@@ -11,6 +11,10 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.build.jdk>1.8</project.build.jdk>
 		<spring.version>4.1.7.RELEASE</spring.version>
+		<kafka.version>0.9.0.0</kafka.version>
+		<zkclient.version>0.7</zkclient.version>
+		<zookeeper.version>3.4.6</zookeeper.version>
+		<jedis.version>2.8.0</jedis.version>
 		<junit.version>4.12</junit.version>
 	</properties>
 	<modules>
@@ -18,15 +22,31 @@
 		<module>jeesuite-kafka</module>
 		<module>jeesuite-tutorial</module>
 		<module>jeesuite-spring</module>
+		<module>jeesuite-cache</module>
+		<module>jeesuite-scheduler</module>
+		<module>jeesuite-monitor-web</module>
 	</modules>
 
 	<dependencies>
 
 		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>2.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>2.5</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
+			<artifactId>slf4j-api</artifactId>
 			<version>1.7.21</version>
 		</dependency>
+
 
 	</dependencies>
 </project>
