@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+
+   <context:property-placeholder
+		ignore-unresolvable="true" location="classpath*:*.properties" />
+
+    <bean  id="topicConsumerProvider" class="com.github.jsknife.kafka.spring.TopicConsumerSpringProvider">
+        <property name="independent" value="false" />
+        <property name="configs">
+            <props>
+                <prop key="bootstrap.servers" >${kafka.servers}</prop>
+                <!-- 同一个组对同一个消息只会消费一次，所以不同业务使用不同的group.id -->
+                <prop key="group.id">kafka-demo2</prop>
+                <prop key="enable.auto.commit">true</prop>
+                <prop key="auto.offset.reset">earliest</prop>
+                <!-- 131072 = 128kb -->
+                <prop key="max.partition.fetch.bytes">131072</prop>
+                <prop key="client.id">tutorial-consumer</prop>
+            </props>
+        </property>
+        <property name="topicHandlers" >
+            <map>
+              <!-- 指定消息监听器 -->
+              <entry key="demo-topic">
+                 <bean class="test.DemoMessageHandler" />
+              </entry>
+            </map>
+        </property>
+    </bean>
+    
+   
+   
+</beans>
