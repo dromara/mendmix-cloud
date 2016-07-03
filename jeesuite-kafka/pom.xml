@@ -6,11 +6,6 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>jeesuite-kafka</artifactId>
-  
-  <properties>
-		<kafka.version>0.9.0.0</kafka.version>
-		<zkclient.version>0.7</zkclient.version>
-	</properties>
 
 	<dependencies>
 
@@ -96,19 +91,6 @@
 					<artifactId>slf4j-api</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-core</artifactId>
-			<version>2.5</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-slf4j-impl</artifactId>
-			<version>2.5</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
