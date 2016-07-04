@@ -48,7 +48,7 @@ public abstract class BaseScheduler implements DisposableBean{
     private TriggerKey triggerKey;
     private long jobFireInterval = 0;//任务执行间隔（秒）
     
-    private boolean promptlyExecute;//启动是否立即执行
+    private boolean executeOnStarted;//启动是否立即执行
     
 	//@Autowired
     private ControlHandler controlHandler;
@@ -76,13 +76,13 @@ public abstract class BaseScheduler implements DisposableBean{
 	public void setControlHandler(ControlHandler controlHandler) {
 		this.controlHandler = controlHandler;
 	}
-	
-	public boolean isPromptlyExecute() {
-		return promptlyExecute;
+
+	public boolean isExecuteOnStarted() {
+		return executeOnStarted;
 	}
 
-	public void setPromptlyExecute(boolean promptlyExecute) {
-		this.promptlyExecute = promptlyExecute;
+	public void setExecuteOnStarted(boolean executeOnStarted) {
+		this.executeOnStarted = executeOnStarted;
 	}
 
 	protected Scheduler getScheduler() {

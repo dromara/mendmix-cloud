@@ -32,7 +32,7 @@
 					<property name="cronExpr" value="30 * * * * ?" />
 					<property name="controlHandler" ref="schControlHandler" />
 					<!-- 启动完成立即执行一次 -->
-					<property name="promptlyExecute" value="true" />
+					<property name="executeOnStarted" value="true" />
 				</bean>
 				<bean class="com.jeesuite.test.sch.DemoTask2">
 					<property name="jobName" value="task2" />

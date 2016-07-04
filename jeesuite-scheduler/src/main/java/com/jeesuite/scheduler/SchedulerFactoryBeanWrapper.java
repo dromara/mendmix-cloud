@@ -73,7 +73,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		acf.registerBeanDefinition(beanName, beanDefBuilder.getRawBeanDefinition());
 		
 		for (BaseScheduler sch : schedulers) {
-			if(sch.isPromptlyExecute()){
+			if(sch.isExecuteOnStarted()){
 				new Thread(new Runnable() {
 					@Override
 					public void run() {						
