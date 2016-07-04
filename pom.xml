@@ -25,6 +25,7 @@
 		<module>jeesuite-cache</module>
 		<module>jeesuite-scheduler</module>
 		<module>jeesuite-monitor-web</module>
+		<module>jeesuite-mybatis</module>
 	</modules>
 
 	<dependencies>
