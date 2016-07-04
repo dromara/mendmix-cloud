@@ -8,7 +8,7 @@
 <context:property-placeholder
 		ignore-unresolvable="true" location="classpath*:*.properties" />
 		
-    <bean  id="topicProducerProvider" class="com.github.jsknife.kafka.spring.TopicProducerSpringProvider">
+    <bean  id="topicProducerProvider" class="com.jeesuite.kafka.spring.TopicProducerSpringProvider">
         <property name="defaultAsynSend" value="true" />
         <property name="configs">
             <props>

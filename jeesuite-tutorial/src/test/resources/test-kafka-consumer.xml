@@ -8,7 +8,7 @@
    <context:property-placeholder
 		ignore-unresolvable="true" location="classpath*:*.properties" />
 
-    <bean  id="topicConsumerProvider" class="com.github.jsknife.kafka.spring.TopicConsumerSpringProvider">
+    <bean  id="topicConsumerProvider" class="com.jeesuite.kafka.spring.TopicConsumerSpringProvider">
         <property name="independent" value="false" />
         <property name="configs">
             <props>
@@ -26,7 +26,7 @@
             <map>
               <!-- 指定消息监听器 -->
               <entry key="demo-topic">
-                 <bean class="test.DemoMessageHandler" />
+                 <bean class="com.jeesuite.test.kafka.DemoMessageHandler" />
               </entry>
             </map>
         </property>

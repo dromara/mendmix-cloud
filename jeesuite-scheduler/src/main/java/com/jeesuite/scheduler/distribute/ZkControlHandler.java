@@ -38,7 +38,7 @@ public class ZkControlHandler implements ControlHandler,InitializingBean,Disposa
 	
 	private Map<String, SchedulerConfg> schedulerConfgs = new ConcurrentHashMap<>();
 
-	private static final String ROOT = "/dis_tasks/v2/";
+	private static final String ROOT = "/dis_tasks/";
 	
 	private String zkServers;
 	
