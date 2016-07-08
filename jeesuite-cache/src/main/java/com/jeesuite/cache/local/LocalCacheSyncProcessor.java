@@ -31,7 +31,7 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 
 	private static final Logger logger = LoggerFactory.getLogger(LocalCacheSyncProcessor.class);
 	
-	private static String channelName = "localCacheNotify";
+	private static String channelName = "clearLevel1Cache";
 	
 	private String servers;
     private boolean enable = false;
@@ -50,13 +50,17 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 	private static LocalCacheSyncProcessor instance;
 	
 	public static LocalCacheSyncProcessor getInstance() {
-		if(instance == null)instance = InstanceFactory.getInstance(LocalCacheSyncProcessor.class);
-		if(instance == null)instance = new LocalCacheSyncProcessor();
+		if(instance == null){
+			synchronized (LocalCacheSyncProcessor.class) {				
+				if(instance == null)instance = InstanceFactory.getInstance(LocalCacheSyncProcessor.class);
+				if(instance == null)instance = new LocalCacheSyncProcessor();
+			}
+		}
 		return instance;
 	}
 	
 
-	public boolean doPublish(String key){
+	public boolean publishSyncEvent(String key){
 		if(enable ==false)return true;
 		for (String prefix : keyPrefixs) {
 			if(key.indexOf(prefix) == 0){
@@ -170,15 +174,15 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 
 	private class LocalCacheSyncListener extends JedisPubSub {
 
-		private static final String CLEAR = "clear";
+		private static final String CLEAR_ALL = "clearall";
 
 		@Override
 		public void onMessage(String channel, String message) {
 			super.onMessage(channel, message);
 			if(channel.equals(channelName)){
-				if(CLEAR.equals(message)){
+				if(CLEAR_ALL.equals(message)){
 					LocalCacheProvider.getInstance().clearAll();
-					logger.info("receive command {} and clear local cache finish!",CLEAR);
+					logger.info("receive command {} and clear local cache finish!",CLEAR_ALL);
 				}else{					
 					LocalCacheProvider.getInstance().remove(message);
 				}

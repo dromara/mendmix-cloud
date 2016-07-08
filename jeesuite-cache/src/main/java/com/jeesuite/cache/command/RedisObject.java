@@ -47,6 +47,7 @@ public class RedisObject extends RedisBase {
 	 * @return
 	 */
 	public RedisObject resetKey(String key){
+		this.origKey = key;
 		this.key = SafeEncoder.encode(key);
 		return this;
 	}
@@ -79,8 +80,8 @@ public class RedisObject extends RedisBase {
 			}
 			if(result){
 				result =  setExpire(seconds);
-				//
-				LocalCacheProvider.getInstance().set(SafeEncoder.encode(key), value);
+				//set可能是更新缓存，所以统一通知各节点清除本地缓存
+				LocalCacheSyncProcessor.getInstance().publishSyncEvent(origKey);
 			}
 			return result;
 		} finally {
@@ -105,7 +106,11 @@ public class RedisObject extends RedisBase {
 			}else{
 				result = getBinaryJedisCommands(groupName).set(key, valueSerialize(value)).equals(RESP_OK);
 			}
-			if(result)result = setExpireAt(expireAt);
+			if(result){
+				result = setExpireAt(expireAt);
+				//set可能是更新缓存，所以统一通知各节点清除本地缓存
+				LocalCacheSyncProcessor.getInstance().publishSyncEvent(origKey);
+			}
 			return result;
 		} finally {
 			getJedisProvider(groupName).release();
@@ -116,7 +121,7 @@ public class RedisObject extends RedisBase {
 	public <T> T get() {
 		try {
 			//本地缓存读取
-			T value = LocalCacheProvider.getInstance().get(SafeEncoder.encode(key));
+			T value = LocalCacheProvider.getInstance().get(this.origKey);
 			if(value != null)return value;
 			
 			byte[] bytes = null;
@@ -125,7 +130,10 @@ public class RedisObject extends RedisBase {
 			}else{					
 				bytes = getBinaryJedisCommands(groupName).get(key);
 			}
-			return valueDerialize(bytes);
+			value = valueDerialize(bytes);
+			//local
+			LocalCacheProvider.getInstance().set(this.origKey, value);
+			return value;
 		} finally {
 			getJedisProvider(groupName).release();
 		}
@@ -136,7 +144,7 @@ public class RedisObject extends RedisBase {
 	public boolean remove() {
 		boolean removed = super.remove();
 		//通知清除本地缓存
-		if(removed)LocalCacheSyncProcessor.getInstance().doPublish(SafeEncoder.encode(key));
+		if(removed)LocalCacheSyncProcessor.getInstance().publishSyncEvent(origKey);
 		return removed;
 	}
 	

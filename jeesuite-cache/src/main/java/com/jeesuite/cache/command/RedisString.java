@@ -84,6 +84,8 @@ public class RedisString {
 			boolean result = getJedisCommands(groupName).set(key, value).equals(RESP_OK);
 			if(result && seconds > 0){
 				result =  setExpire(seconds);
+				//set可能是更新缓存，所以统一通知各节点清除本地缓存
+				LocalCacheSyncProcessor.getInstance().publishSyncEvent(key);
 			}
 			return result;
 		} finally {
@@ -105,8 +107,8 @@ public class RedisString {
 			boolean result = getJedisCommands(groupName).set(key, value).equals(RESP_OK);
 			if(result){
 				result = setExpireAt(expireAt);
-				//
-				LocalCacheProvider.getInstance().set(key, value);
+				//set可能是更新缓存，所以统一通知各节点清除本地缓存
+				LocalCacheSyncProcessor.getInstance().publishSyncEvent(key);
 			}
 			return result;
 		} finally {
@@ -160,7 +162,7 @@ public class RedisString {
 		} finally {
 			getJedisProvider(groupName).release();
 			//
-			LocalCacheSyncProcessor.getInstance().doPublish(key);
+			LocalCacheSyncProcessor.getInstance().publishSyncEvent(key);
 		}
 	}
 

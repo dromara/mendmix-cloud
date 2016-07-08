@@ -43,6 +43,8 @@ public abstract class RedisBase {
     
 	protected byte[] key;
 	
+	protected String origKey;
+	
 	protected boolean setExpired;//是否设置了超时时间
 
 	public byte[] getKey() {
@@ -50,6 +52,7 @@ public abstract class RedisBase {
 	}
 
 	public RedisBase(String key) {
+		this.origKey = key;
 		//
 		if(key.contains(KEY_SUFFIX_SPLIT)){
 			this.groupName = key.split(KEY_SUFFIX_SPLIT)[0];
@@ -58,6 +61,7 @@ public abstract class RedisBase {
 	}
 	
 	public RedisBase(String key,String groupName) {
+		this.origKey = key;
 		this.key = SafeEncoder.encode(key);
 		this.groupName = groupName;
 	}
@@ -250,7 +254,7 @@ public abstract class RedisBase {
 			return (T)SerializeUtils.deserialize(bytes);
 		} catch (Exception e) {
 			remove();
-			logger.warn("get key[{}] from redis is not null,but Deserialize error,message:{}",SafeEncoder.encode(key),e);
+			logger.warn("get key[{}] from redis is not null,but Deserialize error,message:{}",origKey,e);
 			return null;
 		}
 	}
