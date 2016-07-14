@@ -13,6 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
@@ -52,6 +53,8 @@ public class OldApiTopicConsumer implements TopicConsumer {
 	
 	private AtomicBoolean runing = new AtomicBoolean(false);
 	
+	//记录主题当前阻塞未处理的消息数
+	private Map<String, AtomicLong> notProcessMessageCounts = new HashMap<>();
 
 	public OldApiTopicConsumer(ConsumerConnector connector, Map<String, MessageHandler> topics) {
 		Validate.notNull(connector);
@@ -89,6 +92,8 @@ public class OldApiTopicConsumer implements TopicConsumer {
 		for (String topicName : topics.keySet()) {
 			int nThreads = 1;
 			topicCountMap.put(topicName, nThreads);
+			//
+			notProcessMessageCounts.put(topicName, new AtomicLong(0));
 			logger.info("topic[{}] assign fetch Threads {}",topicName,nThreads);
 		}
 		
@@ -162,10 +167,18 @@ public class OldApiTopicConsumer implements TopicConsumer {
 			ConsumerIterator<String, Object> it = stream.iterator();
 			// 没有消息的话，这里会阻塞
 			while (it.hasNext()) {
+				//该主题当前未消费的任务数
+				long taskCount = notProcessMessageCounts.get(topicName).get();
+				//如果处理不过来，则抓取线程阻塞。
+				// 阻塞时间规则：按100条一秒递增
+				int sleepSec = (int) (taskCount/100);
+				if(sleepSec > 0){					
+					try {Thread.sleep(TimeUnit.SECONDS.toMillis(sleepSec));} catch (Exception e) {}
+				}
 				try {					
 					final DefaultMessage message = (DefaultMessage) it.next().message();
 					//
-					submitMessageToProcess(message);
+					submitMessageToProcess(topicName,message);
 				} catch (Exception e) {
 					logger.error("received_topic_error,topic:"+topicName,e);
 				}
@@ -178,8 +191,10 @@ public class OldApiTopicConsumer implements TopicConsumer {
 		 * 提交消息到处理线程队列
 		 * @param message
 		 */
-		private void submitMessageToProcess(final DefaultMessage message) {
+		private void submitMessageToProcess(final String topicName,final DefaultMessage message) {
 			
+			//待处理任务数+1
+			notProcessMessageCounts.get(topicName).incrementAndGet();
 			defaultProcessExecutor.submit(new Runnable() {
 				@Override
 				public void run() {
@@ -193,6 +208,8 @@ public class OldApiTopicConsumer implements TopicConsumer {
 					} catch (Exception e) {
 						logger.error("received_topic_process_error ["+processorName+"]processMessage error,topic:"+topicName,e);
 					}
+					//待处理队列-1
+					notProcessMessageCounts.get(topicName).decrementAndGet();
 				}
 			});
 		}

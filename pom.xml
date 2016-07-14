@@ -15,6 +15,9 @@
 		<zkclient.version>0.7</zkclient.version>
 		<zookeeper.version>3.4.6</zookeeper.version>
 		<jedis.version>2.8.0</jedis.version>
+		<mybatis.version>3.3.0</mybatis.version>
+		<mapper.version>3.3.4</mapper.version>
+		<druid.version>1.0.16</druid.version>
 		<junit.version>4.12</junit.version>
 	</properties>
 	<modules>

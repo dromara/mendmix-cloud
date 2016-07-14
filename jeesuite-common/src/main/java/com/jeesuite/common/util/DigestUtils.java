@@ -44,6 +44,14 @@ public class DigestUtils {
 		return keys.toLowerCase();
 	}
 	
+	public static String md5WithSalt(Object content,String salt) {
+		if (content == null) {
+			return null;
+		}
+		
+		return md5(content.toString().concat(salt));
+	}
+	
 	public static String encodeBase64(String string){
 		try {
 			return Base64.encodeToString(string.getBytes(CARTSET_UTF_8), false);
