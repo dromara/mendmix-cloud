@@ -170,8 +170,8 @@ public class OldApiTopicConsumer implements TopicConsumer {
 				//该主题当前未消费的任务数
 				long taskCount = notProcessMessageCounts.get(topicName).get();
 				//如果处理不过来，则抓取线程阻塞。
-				// 阻塞时间规则：按100条一秒递增
-				int sleepSec = (int) (taskCount/100);
+				// 阻塞时间规则：按100条一秒递增,最多休眠30秒
+				int sleepSec = ( sleepSec = (int) (taskCount/100)) > 30 ? 30 : sleepSec;
 				if(sleepSec > 0){					
 					try {Thread.sleep(TimeUnit.SECONDS.toMillis(sleepSec));} catch (Exception e) {}
 				}
