@@ -17,7 +17,12 @@ public class DemoMessageHandler implements MessageHandler {
 
 
 	@Override
-	public void process(DefaultMessage message) {
+	public void p1Process(DefaultMessage message) {
+		//TODO 
+	}
+
+	@Override
+	public void p2Process(DefaultMessage message) {
 		Serializable body = message.getBody();
 		System.out.println("process message:" + body);
 		try {Thread.sleep(100);} catch (Exception e) {}

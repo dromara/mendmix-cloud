@@ -13,7 +13,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
@@ -52,9 +51,6 @@ public class OldApiTopicConsumer implements TopicConsumer {
 	private static final int DEFAULT_PROCESS_THREADS = 50;
 	
 	private AtomicBoolean runing = new AtomicBoolean(false);
-	
-	//记录主题当前阻塞未处理的消息数
-	private Map<String, AtomicLong> notProcessMessageCounts = new HashMap<>();
 
 	public OldApiTopicConsumer(ConsumerConnector connector, Map<String, MessageHandler> topics) {
 		Validate.notNull(connector);
@@ -74,7 +70,7 @@ public class OldApiTopicConsumer implements TopicConsumer {
 		
 		int processPoolSize = Integer.parseInt(ResourceUtils.get(KafkaConst.PROP_PROCESS_THREADS,String.valueOf(DEFAULT_PROCESS_THREADS)));
 		this.defaultProcessExecutor = new ThreadPoolExecutor(processPoolSize, processPoolSize, 60, TimeUnit.SECONDS,
-				new LinkedBlockingQueue<Runnable>(), //
+				new LinkedBlockingQueue<Runnable>(1000), //
 				new DefaultManagedAwareThreadFactory(),new ThreadPoolExecutor.CallerRunsPolicy()) {
 			protected void afterExecute(Runnable r, Throwable t) {
 				super.afterExecute(r, t);
@@ -92,8 +88,6 @@ public class OldApiTopicConsumer implements TopicConsumer {
 		for (String topicName : topics.keySet()) {
 			int nThreads = 1;
 			topicCountMap.put(topicName, nThreads);
-			//
-			notProcessMessageCounts.put(topicName, new AtomicLong(0));
 			logger.info("topic[{}] assign fetch Threads {}",topicName,nThreads);
 		}
 		
@@ -168,16 +162,18 @@ public class OldApiTopicConsumer implements TopicConsumer {
 			// 没有消息的话，这里会阻塞
 			while (it.hasNext()) {
 				//该主题当前未消费的任务数
-				long taskCount = notProcessMessageCounts.get(topicName).get();
+				long queueSize = defaultProcessExecutor.getQueue().size();
 				//如果处理不过来，则抓取线程阻塞。
-				// 阻塞时间规则：按100条一秒递增,最多休眠30秒
-				int sleepSec = ( sleepSec = (int) (taskCount/100)) > 30 ? 30 : sleepSec;
+				// 阻塞时间规则：按条一秒递增,最多休眠30秒
+				int sleepSec = ( sleepSec = (int) (queueSize/defaultProcessExecutor.getMaximumPoolSize()) - 1) > 30 ? 30 : sleepSec;
 				if(sleepSec > 0){					
 					try {Thread.sleep(TimeUnit.SECONDS.toMillis(sleepSec));} catch (Exception e) {}
 				}
 				try {					
 					final DefaultMessage message = (DefaultMessage) it.next().message();
-					//
+					//第一阶段处理
+					messageHandler.p1Process(message);
+					//第二阶段处理
 					submitMessageToProcess(topicName,message);
 				} catch (Exception e) {
 					logger.error("received_topic_error,topic:"+topicName,e);
@@ -192,15 +188,12 @@ public class OldApiTopicConsumer implements TopicConsumer {
 		 * @param message
 		 */
 		private void submitMessageToProcess(final String topicName,final DefaultMessage message) {
-			
-			//待处理任务数+1
-			notProcessMessageCounts.get(topicName).incrementAndGet();
 			defaultProcessExecutor.submit(new Runnable() {
 				@Override
 				public void run() {
 					try {	
 						long start = logger.isDebugEnabled() ? System.currentTimeMillis() : 0;
-						messageHandler.process(message);
+						messageHandler.p2Process(message);
 						if(logger.isDebugEnabled()){
 							long useTime = System.currentTimeMillis() - start;
 							if(useTime > 1000)logger.debug("received_topic_useTime [{}]process topic:{} use time {} ms",processorName,topicName,useTime);
@@ -208,8 +201,6 @@ public class OldApiTopicConsumer implements TopicConsumer {
 					} catch (Exception e) {
 						logger.error("received_topic_process_error ["+processorName+"]processMessage error,topic:"+topicName,e);
 					}
-					//待处理队列-1
-					notProcessMessageCounts.get(topicName).decrementAndGet();
 				}
 			});
 		}

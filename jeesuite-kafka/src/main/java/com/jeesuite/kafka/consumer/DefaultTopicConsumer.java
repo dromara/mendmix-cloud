@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
+import com.jeesuite.kafka.thread.StandardThreadExecutor;
 
 /**
  * 默认消费者实现（new consumer api）
@@ -47,7 +48,7 @@ public class DefaultTopicConsumer implements TopicConsumer {
 	private Map<String, MessageHandler> topicHandlers;
 	
 	private ExecutorService fetcheExecutor;
-	private ExecutorService processExecutor;
+	private StandardThreadExecutor processExecutor;
 	private List<ConsumerWorker<String, DefaultMessage>> consumers = new ArrayList<>();
 
 	
@@ -62,7 +63,7 @@ public class DefaultTopicConsumer implements TopicConsumer {
 		int numConsumer = topicHandlers.size();
 	    fetcheExecutor = Executors.newFixedThreadPool(numConsumer);
 	    //
-	    processExecutor = Executors.newFixedThreadPool(50);
+	    processExecutor = new StandardThreadExecutor(1, 50, 1000);
 
 		for (int i = 0; i < numConsumer; i++) {
 			ConsumerWorker<String, DefaultMessage> consumer = new ConsumerWorker<>(configs, topicHandlers,processExecutor);
@@ -231,12 +232,15 @@ public class DefaultTopicConsumer implements TopicConsumer {
 						logger.info("C : {}, Record received topicPartition : {}, offset : {}", clientId, tp,record.offset());
 						partitionToUncommittedOffsetMap.put(tp, record.offset());
 						
+						//第一阶段处理
+						final MessageHandler messageHandler = topicProcessers.get(record.topic());
+						messageHandler.p1Process(record.value());
+						//第二阶段处理
 						processExecutor.submit(new Runnable() {
 							@Override
 							public void run() {
-								MessageHandler messageHandler = topicProcessers.get(record.topic());
 								try {									
-									messageHandler.process(record.value());
+									messageHandler.p2Process(record.value());
 								} catch (Exception e) {
 									logger.error("["+messageHandler.getClass().getSimpleName()+"] process Topic["+record.topic()+"] error",e);
 								}
