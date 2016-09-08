@@ -21,15 +21,15 @@ import java.util.Date;
  * 修改记录： <br />
  * 修 改 者    修改日期     文件版本   修改说明	
  */
-public interface ControlHandler {
+public interface JobRegistry {
 
-	void register(SchedulerConfg conf);
+	void register(JobConfg conf);
 	
 	void setRuning(String jobName,Date fireTime);
 	
 	void setStoping(String jobName,Date nextFireTime);
 	
-	SchedulerConfg getConf(String jobName,boolean forceRemote);
+	JobConfg getConf(String jobName,boolean forceRemote);
 	
 	void unregister(String jobName);
 }

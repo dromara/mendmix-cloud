@@ -35,8 +35,8 @@ import com.jeesuite.spring.InstanceFactory;
  * 修改记录： <br />
  * 修 改 者    修改日期     文件版本   修改说明    
  */
-public abstract class BaseScheduler implements DisposableBean{
-    private static final Logger logger = LoggerFactory.getLogger(BaseScheduler.class);
+public abstract class AbstractJob implements DisposableBean{
+    private static final Logger logger = LoggerFactory.getLogger(AbstractJob.class);
 
     protected String group;
     protected String jobName;
@@ -51,7 +51,7 @@ public abstract class BaseScheduler implements DisposableBean{
     private boolean executeOnStarted;//启动是否立即执行
     
 	//@Autowired
-    private ControlHandler controlHandler;
+    private JobRegistry jobRegistry;
 
 	public void setGroup(String group) {
 		this.group = group;
@@ -73,8 +73,8 @@ public abstract class BaseScheduler implements DisposableBean{
 		this.cronExpr = cronExpr;
 	}
 
-	public void setControlHandler(ControlHandler controlHandler) {
-		this.controlHandler = controlHandler;
+	public void setJobRegistry(JobRegistry jobRegistry) {
+		this.jobRegistry = jobRegistry;
 	}
 
 	public boolean isExecuteOnStarted() {
@@ -91,42 +91,29 @@ public abstract class BaseScheduler implements DisposableBean{
         return scheduler;
     }
 
-    public void execute() {
-    	//避免InstanceFactory还未初始化，就执行
-    	if(scheduler == null && InstanceFactory.getInstanceProvider() == null){
-    		while(true){
-    			if(InstanceFactory.getInstanceProvider() != null)break;
-    			try {Thread.sleep(500);} catch (Exception e) {}
-    		}
-    	}
-    	
-        String latestConExpr = null;
-        Date beginTime = null;
-        boolean runing = false;
-        try {
-            latestConExpr = checkExecutable();
-            if (latestConExpr == null)
-                return;
-            // 更新状态
-            beginTime = getPreviousFireTime();
-			controlHandler.setRuning(jobName, beginTime);
-            runing = true;
-            logger.debug("Job_{} at node[{}] execute begin...",jobName,SchedulerContext.getNodeId());
-            //执行
-            doJob();
-            logger.debug("Job_{} at node[{}] execute finish",jobName,SchedulerContext.getNodeId());
-            //检查是否更新了执行策略
-            checkConExpr(latestConExpr);
-        } catch (Exception e) {
-            logger.error("Job_" + jobName + " execute error", e);
-        } finally {
-            if (runing) {
-            	controlHandler.setStoping(jobName,getTrigger().getNextFireTime());
-            }
-          //重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
-        	cronTrigger = null;
-        }
-    }
+	public void execute() {
+		// 避免InstanceFactory还未初始化，就执行
+		InstanceFactory.waitUtilInitialized();
+
+		if (currentNodeIgnore())
+			return;
+
+		Date beginTime = null;
+		try {
+			// 更新状态
+			beginTime = getPreviousFireTime();
+			jobRegistry.setRuning(jobName, beginTime);
+			logger.debug("Job_{} at node[{}] execute begin...", jobName, JobContext.getContext().getNodeId());
+			// 执行
+			doJob(JobContext.getContext());
+			logger.debug("Job_{} at node[{}] execute finish", jobName, JobContext.getContext().getNodeId());
+		} catch (Exception e) {
+			logger.error("Job_" + jobName + " execute error", e);
+		}
+		jobRegistry.setStoping(jobName, getTrigger().getNextFireTime());
+		// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
+		cronTrigger = null;
+	}
 
     public void checkConExpr(String latestConExpr) {
         try {
@@ -154,7 +141,7 @@ public abstract class BaseScheduler implements DisposableBean{
      */
     protected String checkExecutable() {
         try {
-            SchedulerConfg schConf = controlHandler.getConf(jobName,false);
+            JobConfg schConf = jobRegistry.getConf(jobName,false);
             if (!schConf.isActive()) {
                 if (logger.isDebugEnabled())
                     logger.debug("Job_{} 已禁用,终止执行", jobName);
@@ -204,12 +191,44 @@ public abstract class BaseScheduler implements DisposableBean{
     }
     
     
+    protected boolean currentNodeIgnore() {
+    	if(parallelEnabled())return false;
+        try {
+            JobConfg schConf = jobRegistry.getConf(jobName,false);
+            if (!schConf.isActive()) {
+                if (logger.isDebugEnabled())
+                    logger.debug("Job_{} 已禁用,终止执行", jobName);
+                return true;
+            }
+
+            if (schConf.isRunning()) {
+            	//如果某个节点开始了任务但是没有正常结束导致没有更新任务执行状态
+//                if (isAbnormalabort(schConf)) {
+//                    this.cronExpr = schConf.getCronExpr();
+//                    return false;
+//                }
+                logger.debug("Job_{} 其他节点正在执行,终止当前执行", jobName);
+                return true;
+            }
+            //如果执行节点不为空,且不等于当前节点
+            if(StringUtils.isNotBlank(schConf.getCurrentNodeId()) 
+            		&& !JobContext.getContext().getNodeId().equals(schConf.getCurrentNodeId())){
+            	logger.debug("Job_{} 当前指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
+            	return true;
+            }
+            this.cronExpr = schConf.getCronExpr();
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
+        return false;
+    }
+    
     /**
      * 判断是否异常中断运行状态（）
      * @param schConf
      * @return
      */
-    public boolean isAbnormalabort(SchedulerConfg schConf){
+    public boolean isAbnormalabort(JobConfg schConf){
     	if(schConf.getLastFireTime() == null)return false;
     	//上次开始执行到当前执行时长
     	long runingTime = DateUtils.getDiffSeconds(schConf.getLastFireTime(), getTrigger().getPreviousFireTime());
@@ -258,25 +277,31 @@ public abstract class BaseScheduler implements DisposableBean{
 
     @Override
 	public void destroy() throws Exception {
-    	controlHandler.unregister(jobName);
+    	jobRegistry.unregister(jobName);
     }
 
 	public void init()  {
 		
-		Validate.notNull(controlHandler);
+		Validate.notNull(jobRegistry);
 		
 		triggerName = jobName + "Trigger";
 		
 		triggerKey = new TriggerKey(triggerName, group);
 		
-		SchedulerConfg schedulerConfg = new SchedulerConfg(group,jobName,cronExpr);
+		JobConfg schedulerConfg = new JobConfg(group,jobName,cronExpr);
     	
-        controlHandler.register(schedulerConfg);
+        jobRegistry.register(schedulerConfg);
         
         logger.info("Initialized Job_{} OK!!", jobName);
     }
 
 
-    public abstract void doJob() throws Exception;
+	/**
+	 * 是否开启并行处理
+	 * @return
+	 */
+	public abstract boolean  parallelEnabled();
+	
+	public abstract void doJob(JobContext context) throws Exception;
 
 }

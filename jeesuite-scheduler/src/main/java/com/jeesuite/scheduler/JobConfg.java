@@ -28,7 +28,7 @@ import com.jeesuite.common.json.serializer.DateTimeConvertSerializer;
  * 修改记录： <br />
  * 修 改 者    修改日期     文件版本   修改说明	
  */
-public class SchedulerConfg implements Serializable{
+public class JobConfg implements Serializable{
 
      private static final long serialVersionUID = 1L;
      
@@ -60,14 +60,16 @@ public class SchedulerConfg implements Serializable{
     //当前执行节点id
     private String currentNodeId;
     
-    public SchedulerConfg() {}
+    private long modifyTime;
+    
+    public JobConfg() {}
     
     /**
      * @param schedulerName
      * @param remark
      * @param cronExpr
      */
-    public SchedulerConfg(String groupName,String jobName, String cronExpr) {
+    public JobConfg(String groupName,String jobName, String cronExpr) {
         super();
         this.groupName = groupName;
         this.jobName = jobName;
@@ -151,5 +153,12 @@ public class SchedulerConfg implements Serializable{
 		this.currentNodeId = currentNodeId;
 	}
 
-	
+	public long getModifyTime() {
+		return modifyTime;
+	}
+
+	public void setModifyTime(long modifyTime) {
+		this.modifyTime = modifyTime;
+	}
+
 }

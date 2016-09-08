@@ -7,16 +7,9 @@
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
 		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
-
-   <import resource="test-cache.xml"/>
-   
-   <!--  
-      <bean id="schControlHandler" class="com.jeesuite.scheduler.distribute.RedisControlHandler">
-         <property name="servers" value="localhost:6379" /> 
-    </bean>
-   -->
     
-     <bean id="schControlHandler" class="com.jeesuite.scheduler.distribute.ZkControlHandler">
+    
+    <bean id="jobRegistry" class="com.jeesuite.scheduler.registry.ZkJobRegistry">
        <property name="zkServers" value="localhost:2181" />
     </bean>
    
@@ -30,14 +23,14 @@
 				<bean class="com.jeesuite.test.sch.DemoTask">
 					<property name="jobName" value="task1" />
 					<property name="cronExpr" value="30 * * * * ?" />
-					<property name="controlHandler" ref="schControlHandler" />
+					<property name="jobRegistry" ref="jobRegistry" />
 					<!-- 启动完成立即执行一次 -->
 					<property name="executeOnStarted" value="true" />
 				</bean>
 				<bean class="com.jeesuite.test.sch.DemoTask2">
 					<property name="jobName" value="task2" />
 					<property name="cronExpr" value="30 * * * * ?" />
-					<property name="controlHandler" ref="schControlHandler" />
+					<property name="jobRegistry" ref="jobRegistry" />
 				</bean>
 			</list>
 		</property>

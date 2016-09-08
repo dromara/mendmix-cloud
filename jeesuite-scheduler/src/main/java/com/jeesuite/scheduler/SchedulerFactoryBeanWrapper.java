@@ -34,7 +34,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	
 	private String groupName;
 
-	List<BaseScheduler> schedulers;
+	List<AbstractJob> schedulers;
 	
 	public void setSingleMode(boolean singleMode){
 		SchedulerContext.setSingleMode(singleMode);
@@ -44,7 +44,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		this.groupName = groupName;
 	}
 
-	public void setSchedulers(List<BaseScheduler> schedulers) {
+	public void setSchedulers(List<AbstractJob> schedulers) {
 		this.schedulers = schedulers;
 	}
 
@@ -61,7 +61,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		DefaultListableBeanFactory acf = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
 		
 		List<Trigger> triggers = new ArrayList<>();
-		for (BaseScheduler sch : schedulers) {
+		for (AbstractJob sch : schedulers) {
 			sch.setGroup(groupName);
 			sch.init();
 			triggers.add(registerSchedulerTriggerBean(acf,sch));
@@ -72,7 +72,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		beanDefBuilder.addPropertyValue("triggers", triggers);
 		acf.registerBeanDefinition(beanName, beanDefBuilder.getRawBeanDefinition());
 		
-		for (BaseScheduler sch : schedulers) {
+		for (AbstractJob sch : schedulers) {
 			if(sch.isExecuteOnStarted()){
 				new Thread(new Runnable() {
 					@Override
@@ -92,7 +92,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	 * @param sch
 	 * @return
 	 */
-	private Trigger registerSchedulerTriggerBean(DefaultListableBeanFactory acf,BaseScheduler sch) {
+	private Trigger registerSchedulerTriggerBean(DefaultListableBeanFactory acf,AbstractJob sch) {
 		//注册JobDetail
 		String jobDetailBeanName = sch.getJobName() + "JobDetail";
 		if(context.containsBean(jobDetailBeanName)){
