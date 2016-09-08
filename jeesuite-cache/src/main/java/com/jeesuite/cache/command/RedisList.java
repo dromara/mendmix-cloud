@@ -61,7 +61,7 @@ public class RedisList extends RedisCollection {
 				result = getBinaryJedisCommands(groupName).lpush(key, datas) == 1;
 			}
 			//设置超时时间
-			if(result && !setExpired)setExpire(expireTime);
+			if(result)setExpireIfNot(expireTime);
 			return result;
 		} finally {
 			getJedisProvider(groupName).release();
@@ -78,7 +78,7 @@ public class RedisList extends RedisCollection {
 				result = getBinaryJedisCommands(groupName).rpush(key, datas) == 1;
 			}
 			//设置超时时间
-			if(result && !setExpired)setExpire(expireTime);
+			if(result)setExpireIfNot(expireTime);
 			return result;
 		} finally {
 			getJedisProvider(groupName).release();

@@ -93,7 +93,7 @@ public class RedisNumber extends RedisString {
 	 */
 	public boolean reduce(long integer){
 		try {
-			return getJedisCommands(groupName).incrBy(key, 0-integer) == 1;
+			return getJedisCommands(groupName).decrBy(key, integer) == 1;
 		} finally {
 			getJedisProvider(groupName).release();
 		}

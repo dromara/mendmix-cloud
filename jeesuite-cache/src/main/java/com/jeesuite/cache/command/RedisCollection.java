@@ -17,7 +17,7 @@ public abstract class RedisCollection extends RedisBase {
 	protected long expireTime;//过期时间（秒）
 
 	public RedisCollection(String key) {
-		this(key,DEFAULT_EXPIRE_TIME);
+		this(key,RedisBase.getDefaultExpireSeconds());
 	}
 	
 	/**
@@ -26,7 +26,7 @@ public abstract class RedisCollection extends RedisBase {
 	 * @param groupName
 	 */
 	public RedisCollection(String key,String groupName) {
-		this(key,groupName,DEFAULT_EXPIRE_TIME);
+		this(key,groupName,RedisBase.getDefaultExpireSeconds());
 	}
 	
 	public RedisCollection(String key,long expireTime) {

@@ -20,11 +20,6 @@ import com.jeesuite.cache.local.LocalCacheSyncProcessor;
  */
 public class RedisString {
 	
-	/**
-	 *  默认缓存时长（7 天）
-	 */
-	protected static final int DEFAULT_EXPIRE_TIME = 60 * 60 * 24 * 7;
-	
 	protected static final String RESP_OK = "OK";
 
 	protected String key;
@@ -62,12 +57,12 @@ public class RedisString {
 	}
 	
 	/**
-	 * 设置缓存，默认过期时间(DEFAULT_EXPIRE_TIME)
+	 * 设置缓存，默认过期时间
 	 * @param value
 	 * @return
 	 */
 	public boolean set(String value){
-		return set(value, DEFAULT_EXPIRE_TIME);
+		return set(value, RedisBase.getDefaultExpireSeconds());
 	}
 	
 	/**

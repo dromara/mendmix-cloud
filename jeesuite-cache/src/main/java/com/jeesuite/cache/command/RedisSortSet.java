@@ -63,7 +63,7 @@ public class RedisSortSet extends RedisCollection {
         		result = getBinaryJedisCommands(groupName).zadd(key, weight, valueSerialize(value)) >= 1;
         	}
         	//设置超时时间
-			if(result && !setExpired)setExpire(expireTime);
+        	if(result)setExpireIfNot(expireTime);
 			return result;
     	} finally{
 			getJedisProvider(groupName).release();
@@ -75,7 +75,7 @@ public class RedisSortSet extends RedisCollection {
 	 * @param member
 	 * @return
 	 */
-	public boolean rem(Object mem){
+	public boolean remove(Object mem){
         try {   
         	boolean result = false;
         	if(isCluster(groupName)){
@@ -83,8 +83,6 @@ public class RedisSortSet extends RedisCollection {
         	}else{
         		result = getBinaryJedisCommands(groupName).zrem(key,valueSerialize(mem)) >= 1;
         	}
-        	//设置超时时间
-			if(result && !setExpired)setExpire(expireTime);
 			return result;
     	} finally{
 			getJedisProvider(groupName).release();
@@ -102,8 +100,6 @@ public class RedisSortSet extends RedisCollection {
         	}else{
         		count = getBinaryJedisCommands(groupName).zcard(key);
         	}
-        	//设置超时时间
-			if(!setExpired)setExpire(expireTime);
 			return count;
     	} finally{
 			getJedisProvider(groupName).release();

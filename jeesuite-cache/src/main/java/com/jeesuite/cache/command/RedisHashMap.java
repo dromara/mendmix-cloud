@@ -73,7 +73,7 @@ public class RedisHashMap extends RedisCollection {
 				result = getBinaryJedisCommands(groupName).hmset(key, newDatas).equals(RESP_OK);
 			}
 			//设置超时时间
-			if(result && !setExpired)setExpire(expireTime);
+			if(result)setExpireIfNot(expireTime);
 			return result;
 		} finally {
 			getJedisProvider(groupName).release();
@@ -145,7 +145,7 @@ public class RedisHashMap extends RedisCollection {
 				result = getBinaryJedisCommands(groupName).hset(key, SafeEncoder.encode(field), valueSerialize(value)) >= 0;
 			}		
 			//设置超时时间
-			if(result && !setExpired)setExpire(expireTime);
+			if(result)setExpireIfNot(expireTime);
 			return result;
 		} finally {
 			getJedisProvider(groupName).release();

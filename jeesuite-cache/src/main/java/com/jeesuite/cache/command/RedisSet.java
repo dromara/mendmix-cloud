@@ -61,7 +61,7 @@ public class RedisSet extends RedisCollection {
         		result = getBinaryJedisCommands(groupName).sadd(key,datas) >= 1;
         	}
         	//设置超时时间
-			if(result && !setExpired)setExpire(expireTime);
+        	if(result)setExpireIfNot(expireTime);
 			return result;
     	} finally{
 			getJedisProvider(groupName).release();

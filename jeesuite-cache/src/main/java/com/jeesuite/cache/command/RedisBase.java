@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,10 +32,6 @@ public abstract class RedisBase {
 	protected static final Logger logger = LoggerFactory.getLogger(RedisBase.class);
 	
 	protected static final String KEY_SUFFIX_SPLIT = "::";
-	/**
-	 *  默认缓存时长（7 天）
-	 */
-	protected static final long DEFAULT_EXPIRE_TIME = CacheExpires.IN_1WEEK;
     //
 	protected static final String RESP_OK = "OK";
 	//
@@ -45,8 +42,6 @@ public abstract class RedisBase {
 	
 	protected String origKey;
 	
-	protected boolean setExpired;//是否设置了超时时间
-
 	public byte[] getKey() {
 		return key;
 	}
@@ -124,7 +119,6 @@ public abstract class RedisBase {
 			}
 			return getBinaryJedisCommands(groupName).pexpire(key, seconds * 1000) == 1;
 		} finally {
-			setExpired = true;
 			getJedisProvider(groupName).release();
 		}
 
@@ -150,9 +144,21 @@ public abstract class RedisBase {
 			}
 			return getBinaryJedisCommands(groupName).pexpireAt(key, expireAt.getTime()) == 1;
 		} finally {
-			setExpired = true;
 			getJedisProvider(groupName).release();
 		}
+	}
+	
+	/**
+	 * 没设置过期时间则设置
+	 * @param seconds
+	 * @return
+	 */
+	public boolean setExpireIfNot(long seconds) {
+		Long ttl = getTtl();
+		if(ttl == -1){
+			return setExpire(seconds);
+		}
+		return ttl >= 0;
 	}
 
 	/**
@@ -268,4 +274,11 @@ public abstract class RedisBase {
 		return list;
 	}
 
+	/**
+	 * 默认过期时间
+	 * @return
+	 */
+	public static long getDefaultExpireSeconds(){
+		return CacheExpires.IN_1WEEK + RandomUtils.nextLong(1, CacheExpires.IN_1DAY);
+	}
 }

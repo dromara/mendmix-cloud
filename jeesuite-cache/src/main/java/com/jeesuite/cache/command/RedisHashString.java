@@ -21,10 +21,7 @@ import java.util.Map;
  * @date 2015年12月7日
  */
 public class RedisHashString {
-	/**
-	 *  默认缓存时长（7 天）
-	 */
-	protected static final int DEFAULT_EXPIRE_TIME = 60 * 60 * 24 * 7;
+
 
 	protected static final String RESP_OK = "OK";
 

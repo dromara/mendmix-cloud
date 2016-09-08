@@ -58,7 +58,7 @@ public class RedisObject extends RedisBase {
 	 * @return
 	 */
 	public boolean set(Object value){
-		return set(value, DEFAULT_EXPIRE_TIME);
+		return set(value, RedisBase.getDefaultExpireSeconds());
 	}
 	
 	/**
