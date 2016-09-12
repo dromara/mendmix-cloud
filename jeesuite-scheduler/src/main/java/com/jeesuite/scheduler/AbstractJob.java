@@ -20,7 +20,7 @@ import com.jeesuite.common.util.DateUtils;
 import com.jeesuite.spring.InstanceFactory;
 
 /**
- * 类    名：BaseScheduler.java<br />
+ * 类    名：AbstractJob.java<br />
  *   
  * 功能描述：定时任务基类  <br />
  *  
@@ -200,6 +200,13 @@ public abstract class AbstractJob implements DisposableBean{
                     logger.debug("Job_{} 已禁用,终止执行", jobName);
                 return true;
             }
+            
+          //如果执行节点不为空,且不等于当前节点
+            if(StringUtils.isNotBlank(schConf.getCurrentNodeId()) 
+            		&& !JobContext.getContext().getNodeId().equals(schConf.getCurrentNodeId())){
+            	logger.debug("Job_{} 当前指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
+            	return true;
+            }
 
             if (schConf.isRunning()) {
             	//如果某个节点开始了任务但是没有正常结束导致没有更新任务执行状态
@@ -210,12 +217,7 @@ public abstract class AbstractJob implements DisposableBean{
                 logger.debug("Job_{} 其他节点正在执行,终止当前执行", jobName);
                 return true;
             }
-            //如果执行节点不为空,且不等于当前节点
-            if(StringUtils.isNotBlank(schConf.getCurrentNodeId()) 
-            		&& !JobContext.getContext().getNodeId().equals(schConf.getCurrentNodeId())){
-            	logger.debug("Job_{} 当前指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
-            	return true;
-            }
+            
             this.cronExpr = schConf.getCronExpr();
         } catch (Exception e) {
         	e.printStackTrace();

@@ -18,7 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-import com.jeesuite.kafka.consumer.DefaultTopicConsumer;
+import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
+import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.monitor.KafkaMonitor;
@@ -45,7 +46,11 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
     //是否独立进程
     private boolean independent;
     
+    private boolean useNewAPI = false;
+    
     private Map<String, MessageHandler> topicHandlers;
+    
+    private int processThreads = 200;
     
     private String groupId;
     
@@ -139,7 +144,11 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		}
 		logger.info("\n============kafka.Consumer.Config============\n" + sb.toString() + "\n");
 
-        consumer = new DefaultTopicConsumer(configs, topicHandlers);
+		if(useNewAPI){			
+			consumer = new NewApiTopicConsumer(configs, topicHandlers,processThreads);
+		}else{
+			consumer = new OldApiTopicConsumer(configs, topicHandlers, processThreads);
+		}
 
         consumer.start();
         //状态：运行中
@@ -162,6 +171,14 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 
 	public void setIndependent(boolean independent) {
 		this.independent = independent;
+	}
+
+	public void setProcessThreads(int processThreads) {
+		this.processThreads = processThreads;
+	}
+
+	public void setUseNewAPI(boolean useNewAPI) {
+		this.useNewAPI = useNewAPI;
 	}
 
 	@Override

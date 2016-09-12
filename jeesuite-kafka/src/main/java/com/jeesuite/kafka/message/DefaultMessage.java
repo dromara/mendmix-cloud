@@ -23,12 +23,28 @@ public class DefaultMessage implements Serializable {
 
 	private Serializable body;
 	
+	private int priority = 1;//优先级 1-9  数字越大优先级 越高
+	
 
 	public DefaultMessage(Serializable body) {
 		super();
 		this.body = body;
 	}
 	
+	public DefaultMessage(Serializable body, int priority) {
+		this(body, null, 1);
+	}
+	
+	public DefaultMessage(Serializable body, Serializable partitionFactor) {
+		this(body, partitionFactor, 1);
+	}
+	
+	public DefaultMessage(Serializable body, Serializable partitionFactor, int priority) {
+		super();
+		this.body = body;
+		this.partitionFactor = partitionFactor;
+		this.priority = priority;
+	}
 
 	public String getMsgId() {
 		return msgId;
@@ -57,15 +73,23 @@ public class DefaultMessage implements Serializable {
 		return headers;
 	}
 
-
 	public void setHeaders(Map<String, Object> headers) {
 		this.headers = headers;
 	}
-
-
+	
 	public void setMsgId(String msgId) {
 		this.msgId = msgId;
 	}
+
+	public int getPriority() {
+		return priority;
+	}
+
+
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
+
 
 	public long getPartitionHash() {
 		if(partitionHash <= 0 && partitionFactor != null){

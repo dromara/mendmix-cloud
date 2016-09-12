@@ -6,25 +6,30 @@ package com.jeesuite.kafka.consumer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.concurrent.DefaultManagedAwareThreadFactory;
 
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.serializer.MessageDecoder;
-import com.jeesuite.kafka.utils.KafkaConst;
 
+import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
@@ -38,6 +43,7 @@ import kafka.utils.VerifiableProperties;
  */
 public class OldApiTopicConsumer implements TopicConsumer {
 
+
 	private final static Logger logger = LoggerFactory.getLogger(OldApiTopicConsumer.class);
 	
 	private ConsumerConnector connector;
@@ -48,37 +54,35 @@ public class OldApiTopicConsumer implements TopicConsumer {
 	//默认处理线程
 	private ThreadPoolExecutor defaultProcessExecutor;
 	
-	private static final int DEFAULT_PROCESS_THREADS = 50;
+	//执行线程池满了被拒绝任务处理线程池
+	private ExecutorService poolRejectedExecutor = Executors.newSingleThreadExecutor();
 	
 	private AtomicBoolean runing = new AtomicBoolean(false);
 
-	public OldApiTopicConsumer(ConsumerConnector connector, Map<String, MessageHandler> topics) {
+	/**
+	 * 
+	 * @param connector
+	 * @param topics
+	 * @param processThreads 
+	 */
+	public OldApiTopicConsumer(Properties configs, Map<String, MessageHandler> topics,int maxProcessThreads) {
 		Validate.notNull(connector);
-
-		this.connector = connector;
+		this.connector = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(configs));
 		this.topics = topics;
 		
 		int poolSize = topics.size();
-		this.fetchExecutor = new ThreadPoolExecutor(poolSize, poolSize, 60, TimeUnit.SECONDS,
-				new LinkedBlockingQueue<Runnable>(), //
-				new DefaultManagedAwareThreadFactory()) {
+		this.fetchExecutor = new ThreadPoolExecutor(poolSize, poolSize,60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new KafkaThreadFactory("KafkaFetcher"));
+		
+		this.defaultProcessExecutor = new ThreadPoolExecutor(2, maxProcessThreads, 30, TimeUnit.SECONDS,
+				new SynchronousQueue<Runnable>(), //
+				new KafkaThreadFactory("KafkaDefaultProcessor"),new PoolFullRunsPolicy()) {
 			protected void afterExecute(Runnable r, Throwable t) {
 				super.afterExecute(r, t);
 				printException(r, t);
 			}
 		};
 		
-		int processPoolSize = Integer.parseInt(ResourceUtils.get(KafkaConst.PROP_PROCESS_THREADS,String.valueOf(DEFAULT_PROCESS_THREADS)));
-		this.defaultProcessExecutor = new ThreadPoolExecutor(processPoolSize, processPoolSize, 60, TimeUnit.SECONDS,
-				new LinkedBlockingQueue<Runnable>(1000), //
-				new DefaultManagedAwareThreadFactory(),new ThreadPoolExecutor.CallerRunsPolicy()) {
-			protected void afterExecute(Runnable r, Throwable t) {
-				super.afterExecute(r, t);
-				printException(r, t);
-			}
-		};
-		
-		logger.info("Kafka Conumer ThreadPool initialized,fetchPool Size:{},defalutProcessPool Size:{} ",poolSize,processPoolSize);
+		logger.info("Kafka Conumer ThreadPool initialized,fetchPool Size:{},defalutProcessPool Size:{} ",poolSize,maxProcessThreads);
 	}
 
 
@@ -161,13 +165,13 @@ public class OldApiTopicConsumer implements TopicConsumer {
 			ConsumerIterator<String, Object> it = stream.iterator();
 			// 没有消息的话，这里会阻塞
 			while (it.hasNext()) {
-				//该主题当前未消费的任务数
-				long queueSize = defaultProcessExecutor.getQueue().size();
-				//如果处理不过来，则抓取线程阻塞。
-				// 阻塞时间规则：按条一秒递增,最多休眠30秒
-				int sleepSec = ( sleepSec = (int) (queueSize/defaultProcessExecutor.getMaximumPoolSize()) - 1) > 30 ? 30 : sleepSec;
-				if(sleepSec > 0){					
-					try {Thread.sleep(TimeUnit.SECONDS.toMillis(sleepSec));} catch (Exception e) {}
+				
+				//当处理线程满后，阻塞处理线程
+				while(true){
+					if(defaultProcessExecutor.getMaximumPoolSize() > defaultProcessExecutor.getActiveCount()){
+						break;
+					}
+					try {Thread.sleep(200);} catch (Exception e) {}
 				}
 				try {					
 					final DefaultMessage message = (DefaultMessage) it.next().message();
@@ -210,12 +214,55 @@ public class OldApiTopicConsumer implements TopicConsumer {
 	@Override
 	public void close() {
 		if(!runing.get())return;
-		this.fetchExecutor.shutdownNow();
+		this.fetchExecutor.shutdown();
 		this.defaultProcessExecutor.shutdown();
+		this.poolRejectedExecutor.shutdown();
 		this.connector.commitOffsets();
 		this.connector.shutdown();
 		runing.set(false);
 		logger.info("KafkaTopicSubscriber shutdown ok...");
 	}
+	
+	/**
+	 * 处理线程满后策略
+	 * @description <br>
+	 * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+	 * @date 2016年7月25日
+	 */
+	private class PoolFullRunsPolicy implements RejectedExecutionHandler {
+		
+        public PoolFullRunsPolicy() {}
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        	poolRejectedExecutor.execute(r);
+        }
+    }
+	
+
+    static class KafkaThreadFactory implements ThreadFactory {
+        private static final AtomicInteger poolNumber = new AtomicInteger(1);
+        private final ThreadGroup group;
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final String namePrefix;
+
+        KafkaThreadFactory(String namePrefix) {
+            SecurityManager s = System.getSecurityManager();
+            group = (s != null) ? s.getThreadGroup() :
+                                  Thread.currentThread().getThreadGroup();
+            this.namePrefix = namePrefix + "-" +
+                          poolNumber.getAndIncrement() +
+                         "-thread-";
+        }
+
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r,
+                                  namePrefix + threadNumber.getAndIncrement(),
+                                  0);
+            if (t.isDaemon())
+                t.setDaemon(false);
+            if (t.getPriority() != Thread.NORM_PRIORITY)
+                t.setPriority(Thread.NORM_PRIORITY);
+            return t;
+        }
+    }
 	
 }

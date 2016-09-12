@@ -40,7 +40,7 @@ import com.jeesuite.kafka.thread.StandardThreadExecutor;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月12日
  */
-public class DefaultTopicConsumer implements TopicConsumer {
+public class NewApiTopicConsumer implements TopicConsumer {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConsumerWorker.class);
 
@@ -52,20 +52,20 @@ public class DefaultTopicConsumer implements TopicConsumer {
 	private List<ConsumerWorker<String, DefaultMessage>> consumers = new ArrayList<>();
 
 	
-	public DefaultTopicConsumer(Properties configs, Map<String, MessageHandler> topicHandlers) {
+	public NewApiTopicConsumer(Properties configs, Map<String, MessageHandler> topicHandlers,int maxProcessThreads) {
 		super();
 		this.configs = configs;
 		this.topicHandlers = topicHandlers;
+		//
+	    fetcheExecutor = Executors.newFixedThreadPool(topicHandlers.size());
+	    //
+	    processExecutor = new StandardThreadExecutor(1, maxProcessThreads, 1000);
 	}
 
 	@Override
 	public void start() {
-		int numConsumer = topicHandlers.size();
-	    fetcheExecutor = Executors.newFixedThreadPool(numConsumer);
-	    //
-	    processExecutor = new StandardThreadExecutor(1, 50, 1000);
 
-		for (int i = 0; i < numConsumer; i++) {
+		for (int i = 0; i < topicHandlers.size(); i++) {
 			ConsumerWorker<String, DefaultMessage> consumer = new ConsumerWorker<>(configs, topicHandlers,processExecutor);
 			consumers.add(consumer);
 			fetcheExecutor.submit(consumer);
@@ -79,7 +79,7 @@ public class DefaultTopicConsumer implements TopicConsumer {
 			consumers.remove(i);
 			i--;
 		}
-		fetcheExecutor.shutdownNow();
+		fetcheExecutor.shutdown();
 		processExecutor.shutdown();
 	}
 	
