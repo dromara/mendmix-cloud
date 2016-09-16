@@ -28,6 +28,9 @@ import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheKey;
+import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
+import com.jeesuite.mybatis.plugin.cache.name.Mapper3CacheMethodDefine;
+import com.jeesuite.mybatis.plugin.cache.name.MybatisPlusCacheMethodDefine;
 
 
 /**
@@ -56,10 +59,18 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 	
 	private CacheProvider cacheProvider;
 	
+	private CacheMethodDefine methodDefine;
+	
+	//CRUD框架驱动 default，mapper3，mybatis-plus
+	private String crudDriver = "default";
+	
 	public void setCacheProvider(CacheProvider cacheProvider) {
 		this.cacheProvider = cacheProvider;
 	}
 
+	public void setCrudDriver(String crudDriver) {
+		this.crudDriver = crudDriver;
+	}
 
 	@Override
 	public Object onInterceptor(Invocation invocation) throws Throwable {
@@ -229,11 +240,10 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 		return null;
 	}
 	
-	private static String selectByPrimaryKey = ".selectByPrimaryKey";
 	private QueryMethodCache getQueryByPkMethodCache(String mtId){
 		mtId = mtId.substring(0, mtId.lastIndexOf(SPLIT_PONIT));
 		if(queryCacheMethods.containsKey(mtId)){
-			return queryCacheMethods.get(mtId).get(mtId + selectByPrimaryKey);
+			return queryCacheMethods.get(mtId).get(mtId + "." + methodDefine.selectName());
 		}
 		return null;
 	}
@@ -241,6 +251,14 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		if("mapper3".equalsIgnoreCase(crudDriver)){
+			methodDefine = new Mapper3CacheMethodDefine();
+		}else if("mybatis-plus".equalsIgnoreCase(crudDriver)){
+			methodDefine = new MybatisPlusCacheMethodDefine();
+		}else{
+			methodDefine = new DefaultCacheMethodDefine();
+		}
+		
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		
 		QueryMethodCache methodCache = null;
@@ -307,20 +325,24 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 			logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",queryByPKMethod.methodName,queryByPKMethod.keyPattern);
 			
 			queryCacheMethods.put(mapperClass.getName(), tmpMap);
+			
+			String methodName = null;
 			//按主键插入
-			String methodName = mapperClass.getName() + ".insert";
-			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.INSERT));
-			methodName = mapperClass.getName() + ".insertSelective";
-			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.INSERT));
+			String[] insertNames = methodDefine.insertName().split(",");
+			for (String name : insertNames) {				
+				methodName = mapperClass.getName() + "." + name;
+				updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.INSERT));
+			}
 			
 			//按主键更新
-			methodName = mapperClass.getName() + ".updateByPrimaryKey";
-			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.UPDATE));
-			methodName = mapperClass.getName() + ".updateByPrimaryKeySelective";
-			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.UPDATE));
+			String[] updateNames = methodDefine.updateName().split(",");
+			for (String name : updateNames) {				
+				methodName = mapperClass.getName() + "." + name;
+				updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.UPDATE));
+			}
 			
 			//按主键删除
-			methodName = mapperClass.getName() + ".deleteByPrimaryKey";
+			methodName = mapperClass.getName() + "." + methodDefine.deleteName();
 			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.DELETE));
 
 		}
@@ -343,7 +365,7 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 				methodCache.isPk = true;
 				methodCache.uniqueResult = true;
 				methodCache.keyPattern = entityClass.getSimpleName() + ".id:%s";
-				methodCache.methodName = mapperClass.getName() + ".selectByPrimaryKey";
+				methodCache.methodName = mapperClass.getName() + "." + methodDefine.selectName();
 			}
 		}
 		

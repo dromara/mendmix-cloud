@@ -13,6 +13,7 @@ import com.jeesuite.mybatis.crud.builder.InsertBuilder;
 import com.jeesuite.mybatis.crud.builder.UpdateBuilder;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
+import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
 
 /**
  * @description <br>
@@ -22,6 +23,7 @@ import com.jeesuite.mybatis.parser.MybatisMapperParser;
  */
 public class GeneralSqlGenerator {
 
+	public static DefaultCacheMethodDefine methodDefines = new DefaultCacheMethodDefine();
 	public static void generate(Configuration configuration) {
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		for (EntityInfo entity : entityInfos) {

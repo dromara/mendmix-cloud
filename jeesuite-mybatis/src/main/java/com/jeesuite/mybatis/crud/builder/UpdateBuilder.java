@@ -26,7 +26,7 @@ public class UpdateBuilder {
 	 * @param entity
 	 */
 	public static void build(Configuration configuration, EntityInfo entity) {
-		String msId = entity.getMapperClass().getName() + ".updateByPrimaryKey";
+		String msId = entity.getMapperClass().getName() + ".updateByKey";
 
 		EntityMapper entityMapper = EntityHelper.getEntityMapper(entity.getEntityClass());
 

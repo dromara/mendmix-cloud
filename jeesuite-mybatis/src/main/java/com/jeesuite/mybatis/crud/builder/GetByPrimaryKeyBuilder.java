@@ -15,6 +15,7 @@ import org.apache.ibatis.reflection.SystemMetaObject;
 import org.apache.ibatis.scripting.xmltags.DynamicSqlSource;
 import org.apache.ibatis.session.Configuration;
 
+import com.jeesuite.mybatis.crud.GeneralSqlGenerator;
 import com.jeesuite.mybatis.crud.helper.EntityHelper;
 import com.jeesuite.mybatis.crud.helper.EntityMapper;
 import com.jeesuite.mybatis.crud.helper.MybatisObjectBuilder;
@@ -33,7 +34,7 @@ public class GetByPrimaryKeyBuilder {
 	 * @param entity
 	 */
 	public static void build(Configuration configuration, EntityInfo entity) {
-		String msId = entity.getMapperClass().getName() + ".getByPrimaryKey";
+		String msId = entity.getMapperClass().getName() + "." + GeneralSqlGenerator.methodDefines.selectName();
 
 		EntityMapper entityMapper = EntityHelper.getEntityMapper(entity.getEntityClass());
 
