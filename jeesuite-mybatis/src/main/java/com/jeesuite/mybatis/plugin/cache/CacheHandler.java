@@ -27,7 +27,6 @@ import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
-import com.jeesuite.mybatis.plugin.cache.annotation.CacheKey;
 import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
 import com.jeesuite.mybatis.plugin.cache.name.Mapper3CacheMethodDefine;
 import com.jeesuite.mybatis.plugin.cache.name.MybatisPlusCacheMethodDefine;
@@ -277,28 +276,7 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 			String keyPatternForPK = queryByPKMethod.keyPattern;
 
 			Map<String, QueryMethodCache> tmpMap = new HashMap<>();
-			//实体有缓存标注
-			if(entityWithAnnotation){
-				annotationCache = ei.getEntityClass().getAnnotation(Cache.class);
-				//根据实体field查询方法，主键及带CacheKey的字段
-				Field[] fields = ei.getEntityClass().getDeclaredFields();
-				//主键key前缀
-				for (Field field : fields) {
-					methodCache = null;
-					if(field.isAnnotationPresent(CacheKey.class)){
-						methodCache = new QueryMethodCache();
-						methodCache.keyPattern = ei.getEntityClass().getSimpleName() + SPLIT_PONIT + field.getName() + REGEX_PLACEHOLDER;
-						methodCache.uniqueResult = true;
-						methodCache.methodName = mapperClass.getName() + ".findBy" + field.getName().substring(0, 1).toUpperCase() + field.getName().substring(1);
-						methodCache.fieldNames = new String[]{field.getName()};
-						methodCache.expire = annotationCache.expire();
-						tmpMap.put(methodCache.methodName, methodCache);
-						logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",methodCache.methodName,methodCache.keyPattern);
-					}
-				}
-			}
 		
-			
 			//接口定义的自动缓存方法
 			Method[] methods = mapperClass.getDeclaredMethods();
 			for (Method method : methods) {
@@ -395,11 +373,10 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 				Annotation[] aa = annotations[i];
 				if(aa.length > 0){
 					String fieldName = null;
-					for (Annotation annotation : aa) {
-						if(annotation.toString().contains(CacheKey.class.getName())){
-							fieldName = ((CacheKey)annotation).value();
-						}else if(annotation.toString().contains(Param.class.getName())){
-							if(fieldName == null)fieldName = ((Param)annotation).value();
+					inner:for (Annotation annotation : aa) {
+						if(annotation.toString().contains(Param.class.getName())){
+							fieldName = ((Param)annotation).value();
+							break inner;
 						}
 					}
 					if(fieldName == null)new RuntimeException(String.format("无cacheField 定义 at %s.%s", entityClass.getName(),fieldName,mapperClass.getName(),method.getName()));
@@ -409,7 +386,7 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 					sb.append(SPLIT_PONIT).append(fieldName).append(REGEX_PLACEHOLDER);
 					methodCache.fieldNames[i] = fieldName;
 				}else{
-					throw new RuntimeException(String.format("接口%s.%s参数缺失CacheKey标注", mapperClass.getName(),method.getName()));
+					throw new RuntimeException(String.format("接口%s.%s参数缺失Param标注", mapperClass.getName(),method.getName()));
 				}
 			}
 		}

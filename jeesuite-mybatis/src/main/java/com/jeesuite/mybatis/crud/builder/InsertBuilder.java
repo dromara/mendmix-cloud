@@ -8,6 +8,7 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.scripting.xmltags.DynamicSqlSource;
 import org.apache.ibatis.session.Configuration;
 
+import com.jeesuite.mybatis.crud.GeneralSqlGenerator;
 import com.jeesuite.mybatis.crud.helper.EntityHelper;
 import com.jeesuite.mybatis.crud.helper.EntityMapper;
 import com.jeesuite.mybatis.crud.helper.MybatisObjectBuilder;
@@ -26,7 +27,7 @@ public class InsertBuilder {
 	 * @param entity
 	 */
 	public static void build(Configuration configuration, EntityInfo entity) {
-		String msId = entity.getMapperClass().getName() + ".insert";
+		String msId = entity.getMapperClass().getName() + "." + GeneralSqlGenerator.methodDefines.insertName().split(",")[0];
 
 		// 从参数对象里提取注解信息
 		EntityMapper entityMapper = EntityHelper.getEntityMapper(entity.getEntityClass());

@@ -17,9 +17,9 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @description <br>
- * @author <a href="mailto:wei.jiang@lifesense.com">vakin</a>
- * @date 2016年3月24日
- * @Copyright (c) 2015, lifesense.com
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2015年12月2日
+ * @Copyright (c) 2015, jwww
  */
 public class MybatisObjectBuilder {
 

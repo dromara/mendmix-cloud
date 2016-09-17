@@ -65,13 +65,9 @@ public class EntityHelper {
 
                 // 数据库字段名
                 String columnName = null;
-                //				Class<?> typeHandler = null;
                 if (field.isAnnotationPresent(Column.class)) {
                     Column column = field.getAnnotation(Column.class);
                     columnName = column.name();
-                    // if (column.typeHandler() != Object.class) {
-                    // typeHandler = column.typeHandler();
-                    // }
                     columnMapper.setInsertable(column.insertable());
                     columnMapper.setUpdatable(column.updatable());
                 }
@@ -83,7 +79,6 @@ public class EntityHelper {
                 columnMapper.setProperty(field.getName());
                 columnMapper.setColumn(columnName);
                 columnMapper.setJavaType(field.getType());
-                // columnMapper.setTypeHandler(typeHandler);
 
                 // 是否主键
                 columnMapper.setId(field.isAnnotationPresent(Id.class));
@@ -103,9 +98,6 @@ public class EntityHelper {
             if (idColumnsMapperSet.size() <= 0) {
                 throw new RuntimeException("实体" + entityClass.getName() + "不存在主键或者");
             }
-            //			if (idColumnsMapperSet.size() > 1) {
-            //				throw new RuntimeException("实体" + entityClass.getName() + "只能有一个主键");
-            //			}
 
             // 解析实体映射信息
             entityMapper = new EntityMapper();
@@ -185,23 +177,6 @@ public class EntityHelper {
         return result.toLowerCase();
     }
 
-    // /**
-    // * 将下划线风格替换为驼峰风格
-    // */
-    // private static String underlineToCamelhump(String str) {
-    // Matcher matcher = Pattern.compile("_[a-z]").matcher(str);
-    // StringBuilder builder = new StringBuilder(str);
-    // for (int i = 0; matcher.find(); i++) {
-    // builder.replace(matcher.start() - i, matcher.end() - i,
-    // matcher.group().substring(1).toUpperCase());
-    // }
-    // if (Character.isUpperCase(builder.charAt(0))) {
-    // builder.replace(0, 1,
-    // String.valueOf(Character.toLowerCase(builder.charAt(0))));
-    // }
-    // return builder.toString();
-    // }
-
     private static boolean isUppercaseAlpha(char c) {
         return (c >= 'A') && (c <= 'Z');
     }
@@ -240,7 +215,7 @@ public class EntityHelper {
         }
         Field[] fields = entityClass.getDeclaredFields();
         for (Field field : fields) {
-            // 排除静态字段，解决bug#2
+            // 排除静态字段
             if (!Modifier.isStatic(field.getModifiers())) {
                 fieldList.add(field);
             }

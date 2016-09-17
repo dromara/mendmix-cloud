@@ -1,10 +1,10 @@
 package com.jeesuite.mybatis.crud.helper;
 
 /**
- * 表映射信息
- * 
- * @author LinHaobin
- *
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2015年12月2日
+ * @Copyright (c) 2015, jwww
  */
 public class TableMapper {
 
