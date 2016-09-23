@@ -150,7 +150,7 @@ public class NewApiTopicConsumer implements TopicConsumer {
 				}
 
 				//由于处理消息可能产生延时，收到消息后，暂停所有分区并手动发送心跳，以避免consumer group被踢掉
-				consumer.pause(consumer.assignment().toArray(new TopicPartition[0]));
+				consumer.pause(consumer.assignment());
 				Future<Boolean> future = executor.submit(new ConsumeRecords(records, partitionToUncommittedOffsetMap));
 				futures.add(future);
 
@@ -172,7 +172,7 @@ public class NewApiTopicConsumer implements TopicConsumer {
 					}
 				}
 				futures.remove(future);
-				consumer.resume(consumer.assignment().toArray(new TopicPartition[0]));
+				consumer.resume(consumer.assignment());
 				commitOffsets(partitionToUncommittedOffsetMap);
 			}
 

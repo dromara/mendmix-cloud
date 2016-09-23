@@ -33,7 +33,7 @@ public class DefaultPartitioner implements Partitioner {
 
 
     public int partition(String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster) {
-        List<PartitionInfo> partitions = cluster.partitionsForTopic(topic);
+        List<PartitionInfo> partitions = cluster.availablePartitionsForTopic(topic);
         int numPartitions = partitions.size();
 
         long partitionHash = ((DefaultMessage)value).getPartitionHash();

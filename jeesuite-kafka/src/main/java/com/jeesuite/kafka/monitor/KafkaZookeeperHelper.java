@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
+import org.apache.kafka.common.requests.MetadataResponse.TopicMetadata;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.jeesuite.common.util.ResourceUtils;
 
 import kafka.admin.AdminUtils;
-import kafka.api.TopicMetadata;
 import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
 
@@ -49,11 +49,12 @@ public class KafkaZookeeperHelper {
 	}
 	
 	public TopicMetadata getTopicMetadata(String topic) {
-		return AdminUtils.fetchTopicMetadataFromZk(topic, zkUtils);
+		TopicMetadata topicMetadata = AdminUtils.fetchTopicMetadataFromZk(topic, zkUtils);
+		return topicMetadata;
 	}
 	
 	public int getPartitionCounts(String topic){
-		return getTopicMetadata(topic).partitionsMetadata().length();
+		return getTopicMetadata(topic).partitionMetadata().size();
 	}
 	
 	public List<String> getConsumers(String groupId){
