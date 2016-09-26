@@ -29,13 +29,13 @@ import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 import com.alibaba.druid.pool.DruidDataSource;
 
 /**
- * 多数据源路由实例化bean（读写分离 and 水平分库路由）
+ * 自动路由多数据源（读写分离 and 水平分库路由）
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年11月18日
  * @Copyright (c) 2015, jwww
  */
-public class DataSourceRouteFactoryBean extends AbstractDataSource implements ApplicationContextAware,InitializingBean{  
+public class MutiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean{  
 
 	private static final String MASTER_KEY = "master";
 

@@ -1,4 +1,4 @@
-package com.jeesuite.mybatis.core;
+package com.jeesuite.mybatis.plugin;
 
 import java.util.List;
 import java.util.Properties;
@@ -13,6 +13,8 @@ import org.apache.ibatis.plugin.Signature;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
+import com.jeesuite.mybatis.core.InterceptorHandler;
+import com.jeesuite.mybatis.core.InterceptorType;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 
 /**
@@ -28,7 +30,7 @@ import com.jeesuite.mybatis.plugin.cache.CacheHandler;
     @Signature(type = Executor.class, method = "query", args = {  
             MappedStatement.class, Object.class, RowBounds.class,  
             ResultHandler.class }) })  
-public class AutoCompletePlugins implements Interceptor{
+public class PluginsEntrypoint implements Interceptor{
 
 	private List<InterceptorHandler> interceptorHandlers;
 	

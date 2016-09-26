@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+                            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+                            http://www.springframework.org/schema/tx  http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+
+
+	<context:property-placeholder
+		ignore-unresolvable="true" location="classpath*:*.properties" />
+	<aop:aspectj-autoproxy />
+	
+	<import resource="test-cache.xml"/>
+
+    <bean id="routeDataSource" class="com.jeesuite.mybatis.datasource.MutiRouteDataSource" />
+
+	<bean id="transactionTemplate"
+		class="org.springframework.transaction.support.TransactionTemplate">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="isolationLevelName" value="ISOLATION_DEFAULT" />
+		<property name="propagationBehaviorName" value="PROPAGATION_REQUIRED" />
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="routeDataSource" />
+	</bean>
+
+	<bean id="rwRouteSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="classpath:mybatis-configuration.xml" />
+		<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" /> 
+		<property name="dataSource" ref="routeDataSource" />
+		<property name="typeAliasesPackage" value="com.jeesuite.test.mybatis.entity" />
+		<property name="plugins">
+            <array>
+                <bean class="com.jeesuite.mybatis.plugin.PluginsEntrypoint">
+                    <property name="interceptorHandlers">
+                       <list>
+                           <bean class="com.jeesuite.mybatis.plugin.cache.CacheHandler" />
+                           <!-- <bean class="com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler" />
+                           <bean class="com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler" /> -->
+                       </list>
+                    </property>
+                </bean>
+            </array>
+        </property>
+	</bean>
+	
+	<bean class="com.jeesuite.mybatis.spring.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="rwRouteSqlSessionFactory" />
+		<property name="basePackage" value="com.jeesuite.test.mybatis.mapper" />
+    </bean>
+
+</beans>

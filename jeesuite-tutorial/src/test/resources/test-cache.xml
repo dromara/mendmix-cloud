@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+                            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+                            http://www.springframework.org/schema/tx  http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+
+
+	<context:property-placeholder ignore-unresolvable="true" location="classpath*:config.properties" />
+
+	<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+		<property name="maxTotal" value="${redis.pool.maxTotal}" />
+		<property name="maxIdle" value="${redis.pool.maxIdle}" />
+		<property name="minIdle" value="${redis.pool.minIdle}" />
+	</bean>
+
+	<bean class="com.jeesuite.cache.redis.JedisProviderFactoryBean">
+		<property name="jedisPoolConfig" ref="jedisPoolConfig" />
+		<!-- mode(standard:标准模式，cluster：集群模式，shard：分片模式) -->
+		<property name="mode" value="${redis.mode}" />
+		<!-- 多个用“,”隔开 -->
+		<property name="servers" value="${redis.servers}" />
+		<property name="timeout" value="${redis.conn.timeout}" />
+	</bean>
+
+	<bean id="group2Cache"
+		class="com.jeesuite.cache.redis.JedisProviderFactoryBean">
+		<property name="group" value="group2" />
+		<property name="jedisPoolConfig" ref="jedisPoolConfig" />
+		<!-- mode(standard:标准模式，cluster：集群模式，shard：分片模式) -->
+		<property name="mode" value="${redis.mode}" />
+		<!-- 多个用“,”隔开 -->
+		<property name="servers" value="${redis.servers}" />
+		<property name="timeout" value="${redis.conn.timeout}" />
+	</bean>
+
+    <bean id="localCacheSyncProcessor" class="com.jeesuite.cache.local.LocalCacheSyncProcessor">
+         <property name="enable" value="true" />
+         <property name="servers" value="${redis.servers}" />
+         <property name="maxSize" value="100000" />
+         <property name="expireAfterMins" value="1440" />
+         <!-- 需要本地缓存的key前缀。多个用,或;隔开 -->
+         <property name="keyPrefixs">
+            <value>local.cache.test</value>
+         </property>
+    </bean>
+	
+</beans>
