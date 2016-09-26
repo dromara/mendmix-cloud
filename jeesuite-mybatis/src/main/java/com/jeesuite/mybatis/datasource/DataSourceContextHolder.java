@@ -70,20 +70,6 @@ public class DataSourceContextHolder {
 		contextVals.set(vals);
 	}
 	
-	public void setShardFieldValue(Object shardFieldValue) {
-		DataSourceContextVals vals = contextVals.get();
-		if (vals == null)
-			vals = new DataSourceContextVals();
-		vals.shardFieldValue =shardFieldValue;
-		contextVals.set(vals);
-	}
-	
-	public Object getShardFieldValue() {
-		DataSourceContextVals vals = contextVals.get();
-		if (vals == null)return null;
-		return vals.shardFieldValue;
-	}
-
 	/**
 	 * 设置是否使用从库
 	 * 
@@ -109,21 +95,6 @@ public class DataSourceContextHolder {
 			vals = new DataSourceContextVals();
 		vals.userOne = true;
 		vals.userSlave = false;
-		contextVals.set(vals);
-		return this;
-	}
-
-	/**
-	 * 设置强制使用从库
-	 * 
-	 * @return
-	 */
-	public DataSourceContextHolder forceSlave() {
-		DataSourceContextVals vals = contextVals.get();
-		if (vals == null)
-			vals = new DataSourceContextVals();
-		vals.userOne = true;
-		vals.userSlave = true;
 		contextVals.set(vals);
 		return this;
 	}
@@ -211,7 +182,6 @@ public class DataSourceContextHolder {
 		public boolean userSlave; //
 		public boolean userOne;
 		public String dsKey;
-		public Object shardFieldValue;
 	}
 }
 

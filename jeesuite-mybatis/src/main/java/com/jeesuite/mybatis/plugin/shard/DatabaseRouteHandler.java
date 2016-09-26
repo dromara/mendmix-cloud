@@ -85,18 +85,14 @@ public class DatabaseRouteHandler implements InterceptorHandler,InitializingBean
 		
 		if(requiredShard){
 			//先检查是否已经设置
-			Object shardFieldValue = DataSourceContextHolder.get().getShardFieldValue();
+			Object shardFieldValue = getShardFieldValue(ms.getId(),parameterObject);
 			if(shardFieldValue == null){
-				if(requiredShard){			
-					shardFieldValue = getShardFieldValue(ms.getId(),parameterObject);
-				}
-				if(shardFieldValue == null){
-					logger.error("方法{}无法获取分库字段{}的值",ms.getId(),shardStrategy.shardEntityField());
-				}
+				logger.error("方法{}无法获取分库字段{}的值",ms.getId(),shardStrategy.shardEntityField());
+			}else{				
+				int dbIndex = shardStrategy.assigned(shardFieldValue);
+				//指定数据库分库序列
+				DataSourceContextHolder.get().setDbIndex(dbIndex);
 			}
-			int dbIndex = shardStrategy.assigned(shardFieldValue);
-			//指定数据库分库序列
-			DataSourceContextHolder.get().setDbIndex(dbIndex);
 		}
 		return null;
 	}
@@ -166,9 +162,15 @@ public class DatabaseRouteHandler implements InterceptorHandler,InitializingBean
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		
+		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
+		
+		//TODO 解析mapper接口的DbShardKey标注
+		for (EntityInfo entityInfo : entityInfos) {
+			
+		}
+		
 		shardFieldAfterWherePattern = Pattern.compile("^.*[WHERE|where|and|AND|ON|on]\\s+.*"+shardStrategy.shardDbField().toLowerCase()+".*$");
 		
-		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		//忽略分库表
 		if(shardStrategy.ignoreTables() != null){
 			//表名转小写
