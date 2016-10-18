@@ -122,7 +122,7 @@ public class EntityHelper {
 
         for (int i = 0; i < genTypes.length; i++) {
             Type genType = genTypes[i];
-            String s1 = genType.getTypeName();
+            String s1 = genType.getClass().getName();
             String s2 = BaseEntity.class.getName();
             if (s1.startsWith(s2)) {
                 Type[] params = ((ParameterizedType) genType).getActualTypeArguments();

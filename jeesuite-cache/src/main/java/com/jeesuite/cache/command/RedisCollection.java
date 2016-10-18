@@ -43,7 +43,7 @@ public abstract class RedisCollection extends RedisBase {
 		List<T> result = new ArrayList<>();
     	if(datas == null)return result;
     	for (byte[] data : datas) {
-			result.add(valueDerialize(data));
+			result.add((T)valueDerialize(data));
 		}
 		return result;
 	}

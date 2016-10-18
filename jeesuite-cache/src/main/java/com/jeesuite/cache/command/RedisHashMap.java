@@ -99,7 +99,7 @@ public class RedisHashMap extends RedisCollection {
 			Iterator<Map.Entry<byte[], byte[]>> it = datas.entrySet().iterator();
 			while(it.hasNext()){
 				Map.Entry<byte[], byte[]> entry=it.next();
-				result.put(SafeEncoder.encode(entry.getKey()), valueDerialize(entry.getValue()));
+				result.put(SafeEncoder.encode(entry.getKey()), (T)valueDerialize(entry.getValue()));
 			}
 			return result;
 		} finally {
@@ -214,7 +214,7 @@ public class RedisHashMap extends RedisCollection {
 				} else {
 					datas = getBinaryJedisCommands(groupName).hmget(key, SafeEncoder.encode(field));
 				}
-				result.put(field, valueDerialize(datas.get(0)));
+				result.put(field, (T)valueDerialize(datas.get(0)));
 			}
 			return result;
 		} finally {

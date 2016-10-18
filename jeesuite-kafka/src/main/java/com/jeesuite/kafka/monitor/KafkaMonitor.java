@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
@@ -128,9 +129,14 @@ public class KafkaMonitor {
 	 */
 	public Map<String, Long[]> producerStats(){
 		Map<String, Long[]> result = new HashMap<>();
-		producerStats.forEach((k,v)->{
-			result.put(k, new Long[]{v[0].get(),v[1].get()});
-		});
+//		producerStats.forEach((k,v)->{
+//			result.put(k, new Long[]{v[0].get(),v[1].get()});
+//		});
+		Set<String> keys = producerStats.keySet();
+		for (String key : keys) {
+			AtomicLong[] v = producerStats.get(key);
+			result.put(key, new Long[]{v[0].get(),v[1].get()});
+		}
 		return result;
 	}
 	
@@ -165,11 +171,18 @@ public class KafkaMonitor {
 		Map<String, Object> map = new TreeMap<>();
 	
 		Map<String, Long> producerStat = new TreeMap<>();
-		producerStats.forEach((k,v)->{
-			if(v[1].get() > 1){
-				producerStat.put(k, v[1].get());
-			}
-		});
+//		producerStats.forEach((k,v)->{
+//			if(v[1].get() > 1){
+//				producerStat.put(k, v[1].get());
+//			}
+//		});
+		
+		Set<String> keys = producerStats.keySet();
+		for (String key : keys) {
+			AtomicLong[] v = producerStats.get(key);
+			producerStat.put(key, v[1].get());
+		}
+		
 		if(!producerStat.isEmpty()){
 			map.put("producerErrors", producerStat);
 		}

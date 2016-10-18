@@ -269,7 +269,7 @@ public abstract class RedisBase {
 		List<T> list = new ArrayList<>();
 		if(datas == null)return list;
          for (byte[] bs : datas) {
-        	 list.add(valueDerialize(bs));
+        	 list.add((T)valueDerialize(bs));
 		}
 		return list;
 	}

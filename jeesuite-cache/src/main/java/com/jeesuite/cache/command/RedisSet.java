@@ -125,7 +125,7 @@ public class RedisSet extends RedisCollection {
 		Set<T> result = new HashSet<>();
     	if(datas == null)return result;
     	for (byte[] data : datas) {
-			result.add(valueDerialize(data));
+			result.add((T)valueDerialize(data));
 		}
 		return result;
 	}

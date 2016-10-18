@@ -5,6 +5,7 @@ package com.jeesuite.common.util;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +31,12 @@ public class ResourceUtils {
             if(!properties.isEmpty())return;
 			File dir = new File(Thread.currentThread().getContextClassLoader().getResource("").getPath());
 
-			File[] propFiles = dir.listFiles(f -> f.getName().endsWith(".properties"));
+			File[] propFiles = dir.listFiles(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.endsWith("properties");
+				}
+			});
 
 			for (File file : propFiles) {
 				Properties p = new Properties();

@@ -153,8 +153,8 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	}
 
 	private synchronized JobConfg getConfigFromZK(String path,Stat stat){
-		String data = stat == null ? zkClient.readData(path) : zkClient.readData(path,stat);
-		return data == null ? null : JsonUtils.toObject(data, JobConfg.class);
+		Object data = stat == null ? zkClient.readData(path) : zkClient.readData(path,stat);
+		return data == null ? null : JsonUtils.toObject(data.toString(), JobConfg.class);
 	}
 
 	@Override

@@ -32,11 +32,11 @@ public class ProducerClient implements ApplicationContextAware{
 	public void testPublish() throws InterruptedException{
 		
 		final ExecutorService pool = Executors.newFixedThreadPool(3);
-		Timer timer = new Timer(true);
+		final Timer timer = new Timer(true);
 		
-		AtomicInteger count = new AtomicInteger(0);
+		final AtomicInteger count = new AtomicInteger(0);
 		
-		int nums = 10;
+		final int nums = 10;
 		timer.schedule(new TimerTask() {
 			
 			@Override

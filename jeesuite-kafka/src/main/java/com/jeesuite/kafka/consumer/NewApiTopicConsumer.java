@@ -227,7 +227,7 @@ public class NewApiTopicConsumer implements TopicConsumer {
 
 				logger.info("C : {}, Number of records received : {}", clientId, records.count());
 				try {
-					for (ConsumerRecord<K, V> record : records) {
+					for (final ConsumerRecord<K, V> record : records) {
 						TopicPartition tp = new TopicPartition(record.topic(), record.partition());
 						logger.info("C : {}, Record received topicPartition : {}, offset : {}", clientId, tp,record.offset());
 						partitionToUncommittedOffsetMap.put(tp, record.offset());

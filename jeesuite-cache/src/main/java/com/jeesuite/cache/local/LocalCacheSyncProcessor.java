@@ -91,8 +91,8 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 		
 		String[] serverInfos = StringUtils.tokenizeToStringArray(servers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS)[0].split(":");
 		
-		String host =serverInfos[0];
-		int port = Integer.parseInt(serverInfos[1]);
+		final String host =serverInfos[0];
+		final int port = Integer.parseInt(serverInfos[1]);
 		
 		listener = new LocalCacheSyncListener();
 		

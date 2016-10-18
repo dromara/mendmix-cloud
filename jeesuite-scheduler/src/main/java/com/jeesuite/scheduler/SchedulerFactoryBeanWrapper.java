@@ -72,7 +72,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		beanDefBuilder.addPropertyValue("triggers", triggers);
 		acf.registerBeanDefinition(beanName, beanDefBuilder.getRawBeanDefinition());
 		
-		for (AbstractJob sch : schedulers) {
+		for (final AbstractJob sch : schedulers) {
 			if(sch.isExecuteOnStarted()){
 				new Thread(new Runnable() {
 					@Override

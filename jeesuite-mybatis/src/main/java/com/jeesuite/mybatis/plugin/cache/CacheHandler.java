@@ -362,7 +362,7 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 		methodCache.uniqueResult = true;
 		String methodName = mapperClass.getName() + SPLIT_PONIT + method.getName();
 		methodCache.methodName = methodName;
-		methodCache.fieldNames = new String[method.getParameterCount()];
+		methodCache.fieldNames = new String[method.getParameterTypes().length];
 		
 		StringBuilder sb = new StringBuilder(entityClass.getSimpleName());
 		

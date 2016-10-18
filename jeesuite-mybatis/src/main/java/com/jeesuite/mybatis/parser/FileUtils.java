@@ -23,7 +23,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class FileUtils {
 
-	public static Collection<File> listFiles(File directory, String extensions) {
+	public static Collection<File> listFiles(File directory, final String extensions) {
 		File[] files = directory.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
