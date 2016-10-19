@@ -66,7 +66,6 @@ public class OldApiTopicConsumer implements TopicConsumer {
 	 * @param processThreads 
 	 */
 	public OldApiTopicConsumer(Properties configs, Map<String, MessageHandler> topics,int maxProcessThreads) {
-		Validate.notNull(connector);
 		this.connector = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(configs));
 		this.topics = topics;
 		
