@@ -5,7 +5,6 @@ package com.jeesuite.kafka.thread;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -19,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 该线程池可伸缩并有缓冲队列（先根据任务数调整到最大线程数，超出的放入缓冲队列）
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年7月20日
@@ -30,6 +30,8 @@ public class StandardThreadExecutor extends ThreadPoolExecutor {
 	public static final int DEFAULT_MIN_THREADS = 1;
 	public static final int DEFAULT_MAX_THREADS = Runtime.getRuntime().availableProcessors() + 1;
 	public static final int DEFAULT_MAX_IDLE_TIME = 60 * 1000; // 1 minutes
+	
+	private static final ThreadFactory defaultThreadFactory = new StandardThreadFactory("StandardThreadPool");
 
 	protected AtomicInteger submittedTasksCount;	// 正在处理的任务数 
 	private int maxSubmittedTaskCount;				// 最大允许同时处理的任务数
@@ -47,7 +49,7 @@ public class StandardThreadExecutor extends ThreadPoolExecutor {
 	}
 
 	public StandardThreadExecutor(int coreThreads, int maxThreads, int queueCapacity) {
-		this(coreThreads, maxThreads, queueCapacity, Executors.defaultThreadFactory());
+		this(coreThreads, maxThreads, queueCapacity, defaultThreadFactory);
 	}
 
 	public StandardThreadExecutor(int coreThreads, int maxThreads, int queueCapacity, ThreadFactory threadFactory) {
@@ -55,7 +57,7 @@ public class StandardThreadExecutor extends ThreadPoolExecutor {
 	}
 
 	public StandardThreadExecutor(int coreThreads, int maxThreads, long keepAliveTime, TimeUnit unit, int queueCapacity) {
-		this(coreThreads, maxThreads, keepAliveTime, unit, queueCapacity, Executors.defaultThreadFactory());
+		this(coreThreads, maxThreads, keepAliveTime, unit, queueCapacity, defaultThreadFactory);
 	}
 
 	public StandardThreadExecutor(int coreThreads, int maxThreads, long keepAliveTime, TimeUnit unit,
@@ -131,6 +133,33 @@ public class StandardThreadExecutor extends ThreadPoolExecutor {
 		if (t != null)
 			logger.error(t.getMessage(), t);
 	}
+	
+	public static class StandardThreadFactory implements ThreadFactory {
+	    private static final AtomicInteger poolNumber = new AtomicInteger(1);
+	    private final ThreadGroup group;
+	    private final AtomicInteger threadNumber = new AtomicInteger(1);
+	    private final String namePrefix;
+
+	    public StandardThreadFactory(String namePrefix) {
+	        SecurityManager s = System.getSecurityManager();
+	        group = (s != null) ? s.getThreadGroup() :
+	                              Thread.currentThread().getThreadGroup();
+	        this.namePrefix = namePrefix + "-" +
+	                      poolNumber.getAndIncrement() +
+	                     "-thread-";
+	    }
+
+	    public Thread newThread(Runnable r) {
+	        Thread t = new Thread(group, r,
+	                              namePrefix + threadNumber.getAndIncrement(),
+	                              0);
+	        if (t.isDaemon())
+	            t.setDaemon(false);
+	        if (t.getPriority() != Thread.NORM_PRIORITY)
+	            t.setPriority(Thread.NORM_PRIORITY);
+	        return t;
+	    }
+	}
 }
 
 class ExecutorQueue extends LinkedTransferQueue<Runnable> {
@@ -168,3 +197,4 @@ class ExecutorQueue extends LinkedTransferQueue<Runnable> {
 		return super.offer(o);
 	}
 }
+

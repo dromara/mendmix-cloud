@@ -11,7 +11,8 @@
     <bean  id="topicConsumerProvider" class="com.jeesuite.kafka.spring.TopicConsumerSpringProvider">
         <property name="independent" value="false" />
         <!-- 使用新版API开关 -->
-        <property name="useNewAPI" value="true" />
+        <property name="useNewAPI" value="false" />
+        <property name="processThreads" value="100" />
         <property name="configs">
             <props>
                <!-- 老版 consumerAPI 才需要zookeeper.connect -->
@@ -21,7 +22,7 @@
                 <prop key="group.id">kafka-demo2</prop>
                 <prop key="enable.auto.commit">true</prop>
                 <!-- old api可选值：smallest，largest； 新版api可选值：earliest，largest -->
-                <prop key="auto.offset.reset">earliest</prop>
+                <prop key="auto.offset.reset">smallest</prop>
                 <!-- 131072 = 128kb -->
                 <prop key="max.partition.fetch.bytes">131072</prop>
                 <prop key="client.id">tutorial-consumer</prop>
@@ -32,6 +33,9 @@
               <!-- 指定消息监听器 -->
               <entry key="demo-topic">
                  <bean class="com.jeesuite.test.kafka.DemoMessageHandler" />
+              </entry>
+              <entry key="demo2-topic">
+                 <bean class="com.jeesuite.test.kafka.Demo2MessageHandler" />
               </entry>
             </map>
         </property>

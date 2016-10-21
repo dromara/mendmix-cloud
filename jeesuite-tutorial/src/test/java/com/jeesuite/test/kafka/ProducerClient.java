@@ -1,6 +1,7 @@
 package com.jeesuite.test.kafka;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +51,8 @@ public class ProducerClient implements ApplicationContextAware{
 					pool.submit(new Runnable() {			
 						@Override
 						public void run() {
-                            topicProducer.publish("demo-topic", new DefaultMessage(RandomStringUtils.random(5, true, true)));
+							String topic = new Random().nextBoolean() ? "demo-topic" : "demo2-topic";
+                            topicProducer.publish(topic, new DefaultMessage(RandomStringUtils.random(5, true, true)));
 							count.incrementAndGet();
 						}
 					});

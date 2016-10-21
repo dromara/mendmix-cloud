@@ -7,27 +7,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.serializer.MessageDecoder;
+import com.jeesuite.kafka.thread.StandardThreadExecutor;
+import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
 
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
@@ -50,9 +44,9 @@ public class OldApiTopicConsumer implements TopicConsumer {
 	//
 	private Map<String, MessageHandler> topics;
 	//接收线程
-	private ThreadPoolExecutor fetchExecutor;
+	private StandardThreadExecutor fetchExecutor;
 	//默认处理线程
-	private ThreadPoolExecutor defaultProcessExecutor;
+	private StandardThreadExecutor defaultProcessExecutor;
 	
 	//执行线程池满了被拒绝任务处理线程池
 	private ExecutorService poolRejectedExecutor = Executors.newSingleThreadExecutor();
@@ -70,16 +64,9 @@ public class OldApiTopicConsumer implements TopicConsumer {
 		this.topics = topics;
 		
 		int poolSize = topics.size();
-		this.fetchExecutor = new ThreadPoolExecutor(poolSize, poolSize,60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new KafkaThreadFactory("KafkaFetcher"));
+		this.fetchExecutor = new StandardThreadExecutor(poolSize, poolSize,0, TimeUnit.SECONDS, poolSize,new StandardThreadFactory("KafkaFetcher"));
 		
-		this.defaultProcessExecutor = new ThreadPoolExecutor(2, maxProcessThreads, 30, TimeUnit.SECONDS,
-				new SynchronousQueue<Runnable>(), //
-				new KafkaThreadFactory("KafkaDefaultProcessor"),new PoolFullRunsPolicy()) {
-			protected void afterExecute(Runnable r, Throwable t) {
-				super.afterExecute(r, t);
-				printException(r, t);
-			}
-		};
+		this.defaultProcessExecutor = new StandardThreadExecutor(1, maxProcessThreads,30, TimeUnit.SECONDS, maxProcessThreads,new StandardThreadFactory("KafkaProcessor"));
 		
 		logger.info("Kafka Conumer ThreadPool initialized,fetchPool Size:{},defalutProcessPool Size:{} ",poolSize,maxProcessThreads);
 	}
@@ -110,29 +97,6 @@ public class OldApiTopicConsumer implements TopicConsumer {
 		}
 		//
 		runing.set(true);
-	}
-
-	/**
-	 * 线程池内异常处理
-	 * @param r
-	 * @param t
-	 */
-	private static void printException(Runnable r, Throwable t) {
-		if (t == null && r instanceof Future<?>) {
-			try {
-				Future<?> future = (Future<?>) r;
-				if (future.isDone())
-					future.get();
-			} catch (CancellationException ce) {
-				t = ce;
-			} catch (ExecutionException ee) {
-				t = ee.getCause();
-			} catch (InterruptedException ie) {
-				Thread.currentThread().interrupt(); // ignore/reset
-			}
-		}
-		if (t != null)
-			logger.error(t.getMessage(), t);
 	}
 
 	/**
@@ -167,7 +131,7 @@ public class OldApiTopicConsumer implements TopicConsumer {
 				
 				//当处理线程满后，阻塞处理线程
 				while(true){
-					if(defaultProcessExecutor.getMaximumPoolSize() > defaultProcessExecutor.getActiveCount()){
+					if(defaultProcessExecutor.getMaximumPoolSize() > defaultProcessExecutor.getSubmittedTasksCount()){
 						break;
 					}
 					try {Thread.sleep(200);} catch (Exception e) {}
@@ -235,33 +199,5 @@ public class OldApiTopicConsumer implements TopicConsumer {
         	poolRejectedExecutor.execute(r);
         }
     }
-	
-
-    static class KafkaThreadFactory implements ThreadFactory {
-        private static final AtomicInteger poolNumber = new AtomicInteger(1);
-        private final ThreadGroup group;
-        private final AtomicInteger threadNumber = new AtomicInteger(1);
-        private final String namePrefix;
-
-        KafkaThreadFactory(String namePrefix) {
-            SecurityManager s = System.getSecurityManager();
-            group = (s != null) ? s.getThreadGroup() :
-                                  Thread.currentThread().getThreadGroup();
-            this.namePrefix = namePrefix + "-" +
-                          poolNumber.getAndIncrement() +
-                         "-thread-";
-        }
-
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r,
-                                  namePrefix + threadNumber.getAndIncrement(),
-                                  0);
-            if (t.isDaemon())
-                t.setDaemon(false);
-            if (t.getPriority() != Thread.NORM_PRIORITY)
-                t.setPriority(Thread.NORM_PRIORITY);
-            return t;
-        }
-    }
-	
+		
 }

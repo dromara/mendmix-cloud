@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -49,8 +48,9 @@ public class NewApiTopicConsumer implements TopicConsumer {
 	
 	private ExecutorService fetcheExecutor;
 	private StandardThreadExecutor processExecutor;
-	private List<ConsumerWorker<String, DefaultMessage>> consumers = new ArrayList<>();
+	private List<ConsumerWorker> consumerWorks = new ArrayList<>();
 
+	private KafkaConsumer<String, DefaultMessage> consumer;
 	
 	public NewApiTopicConsumer(Properties configs, Map<String, MessageHandler> topicHandlers,int maxProcessThreads) {
 		super();
@@ -64,85 +64,87 @@ public class NewApiTopicConsumer implements TopicConsumer {
 
 	@Override
 	public void start() {
-
+		createKafkaConsumer();
+		//按主题数创建ConsumerWorker线程
 		for (int i = 0; i < topicHandlers.size(); i++) {
-			ConsumerWorker<String, DefaultMessage> consumer = new ConsumerWorker<>(configs, topicHandlers,processExecutor);
-			consumers.add(consumer);
+			ConsumerWorker consumer = new ConsumerWorker();
+			consumerWorks.add(consumer);
 			fetcheExecutor.submit(consumer);
 		}
 	}
 
 	@Override
 	public void close() {
-		for (int i = 0; i < consumers.size(); i++) {
-			consumers.get(i).close();
-			consumers.remove(i);
+		for (int i = 0; i < consumerWorks.size(); i++) {
+			consumerWorks.get(i).close();
+			consumerWorks.remove(i);
 			i--;
 		}
 		fetcheExecutor.shutdown();
 		processExecutor.shutdown();
+		consumer.close();
 	}
 	
-	private class ConsumerWorker<K extends Serializable, V extends DefaultMessage> implements Runnable {
+	final Map<TopicPartition, Long> partitionToUncommittedOffsetMap = new ConcurrentHashMap<>();
+	final List<Future<Boolean>> futures = new ArrayList<>();
+	
+	private <K extends Serializable, V extends DefaultMessage> void createKafkaConsumer(){
+		consumer = new KafkaConsumer<>(configs);
+		ConsumerRebalanceListener listener = new ConsumerRebalanceListener() {
 
-		private KafkaConsumer<K, V> consumer;
-		private final String clientId;
-		private Map<String, MessageHandler> topicProcessers;
-		
-		private ExecutorService processExecutor;
+			@Override
+			public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+				if (!futures.isEmpty())
+					futures.get(0).cancel(true);
+
+				commitOffsets(partitionToUncommittedOffsetMap);
+			}
+
+			@Override
+			public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+				for (TopicPartition tp : partitions) {
+					OffsetAndMetadata offsetAndMetaData = consumer.committed(tp);
+					long startOffset = offsetAndMetaData != null ? offsetAndMetaData.offset() : -1L;
+					logger.info("Assigned topicPartion : {} offset : {}", tp, startOffset);
+
+					if (startOffset >= 0)
+						consumer.seek(tp, startOffset);
+				}
+			}
+		};
+
+		List<String> topics = new ArrayList<>(topicHandlers.keySet());
+		consumer.subscribe(topics, listener);
+	}
+	
+	
+	private void commitOffsets(Map<TopicPartition, Long> partitionToOffsetMap) {
+
+		if (!partitionToOffsetMap.isEmpty()) {
+			Map<TopicPartition, OffsetAndMetadata> partitionToMetadataMap = new HashMap<>();
+			for (Entry<TopicPartition, Long> e : partitionToOffsetMap.entrySet()) {
+				partitionToMetadataMap.put(e.getKey(), new OffsetAndMetadata(e.getValue() + 1));
+			}
+
+			logger.info("committing the offsets : {}", partitionToMetadataMap);
+			consumer.commitSync(partitionToMetadataMap);
+			partitionToOffsetMap.clear();
+		}
+	}
+	
+	private class ConsumerWorker implements Runnable {
 
 		private AtomicBoolean closed = new AtomicBoolean();
 		private CountDownLatch shutdownLatch = new CountDownLatch(1);
 
-		public ConsumerWorker(Properties configs, Map<String, MessageHandler> topicProcessers,ExecutorService processExecutor) {
-
-			this.clientId = configs.getProperty(ConsumerConfig.CLIENT_ID_CONFIG);
-			this.topicProcessers = topicProcessers;
-			configs.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
-			this.consumer = new KafkaConsumer<>(configs);
-			this.processExecutor = processExecutor;
-		}
-
 		@Override
 		public void run() {
 
-			logger.info("Starting consumer : {}", clientId);
-
 			ExecutorService executor = Executors.newFixedThreadPool(1);
-			final Map<TopicPartition, Long> partitionToUncommittedOffsetMap = new ConcurrentHashMap<>();
-			final List<Future<Boolean>> futures = new ArrayList<>();
-
-			ConsumerRebalanceListener listener = new ConsumerRebalanceListener() {
-
-				@Override
-				public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-					if (!futures.isEmpty())
-						futures.get(0).cancel(true);
-
-					logger.info("C : {}, Revoked topicPartitions : {}", clientId, partitions);
-					commitOffsets(partitionToUncommittedOffsetMap);
-				}
-
-				@Override
-				public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-					for (TopicPartition tp : partitions) {
-						OffsetAndMetadata offsetAndMetaData = consumer.committed(tp);
-						long startOffset = offsetAndMetaData != null ? offsetAndMetaData.offset() : -1L;
-						logger.info("C : {}, Assigned topicPartion : {} offset : {}", clientId, tp, startOffset);
-
-						if (startOffset >= 0)
-							consumer.seek(tp, startOffset);
-					}
-				}
-			};
-
-			List<String> topics = new ArrayList<>(topicProcessers.keySet());
-			consumer.subscribe(topics, listener);
-			logger.info("Started to process records for consumer : {}", clientId);
 
 			while (!closed.get()) {
 
-				ConsumerRecords<K, V> records = consumer.poll(1500);
+				ConsumerRecords<String,DefaultMessage> records = consumer.poll(1500);
 
 				// no record found
 				if (records.isEmpty()) {
@@ -160,14 +162,14 @@ public class NewApiTopicConsumer implements TopicConsumer {
 						//等待 heart-beat 间隔时间
 						isCompleted = future.get(3, TimeUnit.SECONDS); 
 					} catch (TimeoutException e) {
-						logger.debug("C : {}, heartbeats the coordinator", clientId);
+						logger.debug("heartbeats the coordinator");
 						consumer.poll(0); // does heart-beat
 						commitOffsets(partitionToUncommittedOffsetMap);
 					} catch (CancellationException e) {
-						logger.debug("C : {}, ConsumeRecords Job got cancelled", clientId);
+						logger.debug("ConsumeRecords Job got cancelled");
 						break;
 					} catch (ExecutionException | InterruptedException e) {
-						logger.error("C : {}, Error while consuming records", clientId, e);
+						logger.error("Error while consuming records", e);
 						break;
 					}
 				}
@@ -181,25 +183,11 @@ public class NewApiTopicConsumer implements TopicConsumer {
 				while (!executor.awaitTermination(5, TimeUnit.SECONDS))
 					;
 			} catch (InterruptedException e) {
-				logger.error("C : {}, Error while exiting the consumer", clientId, e);
+				logger.error("Error while exiting the consumer");
 			}
 			consumer.close();
 			shutdownLatch.countDown();
-			logger.info("C : {}, consumer exited", clientId);
-		}
-
-		private void commitOffsets(Map<TopicPartition, Long> partitionToOffsetMap) {
-
-			if (!partitionToOffsetMap.isEmpty()) {
-				Map<TopicPartition, OffsetAndMetadata> partitionToMetadataMap = new HashMap<>();
-				for (Entry<TopicPartition, Long> e : partitionToOffsetMap.entrySet()) {
-					partitionToMetadataMap.put(e.getKey(), new OffsetAndMetadata(e.getValue() + 1));
-				}
-
-				logger.info("C : {}, committing the offsets : {}", clientId, partitionToMetadataMap);
-				consumer.commitSync(partitionToMetadataMap);
-				partitionToOffsetMap.clear();
-			}
+			logger.info("C : {}, consumer exited");
 		}
 
 		public void close() {
@@ -213,10 +201,10 @@ public class NewApiTopicConsumer implements TopicConsumer {
 
 		private class ConsumeRecords implements Callable<Boolean> {
 
-			ConsumerRecords<K, V> records;
+			ConsumerRecords<String,DefaultMessage> records;
 			Map<TopicPartition, Long> partitionToUncommittedOffsetMap;
 
-			public ConsumeRecords(ConsumerRecords<K, V> records,
+			public ConsumeRecords(ConsumerRecords<String,DefaultMessage> records,
 					Map<TopicPartition, Long> partitionToUncommittedOffsetMap) {
 				this.records = records;
 				this.partitionToUncommittedOffsetMap = partitionToUncommittedOffsetMap;
@@ -225,15 +213,15 @@ public class NewApiTopicConsumer implements TopicConsumer {
 			@Override
 			public Boolean call() {
 
-				logger.info("C : {}, Number of records received : {}", clientId, records.count());
+				logger.info("Number of records received : {}", records.count());
 				try {
-					for (final ConsumerRecord<K, V> record : records) {
+					for (final ConsumerRecord<String,DefaultMessage> record : records) {
 						TopicPartition tp = new TopicPartition(record.topic(), record.partition());
-						logger.info("C : {}, Record received topicPartition : {}, offset : {}", clientId, tp,record.offset());
+						logger.info("Record received topicPartition : {}, offset : {}", tp,record.offset());
 						partitionToUncommittedOffsetMap.put(tp, record.offset());
 						
+						final MessageHandler messageHandler = topicHandlers.get(record.topic());
 						//第一阶段处理
-						final MessageHandler messageHandler = topicProcessers.get(record.topic());
 						messageHandler.p1Process(record.value());
 						//第二阶段处理
 						processExecutor.submit(new Runnable() {
