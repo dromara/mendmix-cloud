@@ -5,6 +5,7 @@ package com.jeesuite.cache.redis;
 
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -17,9 +18,11 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.StringUtils;
 
 import com.jeesuite.cache.redis.cluster.JedisClusterProvider;
+import com.jeesuite.cache.redis.sentinel.JedisSentinelProvider;
 import com.jeesuite.cache.redis.standalone.JedisStandaloneProvider;
 
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.Protocol;
 
 /**
  * redis服务提供者注册工厂
@@ -39,14 +42,18 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 	
 	private Pattern pattern = Pattern.compile("^.+[:]\\d{1,5}\\s*$");
 
-	private String mode;//
+	private String mode = JedisStandaloneProvider.MODE;//
 	
 	private JedisPoolConfig jedisPoolConfig;
 	
 	//用来区分不同组的缓存
 	private String group;
 	private String servers;
-	private Integer timeout;
+	private Integer timeout = 3000; //单位：毫秒
+	private String password;
+	private int database = Protocol.DEFAULT_DATABASE;
+	private String masterName;
+	private String clientName;
 	
 	private ApplicationContext context;
 
@@ -75,6 +82,23 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 		this.timeout = timeout;
 	}
 	
+	
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public void setDatabase(int database) {
+		this.database = database;
+	}
+
+	public void setMasterName(String masterName) {
+		this.masterName = masterName;
+	}
+
+	public void setClientName(String clientName) {
+		this.clientName = clientName;
+	}
+
 	@Override
 	public void setApplicationContext(ApplicationContext context) throws BeansException {
 		this.context = context;
@@ -115,6 +139,10 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 			beanClass = JedisStandaloneProvider.class;
 		}else if(JedisClusterProvider.MODE.equalsIgnoreCase(mode)){
 			beanClass = JedisClusterProvider.class;
+		}else if(JedisSentinelProvider.MODE.equalsIgnoreCase(mode)){
+			beanClass = JedisSentinelProvider.class;
+			//
+			Validate.notBlank(masterName, "Sentinel模式[masterName]参数 required");
 		}else{
 			throw new RuntimeException("参数mode："+this.mode+"不支持");
 		}
@@ -122,7 +150,22 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 		
 		DefaultListableBeanFactory acf = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();  
 		BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(beanClass);
-		beanDefinitionBuilder.addConstructorArgValue(getGroup()).addConstructorArgValue(jedisPoolConfig).addConstructorArgValue(servers).addConstructorArgValue(timeout);
+		beanDefinitionBuilder.addConstructorArgValue(getGroup())//
+		        .addConstructorArgValue(jedisPoolConfig)//
+		        .addConstructorArgValue(servers)//
+		        .addConstructorArgValue(timeout);//
+		
+		if(JedisStandaloneProvider.MODE.equalsIgnoreCase(mode) 
+				|| JedisSentinelProvider.MODE.equalsIgnoreCase(mode)){
+			beanDefinitionBuilder.addConstructorArgValue(password)//
+			    .addConstructorArgValue(database)//
+			    .addConstructorArgValue(clientName);
+		}
+		
+		if(JedisSentinelProvider.MODE.equalsIgnoreCase(mode)){
+			beanDefinitionBuilder.addConstructorArgValue(masterName);
+		}
+		
 		acf.registerBeanDefinition(beanName, beanDefinitionBuilder.getRawBeanDefinition());
 		//
 		logger.info("register JedisProvider OK,Class:{},beanName:{}",beanClass.getSimpleName(),beanName);

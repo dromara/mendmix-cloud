@@ -8,7 +8,7 @@
                             http://www.springframework.org/schema/tx  http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
 
 
-	<context:property-placeholder ignore-unresolvable="true" location="classpath*:config.properties" />
+	<context:property-placeholder ignore-unresolvable="true" location="classpath*:redis.properties" />
 
 	<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
 		<property name="maxTotal" value="${redis.pool.maxTotal}" />
@@ -18,23 +18,24 @@
 
 	<bean class="com.jeesuite.cache.redis.JedisProviderFactoryBean">
 		<property name="jedisPoolConfig" ref="jedisPoolConfig" />
-		<!-- mode(standard:标准模式，cluster：集群模式，shard：分片模式) -->
+		<!-- mode(standalone:单机模式，sentinel：哨兵模式(主从),cluster：集群模式，shard：分片模式) -->
 		<property name="mode" value="${redis.mode}" />
 		<!-- 多个用“,”隔开 -->
 		<property name="servers" value="${redis.servers}" />
 		<property name="timeout" value="${redis.conn.timeout}" />
+		<!-- sentinel模式才需要该属性 -->
+		<property name="masterName" value="${redis.masterName}" />
 	</bean>
 
-	<bean id="group2Cache"
+	<!-- <bean id="group2Cache"
 		class="com.jeesuite.cache.redis.JedisProviderFactoryBean">
 		<property name="group" value="group2" />
 		<property name="jedisPoolConfig" ref="jedisPoolConfig" />
-		<!-- mode(standard:标准模式，cluster：集群模式，shard：分片模式) -->
 		<property name="mode" value="${redis.mode}" />
-		<!-- 多个用“,”隔开 -->
+		多个用“,”隔开
 		<property name="servers" value="${redis.servers}" />
 		<property name="timeout" value="${redis.conn.timeout}" />
-	</bean>
+	</bean> -->
 
     <bean id="localCacheSyncProcessor" class="com.jeesuite.cache.local.LocalCacheSyncProcessor">
          <property name="enable" value="true" />
