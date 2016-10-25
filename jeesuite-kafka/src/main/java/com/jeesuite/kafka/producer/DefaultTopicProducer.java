@@ -1,5 +1,6 @@
 package com.jeesuite.kafka.producer;
 
+import java.io.Closeable;
 import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.Validate;
@@ -10,7 +11,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.kafka.handler.ProducerHandler;
+import com.jeesuite.kafka.handler.ProducerResultHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
 
 /**
@@ -19,7 +20,7 @@ import com.jeesuite.kafka.message.DefaultMessage;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月14日
  */
-public class DefaultTopicProducer implements TopicProducer{
+public class DefaultTopicProducer implements TopicProducer,Closeable{
 
     private static final Logger log = LoggerFactory.getLogger(DefaultTopicProducer.class);
 
@@ -28,11 +29,11 @@ public class DefaultTopicProducer implements TopicProducer{
      */
     private KafkaProducer<String, Object> kafkaProducer;
     
-    private ProducerHandler producerListener;
+    private ProducerResultHandler producerResultHanlder;
    
     public DefaultTopicProducer(KafkaProducer<String, Object> kafkaProducer,boolean defaultAsynSend) {
     	this.kafkaProducer = kafkaProducer;
-    	this.producerListener = new ProducerHandler();
+    	this.producerResultHanlder = new ProducerResultHandler(this);
     }
 	
     public boolean publish(final String topicName, final DefaultMessage message,boolean asynSend){
@@ -44,7 +45,7 @@ public class DefaultTopicProducer implements TopicProducer{
         	try {				
         		doAsynSend(topicName, message.getMsgId(),message);
 			} catch (Exception e) {
-				producerListener.onError(topicName,message);
+				producerResultHanlder.onError(topicName,message,asynSend);
 	        	log.error("kafka_send_fail,topic="+topicName+",messageId="+message.getMsgId(),e);
 				return false;
 			}
@@ -59,13 +60,13 @@ public class DefaultTopicProducer implements TopicProducer{
 		try {			
 			Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message));
 			RecordMetadata metadata = future.get();
-			producerListener.onSuccessed(topicName, message);
+			producerResultHanlder.onSuccessed(topicName, message);
 			if (log.isDebugEnabled()) {
                 log.debug("kafka_send_success,topic=" + topicName + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
             }
 			return true;
 		} catch (Exception ex) {
-			producerListener.onError(topicName,message);
+			producerResultHanlder.onError(topicName,message,false);
         	log.error("kafka_send_fail,topic="+topicName+",messageId="+messageKey,ex);
         	return false;
 		}
@@ -85,10 +86,10 @@ public class DefaultTopicProducer implements TopicProducer{
             @Override
             public void onCompletion(RecordMetadata metadata, Exception ex) {
                 if (ex != null) {
-                	producerListener.onError(topicName,message);
+                	producerResultHanlder.onError(topicName,message,true);
                 	log.error("kafka_send_fail,topic="+topicName+",messageId="+messageKey,ex);
                 } else {
-                	producerListener.onSuccessed(topicName, message);
+                	producerResultHanlder.onSuccessed(topicName, message);
                     if (log.isDebugEnabled()) {
                         log.debug("kafka_send_success,topic=" + topicName + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
                     }
@@ -99,6 +100,7 @@ public class DefaultTopicProducer implements TopicProducer{
 	
     public void close() {
         this.kafkaProducer.close();
+        producerResultHanlder.close();
     }
     
 }

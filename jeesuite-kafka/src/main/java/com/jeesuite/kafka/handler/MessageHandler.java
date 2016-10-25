@@ -23,4 +23,11 @@ public interface MessageHandler {
 	 * @param message
 	 */
 	void p2Process(DefaultMessage message);
+	
+	/**
+	 *  处理失败的消息
+	 * @param message
+	 * @return true 表示业务系统自己已经做了处理，false 由底层框架执行重新处理
+	 */
+	boolean onProcessError(DefaultMessage message);
 }

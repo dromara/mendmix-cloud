@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>    
+<!DOCTYPE configuration    
+    PUBLIC "-//mybatis.org//DTD Config 3.0//EN"    
+    "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<settings>
+		<!-- 全局的映射器启用或禁用缓存。 -->
+		<setting name="cacheEnabled" value="false" />
+		<!-- 全局启用或禁用延迟加载 -->
+		<setting name="lazyLoadingEnabled" value="true" />
+		<!-- 允许或不允许多种结果集从一个单独的语句中返回 -->
+		<setting name="multipleResultSetsEnabled" value="true" />
+		<!-- 使用列标签代替列名 -->
+		<setting name="useColumnLabel" value="true" />
+		<!-- 设置超时时间 -->
+		<setting name="defaultStatementTimeout" value="25000" />
+	</settings>
+</configuration> 

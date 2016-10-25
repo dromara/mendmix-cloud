@@ -1,5 +1,6 @@
 package com.jeesuite.kafka.consumer;
 
+import java.io.Closeable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +40,7 @@ import com.jeesuite.kafka.thread.StandardThreadExecutor;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月12日
  */
-public class NewApiTopicConsumer implements TopicConsumer {
+public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConsumerWorker.class);
 
@@ -51,6 +52,8 @@ public class NewApiTopicConsumer implements TopicConsumer {
 	private List<ConsumerWorker> consumerWorks = new ArrayList<>();
 
 	private KafkaConsumer<String, DefaultMessage> consumer;
+	
+	private ErrorMessageDefaultProcessor errorMessageProcessor = new ErrorMessageDefaultProcessor(1);
 	
 	public NewApiTopicConsumer(Properties configs, Map<String, MessageHandler> topicHandlers,int maxProcessThreads) {
 		super();
@@ -82,6 +85,7 @@ public class NewApiTopicConsumer implements TopicConsumer {
 		}
 		fetcheExecutor.shutdown();
 		processExecutor.shutdown();
+		errorMessageProcessor.close();
 		consumer.close();
 	}
 	
@@ -230,6 +234,10 @@ public class NewApiTopicConsumer implements TopicConsumer {
 								try {									
 									messageHandler.p2Process(record.value());
 								} catch (Exception e) {
+									boolean processed = messageHandler.onProcessError(record.value());
+									if(processed == false){
+										errorMessageProcessor.submit(record.value(), messageHandler);
+									}
 									logger.error("["+messageHandler.getClass().getSimpleName()+"] process Topic["+record.topic()+"] error",e);
 								}
 							}

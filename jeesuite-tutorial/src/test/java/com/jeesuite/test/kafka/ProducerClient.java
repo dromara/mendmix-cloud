@@ -37,7 +37,7 @@ public class ProducerClient implements ApplicationContextAware{
 		
 		final AtomicInteger count = new AtomicInteger(0);
 		
-		final int nums = 10;
+		final int nums = 100;
 		timer.schedule(new TimerTask() {
 			
 			@Override
@@ -46,7 +46,7 @@ public class ProducerClient implements ApplicationContextAware{
 					timer.cancel();
 					return;
 				}
-				for (int i = 0; i < 1; i++) {
+				for (int i = 0; i < 10; i++) {
 					
 					pool.submit(new Runnable() {			
 						@Override

@@ -4,6 +4,7 @@
 package com.jeesuite.test.mybatis;
 
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.BeansException;
@@ -29,6 +30,11 @@ public class MybatisTest implements ApplicationContextAware{
 	@Override
 	public void setApplicationContext(ApplicationContext arg0) throws BeansException {	
 		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(arg0));
+	}
+	
+	@Test
+	public void test(){
+		
 	}
 	
 }

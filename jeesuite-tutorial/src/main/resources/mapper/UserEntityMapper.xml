@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.jeesuite.tutorial.mapper.UserEntityMapper" >
-  <resultMap id="BaseResultMap" type="com.jeesuite.tutorial.entity.UserEntity" >
-    <!--
-      WARNING - @mbggenerated
-    -->
-    <id column="id" property="id" jdbcType="INTEGER" />
-    <result column="name" property="name" jdbcType="VARCHAR" />
-    <result column="password" property="password" jdbcType="CHAR" />
-    <result column="mobile" property="mobile" jdbcType="VARCHAR" />
-    <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" />
-    <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" />
-  </resultMap>
+<mapper namespace="com.jeesuite.tutorial.mapper.UserEntityMapper">
+	<resultMap id="BaseResultMap" type="com.jeesuite.tutorial.entity.UserEntity">
+		<!-- WARNING - @mbggenerated -->
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="name" property="name" jdbcType="VARCHAR" />
+		<result column="password" property="password" jdbcType="CHAR" />
+		<result column="mobile" property="mobile" jdbcType="VARCHAR" />
+		<result column="created_at" property="createdAt" jdbcType="TIMESTAMP" />
+		<result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" />
+	</resultMap>
+
+	<update id="update2" parameterType="com.jeesuite.tutorial.entity.UserEntity">
+		update Author
+		<set>
+			<if test="username != null">username=#{username},</if>
+			<if test="password != null">password=#{password},</if>
+			<if test="email != null">email=#{email},</if>
+			<if test="bio != null">bio=#{bio}</if>
+		</set>
+		where id=#{id}
+	</update>
 </mapper>

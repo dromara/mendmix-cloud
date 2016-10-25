@@ -3,6 +3,7 @@
  */
 package com.jeesuite.kafka.consumer;
 
+import java.io.Closeable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ import kafka.utils.VerifiableProperties;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年7月1日
  */
-public class OldApiTopicConsumer implements TopicConsumer {
+public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 
 
 	private final static Logger logger = LoggerFactory.getLogger(OldApiTopicConsumer.class);
@@ -52,6 +53,8 @@ public class OldApiTopicConsumer implements TopicConsumer {
 	private ExecutorService poolRejectedExecutor = Executors.newSingleThreadExecutor();
 	
 	private AtomicBoolean runing = new AtomicBoolean(false);
+	
+	private ErrorMessageDefaultProcessor errorMessageProcessor = new ErrorMessageDefaultProcessor(1);
 
 	/**
 	 * 
@@ -66,7 +69,7 @@ public class OldApiTopicConsumer implements TopicConsumer {
 		int poolSize = topics.size();
 		this.fetchExecutor = new StandardThreadExecutor(poolSize, poolSize,0, TimeUnit.SECONDS, poolSize,new StandardThreadFactory("KafkaFetcher"));
 		
-		this.defaultProcessExecutor = new StandardThreadExecutor(1, maxProcessThreads,30, TimeUnit.SECONDS, maxProcessThreads,new StandardThreadFactory("KafkaProcessor"));
+		this.defaultProcessExecutor = new StandardThreadExecutor(1, maxProcessThreads,30, TimeUnit.SECONDS, maxProcessThreads,new StandardThreadFactory("KafkaProcessor"),new PoolFullRunsPolicy());
 		
 		logger.info("Kafka Conumer ThreadPool initialized,fetchPool Size:{},defalutProcessPool Size:{} ",poolSize,maxProcessThreads);
 	}
@@ -166,6 +169,10 @@ public class OldApiTopicConsumer implements TopicConsumer {
 							if(useTime > 1000)logger.debug("received_topic_useTime [{}]process topic:{} use time {} ms",processorName,topicName,useTime);
 						}
 					} catch (Exception e) {
+						boolean processed = messageHandler.onProcessError(message);
+						if(processed == false){
+							errorMessageProcessor.submit(message, messageHandler);
+						}
 						logger.error("received_topic_process_error ["+processorName+"]processMessage error,topic:"+topicName,e);
 					}
 				}
@@ -183,6 +190,7 @@ public class OldApiTopicConsumer implements TopicConsumer {
 		this.connector.commitOffsets();
 		this.connector.shutdown();
 		runing.set(false);
+		this.errorMessageProcessor.close();
 		logger.info("KafkaTopicSubscriber shutdown ok...");
 	}
 	
