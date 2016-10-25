@@ -18,12 +18,18 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
      * @param entity 要持久化的对象
      */
 	public void insert(T entity);
-
+	
+	public void insertSelective(T entity);
+	
 	/**
-	  * 根据map更新实体(此方法避免一些不必要字段的更新)
 	  * @param entity
 	*/
-	public void updateByPrimaryKey(T entity);
+	public void update(T entity);
+
+	/**
+	  * @param entity
+	*/
+	public void updateSelective(T entity);
 	
 
     /**
@@ -32,8 +38,8 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
      * @param id 指定的唯一标识符
      * @return 指定的唯一标识符对应的持久化对象，如果没有对应的持久化对象，则返回null。
      */
-	public T getByPrimaryKey(ID id);
+	public T getByKey(ID id);
 
-	void deleteByPrimaryKey(ID id);
+	void deleteByKey(ID id);
 }
 

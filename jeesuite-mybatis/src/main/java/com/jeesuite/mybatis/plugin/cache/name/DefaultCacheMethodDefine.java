@@ -14,17 +14,17 @@ public class DefaultCacheMethodDefine implements CacheMethodDefine {
 
 	@Override
 	public String selectName() {
-		return "selectByKey";
+		return "getByKey";
 	}
 
 	@Override
 	public String insertName() {
-		return "insert";
+		return "insert,insertSelective";
 	}
 
 	@Override
 	public String updateName() {
-		return "updateByKey";
+		return "update,updateSelective";
 	}
 
 	@Override
