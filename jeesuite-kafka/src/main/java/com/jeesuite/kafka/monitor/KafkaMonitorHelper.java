@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.kafka.monitor.model.TopicPartitionInfo;
 
 import kafka.api.PartitionOffsetRequestInfo;
 import kafka.cluster.BrokerEndPoint;
@@ -37,7 +38,7 @@ public class KafkaMonitorHelper {
 	
 	
 	public KafkaMonitorHelper() {
-		String servers = ResourceUtils.get("kafka.servers");	
+		String servers = ResourceUtils.get("kafka.servers","127.0.0.1:9092");	
 		kafkaServers.addAll(Arrays.asList(servers.split(",")));
 	}
 
@@ -59,7 +60,7 @@ public class KafkaMonitorHelper {
      * 获取指定主题及分区logsize
      * @param stat
      */
-    public void getTopicPartitionLogSize(TopicPartitionStat stat){
+    public void getTopicPartitionLogSize(TopicPartitionInfo stat){
     	BrokerEndPoint leader = findLeader(stat.getTopic(), stat.getPartition()).leader();
     	SimpleConsumer consumer = getConsumerClient(leader.host(), leader.port());	
     	

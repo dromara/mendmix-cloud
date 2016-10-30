@@ -22,7 +22,6 @@ import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
 import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
 import com.jeesuite.kafka.handler.MessageHandler;
-import com.jeesuite.kafka.monitor.KafkaMonitor;
 import com.jeesuite.kafka.serializer.MessageDeserializer;
 
 
@@ -90,8 +89,6 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		
 		//kafka 内部处理 consumerId ＝ groupId + "_" + consumerId
 		consumerId = groupId + "_" + consumerId;
-		//
-		KafkaMonitor.getContext().setConsumerInfo(consumerId,topics);
 		//
     	start();
     	

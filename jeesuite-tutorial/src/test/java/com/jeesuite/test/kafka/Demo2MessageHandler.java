@@ -32,6 +32,7 @@ public class Demo2MessageHandler implements MessageHandler {
 
 	@Override
 	public boolean onProcessError(DefaultMessage message) {
+		//如果业务自己处理消费错误的消息，再这里实现并return false;
 		return false;
 	}
 

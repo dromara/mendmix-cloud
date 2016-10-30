@@ -4,6 +4,9 @@
 package com.jeesuite.scheduler;
 
 import java.util.Date;
+import java.util.List;
+
+import com.jeesuite.scheduler.model.JobConfig;
 
 /**
  * 类    名：ControlHandler.java<br />
@@ -23,13 +26,15 @@ import java.util.Date;
  */
 public interface JobRegistry {
 
-	void register(JobConfg conf);
+	void register(JobConfig conf);
 	
 	void setRuning(String jobName,Date fireTime);
 	
 	void setStoping(String jobName,Date nextFireTime);
 	
-	JobConfg getConf(String jobName,boolean forceRemote);
+	JobConfig getConf(String jobName,boolean forceRemote);
 	
 	void unregister(String jobName);
+	
+	List<JobConfig> getAllJobs();
 }

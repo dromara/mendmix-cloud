@@ -66,9 +66,7 @@ public class ProducerClient implements ApplicationContextAware{
 				break;
 			}
 		}
-		
-		Map stats = KafkaMonitor.getContext().stats(null);
-        System.out.println(stats);
+
 		pool.shutdown();
 	}
 	

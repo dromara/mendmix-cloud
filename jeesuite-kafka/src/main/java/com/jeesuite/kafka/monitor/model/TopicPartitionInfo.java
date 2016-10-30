@@ -1,9 +1,11 @@
 /**
  * 
  */
-package com.jeesuite.kafka.monitor;
+package com.jeesuite.kafka.monitor.model;
 
 import java.util.Date;
+
+import com.jeesuite.common.util.DateUtils;
 
 /**
  * 
@@ -11,7 +13,7 @@ import java.util.Date;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月22日
  */
-public class TopicPartitionStat {
+public class TopicPartitionInfo {
 
 	private String topic;
 	private int partition;
@@ -19,17 +21,18 @@ public class TopicPartitionStat {
 	private long offset;
 	private Date createTime;
 	private Date lastTime;
+	private String owner;
 	
 	
 	
-	public TopicPartitionStat() {}
-	public TopicPartitionStat(String topic, int partition) {
+	public TopicPartitionInfo() {}
+	public TopicPartitionInfo(String topic, int partition) {
 		super();
 		this.topic = topic;
 		this.partition = partition;
 	}
 	
-	public TopicPartitionStat(String topic, int partition, long offset) {
+	public TopicPartitionInfo(String topic, int partition, long offset) {
 		super();
 		this.topic = topic;
 		this.partition = partition;
@@ -74,5 +77,29 @@ public class TopicPartitionStat {
 
 	public long getLat(){
 		return getLogSize() - getOffset();
+	}
+
+	
+
+	public String getOwner() {
+		return owner;
+	}
+	public void setOwner(String owner) {
+		this.owner = owner;
+	}
+	public String getFormatLastTime(){
+		long diffSeconds = DateUtils.getDiffSeconds(new Date(), getLastTime());
+		if(diffSeconds >= 86400){
+			return (diffSeconds/86400) + " 天前";
+		}
+		if(diffSeconds >= 3600){
+			return (diffSeconds/3600) + " 小时前";
+		}
+		if(diffSeconds >= 60){
+			return (diffSeconds/60) + " 分钟前";
+		}
+		
+		return diffSeconds + " 秒前";
+		
 	}
 }

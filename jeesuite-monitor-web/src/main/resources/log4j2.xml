@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="INFO" monitorInterval="1800">
+	<appenders>
+
+		<Console name="Console" target="SYSTEM_OUT" follow="true">
+			<PatternLayout
+				pattern="%date{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread][%file:%line] - %msg%n" />
+		</Console>
+
+	</appenders>
+
+	<loggers>
+		<logger name="com.jeesuite" level="debug"></logger>
+		<logger name="com.jfinal" level="debug"></logger>
+		<root level="info">
+			<appender-ref ref="Console" />
+		</root>
+	</loggers>
+
+</configuration>

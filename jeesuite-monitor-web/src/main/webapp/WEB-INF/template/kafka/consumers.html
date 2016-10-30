@@ -1,0 +1,44 @@
+<!-- group list -->
+<div class="collapse">
+    <#list consumerGroups as item>
+	<div class="panel ${(item_index==0)?string('active','')}">
+		<div class="panel-head">
+			<span>${item.groupName}</span>&nbsp;
+			<#if item.actived><span class="tag bg-green">actived[${item.clusterNodes?size}]</span><#else><span class="tag bg-red">inactived</span></#if>
+		</div>
+		<div class="panel-body">
+			<table class="table table-bordered">
+				<tr>
+					<th width="120">topicName</th>
+					<th width="80">partition</th>
+					<th width="80">logSize</th>
+					<th width="80">offset</th>
+					<th width="60">lat</th>
+					<th width="*">owner</th>
+					<th width="150">createTime</th>
+					<th width="100">lastTime</th>
+				</tr>
+			</table>
+			<#list item.topics as topic>
+			<#if topic.partitions??>
+			<table class="table table-bordered">
+			<#list topic.partitions as partition>
+				<tr>
+					<#if partition_index==0><td rowspan="6" width="120">${topic.topicName}</td></#if>
+					<td width="80">${partition.partition}</td>
+					<td width="80">${partition.logSize}</td>
+					<td width="80">${partition.offset}</td>
+					<td width="60">${partition.lat}</td>
+					<td width="*">${partition.owner!}</td>
+					<td width="150">${partition.createTime?string("yyyy/MM/dd HH:mm")}</td>
+					<td width="100">${partition.formatLastTime}</td>
+				</tr>
+				</#list>
+			</table>
+			</#if>
+			</#list>
+		</div>
+	</div>
+	</#list>
+</div>
+<!-- group list -->

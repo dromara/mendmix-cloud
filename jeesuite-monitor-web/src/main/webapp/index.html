@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="zh-cn">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<meta name="renderer" content="webkit">
+		<title>拼图后台管理-后台管理</title>
+		<link rel="stylesheet" href="./css/pintuer.css">
+		<link rel="stylesheet" href="./css/admin.css">
+		<script src="./js/jquery.js"></script>
+		<script src="./js/pintuer.js"></script>
+		<script src="./js/admin.js?v2"></script>
+	</head>
+
+	<body>
+		<div class="lefter">
+			<div class="logo">
+				<a href="http://www.pintuer.com" target="_blank"><img src="images/logo.png" alt="后台管理系统" /></a>
+			</div>
+		</div>
+		<div class="righter nav-navicon" id="admin-nav">
+			<div class="mainer">
+				<div class="admin-navbar">
+					<span class="float-right">
+                    <a class="button button-little bg-main" href="http://www.pintuer.com" target="_blank">前台首页</a>
+                    <a class="button button-little bg-yellow" href="login.html">注销登录</a>
+                </span>
+					<ul class="nav nav-inline admin-nav">
+						<li menu-key="kafka" class="active">
+							<a href="index.html" class="icon-home">kafka</a>
+							<ul menu-parent="kafka">
+								<li><a href="javascript:;" pagekey="./kafka/brokers">服务器</a></li>
+								<li><a href="javascript:;" pagekey="./kafka/producers">生产者</a></li>
+								<li><a href="javascript:;" pagekey="./kafka/consumers">消费者</a></li>
+							</ul>
+						</li>
+						<li menu-key="scheduler">
+						   <a href="#" class="icon-th-list">Scheduler</a>
+						   <ul menu-parent="scheduler">
+								<li><a href="javascript:;" pagekey="./scheduler/list">定时任务列表</a></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+				<div class="admin-bread">
+					<span>您好，admin，欢迎您的光临。</span>
+					<ul class="bread">
+						<li><a href="index.html" class="icon-home"> 开始</a></li>
+						<li>后台首页</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<div id="maincontents" name="maincontents" class="admin">
+			<div class="line-big">
+				<div class="xm9">
+					<div class="alert alert-yellow"><span class="close"></span><strong>注意：</strong>您有5条未读信息，<a href="#">点击查看</a>。</div>
+					<div class="alert">
+						<h4>拼图前端框架介绍</h4>
+						<p class="text-gray padding-top">拼图是优秀的响应式前端CSS框架，国内前端框架先驱及领导者，自动适应手机、平板、电脑等设备，让前端开发像游戏般快乐、简单、灵活、便捷。</p>
+						<a target="_blank" class="button bg-dot icon-code" href="pintuer2.zip"> 下载示例代码</a>
+						<a target="_blank" class="button bg-main icon-download" href="http://www.pintuer.com/download/pintuer.zip"> 下载拼图框架</a>
+						<a target="_blank" class="button border-main icon-file" href="http://www.pintuer.com/"> 拼图使用教程</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+
+</html>

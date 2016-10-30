@@ -1,8 +1,9 @@
 /**
  * 
  */
-package com.jeesuite.kafka.monitor;
+package com.jeesuite.kafka.monitor.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,15 +12,15 @@ import java.util.List;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月22日
  */
-public class ConsumerGroupStat {
+public class ConsumerGroupInfo {
 
 	private String groupName;
 	
 	private boolean actived;
 	
-	private int restartCount;
+	private List<TopicInfo> topics;
 	
-	private List<TopicStat> topicStats;
+	private List<String> clusterNodes;
 	
 	private boolean overLatThreshold;
 
@@ -39,22 +40,22 @@ public class ConsumerGroupStat {
 		this.actived = actived;
 	}
 
-	public int getRestartCount() {
-		return restartCount;
+	public List<TopicInfo> getTopics() {
+		return topics == null ? (topics = new ArrayList<>()) : topics;
 	}
 
-	public void setRestartCount(int restartCount) {
-		this.restartCount = restartCount;
+	public void setTopics(List<TopicInfo> topics) {
+		this.topics = topics;
 	}
 
-	public List<TopicStat> getTopicStats() {
-		return topicStats;
+	public List<String> getClusterNodes() {
+		return clusterNodes;
 	}
 
-	public void setTopicStats(List<TopicStat> topicStats) {
-		this.topicStats = topicStats;
+	public void setClusterNodes(List<String> clusterNodes) {
+		this.clusterNodes = clusterNodes;
 	}
-	
+
 	public boolean isOverLatThreshold() {
 		return overLatThreshold;
 	}
@@ -64,10 +65,10 @@ public class ConsumerGroupStat {
 	}
 
 	public void analysisLatThresholdStat(long latThreshold){
-		for (TopicStat topicStat : topicStats) {
-			if(topicStat.getPartitionStats() == null)continue;
+		for (TopicInfo topicStat : getTopics()) {
+			if(topicStat.getPartitions() == null)continue;
 			long totalLats = 0;
-			for (TopicPartitionStat partitionStat : topicStat.getPartitionStats()) {
+			for (TopicPartitionInfo partitionStat : topicStat.getPartitions()) {
 				totalLats += partitionStat.getLat();
 			}
 			boolean overLatThreshold = totalLats > latThreshold;

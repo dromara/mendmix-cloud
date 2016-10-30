@@ -26,7 +26,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.scheduler.JobRegistry;
-import com.jeesuite.scheduler.JobConfg;
+import com.jeesuite.scheduler.model.JobConfig;
 import com.jeesuite.scheduler.JobContext;
 
 /**
@@ -39,9 +39,9 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	
 	private static final Logger logger = LoggerFactory.getLogger(ZkJobRegistry.class);
 	
-	private Map<String, JobConfg> schedulerConfgs = new ConcurrentHashMap<>();
+	private Map<String, JobConfig> schedulerConfgs = new ConcurrentHashMap<>();
 
-	private static final String ROOT = "/dis_tasks/v2/";
+	public static final String ROOT = "/schedulers/";
 	
 	private String zkServers;
 	
@@ -65,7 +65,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	}
 
 	@Override
-	public synchronized void register(JobConfg conf) {
+	public synchronized void register(JobConfig conf) {
 		
 		long currentTimeMillis = Calendar.getInstance().getTimeInMillis();
 		conf.setModifyTime(currentTimeMillis);
@@ -93,7 +93,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		//是否要更新ZK的conf配置
 		boolean updateConfInZK = isFirstNode;
 		if(!updateConfInZK){
-			JobConfg configFromZK = getConfigFromZK(path,null);
+			JobConfig configFromZK = getConfigFromZK(path,null);
 			updateConfInZK = configFromZK == null 
 					|| !StringUtils.equals(configFromZK.getCronExpr(), conf.getCronExpr())// 执行时间修改了
 					|| currentTimeMillis - configFromZK.getModifyTime() > TimeUnit.MINUTES.toMillis(10); // 
@@ -124,7 +124,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			@Override
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				if(data == null)return;
-				schedulerConfgs.put(jobName, JsonUtils.toObject(data.toString(), JobConfg.class));
+				schedulerConfgs.put(jobName, JsonUtils.toObject(data.toString(), JobConfig.class));
 			}
 		});
         //订阅节点信息变化
@@ -133,8 +133,8 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			public void handleChildChange(String parentPath, List<String> currentChilds) throws Exception {
 				logger.info(">>nodes changed ,nodes:{}",currentChilds);
 				if(currentChilds == null || currentChilds.isEmpty())return;
-				Collection<JobConfg> configs = schedulerConfgs.values();
-				for (JobConfg config : configs) {
+				Collection<JobConfig> configs = schedulerConfgs.values();
+				for (JobConfig config : configs) {
 					if(!currentChilds.contains(config.getCurrentNodeId())){
 						logger.info("process Job[{}] node_failover from {} to {}",config.getJobName(),config.getCurrentNodeId(),currentChilds.get(0));
 						config.setCurrentNodeId(currentChilds.get(0));
@@ -152,14 +152,14 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
         logger.info("finish register schConfig:{}，\nactiveNodes:{}",ToStringBuilder.reflectionToString(conf, ToStringStyle.MULTI_LINE_STYLE),activeNodes);
 	}
 
-	private synchronized JobConfg getConfigFromZK(String path,Stat stat){
+	private synchronized JobConfig getConfigFromZK(String path,Stat stat){
 		Object data = stat == null ? zkClient.readData(path) : zkClient.readData(path,stat);
-		return data == null ? null : JsonUtils.toObject(data.toString(), JobConfg.class);
+		return data == null ? null : JsonUtils.toObject(data.toString(), JobConfig.class);
 	}
 
 	@Override
-	public synchronized JobConfg getConf(String jobName,boolean forceRemote) {
-		JobConfg config = schedulerConfgs.get(jobName);
+	public synchronized JobConfig getConf(String jobName,boolean forceRemote) {
+		JobConfig config = schedulerConfgs.get(jobName);
 		if(forceRemote){			
 			String path = getPath(config);
 			config = getConfigFromZK(path,null);
@@ -169,7 +169,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	
 	@Override
 	public synchronized void unregister(String jobName) {
-		JobConfg config = schedulerConfgs.get(jobName);
+		JobConfig config = schedulerConfgs.get(jobName);
 		
 		String path = getPath(config);
 		
@@ -179,7 +179,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		}
 	}
 	
-	private String getPath(JobConfg config){
+	private String getPath(JobConfig config){
 		return ROOT + config.getGroupName() + "/" + config.getJobName();
 	}
 
@@ -190,7 +190,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 
 	@Override
 	public void setRuning(String jobName, Date fireTime) {
-		JobConfg config = getConf(jobName,false);
+		JobConfig config = getConf(jobName,false);
 		config.setRunning(true);
 		config.setLastFireTime(fireTime);
 		config.setCurrentNodeId(JobContext.getContext().getNodeId());
@@ -200,11 +200,18 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 
 	@Override
 	public void setStoping(String jobName, Date nextFireTime) {
-		JobConfg config = getConf(jobName,false);
+		JobConfig config = getConf(jobName,false);
 		config.setRunning(false);
 		config.setNextFireTime(nextFireTime);
 		config.setModifyTime(Calendar.getInstance().getTimeInMillis());
 		zkClient.writeData(getPath(config), JsonUtils.toJson(config));
+	}
+
+
+	@Override
+	public List<JobConfig> getAllJobs() {
+		
+		return null;
 	}
 	
 	

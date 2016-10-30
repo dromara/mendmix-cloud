@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 
 import com.jeesuite.common.util.DateUtils;
+import com.jeesuite.scheduler.model.JobConfig;
 import com.jeesuite.spring.InstanceFactory;
 
 /**
@@ -85,6 +86,10 @@ public abstract class AbstractJob implements DisposableBean{
 		this.executeOnStarted = executeOnStarted;
 	}
 
+	public String getTriggerName() {
+		return triggerName;
+	}
+
 	protected Scheduler getScheduler() {
         if (scheduler == null)
             scheduler = InstanceFactory.getInstance(Scheduler.class);
@@ -141,7 +146,7 @@ public abstract class AbstractJob implements DisposableBean{
      */
     protected String checkExecutable() {
         try {
-            JobConfg schConf = jobRegistry.getConf(jobName,false);
+            JobConfig schConf = jobRegistry.getConf(jobName,true);
             if (!schConf.isActive()) {
                 if (logger.isDebugEnabled())
                     logger.debug("Job_{} 已禁用,终止执行", jobName);
@@ -194,7 +199,7 @@ public abstract class AbstractJob implements DisposableBean{
     protected boolean currentNodeIgnore() {
     	if(parallelEnabled())return false;
         try {
-            JobConfg schConf = jobRegistry.getConf(jobName,false);
+            JobConfig schConf = jobRegistry.getConf(jobName,true);
             if (!schConf.isActive()) {
                 if (logger.isDebugEnabled())
                     logger.debug("Job_{} 已禁用,终止执行", jobName);
@@ -230,7 +235,7 @@ public abstract class AbstractJob implements DisposableBean{
      * @param schConf
      * @return
      */
-    public boolean isAbnormalabort(JobConfg schConf){
+    public boolean isAbnormalabort(JobConfig schConf){
     	if(schConf.getLastFireTime() == null)return false;
     	//上次开始执行到当前执行时长
     	long runingTime = DateUtils.getDiffSeconds(schConf.getLastFireTime(), getTrigger().getPreviousFireTime());
@@ -290,7 +295,7 @@ public abstract class AbstractJob implements DisposableBean{
 		
 		triggerKey = new TriggerKey(triggerName, group);
 		
-		JobConfg schedulerConfg = new JobConfg(group,jobName,cronExpr);
+		JobConfig schedulerConfg = new JobConfig(group,jobName,cronExpr);
     	
         jobRegistry.register(schedulerConfg);
         

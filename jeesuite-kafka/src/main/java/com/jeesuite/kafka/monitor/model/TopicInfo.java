@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.kafka.monitor;
+package com.jeesuite.kafka.monitor.model;
 
 import java.util.List;
 
@@ -11,14 +11,14 @@ import java.util.List;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月22日
  */
-public class TopicStat {
+public class TopicInfo {
 
 	private String topicName;
 
-	private int partitions; // 分片数
+	private int partitionNums; // 分片数
 
 
-	List<TopicPartitionStat> partitionStats;
+	List<TopicPartitionInfo> partitions;
 	
 	private boolean overLatThreshold;
 	
@@ -34,20 +34,20 @@ public class TopicStat {
 		this.topicName = topicName;
 	}
 
-	public int getPartitions() {
+	public int getPartitionNums() {
+		return partitionNums;
+	}
+
+	public void setPartitionNums(int partitions) {
+		this.partitionNums = partitions;
+	}
+
+	public List<TopicPartitionInfo> getPartitions() {
 		return partitions;
 	}
 
-	public void setPartitions(int partitions) {
+	public void setPartitions(List<TopicPartitionInfo> partitions) {
 		this.partitions = partitions;
-	}
-
-	public List<TopicPartitionStat> getPartitionStats() {
-		return partitionStats;
-	}
-
-	public void setPartitionStats(List<TopicPartitionStat> partitionStats) {
-		this.partitionStats = partitionStats;
 	}
 
 	public boolean isOverLatThreshold() {
@@ -60,16 +60,16 @@ public class TopicStat {
 	
 	
 	public long getTotalLogSize() {
-		if(totalLogSize > 0 || partitionStats == null)return totalLogSize;
-		for (TopicPartitionStat tp : partitionStats) {
+		if(totalLogSize > 0 || partitions == null)return totalLogSize;
+		for (TopicPartitionInfo tp : partitions) {
 			totalLogSize+=tp.getLogSize();
 		}
 		return totalLogSize;
 	}
 
 	public long getTotalOffset() {
-		if(totalOffset > 0 || partitionStats == null)return totalOffset;
-		for (TopicPartitionStat tp : partitionStats) {
+		if(totalOffset > 0 || partitions == null)return totalOffset;
+		for (TopicPartitionInfo tp : partitions) {
 			totalOffset+=tp.getOffset();
 		}
 		return totalOffset;
