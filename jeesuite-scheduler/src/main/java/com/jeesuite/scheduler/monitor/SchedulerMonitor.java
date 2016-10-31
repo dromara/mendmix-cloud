@@ -22,6 +22,7 @@ import com.jeesuite.scheduler.registry.ZkJobRegistry;
  * @date 2016年10月30日
  */
 public class SchedulerMonitor implements Closeable{
+	
 
 	private ZkClient zkClient;
 

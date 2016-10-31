@@ -60,6 +60,11 @@ public class MonitorCommond implements Serializable {
 	public void setBody(Object body) {
 		this.body = body;
 	}
+
+	@Override
+	public String toString() {
+		return "MonitorCommond [cmdType=" + cmdType + ", jobGroup=" + jobGroup + ", jobName=" + jobName + "]";
+	}
 	
 	
 }

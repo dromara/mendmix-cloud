@@ -154,10 +154,10 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
         zkClient.subscribeDataChanges(path, new IZkDataListener() {
 			@Override
 			public void handleDataDeleted(String dataPath) throws Exception {}
-			
 			@Override
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				MonitorCommond cmd = (MonitorCommond) data;
+				logger.info("收到commond:+" + cmd.toString());
 				execCommond(cmd);
 			}
 		});

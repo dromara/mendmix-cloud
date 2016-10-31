@@ -14,23 +14,6 @@ $(function(){
 		});
 	});
 	
-	//
-	$('.J_sch_operator').on('click','#maincontents',function(){
-		var $this = $(this),
-		   group = $this.attr('data-group'),
-		   job = $this.attr('data-job'),
-		   event = $this.attr('data-event');
-		$.ajax({
-		     type: 'POST',
-		     url: './scheduler/operator/'+event ,
-		    data: {job:job,group:group} ,
-		    success: function(json){
-		    	alert(json.msg);
-		    }
-
-		});
-	});
-	
 });
 
 function registerEvent(){
@@ -47,4 +30,22 @@ function registerEvent(){
             e.closest(".panel").toggleClass("active")
         })
     });
+    
+    //
+	$('.J_sch_operator').on('click',function(){
+		alert(1);
+		var $this = $(this),
+		   group = $this.attr('data-group'),
+		   job = $this.attr('data-job'),
+		   event = $this.attr('data-event');
+		$.ajax({
+		     type: 'POST',
+		     url: './scheduler/operator/'+event ,
+		    data: {job:job,group:group} ,
+		    success: function(json){
+		    	alert(json.msg);
+		    }
+
+		});
+	});
 }
