@@ -32,10 +32,10 @@
             <map>
               <!-- 指定消息监听器 -->
               <entry key="demo-topic">
-                 <bean class="com.jeesuite.test.kafka.DemoMessageHandler" />
+                 <bean class="com.jeesuite.test.DemoMessageHandler" />
               </entry>
               <entry key="demo2-topic">
-                 <bean class="com.jeesuite.test.kafka.Demo2MessageHandler" />
+                 <bean class="com.jeesuite.test.Demo2MessageHandler" />
               </entry>
             </map>
         </property>

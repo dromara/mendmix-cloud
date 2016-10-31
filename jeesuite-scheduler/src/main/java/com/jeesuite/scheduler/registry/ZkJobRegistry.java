@@ -3,6 +3,7 @@
  */
 package com.jeesuite.scheduler.registry;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -25,9 +26,11 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.scheduler.AbstractJob;
+import com.jeesuite.scheduler.JobContext;
 import com.jeesuite.scheduler.JobRegistry;
 import com.jeesuite.scheduler.model.JobConfig;
-import com.jeesuite.scheduler.JobContext;
+import com.jeesuite.scheduler.monitor.MonitorCommond;
 
 /**
  * 
@@ -146,6 +149,20 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			}
 		});
         
+        //注册手动执行事件监听(来自于监控平台的)
+        path = nodeStateParentPath + "/" + JobContext.getContext().getNodeId();
+        zkClient.subscribeDataChanges(path, new IZkDataListener() {
+			@Override
+			public void handleDataDeleted(String dataPath) throws Exception {}
+			
+			@Override
+			public void handleDataChange(String dataPath, Object data) throws Exception {
+				MonitorCommond cmd = (MonitorCommond) data;
+				execCommond(cmd);
+			}
+		});
+        
+        
         //刷新节点列表
         List<String> activeNodes = zkClient.getChildren(nodeStateParentPath);
 		JobContext.getContext().refreshNodes(activeNodes);
@@ -210,9 +227,32 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 
 	@Override
 	public List<JobConfig> getAllJobs() {
-		
-		return null;
+		return new ArrayList<>(schedulerConfgs.values());
 	}
 	
-	
+	private void execCommond(MonitorCommond cmd){
+		if(cmd == null)return;
+		switch (cmd.getCmdType()) {
+		case MonitorCommond.TYPE_EXEC:
+			String key = cmd.getJobGroup() + ":" + cmd.getJobName();
+			final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(key);
+			if(abstractJob != null){
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							abstractJob.doJob(JobContext.getContext());
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				}).start();
+			}
+			break;
+		case MonitorCommond.TYPE_STATUS_MOD:
+			//TODO 
+		default:
+			break;
+		}
+	}
 }

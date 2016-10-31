@@ -24,7 +24,7 @@
 					<td><#if job.lastFireTime??>${job.lastFireTime?string("yy/MM/dd HH:mm:ss")}</#if></td>
 					<td><#if job.nextFireTime??>${job.nextFireTime?string("yy/MM/dd HH:mm:ss")}</#if></td>
 					<td>
-					    <a class="button border-blue button-little" href="#">执行</a>&nbsp;
+					    <a class="button border-blue button-little J_sch_operator" data-event="exec" data-group="${job.groupName}" data-job="${job.jobName}" href="#">执行</a>&nbsp;
 						<a class="button border-yellow button-little" href="#">禁用</a>
 					</td>
 				</tr>

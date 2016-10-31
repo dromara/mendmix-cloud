@@ -70,6 +70,16 @@ public class SchedulerMonitor implements Closeable{
 		return result;
 	}
 	
+	public void publishEvent(MonitorCommond cmd){
+		String path = ZkJobRegistry.ROOT + cmd.getJobGroup() + "/nodes";
+		List<String> nodeIds = zkClient.getChildren(path);
+		for (String node : nodeIds) {
+			String nodePath = path + "/" + node;
+			zkClient.writeData(nodePath, cmd);
+		}
+		
+	}
+	
 	public static void main(String[] args) throws IOException {
 		SchedulerMonitor monitor = new SchedulerMonitor("zookeeper", "127.0.0.1:2181");
 		

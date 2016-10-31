@@ -14,6 +14,23 @@ $(function(){
 		});
 	});
 	
+	//
+	$('.J_sch_operator').on('click','#maincontents',function(){
+		var $this = $(this),
+		   group = $this.attr('data-group'),
+		   job = $this.attr('data-job'),
+		   event = $this.attr('data-event');
+		$.ajax({
+		     type: 'POST',
+		     url: './scheduler/operator/'+event ,
+		    data: {job:job,group:group} ,
+		    success: function(json){
+		    	alert(json.msg);
+		    }
+
+		});
+	});
+	
 });
 
 function registerEvent(){

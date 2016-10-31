@@ -5,8 +5,10 @@ package com.jeesuite.scheduler;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,6 +30,8 @@ public class JobContext {
 	private Set<String> activeNodes = new HashSet<String>();
 	
 	private ConsistencyHash hash = new ConsistencyHash();
+	
+	private Map<String, AbstractJob> allJobs = new HashMap<>();
 	
 
 	private JobContext() {
@@ -69,4 +73,14 @@ public class JobContext {
 		String expectNodeId = hash.getAssignedRealNode(shardFactor);
 		return expectNodeId.equals(nodeId);
 	}
+	
+	public void addJob(AbstractJob job){
+		String key = job.group + ":" + job.jobName;
+		allJobs.put(key, job);
+	}
+
+	public Map<String, AbstractJob> getAllJobs() {
+		return allJobs;
+	}
+
 }

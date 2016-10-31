@@ -3,10 +3,13 @@
  */
 package com.jeesuite.monitor.web.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.scheduler.model.JobGroupInfo;
+import com.jeesuite.scheduler.monitor.MonitorCommond;
 import com.jeesuite.scheduler.monitor.SchedulerMonitor;
 import com.jfinal.core.Controller;
 
@@ -23,5 +26,35 @@ public class SchedulerController extends Controller {
 		List<JobGroupInfo> groups = monitor.getAllJobGroups();
 		setAttr("jobGroups", groups);
 		render("list.html");
+	}
+	
+	public void operator(){
+		String event = getPara(0);
+		String group = getPara("group");
+		String job = getPara("job");
+		
+		MonitorCommond cmd = null;
+		if("exec".equals(event)){
+			cmd = new MonitorCommond(MonitorCommond.TYPE_EXEC, group, job, null);
+		}else if("updatestate".equals(event)){
+			cmd = new MonitorCommond(MonitorCommond.TYPE_STATUS_MOD, group, job, null);
+		}
+		
+		Map<String, Object> map = new HashMap<>();
+		if(cmd != null){
+			try {				
+				monitor.publishEvent(cmd);
+				map.put("status", 1);
+				map.put("msg", "发送执行事件成功");
+			} catch (Exception e) {
+				map.put("status", 0);
+				map.put("msg", "publish Event发生错误");
+			}
+		}else{
+			map.put("status", 0);
+			map.put("msg", "未知事件");
+		}
+		renderJson(map);
+		
 	}
 }

@@ -73,6 +73,9 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		acf.registerBeanDefinition(beanName, beanDefBuilder.getRawBeanDefinition());
 		
 		for (final AbstractJob sch : schedulers) {
+			//
+			JobContext.getContext().addJob(sch);
+			//
 			if(sch.isExecuteOnStarted()){
 				new Thread(new Runnable() {
 					@Override
