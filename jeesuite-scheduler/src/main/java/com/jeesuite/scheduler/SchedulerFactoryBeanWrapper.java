@@ -20,6 +20,8 @@ import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
+import com.jeesuite.spring.InstanceFactory;
+
 /**
  * 
  * @description <br>
@@ -66,6 +68,16 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			sch.init();
 			triggers.add(registerSchedulerTriggerBean(acf,sch));
 		}
+		//
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				InstanceFactory.waitUtilInitialized();
+				for (AbstractJob sch : schedulers) {
+					sch.afterInitialized();
+				}
+			}
+		}).start();
 		
 		String beanName = "schedulerFactory";
 		BeanDefinitionBuilder beanDefBuilder = BeanDefinitionBuilder.genericBeanDefinition(SchedulerFactoryBean.class);

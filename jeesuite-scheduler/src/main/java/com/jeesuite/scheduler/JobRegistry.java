@@ -28,6 +28,8 @@ public interface JobRegistry {
 
 	void register(JobConfig conf);
 	
+	void updateJobConfig(JobConfig conf);
+	
 	void setRuning(String jobName,Date fireTime);
 	
 	void setStoping(String jobName,Date nextFireTime);

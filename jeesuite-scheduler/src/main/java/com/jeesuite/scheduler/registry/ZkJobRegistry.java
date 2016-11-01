@@ -255,4 +255,10 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			break;
 		}
 	}
+
+	@Override
+	public void updateJobConfig(JobConfig config) {
+		config.setModifyTime(Calendar.getInstance().getTimeInMillis());
+		zkClient.writeData(getPath(config), JsonUtils.toJson(config));
+	}
 }

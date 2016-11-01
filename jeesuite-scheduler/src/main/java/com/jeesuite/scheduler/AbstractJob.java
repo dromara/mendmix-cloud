@@ -7,11 +7,14 @@ import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.quartz.CronScheduleBuilder;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.impl.triggers.CronTriggerImpl;
+import org.quartz.spi.MutableTrigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -295,12 +298,20 @@ public abstract class AbstractJob implements DisposableBean{
 		
 		triggerKey = new TriggerKey(triggerName, group);
 		
-		JobConfig schedulerConfg = new JobConfig(group,jobName,cronExpr);
+		JobConfig jobConfg = new JobConfig(group,jobName,cronExpr);
     	
-        jobRegistry.register(schedulerConfg);
+        jobRegistry.register(jobConfg);
         
         logger.info("Initialized Job_{} OK!!", jobName);
     }
+	
+	public void afterInitialized()  {
+		if(executeOnStarted)return;
+		JobConfig conf = jobRegistry.getConf(jobName,false);
+		conf.setNextFireTime(getNextFireTime());
+		jobRegistry.updateJobConfig(conf);
+		
+	}
 
 
 	/**
