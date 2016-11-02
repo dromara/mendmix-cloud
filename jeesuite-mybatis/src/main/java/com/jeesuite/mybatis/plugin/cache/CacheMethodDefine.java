@@ -18,4 +18,6 @@ public interface CacheMethodDefine {
 	String updateName();
 	
 	String deleteName();
+	
+	String selectAllName();
 }

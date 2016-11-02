@@ -35,5 +35,10 @@ public class MybatisPlusCacheMethodDefine implements CacheMethodDefine {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override
+	public String selectAllName() {
+		return "selectAll";
+	}
 
 }

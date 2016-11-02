@@ -26,4 +26,12 @@ public @interface Cache {
 	 * @return
 	 */
 	long expire() default 60 * 60 * 24;
+	
+	/**
+	 * 结果是否唯一记录
+	 * @return
+	 */
+	boolean uniqueResult() default true;
+	
+	String keyPattern() default "";
 }

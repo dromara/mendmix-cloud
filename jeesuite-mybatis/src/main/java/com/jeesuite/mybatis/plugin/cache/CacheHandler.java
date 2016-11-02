@@ -30,6 +30,7 @@ import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
 import com.jeesuite.mybatis.plugin.cache.name.Mapper3CacheMethodDefine;
 import com.jeesuite.mybatis.plugin.cache.name.MybatisPlusCacheMethodDefine;
+import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
 
 
 /**
@@ -61,7 +62,7 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 	private CacheMethodDefine methodDefine;
 	
 	//CRUD框架驱动 default，mapper3，mybatis-plus
-	private String crudDriver = "default";
+	private String crudDriver = "mapper3";
 	
 	public void setCacheProvider(CacheProvider cacheProvider) {
 		this.cacheProvider = cacheProvider;
@@ -119,20 +120,22 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 		QueryMethodCache cacheInfo = null;
 		if(mt.getSqlCommandType().equals(SqlCommandType.SELECT)){	
 			if(result == null)return;  
+			if((cacheInfo = getQueryMethodCache(mt.getId())) == null)return;
+			
 			if(result instanceof List){
 				List list = (List)result;
-				if(list.isEmpty() || list.size() > 1)return;
-				result = list.get(0);
+				if(list.isEmpty())return;
+				result = cacheInfo.uniqueResult ? list.get(0) : result;
 			}
-	
-			cacheInfo = getQueryMethodCache(mt.getId());
-			if(cacheInfo == null)return;
-			
 			final String cacheKey = genarateQueryCacheKey(cacheInfo.keyPattern, args[1]);
 			//按主键查询以及标记非引用关系的缓存直接读取缓存
 			if(cacheInfo.isPk || !cacheInfo.uniqueResult){
 				if(cacheProvider.set(cacheKey,result, cacheInfo.expire)){
 					if(logger.isDebugEnabled())logger.debug("method[{}] put result to cache，cacheKey:{}",mt.getId(),cacheKey);
+				}
+				//结果为集合的情况，增加key到cacheGroup
+				if(!cacheInfo.uniqueResult){
+					cacheProvider.putGroupKeys(cacheInfo.cacheGroupKey, cacheKey,cacheInfo.expire);
 				}
 			}else{
 				//之前没有按主键的缓存，增加按主键缓存
@@ -165,11 +168,12 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 							if(insertCommond)cacheUniqueSelectRef(args[1], mt, cacheByPkKey);
 						}
 					}
-				}
-				
-			}else{
-				//TODO 非按主键的
+				}				
+				//TODO 删除同一cachegroup关联缓存
+				cacheProvider.clearGroupKeys(updateMethodCache.cacheGroupKey);
 			}
+			
+			
 		}
 	}
 
@@ -221,7 +225,7 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 		}else if(param instanceof Object[]){
 			return String.format(keyPattern, (Object[])param);
 		}else{
-			return String.format(keyPattern, param.toString());
+			return param == null ? keyPattern : String.format(keyPattern, param.toString());
 		}
 	}
 	
@@ -258,6 +262,8 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 			methodDefine = new DefaultCacheMethodDefine();
 		}
 		
+		if(cacheProvider == null)cacheProvider = new DefaultCacheProvider();
+		
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		
 		QueryMethodCache methodCache = null;
@@ -281,11 +287,12 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 			Method[] methods = mapperClass.getDeclaredMethods();
 			for (Method method : methods) {
 				if(method.isAnnotationPresent(Cache.class)){
-					annotationCache = annotationCache != null ? annotationCache : method.getAnnotation(Cache.class);
+					annotationCache = method.getAnnotation(Cache.class);
 					String fullMethodName = mapperClass.getName() + SPLIT_PONIT + method.getName();
 					if(tmpMap.containsKey(fullMethodName))continue;
 					methodCache = generateQueryMethodCacheByMethod(mapperClass, ei.getEntityClass(), method);
 					methodCache.expire = annotationCache.expire();
+					methodCache.uniqueResult = annotationCache.uniqueResult();
 					tmpMap.put(fullMethodName, methodCache);
 					logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",methodCache.methodName,methodCache.keyPattern);
 				}
@@ -294,6 +301,14 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 			//无任何需要自动缓存的方法
 			if(entityWithAnnotation == false && tmpMap.isEmpty()){
 				continue;
+			}
+			//selectAll
+			QueryMethodCache selectAllMethod = generateSelectAllMethod(mapperClass, ei.getEntityClass());
+			tmpMap.put(selectAllMethod.methodName, selectAllMethod);
+			//
+			if(entityWithAnnotation){
+				queryByPKMethod.expire = ei.getEntityClass().getAnnotation(Cache.class).expire();
+				selectAllMethod.expire = ei.getEntityClass().getAnnotation(Cache.class).expire();
 			}
 			
 			//缓存需要自动缓存的实体类名
@@ -304,25 +319,8 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 			
 			queryCacheMethods.put(mapperClass.getName(), tmpMap);
 			
-			String methodName = null;
-			//按主键插入
-			String[] insertNames = methodDefine.insertName().split(",");
-			for (String name : insertNames) {				
-				methodName = mapperClass.getName() + "." + name;
-				updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.INSERT));
-			}
-			
-			//按主键更新
-			String[] updateNames = methodDefine.updateName().split(",");
-			for (String name : updateNames) {				
-				methodName = mapperClass.getName() + "." + name;
-				updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.UPDATE));
-			}
-			
-			//按主键删除
-			methodName = mapperClass.getName() + "." + methodDefine.deleteName();
-			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(methodName, keyPatternForPK, SqlCommandType.DELETE));
-
+			//更新缓存方法
+			generateUpdateCacheMethod(mapperClass, ei.getEntityClass(), keyPatternForPK);
 		}
 		
 	}
@@ -344,10 +342,42 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 				methodCache.uniqueResult = true;
 				methodCache.keyPattern = entityClass.getSimpleName() + ".id:%s";
 				methodCache.methodName = mapperClass.getName() + "." + methodDefine.selectName();
+				methodCache.cacheGroupKey = entityClass.getSimpleName() + "~keys";
 			}
 		}
-		
 		return methodCache;
+	}
+	
+	private QueryMethodCache generateSelectAllMethod(Class<?> mapperClass,Class<?> entityClass){
+		QueryMethodCache methodCache = new QueryMethodCache();
+		methodCache.cacheGroupKey = entityClass.getSimpleName() + "~keys";
+		methodCache.methodName = mapperClass.getName() + "." + methodDefine.selectAllName();
+		methodCache.keyPattern = entityClass.getSimpleName() + ".all";
+		methodCache.isPk = false;
+		methodCache.uniqueResult = false;
+		return methodCache;
+	}
+	
+	private void generateUpdateCacheMethod(Class<?> mapperClass,Class<?> entityClass,String keyPatternForPK){
+		String methodName = null;
+		//按主键插入
+		String[] insertNames = methodDefine.insertName().split(",");
+		for (String name : insertNames) {				
+			methodName = mapperClass.getName() + "." + name;
+			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.INSERT));
+		}
+		
+		//按主键更新
+		String[] updateNames = methodDefine.updateName().split(",");
+		for (String name : updateNames) {				
+			methodName = mapperClass.getName() + "." + name;
+			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.UPDATE));
+		}
+		
+		//按主键删除
+		methodName = mapperClass.getName() + "." + methodDefine.deleteName();
+		updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.DELETE));
+
 	}
 	
 	/**
@@ -359,10 +389,10 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 	private QueryMethodCache generateQueryMethodCacheByMethod(Class<?> mapperClass,Class<?> entityClass,Method method){
 
 		QueryMethodCache methodCache = new QueryMethodCache();
-		methodCache.uniqueResult = true;
 		String methodName = mapperClass.getName() + SPLIT_PONIT + method.getName();
 		methodCache.methodName = methodName;
 		methodCache.fieldNames = new String[method.getParameterTypes().length];
+		methodCache.cacheGroupKey = entityClass.getSimpleName() + "~keys";
 		
 		StringBuilder sb = new StringBuilder(entityClass.getSimpleName());
 		
@@ -400,23 +430,26 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 	 * 查询缓存方法
 	 */
 	private class QueryMethodCache{
+		public String cacheGroupKey;//缓存组key
 		public String methodName;
 		public String keyPattern;
-		public long expire;//过期时间（秒）
+		public long expire = CacheExpires.IN_1WEEK;//过期时间（秒）
 		public boolean isPk = false;//主键查询
 		public boolean uniqueResult = false;//查询结果是否唯一记录
 		public String[] fieldNames;//作为查询条件的字段名称
+		public QueryMethodCache() {}
 	}
 	
 	/**
 	 * 按主键更新（add,update,delete）的方法
 	 */
 	private class UpdateByPkMethodCache{
+		public String cacheGroupKey;//缓存组key
 		public String keyPattern;
 		public SqlCommandType sqlCommandType;
 		
-		public UpdateByPkMethodCache(String methodName, String keyPattern, SqlCommandType sqlCommandType) {
-			super();
+		public UpdateByPkMethodCache(Class<?> entityClass,String methodName, String keyPattern, SqlCommandType sqlCommandType) {
+			this.cacheGroupKey = entityClass.getSimpleName() + "~keys";
 			this.keyPattern = keyPattern;
 			this.sqlCommandType = sqlCommandType;
 		}

@@ -33,4 +33,9 @@ public class Mapper3CacheMethodDefine implements CacheMethodDefine {
 		return "deleteByPrimaryKey";
 	}
 
+	@Override
+	public String selectAllName() {
+		return "selectAll";
+	}
+
 }

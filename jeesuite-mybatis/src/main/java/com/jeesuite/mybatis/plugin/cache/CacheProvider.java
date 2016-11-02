@@ -16,4 +16,8 @@ public interface CacheProvider {
 	boolean set(String key,Object value,long expired);
 	
 	boolean remove(String key);
+	
+	void putGroupKeys(String groupKey,String subKey,long expireSeconds);
+	
+	void clearGroupKeys(String groupKey);
 }

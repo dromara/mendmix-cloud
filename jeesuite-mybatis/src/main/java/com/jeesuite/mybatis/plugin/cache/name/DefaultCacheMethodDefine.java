@@ -31,5 +31,10 @@ public class DefaultCacheMethodDefine implements CacheMethodDefine {
 	public String deleteName() {
 		return "deleteByKey";
 	}
+	
+	@Override
+	public String selectAllName() {
+		return "selectAll";
+	}
 
 }
