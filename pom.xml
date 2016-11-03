@@ -30,6 +30,7 @@
 		<module>jeesuite-monitor-web</module>
 		<module>jeesuite-mybatis</module>
 		<module>jeesuite-rest</module>
+		<module>jeesuite-confcenter</module>
 	</modules>
 
 	<dependencies>

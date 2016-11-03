@@ -1,6 +1,7 @@
 package com.jeesuite.kafka.message;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,12 +26,24 @@ public class DefaultMessage implements Serializable {
 	
 	private int priority = 1;//优先级 1-9  数字越大优先级 越高
 	
+	private boolean consumerAck = false;//是否需要消费回执
+	
 
 	public DefaultMessage(Serializable body) {
 		super();
 		this.body = body;
 	}
 	
+	/**
+	 * @param body 消息体
+	 * @param consumerAck 是否需要消费回执
+	 */
+	public DefaultMessage(Serializable body, boolean consumerAck) {
+		super();
+		this.body = body;
+		this.consumerAck = consumerAck;
+	}
+
 	public DefaultMessage(Serializable body, int priority) {
 		this(body, null, 1);
 	}
@@ -73,8 +86,10 @@ public class DefaultMessage implements Serializable {
 		return headers;
 	}
 
-	public void setHeaders(Map<String, Object> headers) {
-		this.headers = headers;
+	public DefaultMessage header(String key,Object value) {
+		if(this.headers == null)this.headers = new HashMap<>();
+		this.headers.put(key, value);
+		return this;
 	}
 	
 	public void setMsgId(String msgId) {
@@ -89,7 +104,20 @@ public class DefaultMessage implements Serializable {
 	public void setPriority(int priority) {
 		this.priority = priority;
 	}
+	
+	public DefaultMessage priority(int priority) {
+		this.priority = priority;
+		return this;
+	}
 
+	public boolean isConsumerAck() {
+		return consumerAck;
+	}
+	
+	public DefaultMessage consumerAck(boolean consumerAck) {
+		this.consumerAck = consumerAck;
+		return this;
+	}
 
 	public long getPartitionHash() {
 		if(partitionHash <= 0 && partitionFactor != null){

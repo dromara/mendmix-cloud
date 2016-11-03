@@ -27,7 +27,6 @@ public class Demo2MessageHandler implements MessageHandler {
 		Serializable body = message.getBody();
 		System.out.println("Demo2MessageHandler process message:" + body);
 		try {Thread.sleep(500);} catch (Exception e) {}
-		new Integer("f");
 	}
 
 

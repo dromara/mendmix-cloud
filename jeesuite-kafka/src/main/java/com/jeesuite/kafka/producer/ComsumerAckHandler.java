@@ -11,4 +11,5 @@ package com.jeesuite.kafka.producer;
  */
 public interface ComsumerAckHandler {
 
+	int ack(String msgId);
 }
