@@ -10,12 +10,12 @@
 		
     <bean  id="topicProducerProvider" class="com.jeesuite.kafka.spring.TopicProducerSpringProvider">
         <property name="defaultAsynSend" value="true" />
+        <property name="producerGroup" value="demo" />
         <property name="configs">
             <props>
                 <prop key="bootstrap.servers" >${kafka.servers}</prop>
                 <prop key="acks">1</prop>
                 <prop key="retries">1</prop>
-                <prop key="client.id">tutorial-producer</prop>
             </props>
         </property>
     </bean>

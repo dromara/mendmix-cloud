@@ -18,6 +18,7 @@ import com.jeesuite.kafka.partiton.DefaultPartitioner;
 import com.jeesuite.kafka.producer.DefaultTopicProducer;
 import com.jeesuite.kafka.producer.TopicProducer;
 import com.jeesuite.kafka.serializer.MessageSerializer;
+import com.jeesuite.kafka.utils.NodeNameHolder;
 
 /**
  * 消息发布者集成spring封装对象
@@ -38,6 +39,8 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
     
     //默认是否异步发送
     private boolean defaultAsynSend = true;
+    
+    private String producerGroup;
     
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -72,8 +75,12 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
         }
         
         if(!configs.containsKey(ProducerConfig.COMPRESSION_TYPE_CONFIG)){
-        	configs.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "gzip"); 
+        	configs.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy"); 
         }
+        
+        if(!configs.containsKey("client.id")){
+			configs.put("client.id", (producerGroup == null ? "" : "_"+producerGroup) + NodeNameHolder.getNodeId());
+		}
 
         KafkaProducer<String, Object> kafkaProducer = new KafkaProducer<String, Object>(configs);
 
@@ -96,6 +103,10 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 
 	public void setDefaultAsynSend(boolean defaultAsynSend) {
 		this.defaultAsynSend = defaultAsynSend;
+	}
+
+	public void setProducerGroup(String producerGroup) {
+		this.producerGroup = producerGroup;
 	}
 
 	/**

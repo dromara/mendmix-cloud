@@ -25,7 +25,6 @@
                 <prop key="auto.offset.reset">smallest</prop>
                 <!-- 131072 = 128kb -->
                 <prop key="max.partition.fetch.bytes">131072</prop>
-                <prop key="client.id">tutorial-consumer</prop>
             </props>
         </property>
         <property name="topicHandlers" >

@@ -26,6 +26,9 @@ import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
 public class ErrorMessageDefaultProcessor implements Closeable{
 	
 	private static final Logger logger = LoggerFactory.getLogger(ErrorMessageDefaultProcessor.class);
+	
+	//重试时间间隔单元（毫秒）
+	private static final long RETRY_PERIOD_UNIT = 15 * 1000;
 
 	private final PriorityBlockingQueue<PriorityTask> taskQueue = new PriorityBlockingQueue<PriorityTask>(1000);  
 	
@@ -42,16 +45,20 @@ public class ErrorMessageDefaultProcessor implements Closeable{
 		executor.submit(new Runnable() {
 			@Override
 			public void run() {
-				long currentTimeMillis = System.currentTimeMillis();
 				while(!closed.get()){
 					try {
 						PriorityTask task = taskQueue.take();
-						if(task.nextFireTime < currentTimeMillis){
-							TimeUnit.MILLISECONDS.sleep(100);
+						//空任务跳出循环
+						if(task.getMessage() == null)break;
+						if(task.nextFireTime - System.currentTimeMillis() > 0){
+							TimeUnit.MILLISECONDS.sleep(1000);
+							taskQueue.put(task);
 							continue;
 						}
 						task.run();
-					} catch (Exception e) {}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		});
@@ -67,8 +74,10 @@ public class ErrorMessageDefaultProcessor implements Closeable{
 	
 	public void close(){
 		closed.set(true);
-		//taskQueue 会一直阻塞，所以立即停止
-		executor.shutdownNow();
+		//taskQueue里面没有任务会一直阻塞，所以先add一个新任务保证执行
+		taskQueue.add(new PriorityTask(null, null));
+		try {Thread.sleep(1000);} catch (Exception e) {}
+		executor.shutdown();
 		logger.info("ErrorMessageDefaultProcessor closed");
 	}
 	
@@ -81,7 +90,7 @@ public class ErrorMessageDefaultProcessor implements Closeable{
 	    long nextFireTime;
 		
 	    public PriorityTask(DefaultMessage message, MessageHandler messageHandler) {
-	    	this(message, messageHandler, System.currentTimeMillis());
+	    	this(message, messageHandler, System.currentTimeMillis() + RETRY_PERIOD_UNIT);
 	    }
 	    
 		public PriorityTask(DefaultMessage message, MessageHandler messageHandler,long nextFireTime) {
@@ -91,24 +100,31 @@ public class ErrorMessageDefaultProcessor implements Closeable{
 			this.nextFireTime = nextFireTime;
 		}
 
+		public DefaultMessage getMessage() {
+			return message;
+		}
+
 		@Override
 		public void run() {
 			try {	
-				logger.debug("begin re process message:"+this.toString());
+				logger.debug("begin re-process message:"+message.getMsgId());
 				messageHandler.p2Process(message);
 			} catch (Exception e) {
-				logger.warn("retry mssageId[{}] error",message.getMsgId(),e);
+				retryCount++;
+				logger.warn("retry[{}] mssageId[{}] error",retryCount,message.getMsgId());
 				retry();
 			}
 		}
 		
 		private void retry(){
-			if(retryCount == 3)return;
-			nextFireTime = nextFireTime + retryCount * 30 * 1000;
+			if(retryCount == 3){
+				logger.warn("retry_skip mssageId[{}] retry over {} time error ,skip!!!");
+				return;
+			}
+			nextFireTime = nextFireTime + retryCount * RETRY_PERIOD_UNIT;
 			//重新放入任务队列
 			taskQueue.add(this);
-			logger.debug("re submit mssageId[{}] task to queue,next fireTime:",this.message.getMsgId(),nextFireTime);
-			retryCount++;
+			logger.debug("re-submit mssageId[{}] task to queue,next fireTime:{}",this.message.getMsgId(),nextFireTime);
 		}
 
 		@Override

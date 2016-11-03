@@ -1,16 +1,11 @@
 package com.jeesuite.kafka.spring;
 
-import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
@@ -23,6 +18,7 @@ import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.serializer.MessageDeserializer;
+import com.jeesuite.kafka.utils.NodeNameHolder;
 
 
 /**
@@ -62,7 +58,6 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
     public void afterPropertiesSet() throws Exception {
 		
 		Validate.isTrue(topicHandlers != null && topicHandlers.size() > 0, "at latest one topic");
-		List<String> topics = new ArrayList<>(topicHandlers.keySet());
 		//当前状态
 		if(status.get() > 0)return;
 		
@@ -79,16 +74,16 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		
 		logger.info("\n===============KAFKA Consumer group[{}] begin start=================\n",groupId);
 		
-		try {
-			consumerId = InetAddress.getLocalHost().getHostName() + "_" + RandomStringUtils.random(6, true, true).toLowerCase();
-		} catch (Exception e) {
-			consumerId = UUID.randomUUID().toString();
-		}
+		consumerId = NodeNameHolder.getNodeId();
 		//
 		configs.put("consumer.id", consumerId);
 		
 		//kafka 内部处理 consumerId ＝ groupId + "_" + consumerId
 		consumerId = groupId + "_" + consumerId;
+		//
+		if(!configs.containsKey("client.id")){
+			configs.put("client.id", consumerId);
+		}
 		//
     	start();
     	

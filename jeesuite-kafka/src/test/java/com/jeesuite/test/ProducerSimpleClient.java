@@ -22,8 +22,8 @@ public class ProducerSimpleClient implements ApplicationContextAware{
 	@Test
 	public void testPublish() throws InterruptedException{
 
-		for (int i = 0; i < 3; i++) {			
-			topicProducer.publish("demo-topic", new DefaultMessage("demo-topic:" + i));
+		for (int i = 0; i < 1; i++) {			
+			//topicProducer.publish("demo-topic", new DefaultMessage("demo-topic:" + i));
 			topicProducer.publish("demo2-topic", new DefaultMessage("demo2-topic:" + i));
 		}
 	}
