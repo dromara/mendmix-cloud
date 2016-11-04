@@ -58,10 +58,7 @@ public class JedisProviderFactory {
 	private synchronized static void initFactoryFromSpring() {
 		if(defaultJedisProvider == null){
 			//阻塞，直到spring初始化完成
-			while(true){
-    			if(InstanceFactory.getInstanceProvider() != null)break;
-    			try {Thread.sleep(500);} catch (Exception e) {}
-    		}
+			InstanceFactory.waitUtilInitialized();
 			Map<String, JedisProvider> interfaces = InstanceFactory.getInstanceProvider().getInterfaces(JedisProvider.class);
 			Iterator<JedisProvider> iterator = interfaces.values().iterator();
 			while(iterator.hasNext()){

@@ -11,7 +11,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<compiler.jdk.version>1.7</compiler.jdk.version>
 		<output.encoding>utf-8</output.encoding>
-		<spring.version>4.1.7.RELEASE</spring.version>
+		<spring.version>4.2.5.RELEASE</spring.version>
 		<kafka.version>0.10.0.1</kafka.version>
 		<zkclient.version>0.7</zkclient.version>
 		<zookeeper.version>3.4.6</zookeeper.version>
@@ -80,8 +80,22 @@
 					<encoding>${output.encoding}</encoding>
 				</configuration>
 			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>false</skip>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
+<distributionManagement>
+  <snapshotRepository>
+    <id>snapshots</id>
+    <url>http://test.aiyuangong.com/nexus/content/repositories/snapshots</url>
+  </snapshotRepository>
+</distributionManagement>
 
 </project>
