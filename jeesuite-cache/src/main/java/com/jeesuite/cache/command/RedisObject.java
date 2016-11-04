@@ -10,8 +10,8 @@ import static com.jeesuite.cache.redis.JedisProviderFactory.isCluster;
 
 import java.util.Date;
 
-import com.jeesuite.cache.local.LocalCacheProvider;
-import com.jeesuite.cache.local.LocalCacheSyncProcessor;
+import com.jeesuite.cache.local.Level1CacheProvider;
+import com.jeesuite.cache.local.Level1CacheSupport;
 
 import redis.clients.util.SafeEncoder;
 
@@ -81,7 +81,7 @@ public class RedisObject extends RedisBase {
 			if(result){
 				result =  setExpire(seconds);
 				//set可能是更新缓存，所以统一通知各节点清除本地缓存
-				LocalCacheSyncProcessor.getInstance().publishSyncEvent(origKey);
+				Level1CacheSupport.getInstance().publishSyncEvent(origKey);
 			}
 			return result;
 		} finally {
@@ -109,7 +109,7 @@ public class RedisObject extends RedisBase {
 			if(result){
 				result = setExpireAt(expireAt);
 				//set可能是更新缓存，所以统一通知各节点清除本地缓存
-				LocalCacheSyncProcessor.getInstance().publishSyncEvent(origKey);
+				Level1CacheSupport.getInstance().publishSyncEvent(origKey);
 			}
 			return result;
 		} finally {
@@ -121,7 +121,7 @@ public class RedisObject extends RedisBase {
 	public <T> T get() {
 		try {
 			//本地缓存读取
-			T value = LocalCacheProvider.getInstance().get(this.origKey);
+			T value = Level1CacheProvider.getInstance().get(this.origKey);
 			if(value != null)return value;
 			
 			byte[] bytes = null;
@@ -132,7 +132,7 @@ public class RedisObject extends RedisBase {
 			}
 			value = valueDerialize(bytes);
 			//local
-			LocalCacheProvider.getInstance().set(this.origKey, value);
+			Level1CacheProvider.getInstance().set(this.origKey, value);
 			return value;
 		} finally {
 			getJedisProvider(groupName).release();
@@ -144,7 +144,7 @@ public class RedisObject extends RedisBase {
 	public boolean remove() {
 		boolean removed = super.remove();
 		//通知清除本地缓存
-		if(removed)LocalCacheSyncProcessor.getInstance().publishSyncEvent(origKey);
+		if(removed)Level1CacheSupport.getInstance().publishSyncEvent(origKey);
 		return removed;
 	}
 	

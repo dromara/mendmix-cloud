@@ -8,8 +8,8 @@ import static com.jeesuite.cache.redis.JedisProviderFactory.getJedisProvider;
 
 import java.util.Date;
 
-import com.jeesuite.cache.local.LocalCacheProvider;
-import com.jeesuite.cache.local.LocalCacheSyncProcessor;
+import com.jeesuite.cache.local.Level1CacheProvider;
+import com.jeesuite.cache.local.Level1CacheSupport;
 
 /**
  * 字符串redis操作命令
@@ -80,7 +80,7 @@ public class RedisString {
 			if(result && seconds > 0){
 				result =  setExpire(seconds);
 				//set可能是更新缓存，所以统一通知各节点清除本地缓存
-				LocalCacheSyncProcessor.getInstance().publishSyncEvent(key);
+				Level1CacheSupport.getInstance().publishSyncEvent(key);
 			}
 			return result;
 		} finally {
@@ -103,7 +103,7 @@ public class RedisString {
 			if(result){
 				result = setExpireAt(expireAt);
 				//set可能是更新缓存，所以统一通知各节点清除本地缓存
-				LocalCacheSyncProcessor.getInstance().publishSyncEvent(key);
+				Level1CacheSupport.getInstance().publishSyncEvent(key);
 			}
 			return result;
 		} finally {
@@ -112,7 +112,7 @@ public class RedisString {
 	}
 	
 	public String get() {
-		String value = LocalCacheProvider.getInstance().get(key);
+		String value = Level1CacheProvider.getInstance().get(key);
 		if(value != null)return value;
 		try {
 			value = getJedisCommands(groupName).get(key);
@@ -120,7 +120,7 @@ public class RedisString {
 		} finally {
 			getJedisProvider(groupName).release();
 			//
-			LocalCacheProvider.getInstance().set(key, value);
+			Level1CacheProvider.getInstance().set(key, value);
 		}
 		
 	}
@@ -157,7 +157,7 @@ public class RedisString {
 		} finally {
 			getJedisProvider(groupName).release();
 			//
-			LocalCacheSyncProcessor.getInstance().publishSyncEvent(key);
+			Level1CacheSupport.getInstance().publishSyncEvent(key);
 		}
 	}
 

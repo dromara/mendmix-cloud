@@ -32,19 +32,19 @@
 		<property name="group" value="group2" />
 		<property name="jedisPoolConfig" ref="jedisPoolConfig" />
 		<property name="mode" value="${redis.mode}" />
-		多个用“,”隔开
 		<property name="servers" value="${redis.servers}" />
 		<property name="timeout" value="${redis.conn.timeout}" />
-	</bean> -->
+	</bean>  -->
 
-    <bean id="localCacheSyncProcessor" class="com.jeesuite.cache.local.LocalCacheSyncProcessor">
+    <!-- 本地一级缓存支持 -->
+    <bean id="level1CacheSupport" class="com.jeesuite.cache.local.Level1CacheSupport">
          <property name="enable" value="true" />
          <property name="servers" value="${redis.servers}" />
-         <property name="maxSize" value="100000" />
-         <property name="expireAfterMins" value="1440" />
-         <!-- 需要本地缓存的key前缀。多个用,或;隔开 -->
-         <property name="keyPrefixs">
-            <value>local.cache.test</value>
+         <property name="maxSize" value="10000" />
+         <property name="timeToLiveSeconds" value="300" />
+         <!-- 需要本地缓存缓存组名。多个用,或;隔开 -->
+         <property name="cacheNames">
+            <value>User,City</value>
          </property>
     </bean>
 	

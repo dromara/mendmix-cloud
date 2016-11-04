@@ -3,8 +3,9 @@ package com.jeesuite.cache.local;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
@@ -27,33 +28,33 @@ import redis.clients.jedis.JedisPubSub;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月21日
  */
-public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean{
+public class Level1CacheSupport implements InitializingBean, DisposableBean{
 
-	private static final Logger logger = LoggerFactory.getLogger(LocalCacheSyncProcessor.class);
+	private static final Logger logger = LoggerFactory.getLogger(Level1CacheSupport.class);
 	
 	private static String channelName = "clearLevel1Cache";
 	
 	private String servers;
     private boolean enable = false;
 	
-	private long maxSize = 100000;
-	private long expireAfterMins = 60 * 24;
+	private int maxSize = 100000;
+	private int timeToLiveSeconds = 60 * 24;
 	
-	private List<String> keyPrefixs; //keys 
+	private List<String> cacheNames; //
 	private Jedis subJedisClient;
 	private JedisPool pupJedisPool;
 	
-	private Timer timer;
+	private ScheduledExecutorService redisCheckTimer;
 	
 	private LocalCacheSyncListener listener;
 	
-	private static LocalCacheSyncProcessor instance;
+	private static Level1CacheSupport instance;
 	
-	public static LocalCacheSyncProcessor getInstance() {
+	public static Level1CacheSupport getInstance() {
 		if(instance == null){
-			synchronized (LocalCacheSyncProcessor.class) {				
-				if(instance == null)instance = InstanceFactory.getInstance(LocalCacheSyncProcessor.class);
-				if(instance == null)instance = new LocalCacheSyncProcessor();
+			synchronized (Level1CacheSupport.class) {				
+				if(instance == null)instance = InstanceFactory.getInstance(Level1CacheSupport.class);
+				if(instance == null)instance = new Level1CacheSupport();
 			}
 		}
 		return instance;
@@ -62,7 +63,7 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 
 	public boolean publishSyncEvent(String key){
 		if(enable ==false)return true;
-		for (String prefix : keyPrefixs) {
+		for (String prefix : cacheNames) {
 			if(key.indexOf(prefix) == 0){
 				logger.debug("redis publish:{} for key:{}",channelName,key);
 				return publish(channelName, key);
@@ -86,7 +87,7 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 	public void afterPropertiesSet() throws Exception {
 	
 		if(!enable)return;
-		Validate.notNull(keyPrefixs);
+		Validate.notNull(cacheNames);
 		Validate.notBlank(servers);
 		
 		String[] serverInfos = StringUtils.tokenizeToStringArray(servers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS)[0].split(":");
@@ -96,8 +97,8 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 		
 		listener = new LocalCacheSyncListener();
 		
-		timer = new Timer(true);
-		timer.schedule(new TimerTask() {
+		redisCheckTimer = Executors.newScheduledThreadPool(1);
+		redisCheckTimer.scheduleWithFixedDelay(new Runnable() {
 			
 			@Override
 			public void run() {
@@ -120,23 +121,23 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 					}
 				}
 			}
-		}, 100,1000 * 30);
+		}, 10, 30, TimeUnit.SECONDS);
 		
 		
 		//
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
 		poolConfig.setMaxIdle(1);
 		poolConfig.setMinEvictableIdleTimeMillis(60 * 1000);
-		poolConfig.setMaxTotal(50);
+		poolConfig.setMaxTotal(10);
 		poolConfig.setMaxWaitMillis(30 * 1000);
 		pupJedisPool = new JedisPool(poolConfig, host, port, 3000);
 		
-		LocalCacheProvider.init(keyPrefixs, maxSize,expireAfterMins);
+		Level1CacheProvider.init(cacheNames, maxSize,timeToLiveSeconds);
 	}
 
 	@Override
 	public void destroy() throws Exception {
-		timer.cancel();
+		redisCheckTimer.shutdown();
 		try {listener.unsubscribe();} catch (Exception e) {}
 		if(subJedisClient != null){
 			subJedisClient.close();
@@ -155,20 +156,20 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 		this.enable = enable;
 	}
 
-	public void setExpireAfterMins(long expireAfterMins) {
-		this.expireAfterMins = expireAfterMins;
-	}
-
-	public void setMaxSize(long maxSize) {
+	public void setMaxSize(int maxSize) {
 		this.maxSize = maxSize;
 	}
 
-	public void setKeyPrefixs(String keyPrefixs) {
-		if(org.apache.commons.lang3.StringUtils.isBlank(keyPrefixs)){
+	public void setTimeToLiveSeconds(int timeToLiveSeconds) {
+		this.timeToLiveSeconds = timeToLiveSeconds;
+	}
+
+	public void setCacheNames(String cacheNames) {
+		if(org.apache.commons.lang3.StringUtils.isBlank(cacheNames)){
 			return;
 		}
-		String[] tmpKeyPrefixs = StringUtils.tokenizeToStringArray(keyPrefixs, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-		this.keyPrefixs = new ArrayList<>(Arrays.asList(tmpKeyPrefixs));
+		String[] tmpcacheNames= StringUtils.tokenizeToStringArray(cacheNames, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+		this.cacheNames = new ArrayList<>(Arrays.asList(tmpcacheNames));
 	}
 
 
@@ -181,10 +182,10 @@ public class LocalCacheSyncProcessor implements InitializingBean, DisposableBean
 			super.onMessage(channel, message);
 			if(channel.equals(channelName)){
 				if(CLEAR_ALL.equals(message)){
-					LocalCacheProvider.getInstance().clearAll();
+					Level1CacheProvider.getInstance().clearAll();
 					logger.info("receive command {} and clear local cache finish!",CLEAR_ALL);
 				}else{					
-					LocalCacheProvider.getInstance().remove(message);
+					Level1CacheProvider.getInstance().remove(message);
 				}
 			}
 		}
