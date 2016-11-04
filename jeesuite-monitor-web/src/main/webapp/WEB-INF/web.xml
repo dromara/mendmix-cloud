@@ -19,6 +19,7 @@
 		<url-pattern>/kafka/*</url-pattern>
 		<url-pattern>/scheduler/*</url-pattern>
 		<url-pattern>/auth/*</url-pattern>
+		<url-pattern>/confcenter/*</url-pattern>
 	</filter-mapping>
 	
 	<session-config>

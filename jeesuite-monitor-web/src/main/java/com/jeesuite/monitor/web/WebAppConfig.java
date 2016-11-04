@@ -3,8 +3,10 @@
  */
 package com.jeesuite.monitor.web;
 
+import com.jeesuite.monitor.web.controller.ConfigCenterController;
 import com.jeesuite.monitor.web.controller.KafkaController;
 import com.jeesuite.monitor.web.controller.SchedulerController;
+import com.jeesuite.monitor.web.utils.ConfigFilePathUtils;
 import com.jfinal.config.Constants;
 import com.jfinal.config.Handlers;
 import com.jfinal.config.Interceptors;
@@ -15,13 +17,6 @@ import com.jfinal.render.ViewType;
 
 public class WebAppConfig extends JFinalConfig {
 	
-	
-	
-	/**
-
-	 * 配置常量
-
-	 */
 	@Override
 	public void configConstant(Constants me) {
 		loadPropertyFile("config.properties");
@@ -42,6 +37,7 @@ public class WebAppConfig extends JFinalConfig {
 	public void configRoute(Routes me) {
 		me.add("/kafka", KafkaController.class,"kafka");	
 		me.add("/scheduler", SchedulerController.class,"scheduler");
+		me.add("/confcenter", ConfigCenterController.class,"confcenter");
 	}
 	
 	/**
@@ -71,7 +67,9 @@ public class WebAppConfig extends JFinalConfig {
 	public void configHandler(Handlers me) {}
 
 	@Override
-	public void afterJFinalStart() {}
+	public void afterJFinalStart() {
+		ConfigFilePathUtils.getConfigBaseDir();
+	}
 	
 	
 

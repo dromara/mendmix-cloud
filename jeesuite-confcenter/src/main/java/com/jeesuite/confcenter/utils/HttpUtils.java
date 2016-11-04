@@ -16,7 +16,7 @@ import java.net.URL;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年11月2日
  */
-public class FileUtils {
+public class HttpUtils {
 
 	/**
 	 * 下载远程文件并保存到本地
@@ -26,7 +26,7 @@ public class FileUtils {
 	 * @param localFilePath
 	 *            本地文件路径
 	 */
-	public static void downloadFile(String remoteFilePath, String localFilePath) {
+	public static File downloadFile(String remoteFilePath, String localFilePath) {
 		URL urlfile = null;
 		HttpURLConnection httpUrl = null;
 		BufferedInputStream bis = null;
@@ -46,8 +46,11 @@ public class FileUtils {
 			bos.flush();
 			bis.close();
 			httpUrl.disconnect();
+			
+			return f;
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		} finally {
 			try {
 				bis.close();

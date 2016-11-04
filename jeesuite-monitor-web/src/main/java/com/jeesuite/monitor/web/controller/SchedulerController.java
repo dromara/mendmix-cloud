@@ -11,14 +11,13 @@ import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.scheduler.model.JobGroupInfo;
 import com.jeesuite.scheduler.monitor.MonitorCommond;
 import com.jeesuite.scheduler.monitor.SchedulerMonitor;
-import com.jfinal.core.Controller;
 
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年10月30日
  */
-public class SchedulerController extends Controller {
+public class SchedulerController extends BaseController {
 	
 	private static final SchedulerMonitor monitor = new SchedulerMonitor(ResourceUtils.get("scheduler.registry", "zookeeper"), ResourceUtils.get("scheduler.registry.servers"));
 
@@ -44,15 +43,14 @@ public class SchedulerController extends Controller {
 		if(cmd != null){
 			try {				
 				monitor.publishEvent(cmd);
-				map.put("status", 1);
-				map.put("msg", "发送执行事件成功");
+			    ajaxSuccess("发送执行事件成功");
 			} catch (Exception e) {
 				map.put("status", 0);
-				map.put("msg", "publish Event发生错误");
+				ajaxError("publish Event发生错误");
 			}
 		}else{
 			map.put("status", 0);
-			map.put("msg", "未知事件");
+			ajaxError("未知事件");
 		}
 		renderJson(map);
 		

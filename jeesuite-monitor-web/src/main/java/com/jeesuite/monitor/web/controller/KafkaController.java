@@ -7,7 +7,6 @@ import java.util.List;
 
 import com.jeesuite.kafka.monitor.KafkaMonitor;
 import com.jeesuite.kafka.monitor.model.ConsumerGroupInfo;
-import com.jfinal.core.Controller;
 
 /**
  * @description <br>
@@ -15,7 +14,7 @@ import com.jfinal.core.Controller;
  * @date 2016年10月28日
  */
 //@Before(AuthInterceptor.class)
-public class KafkaController extends Controller {
+public class KafkaController extends BaseController {
 
 	public void brokers() {
 		setAttr("brokers", KafkaMonitor.getContext().getAllBrokers());
