@@ -21,11 +21,18 @@ public class ProducerSimpleClient implements ApplicationContextAware{
 	
 	@Test
 	public void testPublish() throws InterruptedException{
-
-		for (int i = 0; i < 1; i++) {			
-			//topicProducer.publish("demo-topic", new DefaultMessage("demo-topic:" + i));
-			topicProducer.publish("demo2-topic", new DefaultMessage("demo2-topic:" + i));
-		}
+        //默认模式（异步/ ）发送
+		topicProducer.publish("demo-topic", new DefaultMessage("hello,man"));
+		
+		DefaultMessage msg = new DefaultMessage("hello,man")
+		            .header("headerkey1", "headerval1")//写入header信息
+		            .header("headerkey1", "headerval1")//写入header信息
+		            .partitionFactor(1000) //分区因子，譬如userId＝1000的将发送到同一分区、从而发送到消费者的同一节点(有状态)
+		            .consumerAck(true);// 已消费回执(未发布)
+		
+		//异步发送
+		topicProducer.publish("demo-topic", msg,true);
+				
 	}
 	
 	

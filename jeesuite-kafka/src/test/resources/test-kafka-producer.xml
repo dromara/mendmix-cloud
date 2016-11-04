@@ -8,10 +8,13 @@
 <context:property-placeholder
 		ignore-unresolvable="true" location="classpath*:*.properties" />
 		
-    <bean  id="topicProducerProvider" class="com.jeesuite.kafka.spring.TopicProducerSpringProvider">
+    <bean id="topicProducerProvider" class="com.jeesuite.kafka.spring.TopicProducerSpringProvider">
+        <!-- 默认是否异步发送 -->
         <property name="defaultAsynSend" value="true" />
+        <!-- 标识同一集群，监控需要 -->
         <property name="producerGroup" value="demo" />
         <property name="configs">
+            <!-- 以下参数参考:http://kafka.apache.org/documentation.html#producerconfigs -->
             <props>
                 <prop key="bootstrap.servers" >${kafka.servers}</prop>
                 <prop key="acks">1</prop>
