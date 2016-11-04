@@ -7,6 +7,9 @@
 </dependency>
 ```
 #### 关于key的说明
+- key约定格式：namespace.key前缀:实际值，如：（User.id:1001,User.all,User.type:1）
+- namespace及对应一级缓存的cacheName，如：User.id:1001,User.all,User.type:1都属于cacheName[User]
+- mybatis模块自动缓存的namespace即为实体类名，如:UserEntity
 
 #### spring配置文件
 ```
@@ -51,7 +54,7 @@
     </bean>
 ```
 配置文件说明
-- group
+- group 即多套redis配置的支持。如果你的服务里面用到了多组缓存就必须指定组名，组名不能重复，不指定缺省为[default]。
 
 #### 使用和基本语法
 ```
@@ -86,6 +89,10 @@
 		redisHashMap.containsKey("1001");
 		
 		redisHashMap.remove();
+		
+		//指定缓存服务组名
+		//new RedisObject(key, groupName)
+		new RedisObject("User.id:1001", "session_cache");
 ```
 其他还有：
 - RedisList
