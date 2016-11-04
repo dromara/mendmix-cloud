@@ -1,4 +1,5 @@
 - 基于kafka版本kafka_2.10-0.10.0.1
+
 #### 添加依赖
 ```
 <dependency>
@@ -115,4 +116,4 @@ public class DemoMessageHandler implements MessageHandler {
 MessageHandler的一些说明
 - 两阶段处理的同一份数据、一般情况第二阶段处理即可。
 - 如果要触发重试机制请不要try catch异常
-- onProcessError 返回true表示业务自身处理错误，否则框架会没30秒重新执行一次，最多重试3次
+- onProcessError 返回true表示业务自身处理错误，否则框架会每30秒重新执行一次，最多重试3次
