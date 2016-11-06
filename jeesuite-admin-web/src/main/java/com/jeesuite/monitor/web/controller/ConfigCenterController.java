@@ -137,7 +137,12 @@ public class ConfigCenterController extends BaseController {
 			return;
 		}
 
-		String app = getPara("app_name");
+		boolean isGlobal = getParaToInt("is_global",0) == 1;
+		String app = isGlobal ? "global" : getPara("app_name");
+		if(StringUtils.isBlank(app)){
+			ajaxError("请选择应用");
+			return;
+		}
 		String ver = getPara("version");
 		String env = getPara("env");
 		String file = getPara("file_name");

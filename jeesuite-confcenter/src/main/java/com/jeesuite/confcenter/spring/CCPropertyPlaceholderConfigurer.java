@@ -110,9 +110,21 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 		String env = p.getProperty("app.env");
 		String version = p.getProperty("app.version");
 		
-		String[] appFiles = StringUtils.commaDelimitedListToStringArray(p.getProperty("app.config.files"));
-		for (String file : appFiles) {
-			result.add(String.format("%s?app=%s&env=%s&ver=%s&file=%s", apiUrl,app,env,version,file));
+		//应用私有配置文件
+		String fileNames = p.getProperty("app.config.files");
+		if(org.apache.commons.lang3.StringUtils.isNotBlank(fileNames)){			
+			String[] appFiles = StringUtils.commaDelimitedListToStringArray(fileNames);
+			for (String file : appFiles) {
+				result.add(String.format("%s?app=%s&env=%s&ver=%s&file=%s", apiUrl,app,env,version,file));
+			}
+		}
+		//全局配置文件
+		fileNames = p.getProperty("global.config.files");
+		if(org.apache.commons.lang3.StringUtils.isNotBlank(fileNames)){			
+			String[] appFiles = StringUtils.commaDelimitedListToStringArray(fileNames);
+			for (String file : appFiles) {
+				result.add(String.format("%s?app=global&env=%s&ver=%s&file=%s", apiUrl,env,version,file));
+			}
 		}
 		
 		return result;

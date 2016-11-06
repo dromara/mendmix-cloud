@@ -1,11 +1,21 @@
 <#include "../public/header.html"/>
 <form method="post" class="form-x form-auto">
+
+   <div class="form-group">
+		<div class="label">
+			<label for="name">是否全局配置</label>
+		</div>
+		<div class="field">
+			<label><input name="is_global" value="1" type="radio">是</label>
+			<label><input name="is_global" value="0" type="radio" checked="checked">否</label>
+		</div>
+	</div>
 	<div class="form-group">
 		<div class="label">
 			<label for="name">应用</label>
 		</div>
 		<div class="field">
-			<select class="input w200" dataType="Require" name="app_name">
+			<select class="input w200" id="app_name" name="app_name">
 			    <option value="">请选择应用..</option>
 				<#if apps??>
 				<#list apps as app><option value="${app.name}">${app.name}</option></#list>
@@ -82,6 +92,16 @@ $(function(){
 	    $('#contents').val(content);
      }
    });
+    
+    //
+    $("input[name='is_global']").change(function() {
+		var $selectedvalue = $("input[name='is_global']:checked").val();
+		if ($selectedvalue == 1) {
+			$('#app_name').attr('disabled',true);
+		} else {
+			$('#app_name').removeAttr("disabled"); 
+		}
+	});
 });
 </script>
 <#include "../public/footer.html"/>
