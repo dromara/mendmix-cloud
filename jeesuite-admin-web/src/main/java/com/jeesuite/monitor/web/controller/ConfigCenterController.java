@@ -59,7 +59,7 @@ public class ConfigCenterController extends BaseController {
 	}
 
 	public void download() {
-		String app = getPara(0);
+		String app = getPara("app");
 		String env = getPara("env");
 		String version = getPara("ver", "0.0.0");
 		String fileName = getPara("file");

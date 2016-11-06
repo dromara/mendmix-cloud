@@ -82,12 +82,16 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 		for (String url : urls) {
 			String fileName = url.split("file=")[1];
 			logger.info("begin download remote file by url:{}",url);
-			File file = HttpUtils.downloadFile(url, classRootDir + "config.properties");
-			if(file != null){				
-				files.add(file);
-				logger.info("download {} ok!!",file.getPath());
-			}else{
-				logger.warn("download file[{}] failture from:{}",fileName,url);
+			try {				
+				File file = HttpUtils.downloadFile(url, classRootDir + fileName);
+				if(file != null){
+					files.add(file);
+					logger.info("download {} ok!!",file.getPath());
+				}else{
+					logger.warn("download file[{}] failture from:{}",fileName,url);
+				}
+			} catch (Exception e) {
+				logger.warn("download file[{}] failture from:{},error:{}",fileName,url,e.getMessage());
 			}
 		}
 		
@@ -108,7 +112,7 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 		
 		String[] appFiles = StringUtils.commaDelimitedListToStringArray(p.getProperty("app.config.files"));
 		for (String file : appFiles) {
-			result.add(String.format("%s/%s?env=%s&ver=%s&file=%s", apiUrl,app,env,version,file));
+			result.add(String.format("%s?app=%s&env=%s&ver=%s&file=%s", apiUrl,app,env,version,file));
 		}
 		
 		return result;

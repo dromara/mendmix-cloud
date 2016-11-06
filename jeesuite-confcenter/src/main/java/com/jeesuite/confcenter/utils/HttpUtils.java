@@ -3,11 +3,11 @@
  */
 package com.jeesuite.confcenter.utils;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -29,32 +29,36 @@ public class HttpUtils {
 	public static File downloadFile(String remoteFilePath, String localFilePath) {
 		URL urlfile = null;
 		HttpURLConnection httpUrl = null;
-		BufferedInputStream bis = null;
-		BufferedOutputStream bos = null;
+		BufferedReader br = null;
+		FileOutputStream out = null;
 		File f = new File(localFilePath);
 		try {
 			urlfile = new URL(remoteFilePath);
 			httpUrl = (HttpURLConnection) urlfile.openConnection();
 			httpUrl.connect();
-			bis = new BufferedInputStream(httpUrl.getInputStream());
-			bos = new BufferedOutputStream(new FileOutputStream(f));
-			int len = 2048;
-			byte[] b = new byte[len];
-			while ((len = bis.read(b)) != -1) {
-				bos.write(b, 0, len);
-			}
-			bos.flush();
-			bis.close();
-			httpUrl.disconnect();
 			
+			br = new BufferedReader(new InputStreamReader(httpUrl.getInputStream(),"utf-8"));
+            String line = null;
+            StringBuilder result = new StringBuilder();
+            while(null != (line=br.readLine())){
+            	if(line.equals("not_found")){
+            		throw new RuntimeException("文件不存在");
+            	}
+            	if(line.equals("download_error")){
+            		throw new RuntimeException("下载错误");
+            	}
+            	result.append(line).append("\n");
+            }
+            out = new FileOutputStream(f);  
+            out.write(result.toString().getBytes("utf-8"));  
+			httpUrl.disconnect();
 			return f;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
+		} catch (IOException e) {
+			throw new RuntimeException("下载错误");
 		} finally {
 			try {
-				bis.close();
-				bos.close();
+				if(br != null)br.close();
+				if(out != null)out.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
