@@ -79,6 +79,7 @@ $(document).ready(function(){
 				$.commons.initCalendar();
 				$.commons.initTab();
 				$.commons.initTip();
+				$.commons.initCollapsePanel();
 				$.commons.initPromptEvent();
 				$.commons.initDialogEvent();
 				$.commons.initConfirmEvent();
@@ -118,6 +119,21 @@ $(document).ready(function(){
 					e.addClass("active");
 					$(detail).addClass("active");
 				};
+			},
+			initCollapsePanel: function(){
+				$(".collapse .panel-head").each(function() {
+			        var e = $(this);
+			        e.click(function() {
+			            e.closest(".collapse").find(".panel").removeClass("active");
+			            e.closest(".panel").addClass("active")
+			        })
+			    });
+			    $(".collapse-toggle .panel-head").each(function() {
+			        var e = $(this);
+			        e.click(function() {
+			            e.closest(".panel").toggleClass("active")
+			        })
+			    });
 			},
 			initTip: function(){
 				 $(".tips").each(function() {
