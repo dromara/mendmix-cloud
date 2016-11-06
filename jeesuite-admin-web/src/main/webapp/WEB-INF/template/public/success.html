@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>提示</title>
+<css file="__STATIC__/css/pink/base.css" />
+<css file="__STATIC__/css/pink/style.css" />
+<script src="__STATIC__/js/jquery/jquery.js"></script>
+</head>
+<body>
+<include file="public:header" />
+<div class="main_wrap">
+    <div class="msg_wrap">
+        <div class="message_box">
+            <div class="msg_right">
+                <p><{$message}></p>
+                <p class="msg_btnleft"><a href="<{$jumpUrl}>">请稍后,正在跳转...</a></p>
+            </div>
+            <script language="javascript">
+                setTimeout("location.href='<{$jumpUrl}>';",2*1000);
+            </script>
+        </div>
+    </div>
+</div>
+<include file="public:footer" />
+</body>
+</html>

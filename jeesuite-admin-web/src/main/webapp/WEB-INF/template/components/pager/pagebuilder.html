@@ -1,0 +1,82 @@
+<#if totalPage gt 1>
+<#-- 页号越界处理 -->
+  <#if (pageNo > totalPage)>
+    <#assign pageNo=totalPage>
+  </#if>
+  <#if (pageNo < 1)>
+    <#assign pageNo=1>
+  </#if>
+<div class="panel-foot text-center">
+<#-- 输出分页表单 -->
+<form method="post" action="" name="qPagerForm">
+<input type="hidden" name="pageNo" value="${pageNo}"/>
+<#if queryParameters??>
+<#list queryParameters?keys as key>
+<#if (key!="pageNo" && queryParameters.get(key)??)>
+<input type="hidden" name="${key}" value="${queryParameters.get(key)}"/>
+</#if>
+</#list>
+</#if>
+</form>
+<#-- 上一页处理 -->
+  <ul class="pagination">
+  <#if (pageNo == 1)>
+	<li><a href="#">上一页</a></li>
+  <#else>
+    <li><a href="javascript:;" onclick="turnOverPage(${pageNo - 1})">上一页</a></li>
+  </#if>
+  </ul>
+<#-- 如果前面页数过多,显示... -->
+  <ul class="pagination pagination-group">
+	<#assign start=1>
+	<#if (pageNo > 4)>
+    <#assign start=(pageNo - 1)>
+    <li><a href="javascript:;" onclick="turnOverPage(1)">1</a></li>
+    <li><a href="javascript:;" onclick="turnOverPage(2)">2</a></li>
+    &hellip;
+	</#if>
+<#-- 显示当前页号和它附近的页号 -->
+	<#assign end=(pageNo + 1)>
+	<#if (end > totalPage)>
+		<#assign end=totalPage>
+	</#if>
+  <#list start..end as i>
+    <#if (pageNo==i)>
+    <li class="active"><a href="javascript:;">${i}</a></li>
+	<#else>
+	<li><a href="javascript:;" onclick="turnOverPage(${i})">${i}</a></li>   
+    </#if>
+  </#list>
+<#-- 如果后面页数过多,显示... -->
+  <#if (end < totalPage - 2)>
+&hellip;  
+  </#if>
+  <#if (end < totalPage - 1)>
+  <li><a href="javascript:;" onclick="turnOverPage(${totalPage - 1})">${totalPage - 1}</a></li>
+  </#if>
+  <#if (end < totalPage)>
+  <li><a href="javascript:;" onclick="turnOverPage(${totalPage})">${totalPage}</a></li>
+  </#if>
+  </ul>
+<#-- 下一页处理 -->
+  <ul class="pagination">
+  <#if (pageNo == totalPage)>
+  <li><a href="#">下一页</a></li>
+  <#else>
+  <li><a href="javascript:;" onclick="turnOverPage(${pageNo + 1})">下一页</a></li>
+  <li><a href="javascript:;" onclick="turnOverPage(${totalPage})">末页</a></li>
+  </#if>
+  </ul>
+  <span class="tr">共<i class="red">${totalRow}</i>条记录</span>
+</div> 
+<script language="javascript">
+  function turnOverPage(no){
+    var qForm=document.qPagerForm;
+    if(no>${totalPage}){no=${totalPage};}
+    if(no<1){no=1;}
+    qForm.pageNo.value=no;
+    qForm.action="${queryURI}";
+    qForm.submit();
+  }
+</script>
+</#if>

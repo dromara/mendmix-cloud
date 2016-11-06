@@ -1,0 +1,95 @@
+﻿<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="renderer" content="webkit">
+<title>拼图后台管理-后台管理</title>
+<link rel="stylesheet" href="./css/pintuer.css">
+<link rel="stylesheet" href="./css/admin.css">
+<link rel="stylesheet" href="./css/lib.css">
+<script src="./js/lib.js"></script>
+<script src="./js/commons.js"></script>
+</head>
+
+<body>
+	<div class="lefter">
+		<div class="logo">
+			<a href="http://www.pintuer.com" target="_blank"><img
+				src="images/logo.png" alt="后台管理系统" /></a>
+		</div>
+	</div>
+	<div class="righter nav-navicon" id="admin-nav">
+		<div class="mainer">
+			<div class="admin-navbar">
+				<span class="float-right"> <a
+					class="button button-little bg-main" href="http://www.pintuer.com"
+					target="_blank">前台首页</a> <a class="button button-little bg-yellow"
+					href="login.html">注销登录</a>
+				</span>
+				<ul class="nav nav-inline admin-nav">
+					<li menu-key="kafka" class="active"><a href="index.html"
+						class="icon-home">kafka</a>
+						<ul menu-parent="kafka">
+							<li><a target="rightContainer" href="./kafka/brokers">服务器</a></li>
+							<li><a target="rightContainer" href="./kafka/producers">生产者</a></li>
+							<li><a target="rightContainer" href="./kafka/consumers">消费者</a></li>
+						</ul></li>
+					<li menu-key="scheduler"><a href="javascript:;"
+						class="icon-th-list">Scheduler</a>
+						<ul menu-parent="scheduler">
+							<li><a target="rightContainer" href="./scheduler/list">定时任务列表</a></li>
+						</ul></li>
+					<li menu-key="confcenter"><a href="javascript:;"
+						class="icon-th-list">confCenter</a>
+						<ul menu-parent="confcenter">
+							<li><a target="rightContainer" href="./confcenter/queryconf">查看配置</a></li>
+							<li><a target="rightContainer" href="./confcenter/addapp">添加应用</a></li>
+							<li><a target="rightContainer" href="./confcenter/addconf">添加配置</a></li>
+						</ul></li>
+				</ul>
+			</div>
+			<div class="admin-bread">
+				<span>您好，admin，欢迎您的光临。</span>
+				<ul class="bread">
+					<li><a href="index.html" class="icon-home"> 开始</a></li>
+					<li>后台首页</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<div class="admin">
+		<iframe src="./main.html" name="rightContainer" scrolling="no"
+			frameborder="0" width="100%" onload="Javascript:SetWinHeight(this)"></iframe>
+	</div>
+</body>
+<script>
+	function SetWinHeight(obj) {
+		var win = obj;
+		if (document.getElementById) {
+			var h = 550;
+			if (win && !window.opera) {
+				if (win.contentDocument
+						&& win.contentDocument.body.offsetHeight)
+					h = win.contentDocument.body.offsetHeight;
+				else if (win.Document && win.Document.body.scrollHeight)
+					h = win.Document.body.scrollHeight;
+			}
+			win.height = h < 550 ? 550 : (h + 25);
+		}
+	}
+	$(document).ready(function() {
+		$rc = $('#rightContainer');
+		$('.admin-nav li').on('click', function() {
+			var $this = $(this);
+			if ($this.hasClass('active'))
+				return;
+			$this.addClass('active').siblings().removeClass('active');
+		});
+	});
+</script>
+
+</html>

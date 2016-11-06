@@ -1,0 +1,30 @@
+body{background-color:#f2f9fd;}
+.panel{background:#fff;}
+form .form-group:last-child{padding-bottom:0;}
+.passcode{position:absolute;right:0;top:0;height:32px;margin:1px;border-left:solid 1px #ddd;text-align:center;line-height:32px;border-radius:0 4px 4px 0;}
+
+
+.lefter{position:relative;float:left;width:180px;margin-right:-180px;background:#e6f2fb;text-align:center;}
+.righter{float:right;width:100%;padding-top:15px;background:#e6f2fb;}
+.mainer{margin-left:180px;}
+
+.logo{border-bottom:solid 1px #b5cfd9;padding:23px 10px;}
+
+.admin-navbar{border-bottom:solid 5px #09c;padding:0 15px;}
+.admin-nav li{display:inline-block;}
+.admin-nav ul{display:none;}
+.admin-nav ul li{float:none;display:block;}
+.admin-nav ul ul li{list-style:circle;margin-left:15px;}
+.admin-nav .active a{background:#09c;color:#fff;border-radius:4px 4px 0 0;}
+.admin-nav .active ul{display:block;position:fixed;left:0;width:180px;margin-top:41px;}
+.admin-nav .active ul a{background:transparent;color:#333;border-radius:0;}
+.admin-nav .active .active a{background:#e6f2fb;border-top:solid 1px #b5cfd9;border-bottom:solid 1px #b5cfd9;}
+
+.admin-bread{background:#f2f9fd;border-left:solid 1px #b5cfd9;border-bottom:solid 1px #b5cfd9;line-height:20px;}
+.admin-bread .bread{margin-bottom:0;}
+.admin-bread span{float:right;font-size:12px;color:#666;line-height:36px;}
+
+.admin{padding:30px;background:#fff;position:fixed;border-left:solid 1px #b5cfd9;right:0;bottom:0;top:87px;left:180px; overflow:auto;}
+.alert{margin-bottom:20px;}
+.admin-panel td{line-height:24px;}
+.admin-panel td .button{line-height:16px;}

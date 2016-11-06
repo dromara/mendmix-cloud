@@ -7,6 +7,33 @@
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
 
+	<licenses>
+		<license>
+			<name>The Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>vakin jiang</name>
+			<email>vakinge@gmail.com</email>
+			<organization>github</organization>
+			<organizationUrl>https://github.com/vakinge</organizationUrl>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>
+         scm:git:https://github.com/vakinge/jeesuite-libs.git
+      </connection>
+		<developerConnection>
+         scm:git:https://github.com/vakinge/jeesuite-libs.git
+      </developerConnection>
+		<url>https://github.com/vakinge/jeesuite-libs</url>
+		<tag>v1.0</tag>
+	</scm>
+	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<compiler.jdk.version>1.7</compiler.jdk.version>
@@ -21,13 +48,14 @@
 		<druid.version>1.0.16</druid.version>
 		<junit.version>4.12</junit.version>
 	</properties>
+	
 	<modules>
 		<module>jeesuite-common</module>
 		<module>jeesuite-kafka</module>
 		<module>jeesuite-spring</module>
 		<module>jeesuite-cache</module>
 		<module>jeesuite-scheduler</module>
-		<module>jeesuite-monitor-web</module>
+		<module>jeesuite-admin-web</module>
 		<module>jeesuite-mybatis</module>
 		<module>jeesuite-rest</module>
 		<module>jeesuite-confcenter</module>
@@ -80,7 +108,7 @@
 					<encoding>${output.encoding}</encoding>
 				</configuration>
 			</plugin>
-			
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
@@ -88,14 +116,58 @@
 					<skip>false</skip>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin> -->
 		</plugins>
 	</build>
 
-<distributionManagement>
-  <snapshotRepository>
-    <id>snapshots</id>
-    <url>http://test.aiyuangong.com/nexus/content/repositories/snapshots</url>
-  </snapshotRepository>
-</distributionManagement>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 
 </project>

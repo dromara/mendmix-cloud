@@ -16,7 +16,10 @@ import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.util.StringUtils;
 
 import com.jeesuite.confcenter.utils.HttpUtils;
 
@@ -29,10 +32,26 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 	
 	private final static Logger logger = LoggerFactory.getLogger(CCPropertyPlaceholderConfigurer.class);
 
+	private boolean remoteEnabled = true;
+	
+	public void setRemoteEnabled(boolean remoteEnabled) {
+		this.remoteEnabled = remoteEnabled;
+	}
+
+	@Override
+	protected void processProperties(ConfigurableListableBeanFactory beanFactoryToProcess, Properties props)
+			throws BeansException {
+		super.processProperties(beanFactoryToProcess, props);
+	}
+
+
+
 	@Override
 	protected Properties mergeProperties() throws IOException {
 		Properties properties = super.mergeProperties();
-		properties.putAll(loadRemoteProperties());
+		if(remoteEnabled){			
+			properties.putAll(loadRemoteProperties());
+		}
 		return properties;
 		//
 	}
@@ -86,8 +105,8 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 		String app = p.getProperty("app.name");
 		String env = p.getProperty("app.env");
 		String version = p.getProperty("app.version");
-		String[] appFiles = p.getProperty("app.config.files").split(",|，");
 		
+		String[] appFiles = StringUtils.commaDelimitedListToStringArray(p.getProperty("app.config.files"));
 		for (String file : appFiles) {
 			result.add(String.format("%s/%s?env=%s&ver=%s&file=%s", apiUrl,app,env,version,file));
 		}

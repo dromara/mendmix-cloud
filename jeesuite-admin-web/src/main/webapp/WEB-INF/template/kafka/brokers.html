@@ -1,0 +1,16 @@
+<#include "../public/header.html"/>
+<table class="table table-striped">
+	<tr>
+		<th>ID</th>
+		<th>服务器IP</th>
+		<th>端口</th>
+	</tr>
+	<tr>
+	    <#list brokers as broker>
+		<td>${broker.id}</td>
+		<td>${broker.host}</td>
+		<td>${broker.port}</td>
+		</#list>
+	</tr>
+</table>
+<#include "../public/footer.html"/>

@@ -1,0 +1,61 @@
+﻿<#include "../public/header.html"/>
+<div class="collapse">
+	<#list jobGroups as group>
+	<div class="panel ${(group_index==0)?string('active','')}">
+		<div class="panel-head">
+		   ${group.name}&nbsp;<#if group.clusterNodes?size gt 0><span class="tag bg-green">actived[${group.clusterNodes?size}]</span><#else><span class="tag bg-red">inactived</span></#if>
+		</div>
+		<div class="panel-body">
+			<table class="table table-striped">
+				<tr>
+					<th width="15%">定时器名称</th>
+					<th width="15%">执行时间cron</th>
+					<th width="10%">启用状态</th>
+					<th width="15%">当前节点</th>
+					<th width="15%">上次执行时间</th>
+					<th width="15%">下次执行时间</th>
+					<th width="15%">操作</th>
+				</tr>
+				<#list group.jobs as job>
+				<tr>
+					<td>${job.jobName}<#if job.schedulerName??>[${job.schedulerName}]</#if></td>
+					<td>${job.cronExpr}</td>
+					<td><#if job.active><span class="badge bg-green">已启用</span><#else><span class="badge bg-red">已停用</span></#if></td>
+					<td>${job.currentNodeId!}</td>
+					<td><#if job.lastFireTime??>${job.lastFireTime?string("yy/MM/dd HH:mm:ss")}</#if></td>
+					<td><#if job.nextFireTime??>${job.nextFireTime?string("yy/MM/dd HH:mm:ss")}</#if></td>
+					<td>
+					    <a class="button border-blue button-little J_sch_operator" data-event="exec" data-group="${job.groupName}" data-job="${job.jobName}" href="#">执行</a>&nbsp;
+						<a class="button border-yellow button-little" href="#">禁用</a>
+					</td>
+				</tr>
+				</#list>
+			</table>
+		</div>
+	</div>
+	</#list>
+</div>
+<script type="text/javascript">
+$(function(){
+	$('.J_sch_operator').on('click',function(){
+		var $this = $(this),
+		   group = $this.attr('data-group'),
+		   job = $this.attr('data-job'),
+		   event = $this.attr('data-event');
+		$.ajax({
+		     type: 'POST',
+		     url: './scheduler/operator/'+event ,
+		    data: {job:job,group:group} ,
+		    success: function(json){
+		    	alert(json.msg);
+		    }
+
+		});
+	});
+});
+</script>
+<#include "../public/footer.html"/>
+
+
+
+

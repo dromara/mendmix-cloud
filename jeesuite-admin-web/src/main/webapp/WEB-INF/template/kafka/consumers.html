@@ -1,0 +1,50 @@
+<#include "../public/header.html"/>
+<!-- group list -->
+<div class="collapse">
+    <#list consumerGroups as item>
+	<div class="panel ${(item_index==0)?string('active','')}">
+		<div class="panel-head">
+			<span>${item.groupName}</span>&nbsp;
+			<#if item.actived><span class="tag bg-green">actived[${item.clusterNodes?size}]</span><#else><span class="tag bg-red">inactived</span></#if>
+		</div>
+		<div class="panel-body">
+			<table class="table table-bordered">
+				<tr>
+					<th width="130">topicName</th>
+					<th width="50">part</th>
+					<th width="80">logSize</th>
+					<th width="75">offset</th>
+					<th width="55">lat</th>
+					<th width="*">owner</th>
+					<th width="150">createTime</th>
+					<th width="100">lastTime</th>
+				</tr>
+			</table>
+			<#list item.topics as topic>
+			<#if topic.partitions??>
+			<table class="table table-bordered">
+			<#list topic.partitions as partition>
+				<tr>
+					<#if partition_index==0>
+					<td rowspan="6" width="130" title="${topic.topicName}"><#if topic.topicName?length gt 15>${topic.topicName?substring(0,15)}...<#else>${topic.topicName}</#if></td>
+					</#if>
+					<td width="50">${partition.partition}</td>
+					<td width="80">${partition.logSize}</td>
+					<td width="75">${partition.offset}</td>
+					<td width="55">${partition.lat}</td>
+					<td width="*" title="${partition.owner!}">
+					<#if partition.owner??><#if partition.owner?length gt 50>${partition.owner?substring(0,50)}...<#else>${partition.owner!}</#if></#if>
+					</td>
+					<td width="150">${partition.createTime?string("yyyy/MM/dd HH:mm")}</td>
+					<td width="100">${partition.formatLastTime}</td>
+				</tr>
+				</#list>
+			</table>
+			</#if>
+			</#list>
+		</div>
+	</div>
+	</#list>
+</div>
+<!-- group list -->
+<#include "../public/footer.html"/>
