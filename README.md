@@ -12,3 +12,6 @@
 * [jeesuite-confcenter](./docs/confcenter.md) 简单的配置中心,支持应用私有配置和全局配置
 * [jeesuite-monitor-web](./docs/monitor.md) 以上组件监控管理页面
 * 持续增加中....
+
+
+### 你可以下载集成了所有模块的demo[jeesuite-demo](https://github.com/vakinge/jeesuite-demo) 
