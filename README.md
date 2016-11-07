@@ -14,4 +14,4 @@
 * 持续增加中....
 
 
-### 你可以下载集成了所有模块的demo[jeesuite-demo](https://github.com/vakinge/jeesuite-demo) 
+### 你可以下载集成了所有模块的demo[jeesuite-demo](../jeesuite-demo) 
