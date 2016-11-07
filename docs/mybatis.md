@@ -9,9 +9,11 @@
 #### 一些说明
 ##### 代码生成及其自动crud
 说明：这一部分代码我实现了一个简单的版本，后面发现有几个比较优秀的mybatis增强框架专注做自动crud功能的，所以已经做了无缝对接推荐使用它们。
+两个框架都提供了代码生成的方法，这里不多说。
 * [Mapper](http://git.oschina.net/free/Mapper)
 * [mybatis-plus](http://git.oschina.net/baomidou/mybatis-plus)
-两个框架都提供了代码生成的方法，这里不多说。
+
+---
 ##### 其他功能说明
 * 读写分离：已经线上稳定运行一年
 * 自动缓存：已经线上稳定运行一年
