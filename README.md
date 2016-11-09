@@ -10,7 +10,7 @@
 * [jeesuite-mybatis](./docs/mybatis.md) 基于mybatis封装，实现自动crud、读写分离、应用级透明分表分库路由、自动缓存及维护。所有特性已经稳定用于生产环境。(待发布)
 * [jeesuite-rest](./docs/rest.md) 发布rest支持
 * [jeesuite-confcenter](./docs/confcenter.md) 简单的配置中心,支持应用私有配置和全局配置
-* [jeesuite-monitor-web](./docs/monitor.md) 以上组件监控管理页面
+* [jeesuite-monitor-web](./docs/admin.md) 以上组件监控管理页面
 * 持续增加中....
 
 
