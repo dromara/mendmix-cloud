@@ -17,6 +17,13 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.jfinal</groupId>
+			<artifactId>jetty-server</artifactId>
+			<version>8.1.8</version>
+		</dependency>
+
+
+		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-kafka</artifactId>
 			<version>1.0.0</version>

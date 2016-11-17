@@ -39,6 +39,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 	
 	private int maxSize = 100000;
 	private int timeToLiveSeconds = 60 * 24;
+	private String password;
 	
 	private List<String> cacheNames; //
 	private Jedis subJedisClient;
@@ -130,7 +131,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		poolConfig.setMinEvictableIdleTimeMillis(60 * 1000);
 		poolConfig.setMaxTotal(10);
 		poolConfig.setMaxWaitMillis(30 * 1000);
-		pupJedisPool = new JedisPool(poolConfig, host, port, 3000);
+		pupJedisPool = new JedisPool(poolConfig, host, port, 3000, password);
 		
 		Level1CacheProvider.init(cacheNames, maxSize,timeToLiveSeconds);
 	}
@@ -163,6 +164,11 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 	public void setTimeToLiveSeconds(int timeToLiveSeconds) {
 		this.timeToLiveSeconds = timeToLiveSeconds;
 	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
 
 	public void setCacheNames(String cacheNames) {
 		if(org.apache.commons.lang3.StringUtils.isBlank(cacheNames)){
