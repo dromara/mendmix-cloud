@@ -59,6 +59,7 @@
 		<module>jeesuite-mybatis</module>
 		<module>jeesuite-rest</module>
 		<module>jeesuite-confcenter</module>
+		<module>jeesuite-common2</module>
 	</modules>
 
 	<dependencies>
