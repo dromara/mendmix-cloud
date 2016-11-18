@@ -57,6 +57,9 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 	
 	private static Map<String, UpdateByPkMethodCache> updateCacheMethods = new HashMap<>();
 	
+	//记录当前线程写入的所有缓存key
+	private static ThreadLocal<List<String>> currentThreadAutoCacheKeys = new ThreadLocal<>();
+	
 	private CacheProvider cacheProvider;
 	
 	private CacheMethodDefine methodDefine;
@@ -453,7 +456,13 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 			this.keyPattern = keyPattern;
 			this.sqlCommandType = sqlCommandType;
 		}
-		
-		
+	}
+	
+	public static void rollbackCache(){
+		List<String> keys = currentThreadAutoCacheKeys.get();
+		if(keys == null)return;
+		for (String key : keys) {
+			
+		}
 	}
 }
