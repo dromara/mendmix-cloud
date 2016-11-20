@@ -53,7 +53,7 @@ public class EntityHelper {
             // 全部列
             Set<ColumnMapper> columnMapperSet = new HashSet<ColumnMapper>();
             // 主键
-            Set<ColumnMapper> idColumnsMapperSet = new HashSet<ColumnMapper>();
+            ColumnMapper idColumn = null;
 
             for (Field field : fields) {
 
@@ -88,14 +88,14 @@ public class EntityHelper {
 
                 // 如果是主键，添加到主键映射信息
                 if (columnMapper.isId()) {
-                    idColumnsMapperSet.add(columnMapper);
+                	idColumn = columnMapper;
                 }
 
             }
             if (columnMapperSet.size() <= 0) {
                 throw new RuntimeException("实体" + entityClass.getName() + "不存在映射字段");
             }
-            if (idColumnsMapperSet.size() <= 0) {
+            if (idColumn == null) {
                 throw new RuntimeException("实体" + entityClass.getName() + "不存在主键或者");
             }
 
@@ -104,7 +104,7 @@ public class EntityHelper {
             entityMapper.setTableMapper(tableMapper);
             entityMapper.setColumnsMapper(columnMapperSet);
             entityMapper.setIdClass(idClass);
-            entityMapper.setIdColumnsMapper(idColumnsMapperSet);
+            entityMapper.setIdColumn(idColumn);
 
             tableMapperCache.put(entityClass, entityMapper);
 

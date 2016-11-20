@@ -50,6 +50,10 @@ public class InsertBuilder {
 			
 			MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, msId, sqlSource,SqlCommandType.INSERT);
 			
+//			statementBuilder.keyGenerator(keyGenerator)//
+//	                        .keyProperty(keyProperty)//
+//	                        .keyColumn(keyColumn);
+	        
 			MappedStatement statement = statementBuilder.build();
 			
 			configuration.addMappedStatement(statement);

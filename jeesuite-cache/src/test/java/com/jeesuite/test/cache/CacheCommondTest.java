@@ -70,6 +70,21 @@ public class CacheCommondTest implements ApplicationContextAware{
 		
 		redisHashMap.remove();
 		
+		//
+		RedisSortSet sortSet = new RedisSortSet("redisSortSet");
+		
+		sortSet.add(1, "1");
+		sortSet.add(2, "2");
+		sortSet.add(3, "3");
+		sortSet.add(4, "4");
+		
+		System.out.println("==============");
+		System.out.println(sortSet.get());
+		
+		sortSet.removeByScore(1, 2);
+		
+		System.out.println(sortSet.get());
+		
 	}
 	
 }

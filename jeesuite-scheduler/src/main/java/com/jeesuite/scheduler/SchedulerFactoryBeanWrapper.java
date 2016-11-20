@@ -21,6 +21,7 @@ import org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
 import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
  * 
@@ -53,6 +54,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.context = applicationContext;
+		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
 	}
 	
 	@Override

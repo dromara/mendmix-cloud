@@ -26,8 +26,7 @@ public class MyBatisGeneratorTool {
 	public static void main(String[] args) {
 		List<String> warnings = new ArrayList<String>();
 		boolean overwrite = true;
-		String genCfg = "/generatorConfig.xml"; //src的一级目录下
-		File configFile = new File("/Users/ayg/projects/jeesuite-libs/jeesuite-tutorial/generator/generatorConfig.xml");
+		File configFile = new File("/Users/ayg/projects/jeesuite-libs/jeesuite-mybatis/src/test/resources/generator/generatorConfig.xml");
 		ConfigurationParser cp = new ConfigurationParser(warnings);
 		Configuration config = null;
 		try {

@@ -3,6 +3,8 @@ package com.jeesuite.mybatis.crud.helper;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.GenerationType;
+
 
 public class EntityMapper {
 
@@ -13,12 +15,14 @@ public class EntityMapper {
     private Set<ColumnMapper> columnsMapper;
 
     // 主键
-    private Set<ColumnMapper> idColumnsMapper;
+    private ColumnMapper idColumn;
 
     // 字段名和属性名的映射
     private Map<String, String> aliasMap;
 
     private Class<?> idClass;
+    
+    private GenerationType idStrategy;
 
     public TableMapper getTableMapper() {
         return tableMapper;
@@ -36,15 +40,16 @@ public class EntityMapper {
         this.columnsMapper = columnsMapper;
     }
 
-    public Set<ColumnMapper> getIdColumnsMapper() {
-        return idColumnsMapper;
-    }
 
-    public void setIdColumnsMapper(Set<ColumnMapper> idColumnsMapper) {
-        this.idColumnsMapper = idColumnsMapper;
-    }
+    public ColumnMapper getIdColumn() {
+		return idColumn;
+	}
 
-    public Map<String, String> getAliasMap() {
+	public void setIdColumn(ColumnMapper idColumn) {
+		this.idColumn = idColumn;
+	}
+
+	public Map<String, String> getAliasMap() {
         return aliasMap;
     }
 
@@ -59,5 +64,17 @@ public class EntityMapper {
     public void setIdClass(Class<?> idClass) {
         this.idClass = idClass;
     }
+
+	public GenerationType getIdStrategy() {
+		return idStrategy;
+	}
+
+	public void setIdStrategy(GenerationType idStrategy) {
+		this.idStrategy = idStrategy;
+	}
+   
+	public boolean autoId(){
+		return idStrategy == GenerationType.AUTO;
+	}
 
 }

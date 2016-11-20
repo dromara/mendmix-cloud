@@ -40,6 +40,6 @@ public class MapperScannerConfigurer extends org.mybatis.spring.mapper.MapperSca
 		SqlSessionFactory sqlSessionFactory = context.getBean(sqlSessionFactoryName, SqlSessionFactory.class);
 		Configuration configuration = sqlSessionFactory.getConfiguration();
 		//
-		GeneralSqlGenerator.generate(configuration);
+		new GeneralSqlGenerator(configuration).generate();
 	}	
 }

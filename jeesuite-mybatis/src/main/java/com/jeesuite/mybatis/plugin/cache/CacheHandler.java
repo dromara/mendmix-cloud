@@ -9,6 +9,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.Id;
 
@@ -18,6 +21,7 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.mybatis.core.BaseEntity;
@@ -29,7 +33,6 @@ import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
 import com.jeesuite.mybatis.plugin.cache.name.Mapper3CacheMethodDefine;
-import com.jeesuite.mybatis.plugin.cache.name.MybatisPlusCacheMethodDefine;
 import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
 
 
@@ -40,14 +43,12 @@ import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
  * @date 2015年12月7日
  * @Copyright (c) 2015, jwww
  */
-public class CacheHandler implements InterceptorHandler,InitializingBean {
+public class CacheHandler implements InterceptorHandler,InitializingBean,DisposableBean {
 
-	/**
-	 * 
-	 */
-	private static final String SPLIT_PONIT = ".";
+	protected static final String SPLIT_PONIT = ".";
 	private static final String REGEX_PLACEHOLDER = ":%s";
 	private static final String REGEX_POINT = "\\.";
+	protected static final String GROUPKEY_SUFFIX = "~keys";
 
 	protected static final Logger logger = LoggerFactory.getLogger(CacheHandler.class);
 	
@@ -57,18 +58,22 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 	
 	private static Map<String, UpdateByPkMethodCache> updateCacheMethods = new HashMap<>();
 	
-	//记录当前线程写入的所有缓存key
-	private static ThreadLocal<List<String>> currentThreadAutoCacheKeys = new ThreadLocal<>();
+	private static List<String> groupKeys = new ArrayList<>();
 	
-	private CacheProvider cacheProvider;
+	//记录当前线程写入的所有缓存key
+	private static ThreadLocal<List<String>>  TransactionWriteCacheKeys = new ThreadLocal<>();
+	
+	protected static CacheProvider cacheProvider;
 	
 	private CacheMethodDefine methodDefine;
 	
-	//CRUD框架驱动 default，mapper3，mybatis-plus
-	private String crudDriver = "mapper3";
+	//CRUD框架驱动 default，mapper3
+	private String crudDriver = "default";
+	
+	private ScheduledExecutorService clearExpiredGroupKeysTimer;
 	
 	public void setCacheProvider(CacheProvider cacheProvider) {
-		this.cacheProvider = cacheProvider;
+		CacheHandler.cacheProvider = cacheProvider;
 	}
 
 	public void setCrudDriver(String crudDriver) {
@@ -169,6 +174,8 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 							if(logger.isDebugEnabled())logger.debug("method[{}] update cacheKey:{}",mt.getId(),cacheByPkKey);
 							//插入其他唯一字段引用
 							if(insertCommond)cacheUniqueSelectRef(args[1], mt, cacheByPkKey);
+							//
+							addCurrentThreadCacheKey(cacheByPkKey);
 						}
 					}
 				}				
@@ -259,8 +266,6 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		if("mapper3".equalsIgnoreCase(crudDriver)){
 			methodDefine = new Mapper3CacheMethodDefine();
-		}else if("mybatis-plus".equalsIgnoreCase(crudDriver)){
-			methodDefine = new MybatisPlusCacheMethodDefine();
 		}else{
 			methodDefine = new DefaultCacheMethodDefine();
 		}
@@ -326,6 +331,24 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 			generateUpdateCacheMethod(mapperClass, ei.getEntityClass(), keyPatternForPK);
 		}
 		
+		//
+		registerClearExpiredGroupKeyTask();
+	}
+	
+	private void registerClearExpiredGroupKeyTask(){
+		clearExpiredGroupKeysTimer = Executors.newScheduledThreadPool(1);
+		clearExpiredGroupKeysTimer.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				for (String key : groupKeys) {
+					try {						
+						cacheProvider.clearExpiredGroupKeys(key);
+					} catch (Exception e) {
+						logger.warn("clearExpiredGroupKeys for {} error!!",key);
+					}
+				}
+			}
+		}, 5, 60, TimeUnit.MINUTES);
 	}
 	
 	/**
@@ -345,7 +368,9 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 				methodCache.uniqueResult = true;
 				methodCache.keyPattern = entityClass.getSimpleName() + ".id:%s";
 				methodCache.methodName = mapperClass.getName() + "." + methodDefine.selectName();
-				methodCache.cacheGroupKey = entityClass.getSimpleName() + "~keys";
+				methodCache.cacheGroupKey = entityClass.getSimpleName() + GROUPKEY_SUFFIX;
+				//
+				groupKeys.add(methodCache.cacheGroupKey);
 			}
 		}
 		return methodCache;
@@ -353,7 +378,7 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 	
 	private QueryMethodCache generateSelectAllMethod(Class<?> mapperClass,Class<?> entityClass){
 		QueryMethodCache methodCache = new QueryMethodCache();
-		methodCache.cacheGroupKey = entityClass.getSimpleName() + "~keys";
+		methodCache.cacheGroupKey = entityClass.getSimpleName() + GROUPKEY_SUFFIX;
 		methodCache.methodName = mapperClass.getName() + "." + methodDefine.selectAllName();
 		methodCache.keyPattern = entityClass.getSimpleName() + ".all";
 		methodCache.isPk = false;
@@ -395,7 +420,7 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 		String methodName = mapperClass.getName() + SPLIT_PONIT + method.getName();
 		methodCache.methodName = methodName;
 		methodCache.fieldNames = new String[method.getParameterTypes().length];
-		methodCache.cacheGroupKey = entityClass.getSimpleName() + "~keys";
+		methodCache.cacheGroupKey = entityClass.getSimpleName() + GROUPKEY_SUFFIX;
 		
 		StringBuilder sb = new StringBuilder(entityClass.getSimpleName());
 		
@@ -452,17 +477,35 @@ public class CacheHandler implements InterceptorHandler,InitializingBean {
 		public SqlCommandType sqlCommandType;
 		
 		public UpdateByPkMethodCache(Class<?> entityClass,String methodName, String keyPattern, SqlCommandType sqlCommandType) {
-			this.cacheGroupKey = entityClass.getSimpleName() + "~keys";
+			this.cacheGroupKey = entityClass.getSimpleName() + GROUPKEY_SUFFIX;
 			this.keyPattern = keyPattern;
 			this.sqlCommandType = sqlCommandType;
 		}
 	}
 	
-	public static void rollbackCache(){
-		List<String> keys = currentThreadAutoCacheKeys.get();
+	private void addCurrentThreadCacheKey(String key){
+		List<String> keys =  TransactionWriteCacheKeys.get();
+		if(keys == null){
+			keys = new ArrayList<>();
+			 TransactionWriteCacheKeys.set(keys);
+		}
+		keys.add(key);
+	}
+	
+	/**
+	 * 回滚当前事务写入的缓存
+	 */
+	public void rollbackCache(){
+		List<String> keys =  TransactionWriteCacheKeys.get();
 		if(keys == null)return;
 		for (String key : keys) {
-			
+			cacheProvider.remove(key);
 		}
+	}
+
+	@Override
+	public void destroy() throws Exception {
+		cacheProvider.close();
+		clearExpiredGroupKeysTimer.shutdown();
 	}
 }

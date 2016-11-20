@@ -25,13 +25,13 @@
 			password="123456">
 		</jdbcConnection>
 
-		<javaModelGenerator targetPackage="com.jeesuite.tutorial.entity" targetProject="src/main/java">
+		<javaModelGenerator targetPackage="com.jeesuite.mybatis.test.entity" targetProject="src/test/java">
 		   <property name="rootClass" value="com.jeesuite.mybatis.core.BaseEntity"/>
 		</javaModelGenerator>
 			
-		<sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources" />
-		<javaClientGenerator targetPackage="com.jeesuite.tutorial.mapper"
-			targetProject="src/main/java" type="XMLMAPPER" />
+		<sqlMapGenerator targetPackage="mapper" targetProject="src/test/resources" />
+		<javaClientGenerator targetPackage="com.jeesuite.mybatis.test.mapper"
+			targetProject="src/test/java" type="XMLMAPPER" />
 
 		<table tableName="users" domainObjectName="UserEntity">
 			<generatedKey column="id" sqlStatement="Mysql" identity="true" />

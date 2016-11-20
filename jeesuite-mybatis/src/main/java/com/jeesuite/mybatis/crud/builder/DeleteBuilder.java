@@ -56,15 +56,13 @@ public class DeleteBuilder {
 
 		// 从表注解里获取表名等信息
 		TableMapper tableMapper = entityMapper.getTableMapper();
-		Set<ColumnMapper> idColumnMappers = entityMapper.getIdColumnsMapper();
+		ColumnMapper idColumn = entityMapper.getIdColumn();
 
 		// 根据字段注解和属性值联合生成sql语句
 		BEGIN();
 		DELETE_FROM(tableMapper.getName());
 
-		for (ColumnMapper columnMapper : idColumnMappers) {
-			WHERE(columnMapper.getColumn() + "=#{" + columnMapper.getProperty() + "}");
-		}
+		WHERE(idColumn.getColumn() + "=#{" + idColumn.getProperty() + "}");
 
 		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, SQL());
 	}

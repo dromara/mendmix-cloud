@@ -3,7 +3,11 @@
  */
 package com.jeesuite.mybatis.plugin.cache.provider;
 
+import java.io.IOException;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.cache.command.RedisSortSet;
@@ -16,6 +20,7 @@ import com.jeesuite.mybatis.plugin.cache.CacheProvider;
  */
 public class DefaultCacheProvider implements CacheProvider{
 
+	protected static final Logger logger = LoggerFactory.getLogger(DefaultCacheProvider.class);
 	//计算关联key集合权重的基数。2016/10/1的时间戳(精确到小时)
 	private long baseScoreInRegionKeysSet = 1475251200;
 
@@ -65,5 +70,21 @@ public class DefaultCacheProvider implements CacheProvider{
 		long score = currentTime + expireSeconds - this.baseScoreInRegionKeysSet;
 		return score;
 	}
+
+	@Override
+	public void clearGroupKey(String groupKey, String subKey) {
+		new RedisSortSet(groupKey).remove(subKey);
+	}
+
+
+	@Override
+	public void clearExpiredGroupKeys(String groupKey) {
+		long maxScore = System.currentTimeMillis()/1000 - this.baseScoreInRegionKeysSet;
+		new RedisSortSet(groupKey).removeByScore(0, maxScore);
+		logger.debug("clearExpiredGroupKeys runing:cacheName:{} , score range:0~{}",groupKey,maxScore);
+	}
+	
+	@Override
+	public void close() throws IOException {}
 
 }

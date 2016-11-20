@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import redis.clients.util.SafeEncoder;
+
 import static com.jeesuite.cache.redis.JedisProviderFactory.*;
 
 /**
@@ -50,17 +52,17 @@ public class RedisSortSet extends RedisCollection {
 	
 	/**
 	 * 新增元素
-	 * @param weight 权重
+	 * @param score 权重
 	 * @param value  元素
 	 * @return
 	 */
-	public boolean add(double weight, Object value){
+	public boolean add(double score, Object value){
         try {   
         	boolean result = false;
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).zadd(key, weight, valueSerialize(value)) >= 1;
+        		result = getBinaryJedisClusterCommands(groupName).zadd(key, score, valueSerialize(value)) >= 1;
         	}else{
-        		result = getBinaryJedisCommands(groupName).zadd(key, weight, valueSerialize(value)) >= 1;
+        		result = getBinaryJedisCommands(groupName).zadd(key, score, valueSerialize(value)) >= 1;
         	}
         	//设置超时时间
         	if(result)setExpireIfNot(expireTime);
@@ -130,6 +132,22 @@ public class RedisSortSet extends RedisCollection {
         		result = getBinaryJedisCommands(groupName).zrange(key, start, end);
         	}
         	return toObjectList(new ArrayList<>(result));
+    	} finally{
+			getJedisProvider(groupName).release();
+		}
+	}
+    
+    public boolean removeByScore(long min,long max){
+        try {   
+        	boolean result = false;
+        	byte[] start = SafeEncoder.encode(String.valueOf(min));
+        	byte[] end = SafeEncoder.encode(String.valueOf(max));
+        	if(isCluster(groupName)){
+        		result = getBinaryJedisClusterCommands(groupName).zremrangeByScore(key, start, end) >= 1;
+        	}else{
+        		result = getBinaryJedisCommands(groupName).zremrangeByScore(key, start, end) >= 1;
+        	}
+			return result;
     	} finally{
 			getJedisProvider(groupName).release();
 		}

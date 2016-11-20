@@ -8,10 +8,16 @@
 ```
 #### 一些说明
 ##### 代码生成及其自动crud
-说明：这一部分代码我实现了一个简单的版本，后面发现有几个比较优秀的mybatis增强框架专注做自动crud功能的，所以已经做了无缝对接推荐使用它们。
-两个框架都提供了代码生成的方法，这里不多说。
-* [Mapper](http://git.oschina.net/free/Mapper)
-* [mybatis-plus](http://git.oschina.net/baomidou/mybatis-plus)
+
+已实现方法
+- getByKey
+- insert
+- insertSelective
+- deleteByKey
+- selectAll
+
+### 特别说明：
+已经无缝对接优秀的mybatis增强框架 [Mapper](http://git.oschina.net/free/Mapper) ，该框架功能强大，该部分推荐集成Mapper。
 
 ---
 ##### 其他功能说明
@@ -98,8 +104,10 @@ slave1~n,group1~n依次递增(第一组group0默认省略)
                            <bean class="com.jeesuite.mybatis.plugin.cache.CacheHandler" />
                            <!--开启读写分离-->
                            <bean class="com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler">
-                              <!--CRUD框架驱动 mapper3，mybatis-plus,默认是mapper3-->
-                              <property name="crudDriver" value="mapper3" />
+                              <!--CRUD框架驱动 集成Mapper框架选择：mapper3,默认是default-->
+                              <property name="crudDriver" value="default" />
+                              <!--如何你要自定义CacheProvider实现，否则将使用cache模块是的实现-->
+                              <property name="cacheProvider" ref="你的CacheProvider实现" />
                            </bean>
                            <!-- 
                             开启分库路由
@@ -111,8 +119,8 @@ slave1~n,group1~n依次递增(第一组group0默认省略)
             </array>
         </property>
 	</bean>
-	<!--集成Mapper框架的配置-->
-	<bean class="tk.mybatis.spring.mapper.MapperScannerConfigurer">
+	<!--集成Mapper框架的配置,此处修改为tk.mybatis.spring.mapper.MapperScannerConfigurer-->
+	<bean class="com.jeesuite.mybatis.spring.MapperScannerConfigurer">
         <property name="sqlSessionFactoryBeanName" value="routeSqlSessionFactory" />
 		<property name="basePackage" value="com.jeesuite.demo.dao.mapper" />
     </bean>
@@ -130,3 +138,17 @@ public interface UserEntityMapper extends BaseMapper<UserEntity> {
 }
 ```
 配置完成即可，查询会自动缓存、更新会自动更新。
+
+#### 一些其他说明
+##### 开启了自动缓存数据库事务失败写入缓存如何处理？
+- 在事务失败后调用CacheHandler.rollbackCache(),通常在业务的拦截器统一处理
+##### 自动缓存的实体如何更新？
+- 首先查询出实体对象，UserEntity entity = mapper.get...(id);
+- 然后通过mapper.updateSelective(entity);
+
+不如不全量更新会导致缓存的内容是有部分字段，因为update后会那最新的entity更新缓存。
+##### 如果手动更新或写入实体缓存
+- EntityCacheHelper.cache(T entity);
+- EntityCacheHelper.removeCache(T entity);
+- EntityCacheHelper.cache(Class<? extends BaseEntity> entityClass,String key,Object value);//该函数适用
+- EntityCacheHelper.removeCache(Class<? extends BaseEntity> entityClass,String key)
