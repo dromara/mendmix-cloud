@@ -495,7 +495,7 @@ public class CacheHandler implements InterceptorHandler,InitializingBean,Disposa
 	/**
 	 * 回滚当前事务写入的缓存
 	 */
-	public void rollbackCache(){
+	public static void rollbackCache(){
 		List<String> keys =  TransactionWriteCacheKeys.get();
 		if(keys == null)return;
 		for (String key : keys) {
