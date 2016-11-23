@@ -1,5 +1,7 @@
 package com.jeesuite.kafka.producer;
 
+import java.io.Serializable;
+
 import com.jeesuite.kafka.message.DefaultMessage;
 
 /**
@@ -17,6 +19,15 @@ public interface TopicProducer {
 	 * @return
 	 */
 	boolean publish(final String topic, final DefaultMessage message,boolean asynSend);
+	
+	/**
+	 * 发送任意消息对象（兼容非配套使用的consumer端）
+	 * @param topic
+	 * @param message
+	 * @param asynSend
+	 * @return
+	 */
+	boolean publishNoWrapperObject(final String topic, final Serializable message,boolean asynSend);
 	
 	void close();
 }

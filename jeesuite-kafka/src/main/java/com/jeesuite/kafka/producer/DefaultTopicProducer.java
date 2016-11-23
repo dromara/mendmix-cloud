@@ -1,6 +1,8 @@
 package com.jeesuite.kafka.producer;
 
 import java.io.Closeable;
+import java.io.Serializable;
+import java.util.UUID;
 import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.Validate;
@@ -102,5 +104,42 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
         this.kafkaProducer.close();
         producerResultHanlder.close();
     }
+
+
+	@Override
+	public boolean publishNoWrapperObject(final String topic, final Serializable message, boolean asynSend) {
+
+		final String messageKey = UUID.randomUUID().toString();
+		
+		if(asynSend){
+			// 异步发送
+	        this.kafkaProducer.send(new ProducerRecord<String, Object>(topic, messageKey,message), new Callback() {
+	            @Override
+	            public void onCompletion(RecordMetadata metadata, Exception ex) {
+	                if (ex != null) {
+	                	log.error("kafka_send_fail,topic="+topic+",messageId="+messageKey,ex);
+	                } else {
+	                    if (log.isDebugEnabled()) {
+	                        log.debug("kafka_send_success,topic=" + topic + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
+	                    }
+	                }
+	            }
+	        });
+	        return true;
+		}else{
+			try {			
+				Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<String, Object>(topic, messageKey,message));
+				RecordMetadata metadata = future.get();
+				if (log.isDebugEnabled()) {
+	                log.debug("kafka_send_success,topic=" + topic + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
+	            }
+				return true;
+			} catch (Exception ex) {
+	        	log.error("kafka_send_fail,topic="+topic+",messageId="+messageKey,ex);
+	        	throw new RuntimeException(ex);
+			}
+		}
+
+	}
     
 }

@@ -1,5 +1,6 @@
 package com.jeesuite.kafka.spring;
 
+import java.io.Serializable;
 import java.util.Properties;
 import java.util.Set;
 
@@ -128,6 +129,27 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 	 */
 	public boolean publish(String topicName, DefaultMessage message,boolean asynSend){
 		return producer.publish(topicName, message,asynSend);
+	}
+	
+	/**
+	 * 发送kafka消息（消息体不经过包装，以兼容旧的未配套使用的consumer端消费）
+	 * @param topicName
+	 * @param message
+	 * @return
+	 */
+	public boolean publishNoWrapperObject(final String topicName, final Serializable message) {
+		return publishNoWrapperObject(topicName, message, defaultAsynSend);
+	}
+	
+	/**
+	 * 发送kafka消息（消息体不经过包装，以兼容旧的为配套使用的consumer）
+	 * @param topicName
+	 * @param message
+	 * @param asynSend 是否异步发送
+	 * @return
+	 */
+	public boolean publishNoWrapperObject(final String topicName, final Serializable message, boolean asynSend) {
+		return producer.publishNoWrapperObject(topicName, message,asynSend);
 	}
 
 }

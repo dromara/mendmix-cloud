@@ -71,12 +71,12 @@ public class ProducerResultHandler implements Closeable{
 
 	public void onSuccessed(String topicName, DefaultMessage message) {
 		//计数统计
-		KafkaMonitor.getContext().updateProducerStat(topicName, false);
+		//KafkaMonitor.getContext().updateProducerStat(topicName, false);
 	}
 
 	public void onError(String topicName, DefaultMessage message,boolean isAsynSend) {
 		//计数统计
-		KafkaMonitor.getContext().updateProducerStat(topicName, true);
+		//KafkaMonitor.getContext().updateProducerStat(topicName, true);
 		//同步发送不重试
 		if(isAsynSend == false){
 			return;
