@@ -137,8 +137,8 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 	 * @param message
 	 * @return
 	 */
-	public boolean publishNoWrapperObject(final String topicName, final Serializable message) {
-		return publishNoWrapperObject(topicName, message, defaultAsynSend);
+	public boolean publishNoWrapperMessage(final String topicName, final Serializable message) {
+		return publishNoWrapperMessage(topicName, message, defaultAsynSend);
 	}
 	
 	/**
@@ -148,7 +148,7 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 	 * @param asynSend 是否异步发送
 	 * @return
 	 */
-	public boolean publishNoWrapperObject(final String topicName, final Serializable message, boolean asynSend) {
+	public boolean publishNoWrapperMessage(final String topicName, final Serializable message, boolean asynSend) {
 		return producer.publishNoWrapperObject(topicName, message,asynSend);
 	}
 
