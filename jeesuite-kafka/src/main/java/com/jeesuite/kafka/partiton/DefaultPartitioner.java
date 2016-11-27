@@ -36,13 +36,16 @@ public class DefaultPartitioner implements Partitioner {
         List<PartitionInfo> partitions = cluster.availablePartitionsForTopic(topic);
         int numPartitions = partitions.size();
 
-        long partitionHash = ((DefaultMessage)value).getPartitionHash();
-        //按hash分区
-        if(partitionHash > 0){
-        	long index = partitionHash % numPartitions;
-        	//System.out.println("numPartitions:"+numPartitions+",partitionHash:"+partitionHash + ",index:"+index);
-        	return (int)index;
-        }
+        try {			
+        	long partitionHash = ((DefaultMessage)value).getPartitionHash();
+        	//按hash分区
+        	if(partitionHash > 0){
+        		long index = partitionHash % numPartitions;
+        		//System.out.println("numPartitions:"+numPartitions+",partitionHash:"+partitionHash + ",index:"+index);
+        		return (int)index;
+        	}
+		} catch (ClassCastException e) {}
+        
         if (keyBytes == null) {
             int nextValue = counter.getAndIncrement();
             List<PartitionInfo> availablePartitions = cluster.availablePartitionsForTopic(topic);
