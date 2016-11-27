@@ -13,7 +13,7 @@
 * [jeesuite-admin-web](./docs/admin.md) 
 ---
 ## Version
-### V1.1
+### V1.0.1
 #### kafka模块
 - 兼容遗留消费者、提供发送无封装的消息方法
 - 生产者端监控采集支持
