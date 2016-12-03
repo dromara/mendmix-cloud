@@ -138,7 +138,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 
 	@Override
 	public void destroy() throws Exception {
-		redisCheckTimer.shutdown();
+		if(redisCheckTimer != null)redisCheckTimer.shutdown();
 		try {listener.unsubscribe();} catch (Exception e) {}
 		if(subJedisClient != null){
 			subJedisClient.close();
