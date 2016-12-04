@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -54,6 +56,7 @@ public class EntityHelper {
             Set<ColumnMapper> columnMapperSet = new HashSet<ColumnMapper>();
             // 主键
             ColumnMapper idColumn = null;
+            GenerationType idStrategy = null;
 
             for (Field field : fields) {
 
@@ -81,15 +84,15 @@ public class EntityHelper {
                 columnMapper.setJavaType(field.getType());
 
                 // 是否主键
-                columnMapper.setId(field.isAnnotationPresent(Id.class));
-
-                // 添加到所有字段映射信息
-                columnMapperSet.add(columnMapper);
-
-                // 如果是主键，添加到主键映射信息
-                if (columnMapper.isId()) {
+                if(field.isAnnotationPresent(Id.class)){                	
+                	columnMapper.setId(true);
+                	if(field.isAnnotationPresent(GeneratedValue.class)){ 
+                		idStrategy = field.getAnnotation(GeneratedValue.class).strategy();
+                	}
                 	idColumn = columnMapper;
                 }
+                // 添加到所有字段映射信息
+                columnMapperSet.add(columnMapper);
 
             }
             if (columnMapperSet.size() <= 0) {
@@ -105,6 +108,7 @@ public class EntityHelper {
             entityMapper.setColumnsMapper(columnMapperSet);
             entityMapper.setIdClass(idClass);
             entityMapper.setIdColumn(idColumn);
+            entityMapper.setIdStrategy(idStrategy);
 
             tableMapperCache.put(entityClass, entityMapper);
 

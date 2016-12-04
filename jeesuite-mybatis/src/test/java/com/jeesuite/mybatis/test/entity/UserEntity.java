@@ -19,6 +19,8 @@ public class UserEntity extends BaseEntity {
     private String email;
 
     private Short type;
+    
+    private Short status;
 
     @Column(name = "created_at")
     private Date createdAt;
@@ -110,7 +112,15 @@ public class UserEntity extends BaseEntity {
         this.type = type;
     }
 
-    /**
+    public Short getStatus() {
+		return status;
+	}
+
+	public void setStatus(Short status) {
+		this.status = status;
+	}
+
+	/**
      * @return created_at
      */
     public Date getCreatedAt() {

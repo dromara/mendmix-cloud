@@ -15,16 +15,18 @@ public interface CacheProvider extends Closeable{
 
 	<T> T get(String key);
 	
+	String getStr(String key);
+	
 	boolean set(String key,Object value,long expired);
 	
 	boolean remove(String key);
 	
-	void putGroupKeys(String groupKey,String subKey,long expireSeconds);
+	void putGroupKeys(String cacheGroup,String subKey,long expireSeconds);
 	
-	void clearGroupKeys(String groupKey);
+	void clearGroupKeys(String cacheGroup);
 	
-	void clearGroupKey(String groupKey,String subKey);
+	void clearGroupKey(String cacheGroup,String subKey);
 	
-	void clearExpiredGroupKeys(String groupKey);
+	void clearExpiredGroupKeys(String cacheGroup);
 
 }

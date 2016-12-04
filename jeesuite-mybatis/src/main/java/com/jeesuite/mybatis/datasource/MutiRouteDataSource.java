@@ -38,6 +38,8 @@ import com.alibaba.druid.pool.DruidDataSource;
 public class MutiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean{  
 
 	private static final String MASTER_KEY = "master";
+	
+	private String configLocation = "mysql.properties";
 
 	private ApplicationContext context;
 	
@@ -61,14 +63,17 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 		this.dataSourceLookup = (dataSourceLookup != null ? dataSourceLookup : new JndiDataSourceLookup());
 	}
 
+	public void setConfigLocation(String configLocation) {
+		this.configLocation = configLocation;
+	}
 
 	@Override
 	public void afterPropertiesSet() {
 		
-		File file = new File(Thread.currentThread().getContextClassLoader().getResource("mysql.properties").getPath());
+		File file = new File(Thread.currentThread().getContextClassLoader().getResource(configLocation).getPath());
 		
 		if(file == null || !file.exists()){
-			throw new RuntimeException("classpath 下无数据库配置文件[mysql.properties]");
+			throw new RuntimeException("classpath 下无数据库配置文件[默认mysql.properties]或指定configLocation");
 		}
 		
 		Map<String, DataSourceInfo> map = parsePropertiesFile(file);

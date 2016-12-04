@@ -10,20 +10,22 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.jeesuite.mybatis.core.BaseEntity;
+
 /**
+ * 缓存关联更新
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
- * @date 2015年12月10日
- * @Copyright (c) 2015, jwww
+ * @date 2016年12月4日
  */
-@Target({ ElementType.METHOD, ElementType.TYPE })
+@Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
-public @interface Cache {
+public @interface CacheEvictCascade {
 	/**
-	 * 过期时间(单位：秒)
+	 * 级联更新其他的实体组
 	 * @return
 	 */
-	long expire() default 60 * 60 * 24;
+	Class<? extends BaseEntity>[] cascadeEntities() default {};
 }

@@ -3,12 +3,6 @@
  */
 package com.jeesuite.mybatis.crud.builder;
 
-import static org.apache.ibatis.jdbc.SqlBuilder.BEGIN;
-import static org.apache.ibatis.jdbc.SqlBuilder.SET;
-import static org.apache.ibatis.jdbc.SqlBuilder.SQL;
-import static org.apache.ibatis.jdbc.SqlBuilder.UPDATE;
-import static org.apache.ibatis.jdbc.SqlBuilder.WHERE;
-
 import java.util.Set;
 
 import org.apache.ibatis.mapping.MappedStatement;
@@ -62,24 +56,29 @@ public class UpdateBuilder {
 		// 从表注解里获取表名等信息
 		TableMapper tableMapper = entityMapper.getTableMapper();
 		Set<ColumnMapper> columnMappers = entityMapper.getColumnsMapper();
-
-		// 根据字段注解和属性值联合生成sql语句
-		BEGIN();
-		UPDATE(tableMapper.getName());
-
-		for (ColumnMapper columnMapper : columnMappers) {
-			if (columnMapper.isId()) {
-				WHERE(columnMapper.getColumn() + "=#{" + columnMapper.getProperty() + "}");
+		
+		String idColumn = null;
+		String idProperty = null;
+		StringBuilder set = new StringBuilder();
+		set.append("<trim prefix=\"SET\" suffixOverrides=\",\">");
+		for (ColumnMapper column : columnMappers) {
+			if (!column.isUpdatable()) {
 				continue;
 			}
-			if (!columnMapper.isUpdatable()) {
-				continue;
+			if (column.isId()) {
+				idColumn= column.getColumn();
+				idProperty = column.getProperty();
 			}
-			String setContent = SqlTemplate.wrapIfTag(columnMapper.getProperty(), columnMapper.getColumn() + "=#{" + columnMapper.getProperty() + "}", !selective);
-			SET(setContent);
+			String expr = SqlTemplate.wrapIfTag(column.getProperty(), column.getColumn() +"=#{"+column.getProperty()+"}", !selective);
+			set.append(expr);
+			if(!selective)set.append(",");
 		}
+		if(!selective)set.deleteCharAt(set.length() - 1);
+		set.append("</trim>");
 
-		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, SQL());
+		String sql = String.format(SqlTemplate.UPDATE_BY_KEY, tableMapper.getName(),set.toString(),idColumn,idProperty);
+
+		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
 	}
 
 

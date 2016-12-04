@@ -4,6 +4,7 @@
 package com.jeesuite.test.mybatis;
 
 import java.util.Date;
+import java.util.List;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -36,17 +37,21 @@ public class MybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
-	public void test(){
+	public void testCRUD(){
 		UserEntity entity = new UserEntity();
 		entity.setCreatedAt(new Date());
 		entity.setEmail(RandomStringUtils.random(6, true, true) + "@163.com");
 		entity.setMobile("13800"+RandomUtils.nextLong(100000, 999999));
+		entity.setType((short)1);
+		entity.setStatus((short)1);
 		mapper.insert(entity);
 		
 		entity = new UserEntity();
 		entity.setCreatedAt(new Date());
 		entity.setEmail(RandomStringUtils.random(6, true, true) + "@163.com");
 		entity.setMobile("13800"+RandomUtils.nextLong(100000, 999999));
+		entity.setType((short)2);
+		entity.setStatus((short)2);
 		mapper.insertSelective(entity);
 		
 		mapper.getByKey(entity.getId());
@@ -54,12 +59,40 @@ public class MybatisTest implements ApplicationContextAware{
 		System.out.println(entity.getId());
 		
 		entity.setName("test..");
-		mapper.update(entity);
+		mapper.updateByKey(entity);
 		
 		entity.setMobile(null);
 		entity.setEmail(null);
 		entity.setName("test..22");
-		mapper.updateSelective(entity);
+		mapper.updateByKeySelective(entity);
+	}
+	
+	@Test
+	public void testCache(){
+		System.out.println("------------");
+		UserEntity userEntity = mapper.getByKey(2);
+//		mapper.findByMobile("13800596875");
+//		System.out.println("------------");
+//		mapper.findByMobile("13800808366");
+//		System.out.println("------------");
+//		mapper.findByMobile("13800808366");
+		
+//		mapper.findByStatus((short)1);
+//		mapper.findByStatus((short)2);
+//		mapper.findByStatus((short)1);
+//		mapper.findByStatus((short)2);
+//		
+//		mapper.findByType((short)1);
+//		mapper.findByType((short)1);
+//		
+//		mapper.deleteByKey(1);
+//		mapper.deleteByKey(4);
+//		userEntity.setName("demo");
+//		mapper.updateByKeySelective(userEntity);
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(List.class.isAssignableFrom(Iterable.class) );
 	}
 	
 }

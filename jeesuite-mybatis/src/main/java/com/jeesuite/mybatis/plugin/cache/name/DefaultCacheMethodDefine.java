@@ -24,7 +24,7 @@ public class DefaultCacheMethodDefine implements CacheMethodDefine {
 
 	@Override
 	public String updateName() {
-		return "update,updateSelective";
+		return "updateByKey,updateByKeySelective";
 	}
 
 	@Override

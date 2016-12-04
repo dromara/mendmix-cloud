@@ -12,7 +12,7 @@
 	</appenders>
 
 	<loggers>
-		<logger name="com.jeesuite" level="TRACE"></logger>
+		<logger name="com.jeesuite" level="DEBUG"></logger>
 		<root level="WARN">
 			<appender-ref ref="Console" />
 		</root>

@@ -24,12 +24,12 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
 	/**
 	  * @param entity
 	*/
-	public void update(T entity);
+	public void updateByKey(T entity);
 
 	/**
 	  * @param entity
 	*/
-	public void updateSelective(T entity);
+	public void updateByKeySelective(T entity);
 	
 
     /**

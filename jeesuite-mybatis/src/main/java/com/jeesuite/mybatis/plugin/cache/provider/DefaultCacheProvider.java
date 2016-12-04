@@ -4,14 +4,17 @@
 package com.jeesuite.mybatis.plugin.cache.provider;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.cache.command.RedisObject;
-import com.jeesuite.cache.command.RedisSortSet;
+import com.jeesuite.cache.command.RedisString;
+import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.mybatis.plugin.cache.CacheProvider;
+
+import redis.clients.jedis.JedisCommands;
 
 /**
  * @description <br>
@@ -21,18 +24,28 @@ import com.jeesuite.mybatis.plugin.cache.CacheProvider;
 public class DefaultCacheProvider implements CacheProvider{
 
 	protected static final Logger logger = LoggerFactory.getLogger(DefaultCacheProvider.class);
-	//计算关联key集合权重的基数。2016/10/1的时间戳(精确到小时)
-	private long baseScoreInRegionKeysSet = 1475251200;
+	//计算关联key集合权重的基数
+	private long baseScoreInRegionKeysSet = System.currentTimeMillis()/1000;
 
 	@Override
 	public <T> T get(String key) {
 		return new RedisObject(key).get();
 	}
 
+	@Override
+	public String getStr(String key){
+		return new RedisString(key).get();
+	}
 
 	@Override
 	public boolean set(String key, Object value, long expired) {
-		return new RedisObject(key).set(value, expired);
+		if(value == null)return false;
+		if(value instanceof String){
+			return new RedisString(key).set(value.toString(),expired);
+		}else{
+			return new RedisObject(key).set(value, expired);
+		}
+		
 	}
 
 
@@ -43,22 +56,56 @@ public class DefaultCacheProvider implements CacheProvider{
 
 
 	@Override
-	public void putGroupKeys(String group, String key,long expireSeconds) {
+	public void putGroupKeys(String cacheGroup, String key,long expireSeconds) {
 		long score = calcScoreInRegionKeysSet(expireSeconds);
-		RedisSortSet redis = new RedisSortSet(group);
-		redis.add(score, key);
-		redis.setExpire(expireSeconds);
+		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
+		try {			
+			commands.zadd(cacheGroup, score, key);
+			commands.pexpire(cacheGroup, expireSeconds * 1000);
+		} finally{
+			JedisProviderFactory.getJedisProvider(null).release();
+		}
 	}
 
 	@Override
-	public void clearGroupKeys(String group) {
-		RedisSortSet redis = new RedisSortSet(group);
-		List<String> keys = redis.get();
-		for (String key : keys) {
-			new RedisObject(key).remove();
+	public void clearGroupKeys(String cacheGroup) {
+		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
+		try {	
+			Set<String> keys = commands.zrange(cacheGroup, 0, -1);
+			for (String key : keys) {
+				commands.del(key);
+			}
+			commands.del(cacheGroup);
+		} finally{
+			JedisProviderFactory.getJedisProvider(null).release();
 		}
-		redis.remove();
 	}
+
+	@Override
+	public void clearGroupKey(String cacheGroup, String subKey) {
+		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
+		try {			
+			commands.zrem(cacheGroup, subKey);
+		} finally{
+			JedisProviderFactory.getJedisProvider(null).release();
+		}
+	}
+
+
+	@Override
+	public void clearExpiredGroupKeys(String cacheGroup) {
+		long maxScore = System.currentTimeMillis()/1000 - this.baseScoreInRegionKeysSet;
+		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
+		try {			
+			commands.zremrangeByScore(cacheGroup, 0, maxScore);
+		} finally{
+			JedisProviderFactory.getJedisProvider(null).release();
+		}
+		logger.debug("clearExpiredGroupKeys runing:cacheName:{} , score range:0~{}",cacheGroup,maxScore);
+	}
+	
+	@Override
+	public void close() throws IOException {}
 	
 	/**
 	 * 避免关联key集合越积越多，按插入的先后顺序计算score便于后续定期删除。<br>
@@ -70,21 +117,5 @@ public class DefaultCacheProvider implements CacheProvider{
 		long score = currentTime + expireSeconds - this.baseScoreInRegionKeysSet;
 		return score;
 	}
-
-	@Override
-	public void clearGroupKey(String groupKey, String subKey) {
-		new RedisSortSet(groupKey).remove(subKey);
-	}
-
-
-	@Override
-	public void clearExpiredGroupKeys(String groupKey) {
-		long maxScore = System.currentTimeMillis()/1000 - this.baseScoreInRegionKeysSet;
-		new RedisSortSet(groupKey).removeByScore(0, maxScore);
-		logger.debug("clearExpiredGroupKeys runing:cacheName:{} , score range:0~{}",groupKey,maxScore);
-	}
-	
-	@Override
-	public void close() throws IOException {}
 
 }

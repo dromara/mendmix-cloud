@@ -74,7 +74,7 @@ public class EntityMapper {
 	}
    
 	public boolean autoId(){
-		return idStrategy == GenerationType.AUTO;
+		return idStrategy != null;
 	}
 
 }
