@@ -23,18 +23,19 @@
 #### cache模块
 - 一级缓存增加支持ehcache、原使用guava cache
 - 增加事务回滚缓存同步回滚接口
+- 一级缓存增加分布式开关(distributedMode 默认true)
 
 
 ### mybatis模块
 - 支持自定义配置文件名
 - 增加@CacheEvictCascade注解支持
 - 简化@Cache注解选项
-
-### common2模块
-- 增加excel导入导出封装、支持大数据量方案
+- 优化缓存key生成规则
 
 ### rest模块
 - 优化异常处理
+- 优化通用日志filter
+- 增加SSO、分布式session支持
 
 ---
 ### V1.0
