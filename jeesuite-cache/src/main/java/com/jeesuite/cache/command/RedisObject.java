@@ -10,7 +10,6 @@ import static com.jeesuite.cache.redis.JedisProviderFactory.isCluster;
 
 import java.util.Date;
 
-import com.jeesuite.cache.local.Level1CacheProvider;
 import com.jeesuite.cache.local.Level1CacheSupport;
 
 import redis.clients.util.SafeEncoder;
@@ -121,7 +120,7 @@ public class RedisObject extends RedisBase {
 	public <T> T get() {
 		try {
 			//本地缓存读取
-			T value = Level1CacheProvider.getInstance().get(this.origKey);
+			T value = Level1CacheSupport.getInstance().get(this.origKey);
 			if(value != null)return value;
 			
 			byte[] bytes = null;
@@ -132,7 +131,7 @@ public class RedisObject extends RedisBase {
 			}
 			value = valueDerialize(bytes);
 			//local
-			Level1CacheProvider.getInstance().set(this.origKey, value);
+			Level1CacheSupport.getInstance().set(this.origKey, value);
 			return value;
 		} finally {
 			getJedisProvider(groupName).release();

@@ -4,16 +4,16 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.0.1-SNAPSHOT</version>
+		<version>1</version>
 	</parent>
 	<artifactId>jeesuite-cache</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.1</version>
 		</dependency>
 
 		<dependency>
@@ -33,5 +33,24 @@
 			<artifactId>guava</artifactId>
 			<version>19.0</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>net.sf.ehcache</groupId>
+			<artifactId>ehcache-core</artifactId>
+			<version>2.6.11</version>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>false</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

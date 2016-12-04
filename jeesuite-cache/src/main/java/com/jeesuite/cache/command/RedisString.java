@@ -8,7 +8,6 @@ import static com.jeesuite.cache.redis.JedisProviderFactory.getJedisProvider;
 
 import java.util.Date;
 
-import com.jeesuite.cache.local.Level1CacheProvider;
 import com.jeesuite.cache.local.Level1CacheSupport;
 
 /**
@@ -112,7 +111,7 @@ public class RedisString {
 	}
 	
 	public String get() {
-		String value = Level1CacheProvider.getInstance().get(key);
+		String value = Level1CacheSupport.getInstance().get(key);
 		if(value != null)return value;
 		try {
 			value = getJedisCommands(groupName).get(key);
@@ -120,7 +119,7 @@ public class RedisString {
 		} finally {
 			getJedisProvider(groupName).release();
 			//
-			Level1CacheProvider.getInstance().set(key, value);
+			Level1CacheSupport.getInstance().set(key, value);
 		}
 		
 	}

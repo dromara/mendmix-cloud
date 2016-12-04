@@ -4,10 +4,10 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.0.1-SNAPSHOT</version>
+		<version>1</version>
 	</parent>
 	<artifactId>jeesuite-common</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<description>基础工具类支持</description>
 
 	<dependencies>
@@ -31,5 +31,17 @@
 		</dependency>
 
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>

@@ -4,10 +4,10 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.0.1-SNAPSHOT</version>
+		<version>1.0.1</version>
 	</parent>
 	<artifactId>jeesuite-rest</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1</version>
 
 	<properties>
 		<jackson.version>2.6.4</jackson.version>
@@ -19,7 +19,7 @@
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.1</version>
 		</dependency>
 
 		<dependency>
@@ -121,4 +121,15 @@
 		</dependency>
 	</dependencies>
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

@@ -3,17 +3,17 @@
   <parent>
     <groupId>com.jeesuite</groupId>
     <artifactId>jeesuite-libs</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1</version>
   </parent>
   <artifactId>jeesuite-kafka</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.0.1</version>
 
 	<dependencies>
 
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.1</version>
 		</dependency>
 
 		<dependency>
@@ -108,4 +108,17 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	
 </project>

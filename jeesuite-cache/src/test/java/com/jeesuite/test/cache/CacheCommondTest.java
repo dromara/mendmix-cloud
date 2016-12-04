@@ -87,4 +87,19 @@ public class CacheCommondTest implements ApplicationContextAware{
 		
 	}
 	
+	@Test
+	public void testLocalRedis() throws InterruptedException{
+		//字符串
+		RedisString redisString = new RedisString("User.id:1001");
+		redisString.set("user1001",60);
+		String value = redisString.get();
+		System.out.println(value);
+		value = redisString.get();
+		System.out.println(value);
+		
+		redisString.remove();
+		
+		Thread.sleep(5000);
+	}
+	
 }

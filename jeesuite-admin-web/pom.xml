@@ -4,10 +4,10 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.0.1-SNAPSHOT</version>
+		<version>1</version>
 	</parent>
 	<artifactId>jeesuite-admin-web</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<packaging>war</packaging>
 
 	<dependencies>
@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-kafka</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.1</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.springframework</groupId>

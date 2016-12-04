@@ -38,13 +38,21 @@
 
     <!-- 本地一级缓存支持 -->
     <bean id="level1CacheSupport" class="com.jeesuite.cache.local.Level1CacheSupport">
-         <property name="enable" value="true" />
+         <!-- 是否启用分布式模式 -->
+         <property name="distributedMode" value="true" />
          <property name="servers" value="${redis.servers}" />
-         <property name="maxSize" value="10000" />
-         <property name="timeToLiveSeconds" value="300" />
+         <property name="cacheProvider">
+            <!-- <bean class="com.jeesuite.cache.local.GuavaLevel1CacheProvider">
+               <property name="maxSize" value="10000" />
+               <property name="timeToLiveSeconds" value="300" />
+            </bean> -->
+            <bean class="com.jeesuite.cache.local.EhCacheLevel1CacheProvider">
+               <property name="ehcacheName" value="level1Cache" />
+            </bean>
+         </property>
          <!-- 需要本地缓存缓存组名。多个用,或;隔开 -->
          <property name="cacheNames">
-            <value>User,City</value>
+            <value>UserEntity,CityEntity</value>
          </property>
     </bean>
 	

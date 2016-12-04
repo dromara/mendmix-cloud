@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-libs</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1</version>
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
 	<name>jeesuite-libs</name>
@@ -195,6 +195,7 @@
 	</build>
 
 	<distributionManagement>
+	    <!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
 		<snapshotRepository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>

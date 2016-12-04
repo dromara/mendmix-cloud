@@ -35,10 +35,8 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 	private static String channelName = "clearLevel1Cache";
 	
 	private String servers;
-    private boolean enable = false;
+    private boolean distributedMode = true; //是否启用分布式模式
 	
-	private int maxSize = 100000;
-	private int timeToLiveSeconds = 60 * 24;
 	private String password;
 	
 	private List<String> cacheNames; //
@@ -46,6 +44,8 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 	private JedisPool pupJedisPool;
 	
 	private ScheduledExecutorService redisCheckTimer;
+	
+	private Level1CacheProvider cacheProvider;
 	
 	private LocalCacheSyncListener listener;
 	
@@ -63,14 +63,14 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 	
 
 	public boolean publishSyncEvent(String key){
-		if(enable ==false)return true;
-		for (String prefix : cacheNames) {
-			if(key.indexOf(prefix) == 0){
-				logger.debug("redis publish:{} for key:{}",channelName,key);
-				return publish(channelName, key);
-			}
-		}
-		return true;
+		if(cacheNames == null)return true;
+		if(!distributedMode)return true;
+		String cacheName = key.split("\\.")[0];
+		if(!cacheNames.contains(cacheName))return true;
+		//删除本地
+		cacheProvider.remove(cacheName, key);
+		logger.debug("redis publish:{} for key:{}",channelName,key);
+		return publish(channelName, new ClearCommand(cacheName, key).serialize());
 	}
 	
 	private boolean publish(String channel,String message){
@@ -83,14 +83,45 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		}
 		
 	}
+	
+	public boolean set(String key, Object value) {
+		if(cacheNames == null)return true;
+		String cacheName = key.split("\\.")[0];
+		if(!cacheNames.contains(cacheName))return true;
+		boolean result = cacheProvider.set(cacheName, key, value);
+		if(logger.isDebugEnabled())logger.debug("set LEVEL1 cache:{}",key);
+		return result;
+	}
+
+	public <T> T get(String key) {
+		if(cacheNames == null)return null;
+		String cacheName = key.split("\\.")[0];
+		if(!cacheNames.contains(cacheName))return null;
+		T object = cacheProvider.get(cacheName, key);
+		if(object != null)logger.debug("get cache:{} from LEVEL1",key);
+		return object;
+	}
+
+	public void remove(String key) {
+		if(cacheNames == null)return;
+		String cacheName = key.split("\\.")[0];
+		if(!cacheNames.contains(cacheName))return;
+		cacheProvider.remove(cacheName, key);
+		logger.debug("remove LEVEL1 cache,cacheName:{},key:{}",cacheName,key);
+	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 	
-		if(!enable)return;
-		Validate.notNull(cacheNames);
+		if(cacheNames == null)return;
+		if(cacheProvider == null){
+			cacheProvider = new GuavaLevel1CacheProvider();
+		}
+		//
+		cacheProvider.start();
+		//
+		if(!distributedMode)return;
 		Validate.notBlank(servers);
-		
 		String[] serverInfos = StringUtils.tokenizeToStringArray(servers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS)[0].split(":");
 		
 		final String host =serverInfos[0];
@@ -106,13 +137,11 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 				if(subJedisClient == null){
 					try {
 						subJedisClient = new Jedis(host, port);
-						enable = true;
 						if("PONG".equals(subJedisClient.ping())){							
 							logger.info("subscribe localCache sync channel.....");
 							subJedisClient.subscribe(listener, new String[]{channelName});
 						}
 					} catch (Exception e) {
-						enable = false;
 						try {listener.unsubscribe();} catch (Exception ex) {}
 						try {
 							subJedisClient.close();
@@ -122,7 +151,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 					}
 				}
 			}
-		}, 10, 30, TimeUnit.SECONDS);
+		}, 0, 30, TimeUnit.SECONDS);
 		
 		
 		//
@@ -132,12 +161,11 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		poolConfig.setMaxTotal(10);
 		poolConfig.setMaxWaitMillis(30 * 1000);
 		pupJedisPool = new JedisPool(poolConfig, host, port, 3000, password);
-		
-		Level1CacheProvider.init(cacheNames, maxSize,timeToLiveSeconds);
 	}
 
 	@Override
 	public void destroy() throws Exception {
+		if(cacheProvider != null)cacheProvider.close();
 		if(redisCheckTimer != null)redisCheckTimer.shutdown();
 		try {listener.unsubscribe();} catch (Exception e) {}
 		if(subJedisClient != null){
@@ -153,20 +181,16 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		this.servers = servers;
 	}
 
-	public void setEnable(boolean enable) {
-		this.enable = enable;
-	}
-
-	public void setMaxSize(int maxSize) {
-		this.maxSize = maxSize;
-	}
-
-	public void setTimeToLiveSeconds(int timeToLiveSeconds) {
-		this.timeToLiveSeconds = timeToLiveSeconds;
-	}
-
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public void setCacheProvider(Level1CacheProvider cacheProvider) {
+		this.cacheProvider = cacheProvider;
+	}
+
+	public void setDistributedMode(boolean distributedMode) {
+		this.distributedMode = distributedMode;
 	}
 
 
@@ -188,10 +212,16 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 			super.onMessage(channel, message);
 			if(channel.equals(channelName)){
 				if(CLEAR_ALL.equals(message)){
-					Level1CacheProvider.getInstance().clearAll();
+					cacheProvider.clearAll();
 					logger.info("receive command {} and clear local cache finish!",CLEAR_ALL);
-				}else{					
-					Level1CacheProvider.getInstance().remove(message);
+				}else{	
+					try {						
+						ClearCommand command = ClearCommand.deserialize(message);
+						if(command.isLocalCommand()){
+							return;
+						}
+						cacheProvider.remove(command.getCacheName(), command.getKey());
+					} catch (Exception e) {}
 				}
 			}
 		}

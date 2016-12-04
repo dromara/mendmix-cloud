@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.0.1-SNAPSHOT</version>
+		<version>1</version>
 	</parent>
 	<artifactId>jeesuite-scheduler</artifactId>
 	<version>1.0.0</version>
@@ -13,7 +13,7 @@
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jeesuite</groupId>
@@ -69,6 +69,17 @@
 			<version>${jedis.version}</version>
 			<scope>provided</scope>
 		</dependency>
-
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>
