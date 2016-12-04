@@ -4,10 +4,10 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.0.1</version>
+		<version>1</version>
 	</parent>
 	<artifactId>jeesuite-rest</artifactId>
-	<version>1</version>
+	<version>1.0.1</version>
 
 	<properties>
 		<jackson.version>2.6.4</jackson.version>
