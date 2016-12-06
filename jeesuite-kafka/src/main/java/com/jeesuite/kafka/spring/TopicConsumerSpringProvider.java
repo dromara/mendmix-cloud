@@ -7,6 +7,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.Validate;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.serializer.MessageDeserializer;
+import com.jeesuite.kafka.serializer.MessageSerializer;
 import com.jeesuite.kafka.utils.NodeNameHolder;
 
 
@@ -67,7 +69,10 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		configs.put("zookeeper.session.timeout.ms", "6000"); 
 		
 		configs.put("key.deserializer",StringDeserializer.class.getName());  
-		configs.put("value.deserializer",MessageDeserializer.class.getName());
+		
+		if(!configs.containsKey("value.deserializer")){
+        	configs.put("value.deserializer", MessageDeserializer.class.getName());
+        }
 
 		//同步节点信息
 		groupId = configs.get(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG).toString();
@@ -122,12 +127,7 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		Validate.notEmpty(this.configs, "configs is required");
 		Validate.notEmpty(this.configs.getProperty("group.id"), "kafka configs[group.id] is required");
 		Validate.notEmpty(this.configs.getProperty("bootstrap.servers"), "kafka configs[bootstrap.servers] is required");
-
-        //configs.put("max.poll.records", "100");// It's not available in Kafka 0.9.0.1 version
-        configs.put("max.partition.fetch.bytes", "131072");//128 kb
-        configs.put("key.deserializer",StringDeserializer.class.getName());  
-        configs.put("value.deserializer",MessageDeserializer.class.getName());
-        
+		
         StringBuffer sb = new StringBuffer();
         Iterator itr = this.configs.entrySet().iterator();
 		while (itr.hasNext()) {

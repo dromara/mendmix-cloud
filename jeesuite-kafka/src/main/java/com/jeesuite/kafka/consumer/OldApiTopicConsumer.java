@@ -4,6 +4,7 @@
 package com.jeesuite.kafka.consumer;
 
 import java.io.Closeable;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +44,8 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 	private final static Logger logger = LoggerFactory.getLogger(OldApiTopicConsumer.class);
 	
 	private ConsumerConnector connector;
+	
+	private Deserializer<Object> deserializer;
 	//
 	private Map<String, MessageHandler> topics;
 	//接收线程
@@ -62,7 +66,13 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 	 * @param topics
 	 * @param processThreads 
 	 */
+	@SuppressWarnings("unchecked")
 	public OldApiTopicConsumer(Properties configs, Map<String, MessageHandler> topics,int maxProcessThreads) {
+		
+		try {
+			Class<?> deserializerClass = Class.forName(configs.getProperty("value.deserializer"));
+			deserializer = (Deserializer<Object>) deserializerClass.newInstance();
+		} catch (Exception e) {}
 		this.connector = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(configs));
 		this.topics = topics;
 		
@@ -85,7 +95,7 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 		}
 		
 		StringDecoder keyDecoder = new StringDecoder(new VerifiableProperties());
-		MessageDecoder valueDecoder = new MessageDecoder();
+		MessageDecoder valueDecoder = new MessageDecoder(deserializer);
 
 		Map<String, List<KafkaStream<String, Object>>> consumerMap = this.connector.createMessageStreams(topicCountMap,
 				keyDecoder, valueDecoder);
@@ -140,7 +150,13 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 					try {Thread.sleep(200);} catch (Exception e) {}
 				}
 				try {					
-					final DefaultMessage message = (DefaultMessage) it.next().message();
+					Object _message = it.next().message();
+					DefaultMessage message = null;
+					try {
+						message = (DefaultMessage) _message;
+					} catch (ClassCastException e) {
+						message = new DefaultMessage((Serializable) _message);
+					}
 					//第一阶段处理
 					messageHandler.p1Process(message);
 					//第二阶段处理

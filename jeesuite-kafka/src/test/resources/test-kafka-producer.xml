@@ -19,6 +19,7 @@
                 <prop key="bootstrap.servers" >${kafka.servers}</prop>
                 <prop key="acks">1</prop>
                 <prop key="retries">1</prop>
+                <!-- <prop key="value.serializer">org.apache.kafka.common.serialization.StringSerializer</prop> -->
             </props>
         </property>
     </bean>

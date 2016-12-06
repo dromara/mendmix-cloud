@@ -28,6 +28,7 @@
                 <prop key="auto.offset.reset">smallest</prop>
                 <!-- 131072 = 128kb -->
                 <prop key="max.partition.fetch.bytes">131072</prop>
+                <!-- <prop key="value.deserializer">org.apache.kafka.common.serialization.StringDeserializer</prop> -->
             </props>
         </property>
         <property name="topicHandlers" >
