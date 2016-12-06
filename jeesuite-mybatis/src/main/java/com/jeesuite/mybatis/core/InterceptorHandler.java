@@ -2,6 +2,8 @@ package com.jeesuite.mybatis.core;
 
 import org.apache.ibatis.plugin.Invocation;
 
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext;
+
 /**
  * mybatis插件拦截处理器接口
  * @description <br>
@@ -10,6 +12,10 @@ import org.apache.ibatis.plugin.Invocation;
  * @Copyright (c) 2015, jwww
  */
 public interface InterceptorHandler {
+	
+	void start(JeesuiteMybatisPluginContext context);
+	
+	void close();
 
 	Object onInterceptor(Invocation invocation) throws Throwable;
 	

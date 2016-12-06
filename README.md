@@ -13,10 +13,16 @@
 * [jeesuite-admin-web](./docs/admin.md) 
 
 ---
-## Version
+## Version History
+### V1.0.2 
+#### cache模块
+- 修复1.0.1本地缓存更新的逻辑问题
+- 考虑多个应用使用同一缓存服务器，支持配置bcastScope区别不同应用缓存更新事件
+
+---
 ### V1.0.1
 #### kafka模块
-- 兼容遗留消费者、提供发送无封装的消息方法
+- 兼容遗留kafka系统、支持发送和接收无封装的消息
 - 生产者端监控采集支持
 - new consumer API优化及其大量测试
 
@@ -35,7 +41,6 @@
 ### rest模块
 - 优化异常处理
 - 优化通用日志filter
-- 增加SSO、分布式session支持
 
 ---
 ### V1.0

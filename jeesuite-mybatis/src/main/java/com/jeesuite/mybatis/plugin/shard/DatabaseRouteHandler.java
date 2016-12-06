@@ -14,7 +14,6 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.core.InterceptorType;
@@ -22,6 +21,7 @@ import com.jeesuite.mybatis.datasource.DataSourceContextHolder;
 import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext;
 
 /**
  * 分库自动路由处理
@@ -31,7 +31,7 @@ import com.jeesuite.mybatis.parser.MybatisMapperParser;
  * @date 2015年12月7日
  * @Copyright (c) 2015, jwww
  */
-public class DatabaseRouteHandler implements InterceptorHandler,InitializingBean {
+public class DatabaseRouteHandler implements InterceptorHandler {
 
 
 	protected static final Logger logger = LoggerFactory.getLogger(DatabaseRouteHandler.class);
@@ -160,7 +160,7 @@ public class DatabaseRouteHandler implements InterceptorHandler,InitializingBean
 
 
 	@Override
-	public void afterPropertiesSet() throws Exception {
+	public void start(JeesuiteMybatisPluginContext context) {
 		
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		
@@ -222,6 +222,12 @@ public class DatabaseRouteHandler implements InterceptorHandler,InitializingBean
 	           clazz.isPrimitive()   
 	       );   
 	   }
+
+
+	@Override
+	public void close() {
+		
+	}
 
 } 
 

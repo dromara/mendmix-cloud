@@ -4,10 +4,7 @@
 package com.jeesuite.mybatis.parser;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -23,15 +20,17 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class FileUtils {
 
-	public static Collection<File> listFiles(File directory, final String extensions) {
-		File[] files = directory.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.endsWith(extensions);
-			}
-		});
+	public static List<File> listFiles(List<File> results,File directory, final String extensions) {
 		
-		return Arrays.asList(files);
+		File[] subFiles = directory.listFiles();
+		for (File file : subFiles) {
+			if(file.isDirectory()){
+				listFiles(results, file, extensions);
+			}else if(file.getName().endsWith(extensions)){
+				results.add(file);
+			}
+		}		
+		return results;
 	}
 	
 	public static List<String> listFiles(JarFile jarFile, String extensions) {

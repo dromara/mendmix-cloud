@@ -9,12 +9,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.mapping.MappedStatement;
@@ -22,8 +22,6 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
@@ -31,6 +29,7 @@ import com.jeesuite.mybatis.core.InterceptorType;
 import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheEvictCascade;
 import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
@@ -45,11 +44,9 @@ import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
  * @date 2015年12月7日
  * @Copyright (c) 2015, jwww
  */
-public class CacheHandler implements InterceptorHandler,InitializingBean,DisposableBean {
+public class CacheHandler implements InterceptorHandler {
 
 	protected static final String SPLIT_PONIT = ".";
-	private static final String REGEX_PLACEHOLDER = ":%s";
-	private static final String REGEX_POINT = "\\.";
 	protected static final String GROUPKEY_SUFFIX = "~keys";
 
 	protected static final Logger logger = LoggerFactory.getLogger(CacheHandler.class);
@@ -77,17 +74,10 @@ public class CacheHandler implements InterceptorHandler,InitializingBean,Disposa
 	
 	private CacheMethodDefine methodDefine;
 	
-	//CRUD框架驱动 default，mapper3
-	private String crudDriver = "default";
-	
 	private ScheduledExecutorService clearExpiredGroupKeysTimer;
 	
 	public void setCacheProvider(CacheProvider cacheProvider) {
 		CacheHandler.cacheProvider = cacheProvider;
-	}
-
-	public void setCrudDriver(String crudDriver) {
-		this.crudDriver = crudDriver;
 	}
 
 	@Override
@@ -261,11 +251,9 @@ public class CacheHandler implements InterceptorHandler,InitializingBean,Disposa
 	private String genarateQueryCacheKey(String keyPattern,Object param){
 		if(param instanceof Map){
 			Map<String, Object> map = (Map<String, Object>) param;
-			//DeviceEntity.deviceId:%s.userId:%s
-			Object[] args = new String[map.size()];
-			String[] parts = keyPattern.split(REGEX_POINT);
-			for (int i = 1; i < parts.length; i++) {
-				args[i-1] = map.get(parts[i].replace(REGEX_PLACEHOLDER, "")).toString();
+			Object[] args = new String[map.size()/2];
+			for (int i = 0; i < args.length; i++) {
+				args[i] = String.valueOf(map.get("param" + (i+1)));
 			}
 			return String.format(keyPattern, args);
 		}else if(param instanceof BaseEntity){
@@ -301,8 +289,8 @@ public class CacheHandler implements InterceptorHandler,InitializingBean,Disposa
 
 
 	@Override
-	public void afterPropertiesSet() throws Exception {
-		if("mapper3".equalsIgnoreCase(crudDriver)){
+	public void start(JeesuiteMybatisPluginContext context) {
+		if("mapper3".equalsIgnoreCase(context.getCrudDriver())){
 			methodDefine = new Mapper3CacheMethodDefine();
 		}else{
 			methodDefine = new DefaultCacheMethodDefine();
@@ -470,7 +458,8 @@ public class CacheHandler implements InterceptorHandler,InitializingBean,Disposa
 		methodCache.methodName = methodName;
 		methodCache.fieldNames = new String[method.getParameterTypes().length];
 		methodCache.cacheGroupKey = entityClass.getSimpleName() + GROUPKEY_SUFFIX;
-		methodCache.uniqueResult = method.getReturnType() != List.class && method.getReturnType() != Set.class;
+		//
+		methodCache.uniqueResult = method.getReturnType().isAnnotationPresent(Table.class);
 		
 		StringBuilder sb = new StringBuilder(entityClass.getSimpleName()).append(SPLIT_PONIT).append(method.getName());
 		
@@ -544,8 +533,12 @@ public class CacheHandler implements InterceptorHandler,InitializingBean,Disposa
 	}
 
 	@Override
-	public void destroy() throws Exception {
-		cacheProvider.close();
-		clearExpiredGroupKeysTimer.shutdown();
+	public void close() {
+		try {			
+			cacheProvider.close();
+		} catch (Exception e) {}
+		try {			
+			clearExpiredGroupKeysTimer.shutdown();
+		} catch (Exception e) {}
 	}
 }

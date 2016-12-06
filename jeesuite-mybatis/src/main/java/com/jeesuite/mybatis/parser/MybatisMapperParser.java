@@ -39,6 +39,15 @@ public class MybatisMapperParser {
 	
 	private static List<EntityInfo> entityInfos = new ArrayList<>();
 	
+	private static String mapperFileSuffix = "Mapper.xml";
+	private static String mapperBaseDir;
+	public static void setMapperLocations(String mapperLocations){
+		//classpath:META-INF/mapper/*Mapper.xml
+		mapperLocations = mapperLocations.split(":")[1];
+		int spitPos = mapperLocations.lastIndexOf("/");
+		mapperBaseDir = mapperLocations.substring(0, spitPos);
+		mapperFileSuffix = mapperLocations.substring(spitPos + 1).replace("*", "");
+	}
 	
 	public static List<EntityInfo> getEntityInfos() {
 		doParse();
@@ -76,24 +85,26 @@ public class MybatisMapperParser {
 	private synchronized static void doParse(){
 		if(caches.isEmpty()){
 			try {
-				URL resource = Thread.currentThread().getContextClassLoader().getResource("mapper/");
+				URL resource = Thread.currentThread().getContextClassLoader().getResource(mapperBaseDir);
 				if (resource != null) {			
 					if (resource.getProtocol().equals("file")) {
 						File mapperDir = new File(resource.getPath());
 						File[] files = mapperDir.listFiles();						
 						for (File f : files) {
-							if(f.getName().endsWith("Mapper.xml")){
+							if(f.getName().endsWith(mapperFileSuffix)){
 								parseMapperFile(new FileInputStream(f));
 							}
 						}
 					} else if (resource.getProtocol().equals("jar")) {
-						String jarFilePath = resource.getFile();						
-						jarFilePath	= jarFilePath.substring("file:".length(), jarFilePath.length() - "!/mapper/".length());
+						String jarFilePath = resource.getFile();	
+						//如：mapperBaseDir = mapper 则分割路径 !/mapper/ 
+						int splitPathLength = mapperBaseDir.length() + 3; 
+						jarFilePath	= jarFilePath.substring("file:".length(), jarFilePath.length() - splitPathLength);
 						jarFilePath = java.net.URLDecoder.decode(jarFilePath, "UTF-8");
 
 						JarFile jarFile = new JarFile(jarFilePath);
 						
-						List<String> fileNames = FileUtils.listFiles(jarFile, "Mapper.xml");
+						List<String> fileNames = FileUtils.listFiles(jarFile, mapperFileSuffix);
 						if (fileNames != null && fileNames.size() > 0) {
 							for (String fileName : fileNames) {
 								InputStream inputStream = jarFile.getInputStream(jarFile.getJarEntry(fileName));

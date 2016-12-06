@@ -32,9 +32,9 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 
 	private static final Logger logger = LoggerFactory.getLogger(Level1CacheSupport.class);
 	
-	private static String channelName = "clearLevel1Cache";
+	private String channelName = "clearLevel1_";
 	
-	private String servers;
+	private String bcastServer;
     private boolean distributedMode = true; //是否启用分布式模式
 	
 	private String password;
@@ -64,13 +64,17 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 
 	public boolean publishSyncEvent(String key){
 		if(cacheNames == null)return true;
-		if(!distributedMode)return true;
 		String cacheName = key.split("\\.")[0];
 		if(!cacheNames.contains(cacheName))return true;
 		//删除本地
 		cacheProvider.remove(cacheName, key);
-		logger.debug("redis publish:{} for key:{}",channelName,key);
-		return publish(channelName, new ClearCommand(cacheName, key).serialize());
+		logger.debug("remove local LEVEL1 cache: cacheName:[{}], key:[{}]",cacheName,key);
+		if(!distributedMode)return true;
+		boolean publish = publish(channelName, new ClearCommand(cacheName, key).serialize());
+		if(publish){
+			logger.debug("broadcast <clear-cache> command for key:[{}] by channelName:[{}]",key,channelName);			
+		}
+		return publish;
 	}
 	
 	private boolean publish(String channel,String message){
@@ -121,8 +125,8 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		cacheProvider.start();
 		//
 		if(!distributedMode)return;
-		Validate.notBlank(servers);
-		String[] serverInfos = StringUtils.tokenizeToStringArray(servers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS)[0].split(":");
+		Validate.notBlank(bcastServer);
+		String[] serverInfos = StringUtils.tokenizeToStringArray(bcastServer, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS)[0].split(":");
 		
 		final String host =serverInfos[0];
 		final int port = Integer.parseInt(serverInfos[1]);
@@ -177,8 +181,8 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		
 	}
 
-	public void setServers(String servers) {
-		this.servers = servers;
+	public void setbBcastServer(String servers) {
+		this.bcastServer = servers;
 	}
 
 	public void setPassword(String password) {
@@ -191,6 +195,10 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 
 	public void setDistributedMode(boolean distributedMode) {
 		this.distributedMode = distributedMode;
+	}
+
+	public void setBcastScope(String bcastScope) {
+		this.channelName =  "clearLevel1_" + bcastScope;
 	}
 
 

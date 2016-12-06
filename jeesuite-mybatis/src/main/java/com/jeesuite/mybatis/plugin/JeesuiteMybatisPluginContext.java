@@ -1,5 +1,6 @@
 package com.jeesuite.mybatis.plugin;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -12,10 +13,17 @@ import org.apache.ibatis.plugin.Plugin;
 import org.apache.ibatis.plugin.Signature;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.util.StringUtils;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.core.InterceptorType;
+import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
+import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
+import com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler;
 
 /**
  * mybatis 插件入口
@@ -30,12 +38,37 @@ import com.jeesuite.mybatis.plugin.cache.CacheHandler;
     @Signature(type = Executor.class, method = "query", args = {  
             MappedStatement.class, Object.class, RowBounds.class,  
             ResultHandler.class }) })  
-public class PluginsEntrypoint implements Interceptor{
+public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBean,DisposableBean{
 
-	private List<InterceptorHandler> interceptorHandlers;
+	//CRUD框架驱动 default，mapper3
+	private String crudDriver = "default";
+	private List<InterceptorHandler> interceptorHandlers = new ArrayList<>();
 	
-	public void setInterceptorHandlers(List<InterceptorHandler> interceptorHandlers) {
-		this.interceptorHandlers = interceptorHandlers;
+	//cache,rwRoute,dbShard
+	public void setInterceptorHandlers(String interceptorHandlers) {
+		String[] handlerNames = StringUtils.tokenizeToStringArray(interceptorHandlers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+	    
+		for (String name : handlerNames) {
+			if("cache".equals(name)){
+				this.interceptorHandlers.add(new CacheHandler());
+			}else if("rwRoute".equals(name)){
+				this.interceptorHandlers.add(new RwRouteHandler());
+			}else if("dbShard".equals(name)){
+				this.interceptorHandlers.add(new DatabaseRouteHandler());
+			}
+		}
+	}
+	
+	public void setMapperLocations(String mapperLocations){
+		MybatisMapperParser.setMapperLocations(mapperLocations);
+	}
+
+	public void setCrudDriver(String crudDriver) {
+		this.crudDriver = crudDriver;
+	}
+
+	public String getCrudDriver() {
+		return crudDriver;
 	}
 
 	@Override
@@ -78,8 +111,21 @@ public class PluginsEntrypoint implements Interceptor{
 	}
 
 	@Override
-	public void setProperties(Properties properties) {
-		
+	public void setProperties(Properties properties) {}
+
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		for (InterceptorHandler handler : interceptorHandlers) {
+			handler.start(this);
+		}
+	}
+
+	@Override
+	public void destroy() throws Exception {
+		for (InterceptorHandler handler : interceptorHandlers) {
+			handler.close();
+		}
 	}
 
 }
