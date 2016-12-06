@@ -55,6 +55,11 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	
 	private ErrorMessageDefaultProcessor errorMessageProcessor = new ErrorMessageDefaultProcessor(1);
 	
+	private final Map<TopicPartition, Long> partitionToUncommittedOffsetMap = new ConcurrentHashMap<>();
+	private final List<Future<Boolean>> committedOffsetFutures = new ArrayList<>();
+	
+	private boolean offsetAutoCommit;
+	
 	public NewApiTopicConsumer(Properties configs, Map<String, MessageHandler> topicHandlers,int maxProcessThreads) {
 		super();
 		this.configs = configs;
@@ -63,6 +68,8 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	    fetcheExecutor = Executors.newFixedThreadPool(topicHandlers.size());
 	    //
 	    processExecutor = new StandardThreadExecutor(1, maxProcessThreads, 1000);
+	    //enable.auto.commit 默认为true
+	    offsetAutoCommit = configs.containsKey("enable.auto.commit") == false || Boolean.parseBoolean(configs.getProperty("enable.auto.commit"));
 	}
 
 	@Override
@@ -89,17 +96,14 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		consumer.close();
 	}
 	
-	final Map<TopicPartition, Long> partitionToUncommittedOffsetMap = new ConcurrentHashMap<>();
-	final List<Future<Boolean>> futures = new ArrayList<>();
-	
 	private <K extends Serializable, V extends DefaultMessage> void createKafkaConsumer(){
 		consumer = new KafkaConsumer<>(configs);
 		ConsumerRebalanceListener listener = new ConsumerRebalanceListener() {
 
 			@Override
 			public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-				if (!futures.isEmpty())
-					futures.get(0).cancel(true);
+				if (!committedOffsetFutures.isEmpty())
+					committedOffsetFutures.get(0).cancel(true);
 
 				commitOffsets(partitionToUncommittedOffsetMap);
 			}
@@ -109,7 +113,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 				for (TopicPartition tp : partitions) {
 					OffsetAndMetadata offsetAndMetaData = consumer.committed(tp);
 					long startOffset = offsetAndMetaData != null ? offsetAndMetaData.offset() : -1L;
-					logger.info("Assigned topicPartion : {} offset : {}", tp, startOffset);
+					logger.debug("Assigned topicPartion : {} offset : {}", tp, startOffset);
 
 					if (startOffset >= 0)
 						consumer.seek(tp, startOffset);
@@ -118,7 +122,12 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		};
 
 		List<String> topics = new ArrayList<>(topicHandlers.keySet());
-		consumer.subscribe(topics, listener);
+		
+		if(offsetAutoCommit){			
+			consumer.subscribe(topics);
+		}else{
+			consumer.subscribe(topics, listener);
+		}
 	}
 	
 	
@@ -130,7 +139,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 				partitionToMetadataMap.put(e.getKey(), new OffsetAndMetadata(e.getValue() + 1));
 			}
 
-			logger.info("committing the offsets : {}", partitionToMetadataMap);
+			logger.debug("committing the offsets : {}", partitionToMetadataMap);
 			consumer.commitSync(partitionToMetadataMap);
 			partitionToOffsetMap.clear();
 		}
@@ -147,18 +156,23 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 			ExecutorService executor = Executors.newFixedThreadPool(1);
 
 			while (!closed.get()) {
-
 				ConsumerRecords<String,DefaultMessage> records = consumer.poll(1500);
-
 				// no record found
 				if (records.isEmpty()) {
+					continue;
+				}
+				
+				if(offsetAutoCommit){
+					for (final ConsumerRecord<String,DefaultMessage> record : records) {						
+						processConsumerRecords(record);
+					}
 					continue;
 				}
 
 				//由于处理消息可能产生延时，收到消息后，暂停所有分区并手动发送心跳，以避免consumer group被踢掉
 				consumer.pause(consumer.assignment());
 				Future<Boolean> future = executor.submit(new ConsumeRecords(records, partitionToUncommittedOffsetMap));
-				futures.add(future);
+				committedOffsetFutures.add(future);
 
 				Boolean isCompleted = false;
 				while (!isCompleted && !closed.get()) {
@@ -177,7 +191,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 						break;
 					}
 				}
-				futures.remove(future);
+				committedOffsetFutures.remove(future);
 				consumer.resume(consumer.assignment());
 				commitOffsets(partitionToUncommittedOffsetMap);
 			}
@@ -192,6 +206,31 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 			consumer.close();
 			shutdownLatch.countDown();
 			logger.info("C : {}, consumer exited");
+		}
+		
+		
+		/**
+		 * @param record
+		 */
+		private void processConsumerRecords(final ConsumerRecord<String, DefaultMessage> record) {
+			final MessageHandler messageHandler = topicHandlers.get(record.topic());
+			//第一阶段处理
+			messageHandler.p1Process(record.value());
+			//第二阶段处理
+			processExecutor.submit(new Runnable() {
+				@Override
+				public void run() {
+					try {									
+						messageHandler.p2Process(record.value());
+					} catch (Exception e) {
+						boolean processed = messageHandler.onProcessError(record.value());
+						if(processed == false){
+							errorMessageProcessor.submit(record.value(), messageHandler);
+						}
+						logger.error("["+messageHandler.getClass().getSimpleName()+"] process Topic["+record.topic()+"] error",e);
+					}
+				}
+			});
 		}
 
 		public void close() {
@@ -217,31 +256,14 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 			@Override
 			public Boolean call() {
 
-				logger.info("Number of records received : {}", records.count());
+				logger.debug("Number of records received : {}", records.count());
 				try {
 					for (final ConsumerRecord<String,DefaultMessage> record : records) {
 						TopicPartition tp = new TopicPartition(record.topic(), record.partition());
 						logger.info("Record received topicPartition : {}, offset : {}", tp,record.offset());
 						partitionToUncommittedOffsetMap.put(tp, record.offset());
 						
-						final MessageHandler messageHandler = topicHandlers.get(record.topic());
-						//第一阶段处理
-						messageHandler.p1Process(record.value());
-						//第二阶段处理
-						processExecutor.submit(new Runnable() {
-							@Override
-							public void run() {
-								try {									
-									messageHandler.p2Process(record.value());
-								} catch (Exception e) {
-									boolean processed = messageHandler.onProcessError(record.value());
-									if(processed == false){
-										errorMessageProcessor.submit(record.value(), messageHandler);
-									}
-									logger.error("["+messageHandler.getClass().getSimpleName()+"] process Topic["+record.topic()+"] error",e);
-								}
-							}
-						});
+						processConsumerRecords(record);
 					}
 				} catch (Exception e) {
 					logger.error("Error while consuming", e);

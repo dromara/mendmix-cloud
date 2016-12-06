@@ -7,7 +7,6 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,6 @@ import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.serializer.MessageDeserializer;
-import com.jeesuite.kafka.serializer.MessageSerializer;
 import com.jeesuite.kafka.utils.NodeNameHolder;
 
 
@@ -73,6 +71,10 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		if(!configs.containsKey("value.deserializer")){
         	configs.put("value.deserializer", MessageDeserializer.class.getName());
         }
+		
+		if(useNewAPI && "smallest".equals(configs.getProperty("auto.offset.reset"))){
+			configs.put("auto.offset.reset", "earliest");
+		}
 
 		//同步节点信息
 		groupId = configs.get(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG).toString();
