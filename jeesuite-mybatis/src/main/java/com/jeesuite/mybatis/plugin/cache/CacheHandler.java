@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -92,11 +93,14 @@ public class CacheHandler implements InterceptorHandler {
 			if(cacheInfo == null)return null;
 			final String cacheKey = genarateQueryCacheKey(cacheInfo.keyPattern, args[1]);
 			//按主键查询以及标记非引用关系的缓存直接读取缓存
-			if(cacheInfo.isPk || !cacheInfo.uniqueResult){
+			if(cacheInfo.isSecondQueryById() == false){
 				//从缓存读取
 				Object object = cacheProvider.get(cacheKey);
 				if(object != null){
-					object = new ArrayList<>(Arrays.asList(object));
+					//mybatis返回都是list，所以这里要包装一下
+					if(object instanceof List == false){						
+						object = new ArrayList<>(Arrays.asList(object));
+					}
 					if(logger.isDebugEnabled())logger.debug("method[{}] find result from cacheKey:{}",mt.getId(),cacheKey);
 				}
 				return object;
@@ -135,16 +139,16 @@ public class CacheHandler implements InterceptorHandler {
 			if(result instanceof List){
 				List list = (List)result;
 				if(list.isEmpty())return;
-				result = cacheInfo.uniqueResult ? list.get(0) : result;
+				result = cacheInfo.collectionResult ? result : list.get(0);
 			}
 			final String cacheKey = genarateQueryCacheKey(cacheInfo.keyPattern, args[1]);
 			//按主键查询以及标记非引用关系的缓存直接读取缓存
-			if(cacheInfo.isPk || !cacheInfo.uniqueResult){
+			if(cacheInfo.isSecondQueryById() == false){
 				if(cacheProvider.set(cacheKey,result, cacheInfo.expire)){
 					if(logger.isDebugEnabled())logger.debug("method[{}] put result to cache，cacheKey:{}",mt.getId(),cacheKey);
 				}
 				//结果为集合的情况，增加key到cacheGroup
-				if(!cacheInfo.uniqueResult){
+				if(cacheInfo.groupRalated){
 					cacheProvider.putGroupKeys(cacheInfo.cacheGroupKey, cacheKey,cacheInfo.expire);
 					logger.debug("method[{}] add key:[{}] to group key:[{}]",mt.getId(),cacheInfo.cacheGroupKey, cacheKey);
 				}else{
@@ -224,7 +228,7 @@ public class CacheHandler implements InterceptorHandler {
 	private void cacheUniqueSelectRef(Object object, MappedStatement mt, String cacheKey) {
 		Collection<QueryMethodCache> mcs = queryCacheMethods.get(mt.getId().substring(0, mt.getId().lastIndexOf(SPLIT_PONIT))).values();
 		outter:for (QueryMethodCache methodCache : mcs) {
-			if(methodCache.isPk || !methodCache.uniqueResult)continue;
+			if(methodCache.isPk || methodCache.groupRalated)continue;
 			try {	
 				Object[] cacheFieldValues = new Object[methodCache.fieldNames.length];
 				for (int i = 0; i < cacheFieldValues.length; i++) {
@@ -402,7 +406,7 @@ public class CacheHandler implements InterceptorHandler {
 			if(field.isAnnotationPresent(Id.class)){
 				methodCache = new QueryMethodCache();
 				methodCache.isPk = true;
-				methodCache.uniqueResult = true;
+				methodCache.collectionResult = false;
 				methodCache.keyPattern = entityClass.getSimpleName() + ".id:%s";
 				methodCache.methodName = mapperClass.getName() + "." + methodDefine.selectName();
 				methodCache.cacheGroupKey = entityClass.getSimpleName() + GROUPKEY_SUFFIX;
@@ -419,7 +423,8 @@ public class CacheHandler implements InterceptorHandler {
 		methodCache.methodName = mapperClass.getName() + "." + methodDefine.selectAllName();
 		methodCache.keyPattern = entityClass.getSimpleName() + ".all";
 		methodCache.isPk = false;
-		methodCache.uniqueResult = false;
+		methodCache.collectionResult = true;
+		methodCache.groupRalated = true;
 		return methodCache;
 	}
 	
@@ -459,7 +464,13 @@ public class CacheHandler implements InterceptorHandler {
 		methodCache.fieldNames = new String[method.getParameterTypes().length];
 		methodCache.cacheGroupKey = entityClass.getSimpleName() + GROUPKEY_SUFFIX;
 		//
-		methodCache.uniqueResult = method.getReturnType().isAnnotationPresent(Table.class);
+		methodCache.collectionResult = method.getReturnType() == List.class || method.getReturnType() == Set.class;
+		if(methodCache.collectionResult){			
+			methodCache.groupRalated = true;
+		}else{
+			// count等统计查询
+			methodCache.groupRalated = method.getReturnType().isAnnotationPresent(Table.class) == false;
+		}
 		
 		StringBuilder sb = new StringBuilder(entityClass.getSimpleName()).append(SPLIT_PONIT).append(method.getName());
 		
@@ -494,9 +505,18 @@ public class CacheHandler implements InterceptorHandler {
 		public String keyPattern;
 		public long expire = CacheExpires.IN_1WEEK;//过期时间（秒）
 		public boolean isPk = false;//主键查询
-		public boolean uniqueResult = true;//查询结果是否唯一记录
+		public boolean collectionResult = false;//查询结果是集合
+		public boolean groupRalated = false; //是否需要关联group
 		public String[] fieldNames;//作为查询条件的字段名称
 		public QueryMethodCache() {}
+		
+		/**
+		 * 是否需要通过关联主键二次查询
+		 * @return
+		 */
+		public boolean isSecondQueryById(){
+			return isPk == false && groupRalated == false;
+		}
 	}
 	
 	/**

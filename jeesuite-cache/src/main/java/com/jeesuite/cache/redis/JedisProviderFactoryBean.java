@@ -161,7 +161,7 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 		
 		if(JedisStandaloneProvider.MODE.equalsIgnoreCase(mode) 
 				|| JedisSentinelProvider.MODE.equalsIgnoreCase(mode)){
-			beanDefinitionBuilder.addConstructorArgValue(password)//
+			beanDefinitionBuilder.addConstructorArgValue(org.apache.commons.lang3.StringUtils.trimToNull(password))//
 			    .addConstructorArgValue(database)//
 			    .addConstructorArgValue(clientName);
 		}
