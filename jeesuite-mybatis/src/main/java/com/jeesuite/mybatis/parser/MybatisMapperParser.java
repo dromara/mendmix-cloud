@@ -143,8 +143,9 @@ public class MybatisMapperParser {
 				entityClass = xNode.getStringAttribute("type");
 				entityInfo = new EntityInfo(mapperClass, entityClass);
 				
-				if(entityInfo.getMapperClass() == null){				
-					log.error("------{}或{}配置路径不正确，请检查对应mapper文件------",entityClass,mapperClass);
+				if(entityInfo.getErrorMsg() != null){				
+					log.warn(">>{},skip！！！！！",entityInfo.getErrorMsg());
+					continue;
 				}
 				
 				entityInfos.add(entityInfo);

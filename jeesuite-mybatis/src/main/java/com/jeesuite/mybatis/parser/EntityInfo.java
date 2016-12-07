@@ -28,14 +28,26 @@ public class EntityInfo {
 	
 	private Map<String, String> mapperSqls = new HashMap<>();
 	
+	private String errorMsg;
+	
+	public String getErrorMsg() {
+		return errorMsg;
+	}
+
 	public EntityInfo(String mapperClassName, String entityClassName) {
 		try {
 			if(StringUtils.isNotBlank(entityClassName))entityClass = Class.forName(entityClassName);
-			this.tableName = entityClass.getAnnotation(Table.class).name();
+			if(entityClass.isAnnotationPresent(Table.class)){
+				this.tableName = entityClass.getAnnotation(Table.class).name();
+			}else{
+				errorMsg = "entityClass[" + entityClassName +"] not found annotation[@Table]";
+				return;
+			}
 			mapperClass = Class.forName(mapperClassName);
-		} catch (Exception e) {
-			e.printStackTrace();
-			entityClass = null;
+		} catch (ClassNotFoundException e) {
+			errorMsg = e.getMessage();
+		}catch (Exception e) {
+			errorMsg = String.format("parse error,please check class[{}] and [{}]", entityClassName,mapperClassName);
 		}
 	}
 	
