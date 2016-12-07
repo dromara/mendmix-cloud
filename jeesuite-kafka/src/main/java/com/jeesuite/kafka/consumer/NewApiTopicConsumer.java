@@ -148,7 +148,6 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	private class ConsumerWorker implements Runnable {
 
 		private AtomicBoolean closed = new AtomicBoolean();
-		private CountDownLatch shutdownLatch = new CountDownLatch(1);
 
 		@Override
 		public void run() {
@@ -204,8 +203,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 				logger.error("Error while exiting the consumer");
 			}
 			consumer.close();
-			shutdownLatch.countDown();
-			logger.info("C : {}, consumer exited");
+			logger.info("consumer exited");
 		}
 		
 		
@@ -234,12 +232,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		}
 
 		public void close() {
-			try {
-				closed.set(true);
-				shutdownLatch.await();
-			} catch (InterruptedException e) {
-				logger.error("Error", e);
-			}
+			closed.set(true);
 		}
 
 		private class ConsumeRecords implements Callable<Boolean> {
