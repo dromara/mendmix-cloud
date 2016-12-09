@@ -35,15 +35,11 @@
 		<property name="typeAliasesPackage" value="com.jeesuite.mybatis.test.entity" />
 		<property name="plugins">
             <array>
-                <bean class="com.jeesuite.mybatis.plugin.PluginsEntrypoint">
-                    <property name="interceptorHandlers">
-                       <list>
-                           <bean class="com.jeesuite.mybatis.plugin.cache.CacheHandler" />
-                           <!-- <bean class="com.jeesuite.mybatis.plugin.rwseparate.routeHandler" />
-                           <bean class="com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler" /> -->
-                       </list>
-                    </property>
-                </bean>
+                <bean class="com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext">
+					<property name="crudDriver" value="default" />
+				    <property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
+				    <property name="interceptorHandlers" value="cache" />
+				</bean> 
             </array>
         </property>
 	</bean>

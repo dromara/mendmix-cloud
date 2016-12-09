@@ -13,8 +13,8 @@
 
 	<loggers>
 		<logger name="com.jeesuite" level="TRACE"></logger>
-		<logger name="org.apache.kafka" level="DEBUG"></logger>
-		<logger name="kafka" level="DEBUG"></logger>
+		<!-- <logger name="org.apache.kafka" level="DEBUG"></logger>
+		<logger name="kafka" level="DEBUG"></logger> -->
 		<root level="info">
 			<appender-ref ref="Console" />
 		</root>

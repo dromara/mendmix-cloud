@@ -1,6 +1,10 @@
 ## Introduction
-**jeesuite-libs**是整理的近几年封装的一些基础组件包，计划陆续整理成一个java后台服务开发套件，包括整合dubbo服务化，rest API接口发布等。目前这些模块都在千万级会员、日UV百万线上稳定运行，可用于生产环境。
+**jeesuite-libs**是整理的近几年封装的一些基础组件包，计划陆续整理成一个java后台服务开发套件，包括整合dubbo服务化，rest API接口发布等。目前这些模块可用于生产环境，1.0版在千万级会员、日UV200万某互联网公司稳定运行。
 ---
+release版已经上传maven中心仓库
+* [sonatype](https://oss.sonatype.org/content/repositories/releases/com/jeesuite/) 
+* [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
+
 ## doc
 * jeesuite-common
 * jeesuite-common2
@@ -10,7 +14,6 @@
 * [jeesuite-mybatis](./docs/mybatis.md) 
 * [jeesuite-rest](./docs/rest.md) 
 * [jeesuite-confcenter](./docs/confcenter.md)
-* [jeesuite-admin-web](./docs/admin.md) 
 
 ---
 ## Version History
@@ -41,6 +44,11 @@
 ### rest模块
 - 优化异常处理
 - 优化通用日志filter
+
+#### scheduler模块
+- 增加当节点执行逻辑判断
+- 增加兼容注册中心不可用逻辑
+- 增加支持控制台强制更新下次执行时间
 
 ---
 ### V1.0

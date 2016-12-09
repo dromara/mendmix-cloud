@@ -17,13 +17,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.jeesuite.common.json.JsonUtils;
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.kafka.monitor.model.BrokerInfo;
 import com.jeesuite.kafka.monitor.model.ConsumerGroupInfo;
-import com.jeesuite.kafka.monitor.model.TopicInfo;
-import com.jeesuite.kafka.monitor.model.TopicPartitionInfo;
-import com.jeesuite.kafka.utils.KafkaConst;
 
 /**
  * 
@@ -33,17 +28,13 @@ import com.jeesuite.kafka.utils.KafkaConst;
  */
 public class KafkaMonitor implements Closeable{
 
-	private KafkaZookeeperHelper zkHelper = KafkaZookeeperHelper.getInstance();
-	
-	private KafkaMonitorHelper kafkaHelper = new KafkaMonitorHelper();
-
-	private static KafkaMonitor context = new KafkaMonitor();;
-	
-	private List<TopicInfo> topicStats = new ArrayList<>();
+	private ZkConsumerCommand zkConsumerCommand;
+	private KafkaConsumerCommand kafkaConsumerCommand;
 	
 	//消费延时阀值
 	private int latThreshold = 2000;
 	
+	private List<ConsumerGroupInfo> consumerGroupResult = new ArrayList<>();
 	private int currentStatHourOfDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY); //当前统计的小时
 	//<topic,[success,error]>
 	private Map<String, AtomicLong[]> producerStats = new HashMap<>();
@@ -51,16 +42,21 @@ public class KafkaMonitor implements Closeable{
 	//
 	private ScheduledExecutorService statScheduler;
 	
-	
 	Lock lock = new ReentrantLock();// 锁 
-	
-	public static KafkaMonitor getContext() {
-		return context;
+
+
+	private KafkaMonitor(String zkServers,String kafkaServers,int latThreshold) {
+		this.latThreshold = latThreshold;
+		zkConsumerCommand = new ZkConsumerCommand(zkServers, kafkaServers);
+		kafkaConsumerCommand = new KafkaConsumerCommand(kafkaServers);
+		// 
+		initCollectionTimer();
 	}
 
-	private KafkaMonitor() {
-		latThreshold = Integer.parseInt(ResourceUtils.get(KafkaConst.PROP_TOPIC_LAT_THRESHOLD, "100"));
-		// 
+	/**
+	 * 
+	 */
+	private void initCollectionTimer() {
 		statScheduler = Executors.newScheduledThreadPool(1);
 		statScheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
@@ -72,17 +68,19 @@ public class KafkaMonitor implements Closeable{
 					if(hourOfDay != currentStatHourOfDay){
 						producerStats.clear();
 					}
-					//清除缓存
+					//抓取kafka消费组信息
+					fetchConsumerGroupFromKafkaAndZK();
 				} finally {
 					lock.unlock();
 				}
 			}
-		}, 1, 30, TimeUnit.SECONDS);
+		}, 1, 5, TimeUnit.SECONDS);
 	}
 	
 	public void close(){
 		statScheduler.shutdown();
-		zkHelper.close();
+		kafkaConsumerCommand.close();
+		zkConsumerCommand.close();
 	}
 	
 	public void updateProducerStat(String topic,boolean error){
@@ -99,45 +97,31 @@ public class KafkaMonitor implements Closeable{
 	}
 	
 	public List<BrokerInfo> getAllBrokers(){
-		return zkHelper.fetchAllBrokers();
+		return zkConsumerCommand.fetchAllBrokers();
 	}
 	
 	public List<ConsumerGroupInfo> getAllConsumerGroupInfos(){
-		List<ConsumerGroupInfo> consumerGroups = zkHelper.fetchAllConsumerGroups();
-		for (ConsumerGroupInfo consumerGroup : consumerGroups) {
-			loadTopicInfoInConsumerGroup(consumerGroup);
-			//分析延时
-			consumerGroup.analysisLatThresholdStat(latThreshold);
-			//
-			consumerGroup.setClusterNodes(zkHelper.getConsumerClusterNodes(consumerGroup.getGroupName()));
+		if(consumerGroupResult.isEmpty()){
+			fetchConsumerGroupFromKafkaAndZK();
 		}
-		return consumerGroups;
+		return consumerGroupResult;
 	}
 
-	private void loadTopicInfoInConsumerGroup(ConsumerGroupInfo group){
-		List<String> subscribeTopics = zkHelper.getSubscribeTopics(group.getGroupName());
-		for (String topic : subscribeTopics) {
-			TopicInfo topicInfo = new TopicInfo();
-			topicInfo.setTopicName(topic);
-			List<TopicPartitionInfo> topicPartitions = zkHelper.getTopicOffsets(group.getGroupName(), topic);
-			for (TopicPartitionInfo partition : topicPartitions) {
-				kafkaHelper.getTopicPartitionLogSize(partition);
-				//owner
-				String owner = zkHelper.fetchPartitionOwner(group.getGroupName(), topic, partition.getPartition());
-				if(owner != null){
-					partition.setOwner(owner);
-					if(!group.isActived()){
-						group.setActived(true);
-					}
-				}
-			}
-			if(topicPartitions.size() > 0){
-				topicInfo.setPartitionNums(topicPartitions.size());
-				topicInfo.setPartitions(topicPartitions);
-				group.getTopics().add(topicInfo);
-			}
+	/**
+	 * @return
+	 */
+	private synchronized void fetchConsumerGroupFromKafkaAndZK() {
+		consumerGroupResult = kafkaConsumerCommand.getAllConsumerGroups();
+		List<ConsumerGroupInfo> list2 = zkConsumerCommand.getAllConsumerGroups();
+		
+		if(list2 != null && list2.size() > 0){
+			consumerGroupResult.addAll(list2);
+		}
+		for (ConsumerGroupInfo consumer : list2) {
+			consumer.analysisLatThresholdStat(latThreshold);
 		}
 	}
+
 	
 	/**
 	 *  kafka生产者统计
@@ -158,11 +142,7 @@ public class KafkaMonitor implements Closeable{
 
 	
 	public static void main(String[] args) {
-		List<ConsumerGroupInfo> groupInfos = KafkaMonitor.getContext().getAllConsumerGroupInfos();
-		for (ConsumerGroupInfo groupInfo : groupInfos) {
-			System.out.println(JsonUtils.toJson(groupInfo));
-		}
-		KafkaMonitor.getContext().close();
+		
 	}
 	
 }

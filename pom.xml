@@ -57,7 +57,6 @@
 		<module>jeesuite-spring</module>
 		<module>jeesuite-cache</module>
 		<module>jeesuite-scheduler</module>
-		<module>jeesuite-admin-web</module>
 		<module>jeesuite-mybatis</module>
 		<module>jeesuite-rest</module>
 		<module>jeesuite-confcenter</module>

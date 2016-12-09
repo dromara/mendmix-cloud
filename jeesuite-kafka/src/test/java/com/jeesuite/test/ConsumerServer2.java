@@ -1,8 +1,6 @@
 package com.jeesuite.test;
 
 import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,21 +23,12 @@ public class ConsumerServer2 {
 			   context.close();
 			}
 		}));
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-//				Map stats = KafkaMonitor.getContext().stats("kafka-demo");
-//		        System.out.println("\n===========MONITOR DATA============\n" + stats + "\n===========MONITOR DATA============\n");
-			}
-		}, 3000,15000);
         
         Scanner scan=new Scanner(System.in); 
 		String cmd=scan.next();
 		if("q".equalsIgnoreCase(cmd)){
 			context.close();
 			scan.close();
-			timer.cancel();
 		}
 
     }

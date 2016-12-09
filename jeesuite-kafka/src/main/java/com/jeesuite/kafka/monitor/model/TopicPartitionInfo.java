@@ -38,6 +38,15 @@ public class TopicPartitionInfo {
 		this.partition = partition;
 		this.offset = offset;
 	}
+	
+	public TopicPartitionInfo(String topic, int partition, long offset, String owner) {
+		super();
+		this.topic = topic;
+		this.partition = partition;
+		this.offset = offset;
+		this.owner = owner;
+	}
+	
 	public String getTopic() {
 		return topic;
 	}
@@ -88,6 +97,7 @@ public class TopicPartitionInfo {
 		this.owner = owner;
 	}
 	public String getFormatLastTime(){
+		if(getLastTime() == null)return null;
 		long diffSeconds = DateUtils.getDiffSeconds(new Date(), getLastTime());
 		if(diffSeconds >= 86400){
 			return (diffSeconds/86400) + " 天前";

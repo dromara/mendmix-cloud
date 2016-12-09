@@ -3,6 +3,7 @@
  */
 package com.jeesuite.kafka.monitor.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,9 +16,6 @@ public class TopicInfo {
 
 	private String topicName;
 
-	private int partitionNums; // 分片数
-
-
 	List<TopicPartitionInfo> partitions;
 	
 	private boolean overLatThreshold;
@@ -25,6 +23,15 @@ public class TopicInfo {
 	private long totalLogSize;
 	
 	private long totalOffset;
+	
+	public TopicInfo() {}
+
+	public TopicInfo(String topicName) {
+		super();
+		this.topicName = topicName;
+	}
+
+
 
 	public String getTopicName() {
 		return topicName;
@@ -35,15 +42,11 @@ public class TopicInfo {
 	}
 
 	public int getPartitionNums() {
-		return partitionNums;
-	}
-
-	public void setPartitionNums(int partitions) {
-		this.partitionNums = partitions;
+		return partitions.size();
 	}
 
 	public List<TopicPartitionInfo> getPartitions() {
-		return partitions;
+		return partitions == null ? (partitions = new ArrayList<>()) : partitions;
 	}
 
 	public void setPartitions(List<TopicPartitionInfo> partitions) {

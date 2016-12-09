@@ -75,6 +75,8 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		if(useNewAPI && "smallest".equals(configs.getProperty("auto.offset.reset"))){
 			configs.put("auto.offset.reset", "earliest");
 		}
+		//强制自动提交
+		configs.put("enable.auto.commit", "true");
 
 		//同步节点信息
 		groupId = configs.get(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG).toString();

@@ -23,7 +23,10 @@ public class ProducerSimpleClient implements ApplicationContextAware{
 	@Test
 	public void testPublish() throws InterruptedException{
         //默认模式（异步/ ）发送
-		topicProducer.publish("demo-topic", new DefaultMessage("hello,man"));
+		for (int i = 0; i < 5; i++) {			
+			topicProducer.publish("demo-topic", new DefaultMessage("hello,man"));
+			topicProducer.publish("demo2-topic", new DefaultMessage("hello,women"));
+		}
 //		
 //		DefaultMessage msg = new DefaultMessage("hello,man")
 //		            .header("headerkey1", "headerval1")//写入header信息

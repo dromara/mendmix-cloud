@@ -37,7 +37,7 @@ public class ProducerClient implements ApplicationContextAware{
 		
 		final AtomicInteger count = new AtomicInteger(0);
 		
-		final int nums = 100;
+		final int nums = 5000;
 		timer.schedule(new TimerTask() {
 			
 			@Override

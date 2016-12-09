@@ -12,7 +12,7 @@
         <!-- 如果为false启动时将阻塞主线程，如zk连接超时就报错 -->
         <property name="independent" value="false" />
         <!-- 使用新版API开关,新版未在线上运行过，线上暂用老版API吧 -->
-        <property name="useNewAPI" value="false" />
+        <property name="useNewAPI" value="true" />
         <!-- 默认最大处理线程，可以配置大一下空闲会自动回收 -->
         <property name="processThreads" value="100" />
         <property name="configs">
@@ -25,7 +25,7 @@
                 <prop key="group.id">kafka-demo2</prop>
                 <prop key="enable.auto.commit">true</prop>
                 <!-- old api可选值：smallest，largest； 新版api可选值：earliest，largest -->
-                <prop key="auto.offset.reset">smallest</prop>
+                <prop key="auto.offset.reset">earliest</prop>
                 <!-- 131072 = 128kb -->
                 <prop key="max.partition.fetch.bytes">131072</prop>
                 <!-- <prop key="value.deserializer">org.apache.kafka.common.serialization.StringDeserializer</prop> -->
