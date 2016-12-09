@@ -6,10 +6,13 @@ package com.jeesuite.scheduler.registry;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.I0Itec.zkclient.IZkChildListener;
@@ -50,12 +53,18 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	
 	private ZkClient zkClient;
 	
+	private String groupPath;
+	
 	private String nodeStateParentPath;
 
 	//是否第一个启动节点
 	boolean isFirstNode = false;
 	
 	boolean nodeStateCreated = false;
+	
+	private ScheduledExecutorService zkCheckTask;
+	
+	private volatile boolean zkAvailabled = true;
 	
 	public void setZkServers(String zkServers) {
 		this.zkServers = zkServers;
@@ -64,17 +73,55 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		ZkConnection zkConnection = new ZkConnection(zkServers);
-       zkClient = new ZkClient(zkConnection, 3000);
+       zkClient = new ZkClient(zkConnection, 10000);
+       //
+       zkCheckTask = Executors.newScheduledThreadPool(1);
+       
+		zkCheckTask.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				if (schedulerConfgs.isEmpty())
+					return;
+				List<String> activeNodes = null;
+				try {
+					activeNodes = zkClient.getChildren(nodeStateParentPath);
+					zkAvailabled = true;
+				} catch (Exception e) {
+					checkZkAvailabled();
+					activeNodes = new ArrayList<>(JobContext.getContext().getActiveNodes());
+				}
+				
+				if(activeNodes.isEmpty())return;
+				//对节点列表排序
+				Collections.sort(activeNodes);
+				//本地缓存的所有jobs
+				Collection<JobConfig> jobConfigs = schedulerConfgs.values();
+				//
+				for (JobConfig jobConfig : jobConfigs) {						
+					// 如果本地任务指定的执行节点不在当前实际的节点列表，重新指定
+					if (!activeNodes.contains(jobConfig.getCurrentNodeId())) {
+						//指定当前节点为排序后的第一个节点
+						String newExecuteNodeId = activeNodes.get(0);
+						jobConfig.setCurrentNodeId(newExecuteNodeId);
+						logger.warn("Job[{}-{}] currentNodeId[{}] not in activeNodeList, assign new ExecuteNodeId:{}",jobConfig.getGroupName(),jobConfig.getJobName(),jobConfig.getCurrentNodeId(),newExecuteNodeId);
+					}
+				}
+			}
+		}, 60, 30, TimeUnit.SECONDS);
 	}
 
 	@Override
 	public synchronized void register(JobConfig conf) {
 		
-		long currentTimeMillis = Calendar.getInstance().getTimeInMillis();
+		Calendar now = Calendar.getInstance();
+		long currentTimeMillis = now.getTimeInMillis();
 		conf.setModifyTime(currentTimeMillis);
 		
+		if(groupPath == null){
+			groupPath = ROOT + conf.getGroupName();
+		}
 		if(nodeStateParentPath == null){
-			nodeStateParentPath = ROOT + conf.getGroupName() + "/nodes";
+			nodeStateParentPath = groupPath + "/nodes";
 		}
 		
 		String path = getPath(conf);
@@ -97,11 +144,22 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		boolean updateConfInZK = isFirstNode;
 		if(!updateConfInZK){
 			JobConfig configFromZK = getConfigFromZK(path,null);
-			updateConfInZK = configFromZK == null 
-					|| !StringUtils.equals(configFromZK.getCronExpr(), conf.getCronExpr())// 执行时间修改了
-					|| currentTimeMillis - configFromZK.getModifyTime() > TimeUnit.MINUTES.toMillis(10); // 
+			if(configFromZK != null){
+				//1.当前执行时间策略变化了
+				//2.下一次执行时间在当前时间之前
+				//3.配置文件修改是30分钟前
+				if(!StringUtils.equals(configFromZK.getCronExpr(), conf.getCronExpr())){
+					updateConfInZK = true;
+				}else if(configFromZK.getNextFireTime() != null && configFromZK.getNextFireTime().before(now.getTime())){
+					updateConfInZK = true;
+				}else if(currentTimeMillis - configFromZK.getModifyTime() > TimeUnit.MINUTES.toMillis(30)){
+					updateConfInZK = true;
+				}
+			}
 		   //拿ZK上的配置覆盖当前的
-		   if(!updateConfInZK)conf = configFromZK;
+		   if(!updateConfInZK){
+			   conf = configFromZK;
+		   }
 		}
 		
 		if(updateConfInZK){
@@ -127,7 +185,8 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			@Override
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				if(data == null)return;
-				schedulerConfgs.put(jobName, JsonUtils.toObject(data.toString(), JobConfig.class));
+				JobConfig _jobConfig = JsonUtils.toObject(data.toString(), JobConfig.class);
+				schedulerConfgs.put(jobName, _jobConfig);
 			}
 		});
         //订阅节点信息变化
@@ -177,9 +236,19 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	@Override
 	public synchronized JobConfig getConf(String jobName,boolean forceRemote) {
 		JobConfig config = schedulerConfgs.get(jobName);
+		//如果只有一个节点就不从强制同步了
+		if(schedulerConfgs.size() == 1){
+			config.setCurrentNodeId(JobContext.getContext().getNodeId());
+			return config;
+		}
 		if(forceRemote){			
 			String path = getPath(config);
-			config = getConfigFromZK(path,null);
+			try {				
+				config = getConfigFromZK(path,null);
+			} catch (Exception e) {
+				checkZkAvailabled();
+				logger.warn("fecth JobConfig from Registry error",e);
+			}
 		}
 		return config;
 	}
@@ -202,6 +271,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 
 	@Override
 	public void destroy() throws Exception {
+		zkCheckTask.shutdown();
 		zkClient.close();
 	}
 
@@ -212,7 +282,14 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		config.setLastFireTime(fireTime);
 		config.setCurrentNodeId(JobContext.getContext().getNodeId());
 		config.setModifyTime(Calendar.getInstance().getTimeInMillis());
-		zkClient.writeData(getPath(config), JsonUtils.toJson(config));
+		//更新本地
+		schedulerConfgs.put(jobName, config);
+		try {			
+			if(zkAvailabled)zkClient.writeData(getPath(config), JsonUtils.toJson(config));
+		} catch (Exception e) {
+			checkZkAvailabled();
+			logger.warn(String.format("Job[{}] setRuning error...", jobName),e);
+		}
 	}
 
 	@Override
@@ -221,13 +298,31 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		config.setRunning(false);
 		config.setNextFireTime(nextFireTime);
 		config.setModifyTime(Calendar.getInstance().getTimeInMillis());
-		zkClient.writeData(getPath(config), JsonUtils.toJson(config));
+		//更新本地
+		schedulerConfgs.put(jobName, config);
+		try {		
+			if(zkAvailabled)zkClient.writeData(getPath(config), JsonUtils.toJson(config));
+		} catch (Exception e) {
+			checkZkAvailabled();
+			logger.warn(String.format("Job[{}] setStoping error...", jobName),e);
+		}
 	}
 
 
 	@Override
 	public List<JobConfig> getAllJobs() {
 		return new ArrayList<>(schedulerConfgs.values());
+	}
+	
+	private boolean checkZkAvailabled(){
+		try {
+			zkClient.exists(ROOT);
+			zkAvailabled = true;
+		} catch (Exception e) {
+			zkAvailabled = false;
+			logger.warn("ZK server is not available....");
+		}
+		return zkAvailabled;
 	}
 	
 	private void execCommond(MonitorCommond cmd){

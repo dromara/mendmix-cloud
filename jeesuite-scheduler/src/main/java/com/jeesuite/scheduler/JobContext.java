@@ -83,4 +83,8 @@ public class JobContext {
 		return allJobs;
 	}
 
+	public Set<String> getActiveNodes() {
+		return activeNodes;
+	}
+
 }

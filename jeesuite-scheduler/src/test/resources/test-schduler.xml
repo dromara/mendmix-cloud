@@ -22,17 +22,17 @@
 			    <!-- 以下配置每个任务列表 -->
 				<bean class="com.jeesuite.test.sch.DemoTask">
 					<property name="jobName" value="demoTask" />
-					<property name="cronExpr" value="0 0/15 * * * ?" />
+					<property name="cronExpr" value="0/10 * * * * ?" />
 					<property name="jobRegistry" ref="jobRegistry" />
 					<!-- 启动完成立即执行一次 -->
-					<property name="executeOnStarted" value="true" />
+					<property name="executeOnStarted" value="false" />
 				</bean>
 				
-				<bean class="com.jeesuite.test.sch.DemoParallelTask">
+				<!-- <bean class="com.jeesuite.test.sch.DemoParallelTask">
 					<property name="jobName" value="demoParallelTask" />
 					<property name="cronExpr" value="0 0/15 * * * ?" />
 					<property name="jobRegistry" ref="jobRegistry" />
-				</bean>
+				</bean> -->
 			</list>
 		</property>
 	</bean>

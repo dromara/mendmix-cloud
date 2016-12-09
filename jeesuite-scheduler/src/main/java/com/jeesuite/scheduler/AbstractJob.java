@@ -3,18 +3,16 @@
  */
 package com.jeesuite.scheduler;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.quartz.CronScheduleBuilder;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.impl.triggers.CronTriggerImpl;
-import org.quartz.spi.MutableTrigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -195,6 +193,7 @@ public abstract class AbstractJob implements DisposableBean{
     }
     
     private Date getNextFireTime(){
+    	if(getTrigger() == null)return null;
     	return getTrigger().getNextFireTime();
     }
     
@@ -203,6 +202,13 @@ public abstract class AbstractJob implements DisposableBean{
     	if(parallelEnabled())return false;
         try {
             JobConfig schConf = jobRegistry.getConf(jobName,true);
+            
+            //下次执行时间 < 当前时间 强制执行
+            if(schConf.getNextFireTime() != null && schConf.getNextFireTime().before(Calendar.getInstance().getTime())){
+            	logger.info("NextFireTime[{}] before currentTime[{}],re-join-execute task ");
+            	return false;
+            }
+            
             if (!schConf.isActive()) {
                 if (logger.isDebugEnabled())
                     logger.debug("Job_{} 已禁用,终止执行", jobName);
@@ -218,10 +224,10 @@ public abstract class AbstractJob implements DisposableBean{
 
             if (schConf.isRunning()) {
             	//如果某个节点开始了任务但是没有正常结束导致没有更新任务执行状态
-//                if (isAbnormalabort(schConf)) {
-//                    this.cronExpr = schConf.getCronExpr();
-//                    return false;
-//                }
+                if (isAbnormalabort(schConf)) {
+                    this.cronExpr = schConf.getCronExpr();
+                    return false;
+                }
                 logger.debug("Job_{} 其他节点正在执行,终止当前执行", jobName);
                 return true;
             }
@@ -243,8 +249,8 @@ public abstract class AbstractJob implements DisposableBean{
     	//上次开始执行到当前执行时长
     	long runingTime = DateUtils.getDiffSeconds(schConf.getLastFireTime(), getTrigger().getPreviousFireTime());
     	//正常阀值
-    	//考虑到一些长周期任务，预定一个任务执行最长周期为600秒
-    	long threshold = getJobFireInterval() > 600  ? 600 : getJobFireInterval();
+    	//考虑到一些长周期任务，预定一个任务执行最长周期为1800秒
+    	long threshold = getJobFireInterval() > 1800  ? 1800 : getJobFireInterval();
     	
     	if(runingTime > threshold){
     		if (logger.isDebugEnabled())
@@ -273,7 +279,8 @@ public abstract class AbstractJob implements DisposableBean{
     
     private CronTriggerImpl getTrigger() {
     	try {
-    		if(this.cronTrigger == null){    		
+    		if(this.cronTrigger == null){   
+    			if(getScheduler() == null)return null;
         		Trigger trigger = getScheduler().getTrigger(triggerKey);
         		this.cronTrigger = (CronTriggerImpl)trigger;
         	}
@@ -308,8 +315,11 @@ public abstract class AbstractJob implements DisposableBean{
 	public void afterInitialized()  {
 		if(executeOnStarted)return;
 		JobConfig conf = jobRegistry.getConf(jobName,false);
-		conf.setNextFireTime(getNextFireTime());
-		jobRegistry.updateJobConfig(conf);
+		Date nextFireTime = getNextFireTime();
+		if(nextFireTime != null){			
+			conf.setNextFireTime(nextFireTime);
+			jobRegistry.updateJobConfig(conf);
+		}
 		
 	}
 
