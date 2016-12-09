@@ -181,7 +181,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		
 	}
 
-	public void setbBcastServer(String servers) {
+	public void setBcastServer(String servers) {
 		this.bcastServer = servers;
 	}
 

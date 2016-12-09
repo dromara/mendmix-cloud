@@ -16,6 +16,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.jeesuite.cache.command.RedisHashMap;
+import com.jeesuite.cache.command.RedisNumber;
 import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.cache.command.RedisSortSet;
 import com.jeesuite.cache.command.RedisString;
@@ -85,6 +86,13 @@ public class CacheCommondTest implements ApplicationContextAware{
 		
 		System.out.println(sortSet.get());
 		
+	}
+	
+	@Test
+	public void testRedisNumber(){
+		long increase = new RedisNumber("ins_test").increase(5);
+		System.out.println(increase);
+		System.out.println(new RedisNumber("ins_test").increase(5));
 	}
 	
 	@Test

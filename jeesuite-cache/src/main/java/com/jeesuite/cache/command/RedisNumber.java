@@ -78,9 +78,9 @@ public class RedisNumber extends RedisString {
 	 * @param integer
 	 * @return
 	 */
-	public boolean increase(long integer){
+	public long increase(long integer){
 		try {
-			return getJedisCommands(groupName).incrBy(key, integer) == 1;
+			return getJedisCommands(groupName).incrBy(key, integer);
 		} finally {
 			getJedisProvider(groupName).release();
 		}
@@ -91,9 +91,9 @@ public class RedisNumber extends RedisString {
 	 * @param integer
 	 * @return
 	 */
-	public boolean reduce(long integer){
+	public long reduce(long integer){
 		try {
-			return getJedisCommands(groupName).decrBy(key, integer) == 1;
+			return getJedisCommands(groupName).decrBy(key, integer);
 		} finally {
 			getJedisProvider(groupName).release();
 		}
