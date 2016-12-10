@@ -6,7 +6,7 @@
     <version>1</version>
   </parent>
   <artifactId>jeesuite-kafka</artifactId>
-  <version>1.0.2-SNAPSHOT</version>
+  <version>1.0.2</version>
 
 	<dependencies>
 

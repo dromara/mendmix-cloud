@@ -93,8 +93,10 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
         KafkaProducer<String, Object> kafkaProducer = new KafkaProducer<String, Object>(configs);
 
         this.producer = new DefaultTopicProducer(kafkaProducer,defaultAsynSend);
+
         //hanlder
         if(StringUtils.isNotBlank(monitorZkServers)){
+        	Validate.notBlank(producerGroup,"enable producer monitor property[producerGroup] is required");
         	this.producer.addEventHandler(new SendCounterHandler(producerGroup,monitorZkServers));
         }
         if(delayRetries > 0){

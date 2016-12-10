@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.kafka.producer;
+package com.jeesuite.kafka.producer.handler;
 
 /**
  * 消息已消费回执

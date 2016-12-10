@@ -46,7 +46,7 @@ public class ProducerClient implements ApplicationContextAware{
 					timer.cancel();
 					return;
 				}
-				for (int i = 0; i < 10; i++) {
+				for (int i = 0; i < 1; i++) {
 					
 					pool.submit(new Runnable() {			
 						@Override
@@ -58,7 +58,7 @@ public class ProducerClient implements ApplicationContextAware{
 					});
 				}
 			}
-		}, 3000, 200);
+		}, 3000, 3000);
 		
 		while(true){
 			if(count.get() >= nums){

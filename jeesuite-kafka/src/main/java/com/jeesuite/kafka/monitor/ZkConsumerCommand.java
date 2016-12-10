@@ -54,13 +54,14 @@ public class ZkConsumerCommand {
 	private ZkClient zkClient;
 	private ZkUtils zkUtils;
 	
-	public ZkConsumerCommand(String zkServers,String kafkaServers) {
+	public ZkConsumerCommand(ZkClient zkClient,String zkServers,String kafkaServers) {
 		
 		kafkaServerList.addAll(Arrays.asList(kafkaServers.split(",")));
 		
-		int sessionTimeoutMs = 10000;
-		int connectionTimeoutMs = 10000;
-		zkClient = new ZkClient(zkServers, sessionTimeoutMs, connectionTimeoutMs, ZKStringSerializer$.MODULE$);
+		if(zkClient == null){			
+			zkClient = new ZkClient(zkServers, 10000, 10000, ZKStringSerializer$.MODULE$);
+		}
+		this.zkClient = zkClient;
 		
 		boolean isSecureKafkaCluster = false;
 		zkUtils = new ZkUtils(zkClient, new ZkConnection(zkServers), isSecureKafkaCluster);
