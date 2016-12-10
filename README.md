@@ -1,3 +1,4 @@
+**黄金位置放个小广告→**欢迎加交流群：230192763（不错，这是一个新群来了不要嫌弃哦^o^）
 ## Introduction
 **jeesuite-libs**是整理的近几年封装的一些基础组件包，计划陆续整理成一个java后台服务开发套件，包括整合dubbo服务化，rest API接口发布等。目前这些模块可用于生产环境，1.0版在千万级会员、日UV200万某互联网公司稳定运行。
 ---
@@ -22,12 +23,21 @@ release版已经上传maven中心仓库
 - 修复1.0.1本地缓存更新的逻辑问题
 - 考虑多个应用使用同一缓存服务器，支持配置bcastScope区别不同应用缓存更新事件
 
+#### kafka模块
+- 生产者端数据监控优化提供对外API
+- consumer offsetcheker 兼容新旧版consumer API
+
+### mybatis模块
+- mybatis插件注册机制修改及重构
+- @cahce标注支持聚合函数结果自动缓存
+- 提供EntityCacheHelper工具类，支持方法内手动写入缓存并自动缓存管理
+
 ---
 ### V1.0.1
 #### kafka模块
 - 兼容遗留kafka系统、支持发送和接收无封装的消息
 - 生产者端监控采集支持
-- new consumer API优化及其大量测试
+- new consumer API优化
 
 #### cache模块
 - 一级缓存增加支持ehcache、原使用guava cache

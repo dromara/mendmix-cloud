@@ -3,22 +3,9 @@
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-cache</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.2</version>
 </dependency>
 ```
-#### 特别说明
-redis初始化过程使用到com.jeesuite.spring.InstanceFactory，因此需要在启动的时候初始化。
-- web.xml
-```
-com.jeesuite.spring.web.ContextLoaderListener
-替换
-org.springframework.web.context.ContextLoaderListener
-<listener>
-	<listener-class>com.jeesuite.spring.web.ContextLoaderListener</listener-class>
-</listener>
-```
-- 非web容器启动
-ApplicationContext初始化完成后，调用InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
 
 #### 关于key的说明
 - key约定格式：namespace.key前缀:实际值，如：（User.id:1001,User.all,User.type:1）
@@ -57,13 +44,23 @@ ApplicationContext初始化完成后，调用InstanceFactory.setInstanceProvider
 
     <!-- 本地一级缓存支持 -->
     <bean id="level1CacheSupport" class="com.jeesuite.cache.local.Level1CacheSupport">
-         <property name="enable" value="true" />
-         <property name="servers" value="${redis.servers}" />
-         <property name="maxSize" value="10000" />
-         <property name="timeToLiveSeconds" value="300" />
+         <!-- 是否启用分布式模式 -->
+         <property name="distributedMode" value="true" />
+         <property name="bcastServer" value="${redis.servers}" />
+         <!-- 防止多个应用使用同一个缓存的情况，出现交叉订阅缓存同步更新情况，请指定eventScope-->
+         <property name="bcastScope" value="demo" />
+         <property name="cacheProvider">
+            <!-- <bean class="com.jeesuite.cache.local.GuavaLevel1CacheProvider">
+               <property name="maxSize" value="10000" />
+               <property name="timeToLiveSeconds" value="300" />
+            </bean> -->
+            <bean class="com.jeesuite.cache.local.EhCacheLevel1CacheProvider">
+               <property name="ehcacheName" value="level1Cache" />
+            </bean>
+         </property>
          <!-- 需要本地缓存缓存组名。多个用,或;隔开 -->
          <property name="cacheNames">
-            <value>User,City</value>
+            <value>UserEntity,CityEntity</value>
          </property>
     </bean>
 ```
@@ -112,3 +109,15 @@ ApplicationContext初始化完成后，调用InstanceFactory.setInstanceProvider
 - RedisList
 - RedisNumber
 - RedisSet
+
+
+如果这些封装不满足你的需求这些你需要用其他的可以直接通过一下方式调用jedis原生API：
+```
+JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
+try {			
+	commands.zadd(cacheGroup, score, key);
+	commands.pexpire(cacheGroup, expireSeconds * 1000);
+} finally{
+	JedisProviderFactory.getJedisProvider(null).release();
+}
+```

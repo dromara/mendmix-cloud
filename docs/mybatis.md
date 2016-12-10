@@ -3,7 +3,7 @@
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-mybatis</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.2</version>
 </dependency>
 ```
 #### 一些说明
@@ -13,20 +13,22 @@
 - getByKey
 - insert
 - insertSelective
+- updateByKey
+- updateByKeySelective
 - deleteByKey
 - selectAll
 
 ### 特别说明：
-已经无缝对接优秀的mybatis增强框架 [Mapper](http://git.oschina.net/free/Mapper) ，该框架功能强大，该部分推荐集成Mapper。
+已经无缝对接优秀的mybatis增强框架 [Mapper](http://git.oschina.net/free/Mapper) ，该框架功能强大，该部分推荐集成Mapper框架。
 
 ---
 ##### 其他功能说明
-* 读写分离：已经线上稳定运行一年
-* 自动缓存：已经线上稳定运行一年
+* 读写分离：支持动态增加slave节点
+* 自动缓存：支持所有dao层查询方法自动缓存管理（自动缓存、自动更新）
 * 分库路由：只适用基本的分库路由，不支持跨库join等，未上过生产系统。
 
 #### 配置
-##### mysql.properties配置，为了减少配置限定读取mysql.properties这个名字
+##### mysql.properties配置，为了减少配置默认读取mysql.properties
 ```
 #mysql global config
 db.shard.size=1000
@@ -97,25 +99,15 @@ slave1~n,group1~n依次递增(第一组group0默认省略)
 		<property name="typeAliasesPackage" value="com.jeesuite.demo.dao.entity" />
 		<property name="plugins">
             <array>
-                <bean class="com.jeesuite.mybatis.plugin.PluginsEntrypoint">
-                    <property name="interceptorHandlers">
-                       <list> 
-                           <!--开启自动缓存-->
-                           <bean class="com.jeesuite.mybatis.plugin.cache.CacheHandler" />
-                           <!--开启读写分离-->
-                           <bean class="com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler">
-                              <!--CRUD框架驱动 集成Mapper框架选择：mapper3,默认是default-->
-                              <property name="crudDriver" value="default" />
-                              <!--如何你要自定义CacheProvider实现，否则将使用cache模块是的实现-->
-                              <property name="cacheProvider" ref="你的CacheProvider实现" />
-                           </bean>
-                           <!-- 
-                            开启分库路由
-                           <bean class="com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler" /> 
-                           -->
-                       </list>
-                    </property>
-                </bean>
+                <bean class="com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext">
+                    <!--可选值:default(默认),mapper3(集成mapper框架)-->
+					<property name="crudDriver" value="default" />
+				    <property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
+				    <!--
+				      可选值：cache(自动缓存),rwRoute(读写分离),dbShard(分库路由)
+				    -->
+				    <property name="interceptorHandlers" value="cache" />
+				</bean> 
             </array>
         </property>
 	</bean>
@@ -133,11 +125,12 @@ public interface UserEntityMapper extends BaseMapper<UserEntity> {
 	@Cache
 	public UserEntity findByMobile(@Param("mobile") String mobile);
 	
-	@Cache(uniqueResult = false,keyPattern = "UserEntity.type:%s")
+	@Cache
 	List<String> findByType(@Param("type") int type);
 }
 ```
 配置完成即可，查询会自动缓存、更新会自动更新。
+
 
 #### 一些其他说明
 ##### 开启了自动缓存数据库事务失败写入缓存如何处理？
@@ -146,9 +139,28 @@ public interface UserEntityMapper extends BaseMapper<UserEntity> {
 - 首先查询出实体对象，UserEntity entity = mapper.get...(id);
 - 然后通过mapper.updateSelective(entity);
 
-不如不全量更新会导致缓存的内容是有部分字段，因为update后会那最新的entity更新缓存。
-##### 如果手动更新或写入实体缓存
-- EntityCacheHelper.cache(T entity);
-- EntityCacheHelper.removeCache(T entity);
-- EntityCacheHelper.cache(Class<? extends BaseEntity> entityClass,String key,Object value);//该函数适用
-- EntityCacheHelper.removeCache(Class<? extends BaseEntity> entityClass,String key)
+如果不全量更新会导致缓存的内容是有部分字段，因为update后会那最新的entity更新缓存。
+##### 如果手动更新或写入实体缓存？
+- 提供EntityCacheHelper方法，在代码中手动写入缓存也将纳入自动缓存管理，无需担心缓存更新问题。
+```
+/**
+	 * 查询并缓存结果
+	 * @param entityClass 实体类class (用户组装实际的缓存key)
+	 * @param key 缓存的key（和entityClass一起组成真实的缓存key。<br>如entityClass=UserEntity.class,key=findlist，实际的key为：UserEntity.findlist）
+	 * @param expireSeconds 过期时间，单位：秒
+	 * @param dataCaller 缓存不存在数据加载源
+	 * @return
+	 */
+	public static <T> T queryTryCache(Class<? extends BaseEntity> entityClass,String key,long expireSeconds,Callable<T> dataCaller)
+```
+```
+//生成的缓存key为：UserEntity.findByStatus:2
+EntityCacheHelper.queryTryCache(UserEntity.class, "findByStatus:2", new Callable<List<UserEntity>>() {
+	public List<UserEntity> call() throws Exception {
+	  //查询语句
+	  List<UserEntity> entitys = mapper.findByStatus((short)2);
+	  return entitys;
+   }
+});
+```
+

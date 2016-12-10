@@ -5,7 +5,7 @@
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-kafka</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 </dependency>
 ```
 ---
@@ -13,17 +13,28 @@
 #### 开发一个producer
 ###### 首先在spring注册，添加以下配置文件即可
 ```
-<bean id="topicProducerProvider" class="com.jeesuite.kafka.spring.TopicProducerSpringProvider">
+    <bean id="topicProducerProvider" class="com.jeesuite.kafka.spring.TopicProducerSpringProvider">
         <!-- 默认是否异步发送 -->
         <property name="defaultAsynSend" value="true" />
         <!-- 标识同一集群，监控需要 -->
         <property name="producerGroup" value="demo" />
+        <!-- 配置zkServers用于监控信息同步，不配置则不开启producer监控 -->
+        <property name="monitorZkServers" value="127.0.0.1:2181" />
+        <!-- 
+          延迟重试次数，默认为3。 
+          延迟重试与kafka自身重试不同。如果开启了延时重试、kafka重试retries建议设置为1或者0
+          kafka自身重试：发送失败连续重试
+          延迟重试：通过异步线程阶梯性重试。如：30秒后重试第一次、60秒后重试第二次
+          延迟重试只针对异步发送模式。
+        -->
+        <property name="delayRetries" value="3" />
         <property name="configs">
             <!-- 以下参数参考:http://kafka.apache.org/documentation.html#producerconfigs -->
             <props>
                 <prop key="bootstrap.servers" >${kafka.servers}</prop>
                 <prop key="acks">1</prop>
                 <prop key="retries">1</prop>
+                <!-- <prop key="value.serializer">org.apache.kafka.common.serialization.StringSerializer</prop> -->
             </props>
         </property>
     </bean>
@@ -39,6 +50,8 @@ public void testPublish() {
     topicProducer.publish("demo-topic", new DefaultMessage("hello,man"));
 	//异步发送
 	topicProducer.publish("demo-topic", new DefaultMessage("hello,man"),true);
+	//发送未包装的消息体（兼容异构的consumer端）
+	topicProducer.publishNoWrapperMessage("demo-topic", JsonUtils.toJson(user),true);
 }
 ```
 ###### 关于DefaultMessage
