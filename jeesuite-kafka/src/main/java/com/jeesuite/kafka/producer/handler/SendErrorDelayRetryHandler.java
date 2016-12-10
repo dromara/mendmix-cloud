@@ -1,9 +1,9 @@
 /**
  * 
  */
-package com.jeesuite.kafka.handler;
+package com.jeesuite.kafka.producer.handler;
 
-import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
@@ -11,24 +11,23 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.kafka.consumer.ErrorMessageDefaultProcessor;
 import com.jeesuite.kafka.message.DefaultMessage;
-import com.jeesuite.kafka.monitor.KafkaMonitor;
-import com.jeesuite.kafka.producer.DefaultTopicProducer;
 import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
 
 /**
- * 消息发送结果处理器
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
- * @date 2016年6月22日
+ * @date 2016年12月10日
  */
-public class ProducerResultHandler implements Closeable{
+public class SendErrorDelayRetryHandler implements ProducerEventHandler{
 
-	private static final Logger logger = LoggerFactory.getLogger(ErrorMessageDefaultProcessor.class);
+	private static final Logger logger = LoggerFactory.getLogger(SendErrorDelayRetryHandler.class);
 
     private final PriorityBlockingQueue<PriorityTask> taskQueue = new PriorityBlockingQueue<PriorityTask>(1000);  
     
@@ -36,11 +35,13 @@ public class ProducerResultHandler implements Closeable{
 	
 	private ExecutorService executor;
 	
-	private DefaultTopicProducer topicProducer;
+	private KafkaProducer<String, Object> topicProducer;
 	
-	public ProducerResultHandler(DefaultTopicProducer topicProducer) {
+	private int retries = 0; //重试次数
+	
+	public SendErrorDelayRetryHandler(String producerGroup,KafkaProducer<String, Object> topicProducer,int retries) {
 		this.topicProducer = topicProducer;
-		
+		this.retries = retries;
 		executor = Executors.newFixedThreadPool(1, new StandardThreadFactory("ErrorMessageProcessor"));
 		executor.submit(new Runnable() {
 			@Override
@@ -58,26 +59,13 @@ public class ProducerResultHandler implements Closeable{
 				}
 			}
 		});
-	
-	}
-
-	public void setTopicProducer(DefaultTopicProducer topicProducer) {
-		this.topicProducer = topicProducer;
 	}
 	
-	public void close(){
-		executor.shutdownNow();
-	}
+	@Override
+	public void onSuccessed(String topicName, RecordMetadata metadata) {}
 
-	public void onSuccessed(String topicName, DefaultMessage message) {
-		//计数统计
-		//KafkaMonitor.getContext().updateProducerStat(topicName, false);
-	}
-
-	public void onError(String topicName, DefaultMessage message,boolean isAsynSend) {
-		//计数统计
-		//KafkaMonitor.getContext().updateProducerStat(topicName, true);
-		//同步发送不重试
+	@Override
+	public void onError(String topicName, DefaultMessage message, boolean isAsynSend) {
 		if(isAsynSend == false){
 			return;
 		}
@@ -86,6 +74,11 @@ public class ProducerResultHandler implements Closeable{
 		//
 		taskQueue.add(new PriorityTask(topicName,message));
 		messageIdsInQueue.add(message.getMsgId());
+	}
+	
+	@Override
+	public void close() throws IOException {
+		executor.shutdownNow();
 	}
 	
 	class PriorityTask implements Runnable,Comparable<PriorityTask>{
@@ -111,7 +104,7 @@ public class ProducerResultHandler implements Closeable{
 		public void run() {
 			try {	
 				logger.debug("begin re process message:"+this.toString());
-				topicProducer.publish(topicName, message, true);
+				topicProducer.send(new ProducerRecord<String, Object>(topicName, message.getMsgId(),message));
 				//处理成功移除
 				messageIdsInQueue.remove(message.getMsgId());
 			} catch (Exception e) {
@@ -121,7 +114,7 @@ public class ProducerResultHandler implements Closeable{
 		}
 		
 		private void retry(){
-			if(retryCount == 3){
+			if(retryCount == retries){
 				return;
 			}
 			nextFireTime = nextFireTime + retryCount * 30 * 1000;
@@ -143,4 +136,5 @@ public class ProducerResultHandler implements Closeable{
 		}
 		
 	}
+
 }

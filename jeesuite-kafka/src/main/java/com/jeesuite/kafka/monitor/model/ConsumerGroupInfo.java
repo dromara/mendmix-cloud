@@ -20,7 +20,7 @@ public class ConsumerGroupInfo {
 	
 	private List<TopicInfo> topics;
 	
-	private List<String> clusterNodes;
+	private List<String> clusterNodes = new ArrayList<>();
 	
 	private boolean overLatThreshold;
 

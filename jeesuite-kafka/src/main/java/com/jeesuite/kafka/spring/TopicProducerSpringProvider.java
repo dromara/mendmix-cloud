@@ -18,6 +18,8 @@ import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.partiton.DefaultPartitioner;
 import com.jeesuite.kafka.producer.DefaultTopicProducer;
 import com.jeesuite.kafka.producer.TopicProducer;
+import com.jeesuite.kafka.producer.handler.SendCounterHandler;
+import com.jeesuite.kafka.producer.handler.SendErrorDelayRetryHandler;
 import com.jeesuite.kafka.serializer.MessageSerializer;
 import com.jeesuite.kafka.utils.NodeNameHolder;
 
@@ -42,6 +44,11 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
     private boolean defaultAsynSend = true;
     
     private String producerGroup;
+    
+    private String monitorZkServers;
+    
+    //延迟重试次数
+    private int delayRetries = 3;
     
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -86,6 +93,13 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
         KafkaProducer<String, Object> kafkaProducer = new KafkaProducer<String, Object>(configs);
 
         this.producer = new DefaultTopicProducer(kafkaProducer,defaultAsynSend);
+        //hanlder
+        if(StringUtils.isNotBlank(monitorZkServers)){
+        	this.producer.addEventHandler(new SendCounterHandler(producerGroup,monitorZkServers));
+        }
+        if(delayRetries > 0){
+        	this.producer.addEventHandler(new SendErrorDelayRetryHandler(producerGroup,kafkaProducer, delayRetries));
+        }
     }
 
     @Override
@@ -108,6 +122,14 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 
 	public void setProducerGroup(String producerGroup) {
 		this.producerGroup = producerGroup;
+	}
+	
+	public void setMonitorZkServers(String monitorZkServers) {
+		this.monitorZkServers = monitorZkServers;
+	}
+
+	public void setDelayRetries(int delayRetries) {
+		this.delayRetries = delayRetries;
 	}
 
 	/**

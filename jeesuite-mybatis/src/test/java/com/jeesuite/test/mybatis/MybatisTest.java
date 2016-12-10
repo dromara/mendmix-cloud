@@ -81,22 +81,15 @@ public class MybatisTest implements ApplicationContextAware{
 		mapper.findByType((short)1);
 		mapper.findByType((short)1);
 		
-		EntityCacheHelper.queryTryCache(UserEntity.class, "test", new Callable<UserEntity>() {
-			public UserEntity call() throws Exception {
-				UserEntity entity = new UserEntity();
-				entity.setId(1);
-				return entity;
+		//生成的缓存key为：UserEntity.findByStatus:2
+		EntityCacheHelper.queryTryCache(UserEntity.class, "findByStatus:2", new Callable<List<UserEntity>>() {
+			public List<UserEntity> call() throws Exception {
+				//查询语句
+				List<UserEntity> entitys = mapper.findByStatus((short)2);
+				return entitys;
 			}
 		});
-		
-		EntityCacheHelper.queryTryCache(UserEntity.class, "test", new Callable<UserEntity>() {
-			public UserEntity call() throws Exception {
-				UserEntity entity = new UserEntity();
-				entity.setId(1);
-				return entity;
-			}
-		});
-//		
+	
 		mapper.deleteByKey(1);
 		mapper.deleteByKey(29);
 		userEntity.setName("demo");

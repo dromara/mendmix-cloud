@@ -3,6 +3,7 @@ package com.jeesuite.kafka.producer;
 import java.io.Serializable;
 
 import com.jeesuite.kafka.message.DefaultMessage;
+import com.jeesuite.kafka.producer.handler.ProducerEventHandler;
 
 /**
  * @description <br>
@@ -11,6 +12,7 @@ import com.jeesuite.kafka.message.DefaultMessage;
  */
 public interface TopicProducer {
 	
+	void addEventHandler(ProducerEventHandler eventHandler);
 	/**
 	 * 发送消息（可选择发送模式）
 	 * @param topic

@@ -34,11 +34,12 @@ import scala.collection.Iterator;
  */
 public class KafkaConsumerCommand {
 
-	private Map<String, KafkaConsumer<String, String>> kafkaConsumers;
+	private Map<String, KafkaConsumer<String, String>> kafkaConsumers = new HashMap<>();
 	private AdminClient adminClient;
 	private String bootstrapServer;
 
 	public KafkaConsumerCommand(String bootstrapServer) {
+		this.bootstrapServer = bootstrapServer;
 		Properties props = new Properties();
 		props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
 		adminClient = AdminClient.create(props);
@@ -79,6 +80,9 @@ public class KafkaConsumerCommand {
 		Iterator<ConsumerSummary> iterator = consumers.iterator();
 		while (iterator.hasNext()) {
 			ConsumerSummary consumer = iterator.next();
+			if(!consumerGroup.getClusterNodes().contains(consumer.clientId())){
+				consumerGroup.getClusterNodes().add(consumer.clientId());
+			}
 			String owner = consumer.clientId() + consumer.clientHost();
 			scala.collection.immutable.List<TopicPartition> partitions = consumer.assignment();
 			Iterator<TopicPartition> iterator2 = partitions.iterator();

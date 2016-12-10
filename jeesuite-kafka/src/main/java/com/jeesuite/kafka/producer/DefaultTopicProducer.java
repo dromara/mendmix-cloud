@@ -2,6 +2,8 @@ package com.jeesuite.kafka.producer;
 
 import java.io.Closeable;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
@@ -13,8 +15,8 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.kafka.handler.ProducerResultHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
+import com.jeesuite.kafka.producer.handler.ProducerEventHandler;
 
 /**
  * 默认消息生产者实现
@@ -31,13 +33,16 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
      */
     private KafkaProducer<String, Object> kafkaProducer;
     
-    private ProducerResultHandler producerResultHanlder;
+    private List<ProducerEventHandler> eventHanlders = new ArrayList<>();
    
     public DefaultTopicProducer(KafkaProducer<String, Object> kafkaProducer,boolean defaultAsynSend) {
     	this.kafkaProducer = kafkaProducer;
-    	this.producerResultHanlder = new ProducerResultHandler(this);
     }
-	
+    
+    public void addEventHandler(ProducerEventHandler eventHandler){
+    	eventHanlders.add(eventHandler);
+    }
+    
     public boolean publish(final String topicName, final DefaultMessage message,boolean asynSend){
         Validate.notNull(topicName, "Topic is required");
 
@@ -47,7 +52,9 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
         	try {				
         		doAsynSend(topicName, message.getMsgId(),message);
 			} catch (Exception e) {
-				producerResultHanlder.onError(topicName,message,asynSend);
+				for (ProducerEventHandler handler : eventHanlders) {
+					handler.onError(topicName, message, asynSend);
+				}
 	        	log.error("kafka_send_fail,topic="+topicName+",messageId="+message.getMsgId(),e);
 				return false;
 			}
@@ -62,13 +69,17 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
 		try {			
 			Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message));
 			RecordMetadata metadata = future.get();
-			producerResultHanlder.onSuccessed(topicName, message);
+			for (ProducerEventHandler handler : eventHanlders) {
+				handler.onSuccessed(topicName, metadata);
+			}
 			if (log.isDebugEnabled()) {
                 log.debug("kafka_send_success,topic=" + topicName + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
             }
 			return true;
 		} catch (Exception ex) {
-			producerResultHanlder.onError(topicName,message,false);
+			for (ProducerEventHandler handler : eventHanlders) {
+				handler.onError(topicName, message, false);
+			}
         	log.error("kafka_send_fail,topic="+topicName+",messageId="+messageKey,ex);
         	return false;
 		}
@@ -88,10 +99,14 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
             @Override
             public void onCompletion(RecordMetadata metadata, Exception ex) {
                 if (ex != null) {
-                	producerResultHanlder.onError(topicName,message,true);
+                	for (ProducerEventHandler handler : eventHanlders) {
+    					handler.onError(topicName, message, true);
+    				}
                 	log.error("kafka_send_fail,topic="+topicName+",messageId="+messageKey,ex);
                 } else {
-                	producerResultHanlder.onSuccessed(topicName, message);
+                	for (ProducerEventHandler handler : eventHanlders) {
+    					handler.onSuccessed(topicName, metadata);
+    				}
                     if (log.isDebugEnabled()) {
                         log.debug("kafka_send_success,topic=" + topicName + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
                     }
@@ -102,7 +117,11 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
 	
     public void close() {
         this.kafkaProducer.close();
-        producerResultHanlder.close();
+        for (ProducerEventHandler handler : eventHanlders) {
+        	try {
+        		handler.close();				
+			} catch (Exception e) {}
+		}
     }
 
 

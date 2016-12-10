@@ -25,7 +25,7 @@
                 <prop key="group.id">kafka-demo2</prop>
                 <prop key="enable.auto.commit">true</prop>
                 <!-- old api可选值：smallest，largest； 新版api可选值：earliest，largest -->
-                <prop key="auto.offset.reset">earliest</prop>
+                <prop key="auto.offset.reset">smallest</prop>
                 <!-- 131072 = 128kb -->
                 <prop key="max.partition.fetch.bytes">131072</prop>
                 <!-- <prop key="value.deserializer">org.apache.kafka.common.serialization.StringDeserializer</prop> -->

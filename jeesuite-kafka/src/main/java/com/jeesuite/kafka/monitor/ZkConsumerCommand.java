@@ -70,10 +70,6 @@ public class ZkConsumerCommand {
 		List<ConsumerGroupInfo> consumerGroups = fetchAllConsumerGroups();
 		for (ConsumerGroupInfo consumerGroup : consumerGroups) {
 			loadTopicInfoInConsumerGroup(consumerGroup);
-			//分析延时
-			//consumerGroup.analysisLatThresholdStat(latThreshold);
-			//
-			consumerGroup.setClusterNodes(getConsumerClusterNodes(consumerGroup.getGroupName()));
 		}
 		return consumerGroups;
 	}
@@ -84,18 +80,22 @@ public class ZkConsumerCommand {
 			TopicInfo topicInfo = new TopicInfo();
 			topicInfo.setTopicName(topic);
 			List<TopicPartitionInfo> topicPartitions = getTopicOffsets(group.getGroupName(), topic);
+			
+			boolean allPartNotOwner = true;
 			for (TopicPartitionInfo partition : topicPartitions) {
 				getTopicPartitionLogSize(partition);
 				//owner
 				String owner = fetchPartitionOwner(group.getGroupName(), topic, partition.getPartition());
 				if(owner != null){
+					allPartNotOwner = false;
 					partition.setOwner(owner);
 					if(!group.isActived()){
 						group.setActived(true);
 					}
 				}
 			}
-			if(topicPartitions.size() > 0){
+			//如果所有分区都没有消费者线程就不显示
+			if(allPartNotOwner == false && topicPartitions.size() > 0){
 				topicInfo.setPartitions(topicPartitions);
 				group.getTopics().add(topicInfo);
 			}
@@ -120,7 +120,12 @@ public class ZkConsumerCommand {
 		if(consumers == null)return result;
 		ConsumerGroupInfo consumerGroup;
 		for (String  groupName : consumers) {
+			List<String> consumerClusterNodes = getConsumerClusterNodes(groupName);
+			if(consumerClusterNodes == null || consumerClusterNodes.isEmpty()){
+				continue;
+			}
 			consumerGroup = new ConsumerGroupInfo();
+			consumerGroup.setClusterNodes(consumerClusterNodes);
 			consumerGroup.setGroupName(groupName);
 			result.add(consumerGroup);
 		}
