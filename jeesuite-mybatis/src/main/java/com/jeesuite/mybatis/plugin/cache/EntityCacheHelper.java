@@ -3,37 +3,54 @@
  */
 package com.jeesuite.mybatis.plugin.cache;
 
+import java.util.concurrent.Callable;
+
 import com.jeesuite.mybatis.core.BaseEntity;
 
 /**
  * 实体缓存辅助工具（关联自动缓存内容）
+ * <br>通过该工具的缓存会自动缓存更新
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年11月19日
  */
 public class EntityCacheHelper {
 
-	public static  void cache(Class<? extends BaseEntity> entityClass,String key,Object value){
-		CacheHandler.cacheProvider.clearGroupKeys(entityClass.getSimpleName() + CacheHandler.GROUPKEY_SUFFIX);
-		CacheHandler.cacheProvider.putGroupKeys(entityClass.getSimpleName() + CacheHandler.GROUPKEY_SUFFIX, key, CacheExpires.IN_1DAY);
+	/**
+	 * 查询并缓存结果(默认缓存一天)
+	 * @param entityClass 实体类class (用户组装实际的缓存key)
+	 * @param key 缓存的key（和entityClass一起组成真实的缓存key。<br>如entityClass=UserEntity.class,key=findlist，实际的key为：UserEntity.findlist）
+	 * @param dataCaller 缓存不存在数据加载源
+	 * @return
+	 */
+	public static <T> T queryTryCache(Class<? extends BaseEntity> entityClass,String key,Callable<T> dataCaller){
+		return queryTryCache(entityClass, key, CacheExpires.IN_1DAY, dataCaller);
 	}
 	
-	public static <T extends BaseEntity> void cache(T entity){
-		String entityClassName = entity.getClass().getSimpleName();
-		String key = entityClassName + CacheHandler.SPLIT_PONIT + entity.getId();
-		CacheHandler.cacheProvider.set(key, entity,CacheExpires.IN_1DAY);
-		CacheHandler.cacheProvider.clearGroupKeys(entityClassName + CacheHandler.GROUPKEY_SUFFIX);
+	/**
+	 * 查询并缓存结果
+	 * @param entityClass 实体类class (用户组装实际的缓存key)
+	 * @param key 缓存的key（和entityClass一起组成真实的缓存key。<br>如entityClass=UserEntity.class,key=findlist，实际的key为：UserEntity.findlist）
+	 * @param expireSeconds 过期时间，单位：秒
+	 * @param dataCaller 缓存不存在数据加载源
+	 * @return
+	 */
+	public static <T> T queryTryCache(Class<? extends BaseEntity> entityClass,String key,long expireSeconds,Callable<T> dataCaller){
+		String entityClassName = entityClass.getSimpleName();
+		key = entityClassName + CacheHandler.SPLIT_PONIT + key;
+		T result = CacheHandler.cacheProvider.get(key);
+		if(result == null){
+			try {				
+				result = dataCaller.call();
+				if(result != null){
+					CacheHandler.cacheProvider.set(key, result, expireSeconds);
+					String cacheGroupKey = entityClassName + CacheHandler.GROUPKEY_SUFFIX;
+					CacheHandler.cacheProvider.putGroupKeys(cacheGroupKey, key, expireSeconds);
+				}
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return result;
 	}
-	
-    public static <T extends BaseEntity> void removeCache(T entity){
-    	String entityClassName = entity.getClass().getSimpleName();
-    	String key = entityClassName + CacheHandler.SPLIT_PONIT + entity.getId();
-    	CacheHandler.cacheProvider.remove(key);
-    	CacheHandler.cacheProvider.clearGroupKeys(entityClassName + CacheHandler.GROUPKEY_SUFFIX);
-	}
-    
-    public static <T extends BaseEntity> void removeCache(Class<? extends BaseEntity> entityClass,String key){
-    	CacheHandler.cacheProvider.remove(key);
-    	CacheHandler.cacheProvider.clearGroupKey(entityClass.getSimpleName() + CacheHandler.GROUPKEY_SUFFIX, key);
-    }
 }
