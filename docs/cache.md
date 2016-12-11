@@ -28,6 +28,8 @@
 		<!-- 多个用“,”隔开 -->
 		<property name="servers" value="127.0.0.1:6379" />
 		<property name="timeout" value="3000" />
+		<property name="password" value="mypass" />
+		<property name="database" value="1" />
 		<!-- sentinel模式才需要该属性
 		<property name="masterName" value="${redis.masterName}" />
 		 -->
@@ -41,13 +43,20 @@
 		<property name="servers" value="127.0.0.1:6380" />
 		<property name="timeout" value="3000" />
 	</bean> 
+```
+配置文件说明
+- mode:  standalone:单机模式，sentinel：哨兵模式(主从),cluster：集群模式，shard：分片模式
+- servers:redis server列表，多个','隔开。sentinel模式要配置哨兵地址（敲黑板～～～～）
+- group: 即多套redis配置的支持。如果你的服务里面用到了多组缓存就必须指定组名，组名不能重复，不指定缺省为[default]。
+- database：默认为 0
+- password： redis设置了密码就配置
 
-    <!-- 本地一级缓存支持 -->
+开启本地一级缓存（集群下一级缓存自动更新）
+```
     <bean id="level1CacheSupport" class="com.jeesuite.cache.local.Level1CacheSupport">
-         <!-- 是否启用分布式模式 -->
          <property name="distributedMode" value="true" />
          <property name="bcastServer" value="${redis.servers}" />
-         <!-- 防止多个应用使用同一个缓存的情况，出现交叉订阅缓存同步更新情况，请指定eventScope-->
+         <property name="password" value="mypass" />
          <property name="bcastScope" value="demo" />
          <property name="cacheProvider">
             <!-- <bean class="com.jeesuite.cache.local.GuavaLevel1CacheProvider">
@@ -65,7 +74,12 @@
     </bean>
 ```
 配置文件说明
-- group 即多套redis配置的支持。如果你的服务里面用到了多组缓存就必须指定组名，组名不能重复，不指定缺省为[default]。
+- distributedMode：是否开启分布式模式、默认（true），不开启的话一级缓存更新就不会广播通知了。
+- bcastServer：广播服务器地址，目前使用redis订阅发布机制广播、所以配置redis地址即可。
+- password：bcastServer的redis有密码则配置
+- bcastScope：一般配置你的应用名即可。主要防止多个应用使用同一个缓存的情况，出现交叉订阅缓存同步更新情况。
+- cacheProvider：本地缓存实现。目前支持guava cache和ehcache。默认guava cache
+- cacheNames：需要开启一级缓存缓存组，不配置实际上一级缓存就不生效。按目前自动缓存key规则（namespace.key:value）,namespace即为cacheName
 
 #### 使用和基本语法
 ```

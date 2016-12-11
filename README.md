@@ -1,8 +1,13 @@
-**黄金位置放个小广告→**欢迎加交流群：230192763（不错，这是一个新群来了不要嫌弃哦^o^）
+**黄金位置放个小广告→**欢迎加交流群：230192763（不错，这是一个新群来的）
 ## Introduction
 **jeesuite-libs**是整理的近几年封装的一些基础组件包，计划陆续整理成一个java后台服务开发套件，包括整合dubbo服务化，rest API接口发布等。目前这些模块可用于生产环境，1.0版在千万级会员、日UV200万某互联网公司稳定运行。
+
+**原则**
+- 不造轮子、全部基于主流的框架如：mybatis、kafka、jedis等封装
+- 只做增强不修改依赖框架本身、可自由升级依赖框架版本
+- 封装的目标：更简单、更灵活。
 ---
-release版已经上传maven中心仓库
+**release版已经上传maven中心仓库**
 * [sonatype](https://oss.sonatype.org/content/repositories/releases/com/jeesuite/) 
 * [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
 

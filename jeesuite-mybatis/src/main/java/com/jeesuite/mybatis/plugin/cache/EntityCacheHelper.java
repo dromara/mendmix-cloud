@@ -53,4 +53,30 @@ public class EntityCacheHelper {
 		}
 		return result;
 	}
+	
+	/**
+	 * 移除指定组所有缓存
+	 * @param entityClass 
+	 */
+	public static void removeCache(Class<? extends BaseEntity> entityClass){
+		String entityClassName = entityClass.getSimpleName();
+		String cacheGroupKey = entityClassName + CacheHandler.GROUPKEY_SUFFIX;
+		CacheHandler.cacheProvider.clearExpiredGroupKeys(cacheGroupKey);
+		//TODO 删除主键
+	}
+	
+	/**
+	 * 移除指定组指定key的缓存
+	 * @param entityClass
+	 * @param key
+	 */
+    public static void removeCache(Class<? extends BaseEntity> entityClass,String key){
+    	String entityClassName = entityClass.getSimpleName();
+		key = entityClassName + CacheHandler.SPLIT_PONIT + key;
+		String cacheGroupKey = entityClassName + CacheHandler.GROUPKEY_SUFFIX;
+		
+		CacheHandler.cacheProvider.remove(key);
+		CacheHandler.cacheProvider.clearGroupKey(cacheGroupKey, key);
+		
+	}
 }
