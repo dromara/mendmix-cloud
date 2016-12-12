@@ -129,4 +129,4 @@
 
 ---
 ### 你可以下载集成了所有模块的demo[jeesuite-demo](http://git.oschina.net/vakinge/jeesuite-demo) 
-### jeesuite-admin[jeesuite-demo](http://git.oschina.net/vakinge/jeesuite-admin) 
+### jeesuite统一管理平台[jeesuite-admin](http://git.oschina.net/vakinge/jeesuite-admin) 
