@@ -21,7 +21,20 @@
 * [jeesuite-rest](./docs/rest.md) 
 * [jeesuite-confcenter](./docs/confcenter.md)
 
+--- 
+## Version Plan
+### V1.0.3 
+#### cache模块
+- 针对某些情况哨兵模式jedis切换的问题做了兼容处理
+
+### mybatis模块
+- 支持批量更新缓存支持
+
+#### scheduler模块
+- 支持增加集群节点重新分配job执行节点
+
 ---
+
 ## Version History
 ### V1.0.2 
 #### cache模块
