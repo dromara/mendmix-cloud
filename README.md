@@ -29,6 +29,7 @@
 
 ### mybatis模块
 - 支持批量更新缓存支持
+- 支持自定义自动缓存缓存实现
 
 #### scheduler模块
 - 支持增加集群节点重新分配job执行节点
@@ -127,4 +128,5 @@
 - 分布式全局ID生成器
 
 ---
-### 你可以下载集成了所有模块的demo[jeesuite-demo](https://github.com/vakinge/jeesuite-demo) 
+### 你可以下载集成了所有模块的demo[jeesuite-demo](http://git.oschina.net/vakinge/jeesuite-demo) 
+### jeesuite-admin[jeesuite-demo](http://git.oschina.net/vakinge/jeesuite-admin) 
