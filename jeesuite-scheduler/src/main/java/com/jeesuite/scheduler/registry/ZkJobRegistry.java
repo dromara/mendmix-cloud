@@ -155,6 +155,9 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 				}else if(currentTimeMillis - configFromZK.getModifyTime() > TimeUnit.MINUTES.toMillis(30)){
 					updateConfInZK = true;
 				}
+			}else{
+				//zookeeper 该job不存在？
+				updateConfInZK = true;
 			}
 		   //拿ZK上的配置覆盖当前的
 		   if(!updateConfInZK){

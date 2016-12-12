@@ -37,6 +37,10 @@
 - @cahce标注支持聚合函数结果自动缓存
 - 提供EntityCacheHelper工具类，支持方法内手动写入缓存并自动缓存管理
 
+#### scheduler模块
+- 兼容增加job新旧版本同时运行逻辑
+- JobContext 增加getActiveNodes方法
+
 ---
 ### V1.0.1
 #### kafka模块
