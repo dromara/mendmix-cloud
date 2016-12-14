@@ -66,6 +66,8 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	
 	private volatile boolean zkAvailabled = true;
 	
+	private volatile boolean updatingStatus;
+	
 	public void setZkServers(String zkServers) {
 		this.zkServers = zkServers;
 	}
@@ -198,15 +200,9 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			public void handleChildChange(String parentPath, List<String> currentChilds) throws Exception {
 				logger.info(">>nodes changed ,nodes:{}",currentChilds);
 				if(currentChilds == null || currentChilds.isEmpty())return;
-				Collection<JobConfig> configs = schedulerConfgs.values();
-				for (JobConfig config : configs) {
-					if(!currentChilds.contains(config.getCurrentNodeId())){
-						logger.info("process Job[{}] node_failover from {} to {}",config.getJobName(),config.getCurrentNodeId(),currentChilds.get(0));
-						config.setCurrentNodeId(currentChilds.get(0));
-						config.setRunning(false);
-					}
-				}
-				//
+				//分配节点
+				rebalanceJobNode(currentChilds);
+				//刷新当前可用节点
 				JobContext.getContext().refreshNodes(currentChilds);
 			}
 		});
@@ -229,6 +225,29 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
         List<String> activeNodes = zkClient.getChildren(nodeStateParentPath);
 		JobContext.getContext().refreshNodes(activeNodes);
         logger.info("finish register schConfig:{}，\nactiveNodes:{}",ToStringBuilder.reflectionToString(conf, ToStringStyle.MULTI_LINE_STYLE),activeNodes);
+	}
+	
+	/**
+	 * 重新分配执行节点
+	 * @param nodes
+	 */
+	private synchronized void rebalanceJobNode(List<String> nodes) {
+		while(updatingStatus);
+		Collection<JobConfig> jobs = schedulerConfgs.values();
+		int nodeIndex = 0;
+		for (JobConfig job : jobs) {
+			String nodeId = nodes.get(nodeIndex++);
+			if(!StringUtils.equals(job.getCurrentNodeId(), nodeId)){				
+				job.setCurrentNodeId(nodeId);
+				logger.info("rebalance Job[{}-{}] To Node[{}] ",job.getGroupName(),job.getJobName(),nodeId);
+			}
+			if(nodeIndex >= nodes.size()){
+				nodeIndex = 0;
+			}
+			//
+			updateJobConfig(job);
+		}
+		
 	}
 
 	private synchronized JobConfig getConfigFromZK(String path,Stat stat){
@@ -280,35 +299,46 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 
 	@Override
 	public void setRuning(String jobName, Date fireTime) {
-		JobConfig config = getConf(jobName,false);
-		config.setRunning(true);
-		config.setLastFireTime(fireTime);
-		config.setCurrentNodeId(JobContext.getContext().getNodeId());
-		config.setModifyTime(Calendar.getInstance().getTimeInMillis());
-		//更新本地
-		schedulerConfgs.put(jobName, config);
+		updatingStatus = false;
 		try {			
-			if(zkAvailabled)zkClient.writeData(getPath(config), JsonUtils.toJson(config));
-		} catch (Exception e) {
-			checkZkAvailabled();
-			logger.warn(String.format("Job[{}] setRuning error...", jobName),e);
+			JobConfig config = getConf(jobName,false);
+			config.setRunning(true);
+			config.setLastFireTime(fireTime);
+			config.setCurrentNodeId(JobContext.getContext().getNodeId());
+			config.setModifyTime(Calendar.getInstance().getTimeInMillis());
+			//更新本地
+			schedulerConfgs.put(jobName, config);
+			try {			
+				if(zkAvailabled)zkClient.writeData(getPath(config), JsonUtils.toJson(config));
+			} catch (Exception e) {
+				checkZkAvailabled();
+				logger.warn(String.format("Job[{}] setRuning error...", jobName),e);
+			}
+		} finally {
+			updatingStatus = false;
 		}
 	}
 
 	@Override
 	public void setStoping(String jobName, Date nextFireTime) {
-		JobConfig config = getConf(jobName,false);
-		config.setRunning(false);
-		config.setNextFireTime(nextFireTime);
-		config.setModifyTime(Calendar.getInstance().getTimeInMillis());
-		//更新本地
-		schedulerConfgs.put(jobName, config);
-		try {		
-			if(zkAvailabled)zkClient.writeData(getPath(config), JsonUtils.toJson(config));
-		} catch (Exception e) {
-			checkZkAvailabled();
-			logger.warn(String.format("Job[{}] setStoping error...", jobName),e);
+		updatingStatus = false;
+		try {
+			JobConfig config = getConf(jobName,false);
+			config.setRunning(false);
+			config.setNextFireTime(nextFireTime);
+			config.setModifyTime(Calendar.getInstance().getTimeInMillis());
+			//更新本地
+			schedulerConfgs.put(jobName, config);
+			try {		
+				if(zkAvailabled)zkClient.writeData(getPath(config), JsonUtils.toJson(config));
+			} catch (Exception e) {
+				checkZkAvailabled();
+				logger.warn(String.format("Job[{}] setStoping error...", jobName),e);
+			}
+		} finally {
+			updatingStatus = false;
 		}
+		
 	}
 
 
@@ -358,5 +388,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	public void updateJobConfig(JobConfig config) {
 		config.setModifyTime(Calendar.getInstance().getTimeInMillis());
 		zkClient.writeData(getPath(config), JsonUtils.toJson(config));
+		schedulerConfgs.put(config.getJobName(), config);
 	}
+	
 }

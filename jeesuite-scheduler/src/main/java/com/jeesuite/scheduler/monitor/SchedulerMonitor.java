@@ -66,7 +66,10 @@ public class SchedulerMonitor implements Closeable{
 					}
 				}
 			}
-			result.add(groupInfo);
+			
+			if(groupInfo.getClusterNodes().size() > 0){				
+				result.add(groupInfo);
+			}
 		}
 		return result;
 	}

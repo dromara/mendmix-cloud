@@ -203,8 +203,9 @@ public abstract class AbstractJob implements DisposableBean{
         try {
             JobConfig schConf = jobRegistry.getConf(jobName,true);
             
-            //下次执行时间 < 当前时间 强制执行
-            if(schConf.getNextFireTime() != null && schConf.getNextFireTime().before(Calendar.getInstance().getTime())){
+            //下次执行时间 < 当前时间(忽略5秒误差) 强制执行
+            if(schConf.getNextFireTime() != null 
+            		&& Calendar.getInstance().getTime().getTime() - schConf.getNextFireTime().getTime() > 5000){
             	logger.info("NextFireTime[{}] before currentTime[{}],re-join-execute task ");
             	return false;
             }
@@ -218,7 +219,7 @@ public abstract class AbstractJob implements DisposableBean{
           //如果执行节点不为空,且不等于当前节点
             if(StringUtils.isNotBlank(schConf.getCurrentNodeId()) 
             		&& !JobContext.getContext().getNodeId().equals(schConf.getCurrentNodeId())){
-            	logger.debug("Job_{} 当前指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
+            	logger.trace("Job_{} 当前指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
             	return true;
             }
 

@@ -25,7 +25,8 @@
 ## Version Plan
 ### V1.0.3 
 #### cache模块
-- 针对某些情况哨兵模式jedis切换的问题做了兼容处理
+- 针对某些情况sentinel模式jedis切换的问题做了兼容处理
+- sentinel模式支持读写分离
 
 ### mybatis模块
 - 支持批量更新缓存支持

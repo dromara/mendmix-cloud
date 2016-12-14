@@ -25,7 +25,7 @@ public class DemoParallelTask extends AbstractJob{
 				continue;
 			}
 			// 处理具体业务逻辑
-			System.out.println("<<<<<<<DemoTask2=====>"+count);
+			System.out.println("<<<<<<<DemoParallelTask=====>"+count);
 		}
 		count++;
 	}
