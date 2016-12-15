@@ -6,19 +6,6 @@
 	<version>1.0.3</version>
 </dependency>
 ```
-#### 特别说明
-redis初始化过程使用到com.jeesuite.spring.InstanceFactory，因此需要在启动的时候初始化。
-- web.xml
-```
-com.jeesuite.spring.web.ContextLoaderListener
-替换
-org.springframework.web.context.ContextLoaderListener
-<listener>
-	<listener-class>com.jeesuite.spring.web.ContextLoaderListener</listener-class>
-</listener>
-```
-- 非web容器启动
-ApplicationContext初始化完成后，调用InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
 
 #### 编写一个定时任务
 ```
