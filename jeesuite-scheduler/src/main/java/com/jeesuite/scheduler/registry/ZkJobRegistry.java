@@ -362,8 +362,12 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	
 	private void execCommond(MonitorCommond cmd){
 		if(cmd == null)return;
-		switch (cmd.getCmdType()) {
-		case MonitorCommond.TYPE_EXEC:
+		
+		JobConfig config = schedulerConfgs.get(cmd.getJobName());
+		if(MonitorCommond.TYPE_EXEC == cmd.getCmdType()){
+			if(config.isRunning()){
+				throw new RuntimeException("任务正在执行中，请稍后再执行");
+			}
 			String key = cmd.getJobGroup() + ":" + cmd.getJobName();
 			final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(key);
 			if(abstractJob != null){
@@ -378,11 +382,20 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 					}
 				}).start();
 			}
-			break;
-		case MonitorCommond.TYPE_STATUS_MOD:
-			//TODO 
-		default:
-			break;
+		}else if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType() 
+				|| MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType()){
+			
+			if(config != null){
+				if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType()){					
+					config.setActive("1".equals(cmd.getBody()));
+				}else{
+					config.setCronExpr(cmd.getBody().toString());
+				}
+				updateJobConfig(config);
+				if(JobContext.getContext().getConfigPersistHandler() != null){
+					JobContext.getContext().getConfigPersistHandler().persist(config);
+				}
+			}
 		}
 	}
 

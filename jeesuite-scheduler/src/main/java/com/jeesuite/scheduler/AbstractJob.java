@@ -271,6 +271,10 @@ public abstract class AbstractJob implements DisposableBean{
     }
 	
 	public void afterInitialized()  {
+		//启动重试任务
+		if(retries > 0){
+			JobContext.getContext().startRetryProcessor();
+		}
 		if(executeOnStarted)return;
 		JobConfig conf = JobContext.getContext().getRegistry().getConf(jobName,false);
 		Date nextFireTime = getNextFireTime();

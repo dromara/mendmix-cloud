@@ -47,7 +47,15 @@ public class JobContext {
 		} catch (Exception e) {
 			nodeId = UUID.randomUUID().toString();
 		}
-		retryProcessor = new TaskRetryProcessor(1);
+	}
+	
+	public void startRetryProcessor(){
+		if(retryProcessor == null){
+			synchronized (context) {
+				if(retryProcessor != null)return;
+				retryProcessor = new TaskRetryProcessor(1);
+			}
+		}
 	}
 
 	public static JobContext getContext() {
@@ -119,7 +127,9 @@ public class JobContext {
 	}
 	
 	public void close(){
-		retryProcessor.close();
+		if(retryProcessor != null){
+			retryProcessor.close();
+		}
 	}
 
 }
