@@ -141,46 +141,6 @@ public abstract class AbstractJob implements DisposableBean{
         }
     }
 
-    /**
-     * 检测当前是否可用(确保当前及其集群环境仅有一个线程在运行该任务)<br>
-     * generate by: vakin jiang
-     *                    at 2012-2-13
-     * @return
-     */
-    protected String checkExecutable() {
-        try {
-            JobConfig schConf = JobContext.getContext().getRegistry().getConf(jobName,true);
-            if (!schConf.isActive()) {
-                if (logger.isDebugEnabled())
-                    logger.debug("Job_{} 已禁用,终止执行", jobName);
-                return null;
-            }
-
-            if (schConf.isRunning()) {
-            	//如果某个节点开始了任务但是没有正常结束导致没有更新任务执行状态
-                if (isAbnormalabort(schConf)) {
-                    this.cronExpr = schConf.getCronExpr();
-                    return this.cronExpr;
-                }
-                if (logger.isDebugEnabled())
-                    logger.debug(triggerName + "Job_{} 其他节点正在执行,终止当前执行", jobName);
-                return null;
-            }
-            //如果执行节点不为空,且不等于当前节点
-            if(StringUtils.isNotBlank(schConf.getCurrentNodeId()) 
-            		&& !SchedulerContext.getNodeId().equals(schConf.getCurrentNodeId())){
-            	if(isAbnormalabort(schConf)){
-            		this.cronExpr = schConf.getCronExpr();
-            		return this.cronExpr;
-            	}
-            	return null;
-            }
-            this.cronExpr = schConf.getCronExpr();
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
-        return this.cronExpr;
-    }
     
     private Date getPreviousFireTime(){
     	return getTrigger().getPreviousFireTime() == null ? new Date() : getTrigger().getPreviousFireTime();
@@ -249,7 +209,7 @@ public abstract class AbstractJob implements DisposableBean{
     	
     	if(runingTime > threshold){
     		if (logger.isDebugEnabled())
-                logger.debug("Job_{} 执行时长[{}]秒,超过阀值[{}]秒，节点:{}可能发生故障,切换节点:{}", jobName,runingTime,threshold,schConf.getCurrentNodeId(),SchedulerContext.getNodeId());
+                logger.debug("Job_{} 执行时长[{}]秒,超过阀值[{}]秒，节点:{}可能发生故障,切换节点:{}", jobName,runingTime,threshold,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
             
     		return true;
     	}

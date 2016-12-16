@@ -12,20 +12,10 @@ import com.jeesuite.common.json.deserializer.DateTimeConvertDeserializer;
 import com.jeesuite.common.json.serializer.DateTimeConvertSerializer;
 
 /**
- * 类 名：SchedulerConfg.java<br />
- * 
- * 功能描述：定时任务配置 <br />
- * 
- * 创建日期：2012-11-22下午04:44:06 <br />
- * 
- * 版本信息：v 1.0<br />
- * 
- * 版权信息：Copyright (c) 2011 Csair All Rights Reserved<br />
- * 
- * 作 者：<a href="mailto:vakinge@gmail.com">vakin jiang</a><br />
- * 
- * 修改记录： <br />
- * 修 改 者 修改日期 文件版本 修改说明
+ * 任务配置
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2016年12月16日
  */
 public class JobConfig implements Serializable {
 
@@ -55,6 +45,8 @@ public class JobConfig implements Serializable {
 	private String currentNodeId;
 
 	private long modifyTime;
+	
+	private String errorMsg;
 
 	public JobConfig() {
 	}
@@ -153,6 +145,18 @@ public class JobConfig implements Serializable {
 
 	public void setModifyTime(long modifyTime) {
 		this.modifyTime = modifyTime;
+	}
+
+	public String getErrorMsg() {
+		return errorMsg;
+	}
+
+	public void setErrorMsg(String errorMsg) {
+		this.errorMsg = errorMsg;
+	}
+	
+	public boolean error(){
+		return errorMsg != null;
 	}
 
 }

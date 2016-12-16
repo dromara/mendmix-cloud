@@ -306,6 +306,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			config.setLastFireTime(fireTime);
 			config.setCurrentNodeId(JobContext.getContext().getNodeId());
 			config.setModifyTime(Calendar.getInstance().getTimeInMillis());
+			config.setErrorMsg(null);
 			//更新本地
 			schedulerConfgs.put(jobName, config);
 			try {			
@@ -327,6 +328,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			config.setRunning(false);
 			config.setNextFireTime(nextFireTime);
 			config.setModifyTime(Calendar.getInstance().getTimeInMillis());
+			config.setErrorMsg(e == null ? null : e.getMessage());
 			//更新本地
 			schedulerConfgs.put(jobName, config);
 			try {		

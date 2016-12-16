@@ -40,10 +40,6 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 
 	List<AbstractJob> schedulers;
 	
-	public void setSingleMode(boolean singleMode){
-		SchedulerContext.setSingleMode(singleMode);
-	}
-	
 	public void setGroupName(String groupName) {
 		this.groupName = groupName;
 	}
