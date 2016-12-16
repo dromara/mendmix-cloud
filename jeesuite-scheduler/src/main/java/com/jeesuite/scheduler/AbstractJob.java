@@ -7,7 +7,6 @@ import java.util.Calendar;
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
@@ -52,8 +51,8 @@ public abstract class AbstractJob implements DisposableBean{
     
     private boolean executeOnStarted;//启动是否立即执行
     
-	//@Autowired
-    private JobRegistry jobRegistry;
+    
+    private int retries = 0;//失败重试次数
 
 	public void setGroup(String group) {
 		this.group = group;
@@ -75,10 +74,6 @@ public abstract class AbstractJob implements DisposableBean{
 		this.cronExpr = cronExpr;
 	}
 
-	public void setJobRegistry(JobRegistry jobRegistry) {
-		this.jobRegistry = jobRegistry;
-	}
-
 	public boolean isExecuteOnStarted() {
 		return executeOnStarted;
 	}
@@ -89,6 +84,10 @@ public abstract class AbstractJob implements DisposableBean{
 
 	public String getTriggerName() {
 		return triggerName;
+	}
+
+	public void setRetries(int retries) {
+		this.retries = retries;
 	}
 
 	protected Scheduler getScheduler() {
@@ -105,18 +104,22 @@ public abstract class AbstractJob implements DisposableBean{
 			return;
 
 		Date beginTime = null;
+		Exception exception = null;
 		try {
 			// 更新状态
 			beginTime = getPreviousFireTime();
-			jobRegistry.setRuning(jobName, beginTime);
+			JobContext.getContext().getRegistry().setRuning(jobName, beginTime);
 			logger.debug("Job_{} at node[{}] execute begin...", jobName, JobContext.getContext().getNodeId());
 			// 执行
 			doJob(JobContext.getContext());
 			logger.debug("Job_{} at node[{}] execute finish", jobName, JobContext.getContext().getNodeId());
 		} catch (Exception e) {
+			//重试
+			if(retries > 0)JobContext.getContext().getRetryProcessor().submit(this, retries);
 			logger.error("Job_" + jobName + " execute error", e);
+			exception = e;
 		}
-		jobRegistry.setStoping(jobName, getTrigger().getNextFireTime());
+		JobContext.getContext().getRegistry().setStoping(jobName, getTrigger().getNextFireTime(),exception);
 		// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
 		cronTrigger = null;
 	}
@@ -134,8 +137,7 @@ public abstract class AbstractJob implements DisposableBean{
                 jobFireInterval = 0;
             }
         } catch (Exception e) {
-            // TODO: handle exception
-        	e.printStackTrace();
+        	logger.error("checkConExpr error",e);
         }
     }
 
@@ -147,21 +149,13 @@ public abstract class AbstractJob implements DisposableBean{
      */
     protected String checkExecutable() {
         try {
-            JobConfig schConf = jobRegistry.getConf(jobName,true);
+            JobConfig schConf = JobContext.getContext().getRegistry().getConf(jobName,true);
             if (!schConf.isActive()) {
                 if (logger.isDebugEnabled())
                     logger.debug("Job_{} 已禁用,终止执行", jobName);
                 return null;
             }
-            
-            //
-//            if(schConf.getNextFireTime() != null && getTrigger().getPreviousFireTime().compareTo(schConf.getNextFireTime()) < 0 && schConf.getNextFireTime().after(new Date())){
-//            	if (logger.isDebugEnabled())
-//                    logger.debug("Job_{} 下次执行时间:{},当前时间:{}不满足", jobName,DateUtils.format(schConf.getNextFireTime()),DateUtils.format(getTrigger().getPreviousFireTime()));
-//            	return null;
-//            }
-            
-            //
+
             if (schConf.isRunning()) {
             	//如果某个节点开始了任务但是没有正常结束导致没有更新任务执行状态
                 if (isAbnormalabort(schConf)) {
@@ -201,7 +195,7 @@ public abstract class AbstractJob implements DisposableBean{
     protected boolean currentNodeIgnore() {
     	if(parallelEnabled())return false;
         try {
-            JobConfig schConf = jobRegistry.getConf(jobName,true);
+            JobConfig schConf = JobContext.getContext().getRegistry().getConf(jobName,true);
             
             //下次执行时间 < 当前时间(忽略5秒误差) 强制执行
             if(schConf.getNextFireTime() != null 
@@ -295,31 +289,34 @@ public abstract class AbstractJob implements DisposableBean{
 
     @Override
 	public void destroy() throws Exception {
-    	jobRegistry.unregister(jobName);
+    	JobContext.getContext().getRegistry().unregister(jobName);
     }
 
 	public void init()  {
-		
-		Validate.notNull(jobRegistry);
 		
 		triggerName = jobName + "Trigger";
 		
 		triggerKey = new TriggerKey(triggerName, group);
 		
 		JobConfig jobConfg = new JobConfig(group,jobName,cronExpr);
+		
+		//从持久化配置合并
+		if(JobContext.getContext().getConfigPersistHandler() != null){
+			JobContext.getContext().getConfigPersistHandler().merge(jobConfg);
+		}
     	
-        jobRegistry.register(jobConfg);
+        JobContext.getContext().getRegistry().register(jobConfg);
         
         logger.info("Initialized Job_{} OK!!", jobName);
     }
 	
 	public void afterInitialized()  {
 		if(executeOnStarted)return;
-		JobConfig conf = jobRegistry.getConf(jobName,false);
+		JobConfig conf = JobContext.getContext().getRegistry().getConf(jobName,false);
 		Date nextFireTime = getNextFireTime();
 		if(nextFireTime != null){			
 			conf.setNextFireTime(nextFireTime);
-			jobRegistry.updateJobConfig(conf);
+			JobContext.getContext().getRegistry().updateJobConfig(conf);
 		}
 		
 	}

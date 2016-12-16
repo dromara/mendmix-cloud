@@ -11,6 +11,7 @@ import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -29,7 +30,7 @@ import com.jeesuite.spring.SpringInstanceProvider;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年8月17日
  */
-public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,InitializingBean{
+public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,InitializingBean,DisposableBean{
 	
 	protected static final Logger logger = LoggerFactory.getLogger(SchedulerFactoryBeanWrapper.class);
 
@@ -49,6 +50,14 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 
 	public void setSchedulers(List<AbstractJob> schedulers) {
 		this.schedulers = schedulers;
+	}
+
+	public void setConfigPersistHandler(ConfigPersistHandler configPersistHandler) {
+		JobContext.getContext().setConfigPersistHandler(configPersistHandler);
+	}
+	
+	public void setRegistry(JobRegistry registry) {
+		JobContext.getContext().setRegistry(registry);
 	}
 
 	@Override
@@ -132,6 +141,12 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		logger.info("register scheduler task [{}] ok!!",sch.getJobName());
 		return (Trigger) context.getBean(triggerBeanName);
 		
+	}
+
+
+	@Override
+	public void destroy() throws Exception {
+		JobContext.getContext().close();
 	}
 
 }

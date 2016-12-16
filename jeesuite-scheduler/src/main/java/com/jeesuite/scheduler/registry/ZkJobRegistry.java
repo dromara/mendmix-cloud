@@ -320,7 +320,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	}
 
 	@Override
-	public void setStoping(String jobName, Date nextFireTime) {
+	public void setStoping(String jobName, Date nextFireTime,Exception e) {
 		updatingStatus = false;
 		try {
 			JobConfig config = getConf(jobName,false);
@@ -331,9 +331,9 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			schedulerConfgs.put(jobName, config);
 			try {		
 				if(zkAvailabled)zkClient.writeData(getPath(config), JsonUtils.toJson(config));
-			} catch (Exception e) {
+			} catch (Exception ex) {
 				checkZkAvailabled();
-				logger.warn(String.format("Job[{}] setStoping error...", jobName),e);
+				logger.warn(String.format("Job[{}] setStoping error...", jobName),ex);
 			}
 		} finally {
 			updatingStatus = false;

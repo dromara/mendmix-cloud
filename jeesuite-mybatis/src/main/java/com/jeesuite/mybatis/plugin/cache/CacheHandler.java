@@ -18,6 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
@@ -190,6 +191,15 @@ public class CacheHandler implements InterceptorHandler {
 						}
 					}
 				}				
+			}else{//按条件删除和更新的情况
+				System.out.println(args);
+				System.out.println(mt);
+				BoundSql boundSql = mt.getBoundSql(args[1]);
+				
+				Object parameterObject2 = boundSql.getParameterObject();
+				System.out.println(parameterObject2);
+				System.out.println(boundSql.getSql());
+				System.out.println();
 			}
 			//删除同一cachegroup关联缓存
 			removeCacheByGroup(mt.getId(), mapperNameSpace);

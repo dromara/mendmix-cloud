@@ -32,7 +32,7 @@ public interface JobRegistry {
 	
 	void setRuning(String jobName,Date fireTime);
 	
-	void setStoping(String jobName,Date nextFireTime);
+	void setStoping(String jobName,Date nextFireTime,Exception e);
 	
 	JobConfig getConf(String jobName,boolean forceRemote);
 	

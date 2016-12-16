@@ -15,6 +15,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import com.jeesuite.scheduler.helper.ConsistencyHash;
+import com.jeesuite.scheduler.registry.NullJobRegistry;
 
 /**
  * @description <br>
@@ -33,6 +34,12 @@ public class JobContext {
 	
 	private Map<String, AbstractJob> allJobs = new HashMap<>();
 	
+	private ConfigPersistHandler configPersistHandler;
+	
+	private TaskRetryProcessor retryProcessor;
+	
+	private JobRegistry registry;
+
 
 	private JobContext() {
 		try {
@@ -40,6 +47,7 @@ public class JobContext {
 		} catch (Exception e) {
 			nodeId = UUID.randomUUID().toString();
 		}
+		retryProcessor = new TaskRetryProcessor(1);
 	}
 
 	public static JobContext getContext() {
@@ -50,6 +58,29 @@ public class JobContext {
 		return nodeId;
 	}
 	
+	public ConfigPersistHandler getConfigPersistHandler() {
+		return configPersistHandler;
+	}
+
+	public void setConfigPersistHandler(ConfigPersistHandler configPersistHandler) {
+		this.configPersistHandler = configPersistHandler;
+	}
+
+	public JobRegistry getRegistry() {
+		if(registry == null){
+			registry = new NullJobRegistry();
+		}
+		return registry;
+	}
+
+	public void setRegistry(JobRegistry registry) {
+		this.registry = registry;
+	}
+
+	public TaskRetryProcessor getRetryProcessor() {
+		return retryProcessor;
+	}
+
 	public void refreshNodes(List<String> nodes){
 		activeNodes.clear();
 		activeNodes.addAll(nodes);
@@ -85,6 +116,10 @@ public class JobContext {
 
 	public Set<String> getActiveNodes() {
 		return activeNodes;
+	}
+	
+	public void close(){
+		retryProcessor.close();
 	}
 
 }
