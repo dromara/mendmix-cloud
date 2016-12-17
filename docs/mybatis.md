@@ -3,7 +3,7 @@
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-mybatis</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 </dependency>
 ```
 #### 一些说明
