@@ -5,6 +5,7 @@ package com.jeesuite.scheduler;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.Scheduler;
@@ -53,6 +54,8 @@ public abstract class AbstractJob implements DisposableBean{
     
     
     private int retries = 0;//失败重试次数
+    
+    private AtomicInteger runCount = new AtomicInteger(0);
 
 	public void setGroup(String group) {
 		this.group = group;
@@ -119,27 +122,12 @@ public abstract class AbstractJob implements DisposableBean{
 			logger.error("Job_" + jobName + " execute error", e);
 			exception = e;
 		}
+		//执行次数累加1
+		runCount.incrementAndGet();
 		JobContext.getContext().getRegistry().setStoping(jobName, getTrigger().getNextFireTime(),exception);
 		// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
 		cronTrigger = null;
 	}
-
-    public void checkConExpr(String latestConExpr) {
-        try {
-            //
-            String originConExpression = getTrigger().getCronExpression();
-            //判断任务时间是否更新过
-            if (!originConExpression.equalsIgnoreCase(latestConExpr)) {
-            	logger.info("reset ConExpression[{}] To [{}] ",originConExpression,latestConExpr);
-            	getTrigger().setCronExpression(latestConExpr);
-                getScheduler().rescheduleJob(triggerKey, getTrigger());
-                //重置
-                jobFireInterval = 0;
-            }
-        } catch (Exception e) {
-        	logger.error("checkConExpr error",e);
-        }
-    }
 
     
     private Date getPreviousFireTime(){

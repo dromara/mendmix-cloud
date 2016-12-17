@@ -4,6 +4,8 @@
 package com.jeesuite.scheduler;
 
 import java.io.Closeable;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -24,13 +26,15 @@ public class TaskRetryProcessor implements Closeable{
 	private static final Logger logger = LoggerFactory.getLogger(TaskRetryProcessor.class);
 	
 	//重试时间间隔单元（毫秒）
-	private static final long RETRY_PERIOD_UNIT = 15 * 1000;
+	private static final long RETRY_PERIOD_UNIT = 10 * 1000;
 
 	private final PriorityBlockingQueue<PriorityTask> taskQueue = new PriorityBlockingQueue<PriorityTask>(1000);  
 	
 	private ExecutorService executor;
 	
 	private AtomicBoolean closed = new AtomicBoolean(false);
+	
+	private List<String> queueJobNames = new CopyOnWriteArrayList<>();
 	
 	public TaskRetryProcessor() {
 		this(1);
@@ -62,10 +66,16 @@ public class TaskRetryProcessor implements Closeable{
 
 	public void submit(final AbstractJob job,final int retries){
 		int taskCount;
-		if((taskCount = taskQueue.size()) > 1000){
+		if((taskCount = taskQueue.size()) > 100){
 			logger.warn("ErrorMessageProcessor queue task count over:{}",taskCount);
 		}
+		if(queueJobNames.contains(job.jobName)){
+			logger.debug("Job[{}-{}] is existing in retry Queue",job.group,job.jobName);
+			return;
+		}
+		logger.info("Add Job[{}-{}] to retry Queue,will be retry {} time",job.group,job.jobName,retries);
 		taskQueue.add(new PriorityTask(job, retries));
+		queueJobNames.add(job.jobName);
 	}
 	
 	public void close(){
@@ -105,6 +115,8 @@ public class TaskRetryProcessor implements Closeable{
 			try {	
 				logger.debug("begin re-process Job[{}-{}]:",job.group,job.jobName);
 				job.doJob(JobContext.getContext());
+				//remove
+				queueJobNames.remove(job.jobName);
 			} catch (Exception e) {
 				retryCount++;
 				logger.warn("retry Job[{}-{}] error",job.group,job.jobName);
@@ -115,6 +127,8 @@ public class TaskRetryProcessor implements Closeable{
 		private void retry(){
 			if(retryCount == retries){
 				logger.warn("retry_skip mssageId[{}] retry over {} time error ,skip!!!");
+				//remove
+				queueJobNames.remove(job.jobName);
 				return;
 			}
 			nextFireTime = nextFireTime + retryCount * RETRY_PERIOD_UNIT;
