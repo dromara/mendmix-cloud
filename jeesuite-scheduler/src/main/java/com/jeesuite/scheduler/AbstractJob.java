@@ -103,8 +103,11 @@ public abstract class AbstractJob implements DisposableBean{
 		// 避免InstanceFactory还未初始化，就执行
 		InstanceFactory.waitUtilInitialized();
 
-		if (currentNodeIgnore())
+		JobConfig schConf = JobContext.getContext().getRegistry().getConf(jobName,false);
+		if (currentNodeIgnore(schConf))
 			return;
+		
+		checkConExprChange(schConf.getCronExpr());
 
 		Date beginTime = null;
 		Exception exception = null;
@@ -140,22 +143,19 @@ public abstract class AbstractJob implements DisposableBean{
     }
     
     
-    protected boolean currentNodeIgnore() {
+    protected boolean currentNodeIgnore(JobConfig schConf) {
     	if(parallelEnabled())return false;
         try {
-            JobConfig schConf = JobContext.getContext().getRegistry().getConf(jobName,true);
+            if (!schConf.isActive()) {
+            	logger.trace("Job_{} 已禁用,终止执行", jobName);
+                return true;
+            }
             
-            //下次执行时间 < 当前时间(忽略5秒误差) 强制执行
+          //下次执行时间 < 当前时间(忽略5秒误差) 强制执行
             if(schConf.getNextFireTime() != null 
             		&& Calendar.getInstance().getTime().getTime() - schConf.getNextFireTime().getTime() > 5000){
             	logger.info("NextFireTime[{}] before currentTime[{}],re-join-execute task ");
             	return false;
-            }
-            
-            if (!schConf.isActive()) {
-                if (logger.isDebugEnabled())
-                    logger.debug("Job_{} 已禁用,终止执行", jobName);
-                return true;
             }
             
           //如果执行节点不为空,且不等于当前节点
@@ -181,6 +181,21 @@ public abstract class AbstractJob implements DisposableBean{
         }
         return false;
     }
+    
+    private void checkConExprChange(String currentConExpr) {  
+        try {   
+            String originConExpression = getTrigger().getCronExpression();  
+            //判断任务时间是否更新过  
+            if (!originConExpression.equalsIgnoreCase(currentConExpr)) {  
+            	getTrigger().setCronExpression(currentConExpr);  
+                getScheduler().rescheduleJob(triggerKey, getTrigger()); 
+                logger.info("Job_{} CronExpression changed, origin:{},current:{}",jobName,originConExpression,currentConExpr);
+            }  
+        } catch (Exception e) {
+        	logger.error("checkConExprChange error",e);
+        }  
+         
+    }  
     
     /**
      * 判断是否异常中断运行状态（）

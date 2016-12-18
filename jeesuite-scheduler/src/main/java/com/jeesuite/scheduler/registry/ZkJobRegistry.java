@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.zookeeper.data.Stat;
+import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -389,6 +390,11 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 				if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType()){					
 					config.setActive("1".equals(cmd.getBody()));
 				}else{
+					try {
+						new CronExpression(cmd.getBody().toString());
+					} catch (Exception e) {
+						throw new RuntimeException("cron表达式格式错误");
+					}
 					config.setCronExpr(cmd.getBody().toString());
 				}
 				updateJobConfig(config);

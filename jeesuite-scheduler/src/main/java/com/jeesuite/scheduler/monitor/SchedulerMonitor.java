@@ -80,6 +80,7 @@ public class SchedulerMonitor implements Closeable{
 		for (String node : nodeIds) {
 			String nodePath = path + "/" + node;
 			zkClient.writeData(nodePath, cmd);
+			break;
 		}
 		
 	}
