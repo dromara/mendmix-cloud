@@ -39,6 +39,8 @@ public class MybatisMapperParser {
 	
 	private static List<EntityInfo> entityInfos = new ArrayList<>();
 	
+	private static Map<String,EntityInfo> mapperRalateEntitys = new HashMap<>();
+	
 	private static String mapperFileSuffix = "Mapper.xml";
 	private static String mapperBaseDir;
 	public static void setMapperLocations(String mapperLocations){
@@ -52,6 +54,11 @@ public class MybatisMapperParser {
 	public static List<EntityInfo> getEntityInfos() {
 		doParse();
 		return entityInfos;
+	}
+	
+	public static EntityInfo getEntityInfoByMapper(String mapperName){
+		doParse();
+		return mapperRalateEntitys.get(mapperName);
 	}
 	
 	public static boolean entityHasProperty(Class<?> entityClass,String propName){
@@ -149,6 +156,7 @@ public class MybatisMapperParser {
 				}
 				
 				entityInfos.add(entityInfo);
+				mapperRalateEntitys.put(mapperClass, entityInfo);
 				//
 				List<XNode> resultNodes = xNode.getChildren();
 				for (XNode xNode2 : resultNodes) {
@@ -212,10 +220,15 @@ public class MybatisMapperParser {
 	    NodeList children = node.getNode().getChildNodes();
 	    for (int i = 0; i < children.getLength(); i++) {
 	      XNode child = node.newXNode(children.item(i));
-	      String data = child.getStringBody("");
+	      String data;
+	      if("#text".equals(child.getName())){
+	    	  data = child.getStringBody("");
+	      }else{
+	    	  data = child.toString();
+	      }
 	        sql.append(data);
 	    }
-	    return sql.toString().replaceAll("\\n+\\s+", "").replaceAll("(<\\!\\[CDATA\\[)|(\\]\\]>)", "");
+	    return sql.toString();
 	  }
 	
 }

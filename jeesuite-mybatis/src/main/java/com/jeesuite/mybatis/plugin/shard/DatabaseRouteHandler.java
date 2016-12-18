@@ -188,12 +188,11 @@ public class DatabaseRouteHandler implements InterceptorHandler {
 		for (EntityInfo entityInfo : entityInfos) {
 			Map<String, String> mapperSqls = entityInfo.getMapperSqls();
 			for (String id : mapperSqls.keySet()) {
-				String sql = mapperSqls.get(id);
+				String sql = mapperSqls.get(id).replaceAll("\\n+\\s+", "").replaceAll("(<\\!\\[CDATA\\[)|(\\]\\]>)", "");
 				if(shardFieldAfterWherePattern.matcher(sql).matches()){
 					//?TODO 解析非where
 					String[] split = sql.split("[WHERE|where|and|AND|ON|on]\\s+.*"+shardStrategy.shardDbField().toLowerCase());
 					String paramName = (split[split.length - 1]).trim().replaceAll("=|#|\\s+|\\{|\\}|<|>", "").split(REGEX_BLANK)[0];
-					id = entityInfo.getMapperClass().getName() + "." + id;
 					shardFieldRalateParamNames.put(id, paramName.trim());
 				}else{
 					

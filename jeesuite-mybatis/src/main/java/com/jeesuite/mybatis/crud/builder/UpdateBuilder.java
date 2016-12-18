@@ -43,7 +43,6 @@ public class UpdateBuilder {
 			
 			MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, msId, sqlSource,SqlCommandType.UPDATE);
 			
-			// 将返回值修改为实体类型
 			MappedStatement statement = statementBuilder.build();
 			
 			configuration.addMappedStatement(statement);

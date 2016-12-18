@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,16 +19,25 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.mapping.BoundSql;
+import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.ResultMap;
+import org.apache.ibatis.mapping.ResultMapping;
 import org.apache.ibatis.mapping.SqlCommandType;
+import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.plugin.Invocation;
+import org.apache.ibatis.reflection.MetaObject;
+import org.apache.ibatis.reflection.SystemMetaObject;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.ResultHandler;
+import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.core.InterceptorType;
+import com.jeesuite.mybatis.crud.builder.SqlTemplate;
 import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
@@ -48,6 +58,10 @@ import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
  */
 public class CacheHandler implements InterceptorHandler {
 
+	/**
+	 * 
+	 */
+	private static final String QUERY_IDS_SUFFIX = "_ralateIds";
 	protected static final String SPLIT_PONIT = ".";
 	protected static final String GROUPKEY_SUFFIX = "~keys";
 
@@ -102,7 +116,7 @@ public class CacheHandler implements InterceptorHandler {
 					if(object instanceof List == false){						
 						object = new ArrayList<>(Arrays.asList(object));
 					}
-					if(logger.isDebugEnabled())logger.debug("method[{}] find result from cacheKey:{}",mt.getId(),cacheKey);
+					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] find result from cacheKey:{}",mt.getId(),cacheKey);
 				}
 				return object;
 			}else{
@@ -112,7 +126,7 @@ public class CacheHandler implements InterceptorHandler {
 				Object object = cacheProvider.get(cacheKeyById);
 				if(object != null){
 					object = new ArrayList<>(Arrays.asList(object));
-					if(logger.isDebugEnabled())logger.debug("method[{}] find result from cacheKey:{} ,ref by:{}",mt.getId(),cacheKeyById,cacheKey);
+					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] find result from cacheKey:{} ,ref by:{}",mt.getId(),cacheKeyById,cacheKey);
 				}
 				
 				return object;
@@ -146,12 +160,12 @@ public class CacheHandler implements InterceptorHandler {
 			//按主键查询以及标记非引用关系的缓存直接读取缓存
 			if(cacheInfo.isSecondQueryById() == false){
 				if(cacheProvider.set(cacheKey,result, cacheInfo.expire)){
-					if(logger.isDebugEnabled())logger.debug("method[{}] put result to cache，cacheKey:{}",mt.getId(),cacheKey);
+					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] put result to cache，cacheKey:{}",mt.getId(),cacheKey);
 				}
 				//结果为集合的情况，增加key到cacheGroup
 				if(cacheInfo.groupRalated){
 					cacheProvider.putGroupKeys(cacheInfo.cacheGroupKey, cacheKey,cacheInfo.expire);
-					logger.debug("method[{}] add key:[{}] to group key:[{}]",mt.getId(),cacheInfo.cacheGroupKey, cacheKey);
+					logger.debug("_autocache_ method[{}] add key:[{}] to group key:[{}]",mt.getId(),cacheInfo.cacheGroupKey, cacheKey);
 				}else{
 					//
 					cacheUniqueSelectRef(result, mt, cacheKey);
@@ -162,20 +176,20 @@ public class CacheHandler implements InterceptorHandler {
 				
 				if(idCacheKey != null && cacheKey != null && cacheProvider.set(idCacheKey,result, cacheInfo.expire) 
 						&& cacheProvider.set(cacheKey,idCacheKey, cacheInfo.expire)){
-					if(logger.isDebugEnabled())logger.debug("method[{}] put result to cache，cacheKey:{},and add ref cacheKey:{}",mt.getId(),idCacheKey,cacheKey);
+					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] put result to cache，cacheKey:{},and add ref cacheKey:{}",mt.getId(),idCacheKey,cacheKey);
 				}
 			}
 		}else{
+			if(!cacheEnableMappers.contains(mapperNameSpace))return;
 			//返回0，未更新成功
 			if(result != null && ((int)result) == 0)return;
-			
 			if(updateCacheMethods.containsKey(mt.getId())){
 				String cacheByPkKey = null;
 				UpdateByPkMethodCache updateMethodCache = updateCacheMethods.get(mt.getId());
 				if(updateMethodCache.sqlCommandType.equals(SqlCommandType.DELETE)){
 					cacheByPkKey = genarateQueryCacheKey(updateMethodCache.keyPattern,args[1]);
 					cacheProvider.remove(cacheByPkKey);
-					if(logger.isDebugEnabled())logger.debug("method[{}] remove cacheKey:{} from cache",mt.getId(),cacheByPkKey);
+					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] remove cacheKey:{} from cache",mt.getId(),cacheByPkKey);
 				}else{
 					cacheByPkKey = genarateQueryCacheKey(updateMethodCache.keyPattern,args[1]);
 					boolean insertCommond = mt.getSqlCommandType().equals(SqlCommandType.INSERT);
@@ -183,7 +197,7 @@ public class CacheHandler implements InterceptorHandler {
 						if(result != null){
 							QueryMethodCache queryByPkMethodCache = getQueryByPkMethodCache(mt.getId());
 							cacheProvider.set(cacheByPkKey,args[1], queryByPkMethodCache.expire);
-							if(logger.isDebugEnabled())logger.debug("method[{}] update cacheKey:{}",mt.getId(),cacheByPkKey);
+							if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] update cacheKey:{}",mt.getId(),cacheByPkKey);
 							//插入其他唯一字段引用
 							if(insertCommond)cacheUniqueSelectRef(args[1], mt, cacheByPkKey);
 							//
@@ -192,19 +206,67 @@ public class CacheHandler implements InterceptorHandler {
 					}
 				}				
 			}else{//按条件删除和更新的情况
-				System.out.println(args);
-				System.out.println(mt);
-				BoundSql boundSql = mt.getBoundSql(args[1]);
-				
-				Object parameterObject2 = boundSql.getParameterObject();
-				System.out.println(parameterObject2);
-				System.out.println(boundSql.getSql());
-				System.out.println();
+				try {					
+					Executor executor = (Executor) invocation.getTarget();
+					Object parameterObject = args[1];
+					ResultHandler resultHandler = null;
+					EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperNameSpace);
+					MappedStatement statement = getQueryIdsMappedStatementForUpdateCache(mt,entityInfo);
+					List<?> idsResult = executor.query(statement, parameterObject, RowBounds.DEFAULT, resultHandler);
+					if(idsResult != null){
+						for (Object id : idsResult) {							
+							String cacheKey = entityInfo.getEntityClass().getSimpleName() + ".id:" + id.toString();
+							cacheProvider.remove(cacheKey);
+						}
+						if(logger.isDebugEnabled())logger.debug("_autocache_ update Method[{}] executed,remove ralate cache {}.id:[{}]",mt.getId(),entityInfo.getEntityClass().getSimpleName(),idsResult);
+					}
+				} catch (Exception e) {
+					logger.error("_autocache_ update Method[{}] remove ralate cache error",e);
+				}
+                
 			}
 			//删除同一cachegroup关联缓存
 			removeCacheByGroup(mt.getId(), mapperNameSpace);
 		}
 	}
+	
+    private MappedStatement getQueryIdsMappedStatementForUpdateCache(MappedStatement mt,EntityInfo entityInfo) {
+    	String msId = mt.getId() + QUERY_IDS_SUFFIX;
+    	
+    	MappedStatement statement = null;
+    	Configuration configuration = mt.getConfiguration();
+    	try {
+    		statement = configuration.getMappedStatement(msId);
+    		if(statement != null)return statement;
+		} catch (Exception e) {}
+    	
+    	synchronized (configuration) {
+			String sql = entityInfo.getMapperSqls().get(mt.getId());
+    		sql = "select "+entityInfo.getIdColumn()+" from "+entityInfo.getTableName()+" WHERE " + sql.split("where|WHERE")[1];
+    		sql = String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
+    		SqlSource sqlSource = configuration.getDefaultScriptingLanuageInstance().createSqlSource(configuration, sql, Object.class);
+    		
+    		MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, msId, sqlSource,SqlCommandType.SELECT);
+    		
+    		statementBuilder.resource(mt.getResource());
+    		statementBuilder.fetchSize(mt.getFetchSize());
+    		statementBuilder.statementType(mt.getStatementType());
+    		statementBuilder.parameterMap(mt.getParameterMap());
+    		statement = statementBuilder.build();
+    		
+    		 List<ResultMap> resultMaps = new ArrayList<ResultMap>();
+    		 
+    		 String id = msId + "-Inline";
+    		 ResultMap.Builder builder = new ResultMap.Builder(configuration, id, entityInfo.getIdType(), new ArrayList<ResultMapping>(), true);
+    	     resultMaps.add(builder.build());
+    	     MetaObject metaObject = SystemMetaObject.forObject(statement);
+    	     metaObject.setValue("resultMaps", Collections.unmodifiableList(resultMaps));
+    		
+    		configuration.addMappedStatement(statement);
+    		
+    		return statement;
+		}
+    }
 
 	/**
 	 * 删除缓存组
@@ -213,17 +275,16 @@ public class CacheHandler implements InterceptorHandler {
 	 */
 	private void removeCacheByGroup(String msId, String mapperNameSpace) {
 		//删除cachegroup关联缓存
-		if(!cacheEnableMappers.contains(mapperNameSpace))return;
 		String entityName = mapperNameRalateEntityNames.get(mapperNameSpace);
 		String cacheGroup = entityName + GROUPKEY_SUFFIX;
 		cacheProvider.clearGroupKeys(cacheGroup);
-		logger.debug("method[{}] remove cache Group:{}",msId,cacheGroup);
+		logger.debug("_autocache_ method[{}] remove cache Group:{}",msId,cacheGroup);
 		//关联缓存
 		if(cacheEvictCascades.containsKey(msId)){
 			for (String entity : cacheEvictCascades.get(msId)) {
 				cacheGroup = entity + GROUPKEY_SUFFIX;
 				cacheProvider.clearExpiredGroupKeys(entity + GROUPKEY_SUFFIX);
-				logger.debug("method[{}] remove Cascade cache Group:[{}]",msId,cacheGroup);
+				logger.debug("_autocache_ method[{}] remove Cascade cache Group:[{}]",msId,cacheGroup);
 			}
 		}
 	}
@@ -248,7 +309,7 @@ public class CacheHandler implements InterceptorHandler {
 				}
 				String fieldCacheKey = genarateQueryCacheKey(methodCache.keyPattern , cacheFieldValues);
 				cacheProvider.set(fieldCacheKey,cacheKey, methodCache.expire);
-				if(logger.isDebugEnabled())logger.debug("method[{}] add ref cacheKey:{}",mt.getId(),fieldCacheKey);
+				if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] add ref cacheKey:{}",mt.getId(),fieldCacheKey);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -395,7 +456,7 @@ public class CacheHandler implements InterceptorHandler {
 					try {						
 						cacheProvider.clearExpiredGroupKeys(key);
 					} catch (Exception e) {
-						logger.warn("clearExpiredGroupKeys for {} error!!",key);
+						logger.warn("_autocache_ clearExpiredGroupKeys for {} error!!",key);
 					}
 				}
 			}

@@ -23,9 +23,16 @@
 
 ---
 ##### 其他功能说明
-* 读写分离：支持动态增加slave节点
-* 自动缓存：支持所有dao层查询方法自动缓存管理（自动缓存、自动更新）
-* 分库路由：只适用基本的分库路由，不支持跨库join等，未上过生产系统。
+* 读写分离
+> 1. 根据执行sql类型自动路由master/slave库
+> 2. 支持基于properties文件动态扩展slave节点
+> 3. 支持@Transactional强制使用master库查询
+* 自动缓存
+> 1. 支持所有mapper自定义查询方法自动缓存管理（自动缓存、自动更新）
+> 2. 支持通过@CacheEvictCascade注解，级联缓存更新
+> 3. 支持通过EntityCacheHelper手动写入/更新缓存并自动纳入自动管理体系
+* 分库路由
+> 1. 只适用基本的分库路由，不支持跨库join等，未上过生产系统。
 
 #### 配置
 ##### mysql.properties配置，为了减少配置默认读取mysql.properties
@@ -163,4 +170,5 @@ EntityCacheHelper.queryTryCache(UserEntity.class, "findByStatus:2", new Callable
    }
 });
 ```
+
 

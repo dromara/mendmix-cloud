@@ -3,11 +3,13 @@
  */
 package com.jeesuite.mybatis.parser;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.persistence.Column;
 import javax.persistence.Table;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +32,11 @@ public class EntityInfo {
 	
 	private String errorMsg;
 	
+	private Class<?> idType;
+	private String idProperty;
+	
+	private String idColumn;
+	
 	public String getErrorMsg() {
 		return errorMsg;
 	}
@@ -39,6 +46,21 @@ public class EntityInfo {
 			if(StringUtils.isNotBlank(entityClassName))entityClass = Class.forName(entityClassName);
 			if(entityClass.isAnnotationPresent(Table.class)){
 				this.tableName = entityClass.getAnnotation(Table.class).name();
+				
+				Field[] fields = entityClass.getDeclaredFields();
+				for (Field field : fields) {
+					if(field.isAnnotationPresent(javax.persistence.Id.class)){
+						this.idType = field.getType();
+						this.idProperty = field.getName();
+						Column column = field.getAnnotation(javax.persistence.Column.class);
+						if(column != null && StringUtils.isNotBlank(column.name())){
+							this.idColumn = column.name();
+						}else{
+							this.idColumn = this.idProperty;
+						}
+						break;
+					}
+				}
 			}else{
 				errorMsg = "entityClass[" + entityClassName +"] not found annotation[@Table]";
 				return;
@@ -95,11 +117,23 @@ public class EntityInfo {
 	}
 	
 	public void addSql(String id,String sql){
-		mapperSqls.put(id, sql);
+		mapperSqls.put(mapperClass.getName() + "." + id, sql);
 	}
 
 	public Map<String, String> getMapperSqls() {
 		return mapperSqls;
+	}
+
+	public Class<?> getIdType() {
+		return idType;
+	}
+
+	public String getIdProperty() {
+		return idProperty;
+	}
+
+	public String getIdColumn() {
+		return idColumn;
 	}
 
 }
