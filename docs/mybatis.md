@@ -148,7 +148,8 @@ public interface UserEntityMapper extends BaseMapper<UserEntity> {
 
 如果不全量更新会导致缓存的内容是有部分字段，因为update后会那最新的entity更新缓存。
 ##### 如果手动更新或写入实体缓存？
-- 提供EntityCacheHelper方法，在代码中手动写入缓存也将纳入自动缓存管理，无需担心缓存更新问题。
+提供EntityCacheHelper方法，在代码中手动写入缓存也将纳入自动缓存管理，无需担心缓存更新问题。
+
 ```
 /**
 	 * 查询并缓存结果
@@ -160,6 +161,7 @@ public interface UserEntityMapper extends BaseMapper<UserEntity> {
 	 */
 	public static <T> T queryTryCache(Class<? extends BaseEntity> entityClass,String key,long expireSeconds,Callable<T> dataCaller)
 ```
+
 ```
 //生成的缓存key为：UserEntity.findByStatus:2
 EntityCacheHelper.queryTryCache(UserEntity.class, "findByStatus:2", new Callable<List<UserEntity>>() {
