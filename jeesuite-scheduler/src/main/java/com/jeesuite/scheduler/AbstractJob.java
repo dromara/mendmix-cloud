@@ -184,6 +184,7 @@ public abstract class AbstractJob implements DisposableBean{
     
     private void checkConExprChange(String currentConExpr) {  
         try {   
+        	if(getTrigger() == null)return;
             String originConExpression = getTrigger().getCronExpression();  
             //判断任务时间是否更新过  
             if (!originConExpression.equalsIgnoreCase(currentConExpr)) {  

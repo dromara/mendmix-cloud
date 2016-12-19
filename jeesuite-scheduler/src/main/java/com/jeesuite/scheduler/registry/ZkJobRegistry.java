@@ -216,7 +216,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			@Override
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				MonitorCommond cmd = (MonitorCommond) data;
-				logger.info("收到commond:+" + cmd.toString());
+				logger.debug("收到commond:+" + cmd.toString());
 				execCommond(cmd);
 			}
 		});
@@ -384,7 +384,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 				}).start();
 			}
 		}else if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType() 
-				|| MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType()){
+				|| MonitorCommond.TYPE_CRON_MOD == cmd.getCmdType()){
 			
 			if(config != null){
 				if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType()){					
