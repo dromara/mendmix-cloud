@@ -152,9 +152,10 @@ public abstract class AbstractJob implements DisposableBean{
             }
             
           //下次执行时间 < 当前时间(忽略5秒误差) 强制执行
-            if(schConf.getNextFireTime() != null 
-            		&& Calendar.getInstance().getTime().getTime() - schConf.getNextFireTime().getTime() > 5000){
-            	logger.info("NextFireTime[{}] before currentTime[{}],re-join-execute task ");
+            long currentTimes = Calendar.getInstance().getTime().getTime();
+			if(schConf.getNextFireTime() != null 
+            		&& currentTimes - schConf.getNextFireTime().getTime() > 5000){
+            	logger.info("NextFireTime[{}] before currentTime[{}],re-join-execute task ",currentTimes,schConf.getNextFireTime().getTime());
             	return false;
             }
             

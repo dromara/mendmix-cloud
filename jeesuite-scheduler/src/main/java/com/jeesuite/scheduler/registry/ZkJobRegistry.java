@@ -94,7 +94,10 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 					activeNodes = new ArrayList<>(JobContext.getContext().getActiveNodes());
 				}
 				
-				if(activeNodes.isEmpty())return;
+				if(!activeNodes.contains(JobContext.getContext().getNodeId())){
+					zkClient.createEphemeral(nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
+					logger.info("node[{}] re-join task clusters",JobContext.getContext().getNodeId());
+				}
 				//对节点列表排序
 				Collections.sort(activeNodes);
 				//本地缓存的所有jobs
@@ -199,8 +202,13 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
         zkClient.subscribeChildChanges(nodeStateParentPath, new IZkChildListener() {
 			@Override
 			public void handleChildChange(String parentPath, List<String> currentChilds) throws Exception {
+				//
+				if(currentChilds == null || !currentChilds.contains(JobContext.getContext().getNodeId())){
+					zkClient.createEphemeral(nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
+					logger.info("Nodelist is empty~ node[{}] re-join task clusters",JobContext.getContext().getNodeId());
+					return;
+				}
 				logger.info(">>nodes changed ,nodes:{}",currentChilds);
-				if(currentChilds == null || currentChilds.isEmpty())return;
 				//分配节点
 				rebalanceJobNode(currentChilds);
 				//刷新当前可用节点
