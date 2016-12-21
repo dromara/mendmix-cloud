@@ -61,13 +61,13 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	//是否第一个启动节点
 	boolean isFirstNode = false;
 	
-	boolean nodeStateCreated = false;
-	
 	private ScheduledExecutorService zkCheckTask;
 	
 	private volatile boolean zkAvailabled = true;
 	
 	private volatile boolean updatingStatus;
+	
+	private boolean nodeEventSubscribed = false;
 	
 	public void setZkServers(String zkServers) {
 		this.zkServers = zkServers;
@@ -177,11 +177,8 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		}
 		schedulerConfgs.put(conf.getJobName(), conf);
 		
-		//创建节点临时节点
-		if(!nodeStateCreated){
-			zkClient.createEphemeral(nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
-			nodeStateCreated = true;
-		}
+		//
+		regAndSubscribeNodeEvent();
         
 		//订阅同步信息变化
         zkClient.subscribeDataChanges(path, new IZkDataListener() {
@@ -198,7 +195,21 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 				schedulerConfgs.put(jobName, _jobConfig);
 			}
 		});
-        //订阅节点信息变化
+        
+        logger.info("finish register schConfig:{}",ToStringBuilder.reflectionToString(conf, ToStringStyle.MULTI_LINE_STYLE));
+	}
+
+	/**
+	 * 订阅节点事件
+	 * @return
+	 */
+	private synchronized void regAndSubscribeNodeEvent() {
+		if(nodeEventSubscribed)return;
+		//创建node节点
+		zkClient.createEphemeral(nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
+		
+		String path;
+		//订阅节点信息变化
         zkClient.subscribeChildChanges(nodeStateParentPath, new IZkChildListener() {
 			@Override
 			public void handleChildChange(String parentPath, List<String> currentChilds) throws Exception {
@@ -216,6 +227,8 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			}
 		});
         
+        logger.info("subscribe nodes change event at path:{}",nodeStateParentPath);
+        
         //注册手动执行事件监听(来自于监控平台的)
         path = nodeStateParentPath + "/" + JobContext.getContext().getNodeId();
         zkClient.subscribeDataChanges(path, new IZkDataListener() {
@@ -229,11 +242,15 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			}
 		});
         
+        logger.info("subscribe command event at path:{}",path);
+        
         
         //刷新节点列表
         List<String> activeNodes = zkClient.getChildren(nodeStateParentPath);
 		JobContext.getContext().refreshNodes(activeNodes);
-        logger.info("finish register schConfig:{}，\nactiveNodes:{}",ToStringBuilder.reflectionToString(conf, ToStringStyle.MULTI_LINE_STYLE),activeNodes);
+		
+		logger.info("current activeNodes:{}",activeNodes);
+		nodeEventSubscribed = true;
 	}
 	
 	/**
