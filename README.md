@@ -6,10 +6,18 @@
 - 不造轮子、全部基于主流的框架如：mybatis、kafka、jedis等封装
 - 只做增强不修改依赖框架本身、可自由升级依赖框架版本
 - 封装的目标：更简单、更灵活。
+
+**补充说明**
+- 类似于配置中心、定时任务为什么不集成成熟的同类框架如：disconf、elastic-job、xxl-job等呢？
+因为以上各种框架功能繁多、在这个功能上做的比较深入同时就带来了逻辑复杂、不便于自行定制修改、另外依赖包众多、让项目臃肿不堪。所以就自己开发
+类似功能、只做核心功能、让依赖和代码量尽量的少。
 ---
 **release版已经上传maven中心仓库**
 * [sonatype](https://oss.sonatype.org/content/repositories/releases/com/jeesuite/) 
 * [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
+
+总体功能模块图&roadmap
+![image](http://7xq7jj.com1.z0.glb.clouddn.com/jeesuite.png)
 
 ## 文档
 * jeesuite-common
