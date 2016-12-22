@@ -11,6 +11,7 @@
 - 类似于配置中心、定时任务为什么不集成成熟的同类框架如：disconf、elastic-job、xxl-job等呢？
 因为以上各种框架功能繁多、在这个功能上做的比较深入同时就带来了逻辑复杂、不便于自行定制修改、另外依赖包众多、让项目臃肿不堪。所以就自己开发
 类似功能、只做核心功能、让依赖和代码量尽量的少。
+
 ---
 **release版已经上传maven中心仓库**
 * [sonatype](https://oss.sonatype.org/content/repositories/releases/com/jeesuite/) 
