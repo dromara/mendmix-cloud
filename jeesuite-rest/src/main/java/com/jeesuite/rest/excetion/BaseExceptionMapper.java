@@ -27,11 +27,19 @@ import com.jeesuite.rest.response.RestResponse;
 public class BaseExceptionMapper implements ExceptionMapper<Exception> {
 
 	private static Logger log = LoggerFactory.getLogger(BaseExceptionMapper.class);
-	private static final String DEFAULT_ERROR_MSG = "系统繁忙,请稍后再试!";
 
 	@Context
 	private HttpServletRequest request;
 	
+	private ExcetionWrapper excetionWrapper;
+	
+	public BaseExceptionMapper() {}
+
+	public BaseExceptionMapper(ExcetionWrapper excetionWrapper) {
+		super();
+		this.excetionWrapper = excetionWrapper;
+	}
+
 	@Override
 	public Response toResponse(Exception e) {
 
@@ -45,9 +53,10 @@ public class BaseExceptionMapper implements ExceptionMapper<Exception> {
 		} else if (e instanceof NotSupportedException) {
 			response = new RestResponse(ResponseCode.不支持的媒体类型);
 		} else {
-			response = new RestResponse(ResponseCode.服务器异常);
+			response = excetionWrapper != null ? excetionWrapper.toResponse(e) : null;
+			if(response == null)response = new RestResponse(ResponseCode.服务器异常);
 		}
-		return Response.status(response.getCode()).type(MediaType.APPLICATION_JSON).entity(response).build();
+		return Response.status(response.httpStatus()).type(MediaType.APPLICATION_JSON).entity(response).build();
 	}
 
 }

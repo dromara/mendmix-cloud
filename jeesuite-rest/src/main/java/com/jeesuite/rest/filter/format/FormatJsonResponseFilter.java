@@ -13,8 +13,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.common.json.JsonUtils;
-import com.jeesuite.rest.RestConst;
 import com.jeesuite.rest.response.ResponseCode;
 import com.jeesuite.rest.response.RestResponse;
 
@@ -58,12 +56,6 @@ public class FormatJsonResponseFilter implements ContainerResponseFilter {
 			responseContext.setStatus(ResponseCode.成功.getCode());
 
 			responseContext.setEntity(jsonResponse);
-
-			if(log.isDebugEnabled() && ResponseCode.找不到路径.getCode() != jsonResponse.getCode()){
-				Object startTime = requestContext.getProperty(RestConst.PROP_REQUEST_BEGIN_TIME);
-				long useTime = startTime != null ? System.currentTimeMillis() - (Long)startTime : 0;
-				log.debug("======RestResponse======\n{}\nUse Time:{} ms\n",JsonUtils.toJson(jsonResponse),useTime);
-			}
 
 		} catch (Exception e) {
 			throw new RuntimeException("转换响应统一格式发生异常", e);

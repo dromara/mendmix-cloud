@@ -1,20 +1,16 @@
 package com.jeesuite.rest.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.jeesuite.rest.filter.auth.RequestHeaderHolder;
 import com.jeesuite.rest.utils.I18nUtils;
 
-/**
- * rest 响应结果
- * 
- * @author LinHaobin
- *
- */
+
 public class RestResponse {
 
 	// 状态
-	private int code;
+	private String code;
 
 	// 返回信息
 	private String msg;
@@ -22,6 +18,12 @@ public class RestResponse {
 	// 响应数据
 	@JsonInclude(Include.NON_NULL)
 	private Object data;
+	
+	@JsonIgnore
+	private int httpStatus;
+	
+	@JsonIgnore
+	private boolean bizException;
 	
 	public RestResponse(){};
 
@@ -31,20 +33,22 @@ public class RestResponse {
 	 * @param responseCode
 	 * @param msg
 	 */
-	public RestResponse(ResponseCodeType responseCode) {
-		this.code = responseCode.getCode();
-		this.msg = I18nUtils.getMessage(RequestHeaderHolder.get(),String.valueOf(code), responseCode.getMsg());
+	public RestResponse(HttpCodeType httpCode) {
+		this.code = String.valueOf(httpCode.getCode());
+		this.msg = I18nUtils.getMessage(RequestHeaderHolder.get(),String.valueOf(code), httpCode.getMsg());
+		this.httpStatus = httpCode.getCode();
 	}
 	
 	/**
 	 * 构造函数
 	 * 
-	 * @param responseCode
+	 * @param errorCode
 	 * @param msg
 	 */
-	public RestResponse(int responseCode, String msg) {
-		this.code = responseCode;
+	public RestResponse(String errorCode, String msg,boolean bizException) {
+		this.code = errorCode;
 		this.msg = I18nUtils.getMessage(RequestHeaderHolder.get(),String.valueOf(code), msg);
+		this.bizException = bizException;
 	}
 
 	/**
@@ -61,7 +65,7 @@ public class RestResponse {
 	 * 
 	 * @return
 	 */
-	public int getCode() {
+	public String getCode() {
 		return this.code;
 	}
 
@@ -76,6 +80,11 @@ public class RestResponse {
 
 	public void setData(Object data) {
 		this.data = data;
+	}
+	
+	public int httpStatus(){
+		if(httpStatus > 0)return httpStatus;
+		return bizException ? 417 : 500;
 	}
 
 	@Override

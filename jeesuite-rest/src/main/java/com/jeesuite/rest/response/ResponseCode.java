@@ -1,6 +1,6 @@
 package com.jeesuite.rest.response;
 
-public enum ResponseCode implements ResponseCodeType {
+public enum ResponseCode implements HttpCodeType {
 	
 	成功(200, "成功"),
 

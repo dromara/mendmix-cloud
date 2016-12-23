@@ -18,17 +18,17 @@ import com.jeesuite.rest.resolver.ObjectMapperResolver;
  * @date 2016年1月16日
  * @Copyright (c) 2015, vakinge@github
  */
-public class BaseApplicaionConfig extends ResourceConfig{
+public abstract class BaseApplicaionConfig extends ResourceConfig implements CustomConfig {
 
 	public BaseApplicaionConfig() {
 		//设置默认时区
 		System.setProperty("user.timezone","Asia/Shanghai");
 				
-		this.packages(this.getClass().getPackage().getName());
+		this.packages(packages());
 		register(ObjectMapperResolver.class);
 		register(JacksonFeature.class);
 		register(JacksonJsonProvider.class);
-		register(BaseExceptionMapper.class);
+		register(new BaseExceptionMapper(createExcetionWrapper()));
 		
 		register(RequestContextFilter.class);
 		
