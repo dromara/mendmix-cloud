@@ -5,6 +5,7 @@ package com.jeesuite.test.mybatis;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -19,6 +20,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.mybatis.plugin.cache.EntityCacheHelper;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 import com.jeesuite.mybatis.test.mapper.UserEntityMapper;
@@ -92,6 +94,8 @@ public class MybatisTest implements ApplicationContextAware{
 		
 		mapper.countByType(1);
 	
+		Set<String> keys = JedisProviderFactory.getMultiKeyCommands(null).keys("UserEntity*");
+		System.out.println(keys);
 		mapper.deleteByKey(1);
 		mapper.deleteByKey(29);
 		userEntity.setName("demo");
@@ -115,7 +119,19 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testCache2(){
+        UserEntity userEntity = mapper.findByMobile("15920558210");
 		
+		mapper.findByStatus((short)1);
+		mapper.findByStatus((short)2);
+		
+		userEntity.setId(null);
+		mapper.countByExample(userEntity);
+		
+		mapper.countByType(1);
+	
+		EntityCacheHelper.removeCache(UserEntity.class);
+		
+	
 	}
 	
 

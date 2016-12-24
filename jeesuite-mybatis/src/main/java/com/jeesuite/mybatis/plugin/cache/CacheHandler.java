@@ -68,7 +68,7 @@ public class CacheHandler implements InterceptorHandler {
 	private static final String WHERE_REGEX = "(w|W)(here|HERE)";
 	private static final String QUERY_IDS_SUFFIX = "_ralateIds";
 	protected static final String SPLIT_PONIT = ".";
-	protected static final String GROUPKEY_SUFFIX = "~keys";
+	public static final String GROUPKEY_SUFFIX = "~keys";
 	
 	//需要缓存的所有mapper
 	private static List<String> cacheEnableMappers = new ArrayList<>();

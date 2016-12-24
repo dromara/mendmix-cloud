@@ -9,9 +9,12 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.cache.CacheExpires;
+import com.jeesuite.cache.command.RedisBatchCommand;
 import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.cache.command.RedisString;
 import com.jeesuite.cache.redis.JedisProviderFactory;
+import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.cache.CacheProvider;
 
 import redis.clients.jedis.JedisCommands;
@@ -25,7 +28,7 @@ public class DefaultCacheProvider implements CacheProvider{
 
 	protected static final Logger logger = LoggerFactory.getLogger(DefaultCacheProvider.class);
 	//计算关联key集合权重的基数
-	private long baseScoreInRegionKeysSet = System.currentTimeMillis()/1000;
+	private long baseScoreInRegionKeysSet = System.currentTimeMillis()/1000 - CacheExpires.IN_1WEEK;
 
 	@Override
 	public <T> T get(String key) {
@@ -56,36 +59,39 @@ public class DefaultCacheProvider implements CacheProvider{
 
 
 	@Override
-	public void putGroupKeys(String cacheGroup, String key,long expireSeconds) {
+	public void putGroupKeys(String cacheGroupKey, String key,long expireSeconds) {
 		long score = calcScoreInRegionKeysSet(expireSeconds);
 		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
 		try {			
-			commands.zadd(cacheGroup, score, key);
-			commands.pexpire(cacheGroup, expireSeconds * 1000);
+			commands.zadd(cacheGroupKey, score, key);
+			commands.pexpire(cacheGroupKey, expireSeconds * 1000);
 		} finally{
 			JedisProviderFactory.getJedisProvider(null).release();
 		}
 	}
 
 	@Override
-	public void clearGroupKeys(String cacheGroup) {
+	public void clearGroupKeys(String cacheGroupKey) {
 		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
 		try {	
-			Set<String> keys = commands.zrange(cacheGroup, 0, -1);
-			for (String key : keys) {
-				commands.del(key);
+			Set<String> keys = commands.zrange(cacheGroupKey, 0, -1);
+			//删除实际的缓存
+			if(keys != null && keys.size() > 0){
+				RedisBatchCommand.removeObjects(keys.toArray(new String[0]));
 			}
-			commands.del(cacheGroup);
+			commands.del(cacheGroupKey);
 		} finally{
 			JedisProviderFactory.getJedisProvider(null).release();
 		}
 	}
 
 	@Override
-	public void clearGroupKey(String cacheGroup, String subKey) {
+	public void clearGroupKey(String cacheGroupKey, String subKey) {
 		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
 		try {			
-			commands.zrem(cacheGroup, subKey);
+			commands.zrem(cacheGroupKey, subKey);
+			//
+			commands.del(subKey);
 		} finally{
 			JedisProviderFactory.getJedisProvider(null).release();
 		}
@@ -116,6 +122,31 @@ public class DefaultCacheProvider implements CacheProvider{
 		long currentTime = System.currentTimeMillis()/1000;
 		long score = currentTime + expireSeconds - this.baseScoreInRegionKeysSet;
 		return score;
+	}
+
+	
+	@Override
+	public void clearGroup(String groupName) {
+
+		String cacheGroupKey = groupName + CacheHandler.GROUPKEY_SUFFIX;
+		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
+		try {	
+			Set<String> keys = commands.zrange(cacheGroupKey, 0, -1);
+			//删除实际的缓存
+			if(keys != null && keys.size() > 0){
+				RedisBatchCommand.removeObjects(keys.toArray(new String[0]));
+			}
+			commands.del(cacheGroupKey);
+			//删除按ID缓存的
+			keys = JedisProviderFactory.getMultiKeyCommands(null).keys(groupName +".id:*");
+			if(keys != null && keys.size() > 0){
+				RedisBatchCommand.removeObjects(keys.toArray(new String[0]));
+			}
+			
+		} finally{
+			JedisProviderFactory.getJedisProvider(null).release();
+		}
+	
 	}
 
 }

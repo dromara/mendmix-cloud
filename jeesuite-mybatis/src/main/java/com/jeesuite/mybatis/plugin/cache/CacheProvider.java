@@ -21,12 +21,14 @@ public interface CacheProvider extends Closeable{
 	
 	boolean remove(String key);
 	
-	void putGroupKeys(String cacheGroup,String subKey,long expireSeconds);
+	void putGroupKeys(String cacheGroupKey,String subKey,long expireSeconds);
 	
-	void clearGroupKeys(String cacheGroup);
+	void clearGroupKeys(String cacheGroupKey);
 	
-	void clearGroupKey(String cacheGroup,String subKey);
+	void clearGroupKey(String cacheGroupKey,String subKey);
 	
 	void clearExpiredGroupKeys(String cacheGroup);
+	
+	void clearGroup(String groupName);
 
 }
