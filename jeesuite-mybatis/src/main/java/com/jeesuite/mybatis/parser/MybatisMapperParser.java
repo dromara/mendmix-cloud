@@ -104,9 +104,11 @@ public class MybatisMapperParser {
 						}
 					} else if (resource.getProtocol().equals("jar")) {
 						String jarFilePath = resource.getFile();	
-						//如：mapperBaseDir = mapper 则分割路径 !/mapper/ 
-						int splitPathLength = mapperBaseDir.length() + 3; 
-						jarFilePath	= jarFilePath.substring("file:".length(), jarFilePath.length() - splitPathLength);
+						
+						//file:/Users/vakinge/.m2/repository/com/jeesuite/demo/demo-dao/1.0-SNAPSHOT/demo-dao-1.0-SNAPSHOT.jar!/mapper;
+						jarFilePath = jarFilePath.split("!/")[0];
+						jarFilePath = jarFilePath.substring("file:".length());
+						log.info("mapper file in jar:{}",jarFilePath);
 						jarFilePath = java.net.URLDecoder.decode(jarFilePath, "UTF-8");
 
 						JarFile jarFile = new JarFile(jarFilePath);
@@ -230,5 +232,6 @@ public class MybatisMapperParser {
 	    }
 	    return sql.toString();
 	  }
+	
 	
 }

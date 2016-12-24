@@ -22,6 +22,7 @@
 		<property name="mode" value="${redis.mode}" />
 		<!-- 多个用“,”隔开 -->
 		<property name="servers" value="${redis.servers}" />
+		<property name="password" value="${redis.password}" />
 		<property name="timeout" value="${redis.conn.timeout}" />
 		<!-- sentinel模式才需要该属性 -->
 		<property name="masterName" value="${redis.masterName}" />

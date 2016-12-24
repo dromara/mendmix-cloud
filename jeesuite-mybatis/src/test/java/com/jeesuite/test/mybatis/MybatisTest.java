@@ -89,11 +89,27 @@ public class MybatisTest implements ApplicationContextAware{
 				return entitys;
 			}
 		});
+		
+		mapper.countByType(1);
 	
 		mapper.deleteByKey(1);
 		mapper.deleteByKey(29);
 		userEntity.setName("demo");
 		mapper.updateByKeySelective(userEntity);
+		
+		mapper.countByType(2);
+		
+		mapper.updateType2(userEntity);
+		
+		mapper.findByStatus((short)1);
+		mapper.findByStatus((short)2);
+		
+		mapper.updateType(new int[]{20,21}, 2);
+		
+		userEntity.setId(null);
+		mapper.countByExample(userEntity);
+		
+		System.out.println();
 	}
 	
 	
