@@ -2,8 +2,9 @@ package com.jeesuite.kafka.serializer;
 
 import java.util.Map;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.kafka.common.serialization.Deserializer;
+
+import com.jeesuite.common.serializer.SerializeUtils;
 
 /**
  * 
@@ -21,7 +22,7 @@ public class MessageDeserializer implements Deserializer<Object> {
         if (data == null)
             return null;
         else
-            return SerializationUtils.deserialize(data);
+            return SerializeUtils.deserialize(data);
     }
 
     @Override

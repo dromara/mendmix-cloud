@@ -1,7 +1,8 @@
 package com.jeesuite.kafka.serializer;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.kafka.common.serialization.Deserializer;
+
+import com.jeesuite.common.serializer.SerializeUtils;
 
 import kafka.serializer.Decoder;
 
@@ -26,6 +27,6 @@ public class MessageDecoder implements Decoder<Object> {
 	@Override
     public Object fromBytes(byte[] bytes) {
     	if(deserializer != null)return deserializer.deserialize(null, bytes);
-    	return SerializationUtils.deserialize(bytes);
+    	return SerializeUtils.deserialize(bytes);
     }
 }

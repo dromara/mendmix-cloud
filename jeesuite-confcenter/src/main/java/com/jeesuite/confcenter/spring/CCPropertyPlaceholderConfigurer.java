@@ -7,20 +7,28 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
+import org.I0Itec.zkclient.IZkDataListener;
+import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.ZkConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.util.StringUtils;
 
+import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.confcenter.utils.ConfigZkPathUtils;
 import com.jeesuite.confcenter.utils.HttpUtils;
 
 /**
@@ -28,11 +36,18 @@ import com.jeesuite.confcenter.utils.HttpUtils;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年11月2日
  */
-public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigurer{
+public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigurer implements DisposableBean{
 	
 	private final static Logger logger = LoggerFactory.getLogger(CCPropertyPlaceholderConfigurer.class);
 
 	private boolean remoteEnabled = true;
+	
+	private String apiBaseUrl;
+	private String app;
+	private String env;
+	private String version;
+	
+	private ZkClient zkClient;
 	
 	public void setRemoteEnabled(boolean remoteEnabled) {
 		this.remoteEnabled = remoteEnabled;
@@ -49,16 +64,64 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 	@Override
 	protected Properties mergeProperties() throws IOException {
 		Properties properties = super.mergeProperties();
-		if(remoteEnabled){			
-			properties.putAll(loadRemoteProperties());
+		if(remoteEnabled){
+			//
+			initZkClient();
+			
+			URL resource = Thread.currentThread().getContextClassLoader().getResource("confcenter.properties");
+			if(resource == null)throw new FileNotFoundException("配置文件[confcenter.properties]缺失");
+			Properties config = new Properties();
+			config.load(new FileReader(new File(resource.getPath())));
+			
+			apiBaseUrl = config.getProperty("confcenter.url");
+			if(apiBaseUrl.endsWith("/"))apiBaseUrl = apiBaseUrl.substring(0, apiBaseUrl.length() - 1);
+			app = config.getProperty("app.name");
+			env = config.getProperty("app.env");
+			version = config.getProperty("app.version");
+			
+			properties.putAll(loadRemoteProperties(config));
+			
+			//发布所有配置ZK
+			publishPropsToZK(properties);
+			
 		}
 		return properties;
 		//
 	}
 
-	private Map<String, Object> loadRemoteProperties() throws FileNotFoundException, IOException{
+	/**
+	 * 同步最终配置到ZK
+	 * @param properties
+	 */
+	private void publishPropsToZK(Properties properties) {
+		if(zkClient == null)return;
 		Map<String, Object> props = new HashMap<>();
-		List<File> files = fecthRemoteConfigFile();
+		for(String key : properties.stringPropertyNames()) { 
+			String value = properties.getProperty(key);
+			if(value != null && !"".equals(value.toString().trim())){
+				props.put(key, value);
+			}
+		}
+		//
+		zkClient.writeData("", JsonUtils.toJson(props));
+	}
+
+	/**
+	 * 
+	 */
+	private void initZkClient() {
+		if(zkClient == null){			
+			String zkServer = HttpUtils.getContent(apiBaseUrl + "/getZkServer");
+			if(zkServer != null && zkServer.contains(":")){					
+				ZkConnection zkConnection = new ZkConnection(zkServer);
+				zkClient = new ZkClient(zkConnection, 10000);
+			}
+		}
+	}
+
+	private Map<String, Object> loadRemoteProperties(Properties config) throws FileNotFoundException, IOException{
+		Map<String, Object> props = new HashMap<>();
+		List<File> files = fecthRemoteConfigFile(config);
 		for (File file : files) {
 			Properties p = new Properties();
 			p.load(new FileReader(file));
@@ -70,15 +133,50 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 				}
 			}
 		}
+		//
+		//registerToZk(files);
 		return props;
 	}
 	
-	private List<File> fecthRemoteConfigFile() throws FileNotFoundException, IOException{
+	
+	/**
+	 * 注册到zk
+	 * @param files
+	 */
+	private void registerToZk(List<File> files) {
+		String nodeId;
+		try {
+			nodeId = InetAddress.getLocalHost().getHostName();
+		} catch (Exception e) {
+			nodeId = UUID.randomUUID().toString();
+		}
+	    for (File file : files) {
+	    	String path = ConfigZkPathUtils.getConfigFilePath(env, app, version, file.getName());
+	    	if(!zkClient.exists(path))return;
+	    	
+	    	zkClient.subscribeDataChanges(path, new IZkDataListener() {
+				@Override
+				public void handleDataDeleted(String dataPath) throws Exception {}
+				
+				@Override
+				public void handleDataChange(String dataPath, Object data) throws Exception {
+					
+				}
+			});
+	    	
+	    	//
+	    	path = path + "/nodes/" + nodeId;
+	    	zkClient.createEphemeral(path);
+		}
+	    
+	}
+	
+	private List<File> fecthRemoteConfigFile(Properties config) throws FileNotFoundException, IOException{
 		List<File> files = new ArrayList<>(); 
 		String classRootDir = Thread.currentThread().getContextClassLoader().getResource("").getPath();
 		if(!classRootDir.endsWith("/"))classRootDir = classRootDir + "/";
 		
-		List<String> urls = parseAllRemoteUrls();
+		List<String> urls = parseAllRemoteUrls(config);
 		for (String url : urls) {
 			String fileName = url.split("file=")[1];
 			logger.info("begin download remote file by url:{}",url);
@@ -98,36 +196,34 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 		return files;
 	}
 	
-	private List<String> parseAllRemoteUrls() throws FileNotFoundException, IOException{
+	private List<String> parseAllRemoteUrls(Properties config) throws FileNotFoundException, IOException{
 		
 		List<String> result = new ArrayList<>();
-		URL resource = Thread.currentThread().getContextClassLoader().getResource("confcenter.properties");
-		if(resource == null)throw new FileNotFoundException("配置文件[confcenter.properties]缺失");
-		Properties p = new Properties();
-		p.load(new FileReader(new File(resource.getPath())));
-		String apiUrl = p.getProperty("confcenter.url");
-		String app = p.getProperty("app.name");
-		String env = p.getProperty("app.env");
-		String version = p.getProperty("app.version");
 		
 		//应用私有配置文件
-		String fileNames = p.getProperty("app.config.files");
+		String fileNames = config.getProperty("app.config.files");
 		if(org.apache.commons.lang3.StringUtils.isNotBlank(fileNames)){			
 			String[] appFiles = StringUtils.commaDelimitedListToStringArray(fileNames);
 			for (String file : appFiles) {
-				result.add(String.format("%s?app=%s&env=%s&ver=%s&file=%s", apiUrl,app,env,version,file));
+				result.add(String.format("%s/download?app=%s&env=%s&ver=%s&file=%s", apiBaseUrl,app,env,version,file));
 			}
 		}
 		//全局配置文件
-		fileNames = p.getProperty("global.config.files");
+		fileNames = config.getProperty("global.config.files");
 		if(org.apache.commons.lang3.StringUtils.isNotBlank(fileNames)){			
 			String[] appFiles = StringUtils.commaDelimitedListToStringArray(fileNames);
 			for (String file : appFiles) {
-				result.add(String.format("%s?app=global&env=%s&ver=%s&file=%s", apiUrl,env,version,file));
+				result.add(String.format("%s/download?app=global&env=%s&ver=%s&file=%s", apiBaseUrl,env,version,file));
 			}
 		}
 		
 		return result;
+	}
+
+
+	@Override
+	public void destroy() throws Exception {
+		if(zkClient != null)zkClient.close();
 	}
 	
 }

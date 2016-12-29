@@ -1,4 +1,4 @@
-package com.jeesuite.rest.filter.auth.annotation;
+package com.jeesuite.rest.filter.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -47,11 +47,10 @@ public class RestConst {
     
     
     public static final String ACCESS_CONTROL_ALLOW_METHODS_TITLE = "Access-Control-Allow-Methods";
-    public static final String ACCESS_CONTROL_ALLOW_METHODS = "POST, GET, OPTIONS";
+    public static final String ACCESS_CONTROL_ALLOW_METHODS = "POST, GET,DELETE,PUT, OPTIONS";
 	
-    public static final String ALLOW_HEADERS = "Origin, No-Cache, X-Requested-With, If-Modified-Since, Pragma, Last-Modified, Cache-Control, Expires, Content-Type";
+    public static final String ALLOW_HEADERS = "Origin, X-Requested-With, Content-Type, Accept, Cookie";
     public static final String ACCESS_CONTROL_ALLOW_HEADERS = "Access-Control-Allow-Headers";
-    public static final String ALLOW_ORIGIN = "*";
     public static final String ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
 
     /**

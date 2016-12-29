@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.kafka.utils;
+package com.jeesuite.common.util;
 
 import java.net.InetAddress;
 import java.util.UUID;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.rest.filter.auth;
+package com.jeesuite.rest.filter;
 
 import com.jeesuite.rest.RequestHeader;
 

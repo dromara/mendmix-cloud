@@ -61,6 +61,7 @@ public class JobConfig implements Serializable {
 		this.groupName = groupName;
 		this.jobName = jobName;
 		this.cronExpr = cronExpr;
+		this.modifyTime = System.currentTimeMillis();
 	}
 
 	public String getGroupName() {

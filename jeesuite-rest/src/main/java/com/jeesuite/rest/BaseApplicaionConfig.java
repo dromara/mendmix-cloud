@@ -9,7 +9,7 @@ import org.springframework.web.filter.RequestContextFilter;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.jeesuite.rest.excetion.BaseExceptionMapper;
-import com.jeesuite.rest.filter.format.FormatJsonDynamicFeature;
+import com.jeesuite.rest.filter.DefaultWebFilter;
 import com.jeesuite.rest.resolver.ObjectMapperResolver;
 
 /**
@@ -29,18 +29,9 @@ public abstract class BaseApplicaionConfig extends ResourceConfig implements Cus
 		register(JacksonFeature.class);
 		register(JacksonJsonProvider.class);
 		register(new BaseExceptionMapper(createExcetionWrapper()));
-		
 		register(RequestContextFilter.class);
 		
-		
-//		register(GlobalFilter.class);
-//		
-//		register(AuthCheckFilter.class);
-//		register(RequestLogFilter.class);
-		register(FormatJsonDynamicFeature.class);
-//		
-//		//跨域
-//		register(CorsFilter.class);
+		register(DefaultWebFilter.class);
 	}
 
 	

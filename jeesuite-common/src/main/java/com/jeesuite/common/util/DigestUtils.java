@@ -9,6 +9,8 @@ import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import com.jeesuite.common.crypt.Base64;
+
 /**
  * 
  * @description <br>

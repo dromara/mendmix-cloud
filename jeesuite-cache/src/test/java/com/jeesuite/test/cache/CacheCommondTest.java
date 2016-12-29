@@ -110,4 +110,9 @@ public class CacheCommondTest implements ApplicationContextAware{
 		Thread.sleep(5000);
 	}
 	
+	@Test
+	public void test11(){
+		
+	}
+	
 }

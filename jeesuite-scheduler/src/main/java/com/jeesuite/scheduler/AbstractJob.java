@@ -106,8 +106,6 @@ public abstract class AbstractJob implements DisposableBean{
 		JobConfig schConf = JobContext.getContext().getRegistry().getConf(jobName,false);
 		if (currentNodeIgnore(schConf))
 			return;
-		
-		checkConExprChange(schConf.getCronExpr());
 
 		Date beginTime = null;
 		Exception exception = null;
@@ -183,15 +181,16 @@ public abstract class AbstractJob implements DisposableBean{
         return false;
     }
     
-    private void checkConExprChange(String currentConExpr) {  
+    public void resetTriggerCronExpr(String newCronExpr) {  
         try {   
         	if(getTrigger() == null)return;
             String originConExpression = getTrigger().getCronExpression();  
             //判断任务时间是否更新过  
-            if (!originConExpression.equalsIgnoreCase(currentConExpr)) {  
-            	getTrigger().setCronExpression(currentConExpr);  
+            if (!originConExpression.equalsIgnoreCase(newCronExpr)) {  
+            	getTrigger().setCronExpression(newCronExpr);  
                 getScheduler().rescheduleJob(triggerKey, getTrigger()); 
-                logger.info("Job_{} CronExpression changed, origin:{},current:{}",jobName,originConExpression,currentConExpr);
+                getScheduler().resumeTrigger(triggerKey);
+                logger.info("Job_{} CronExpression changed, origin:{},current:{}",jobName,originConExpression,newCronExpr);
             }  
         } catch (Exception e) {
         	logger.error("checkConExprChange error",e);

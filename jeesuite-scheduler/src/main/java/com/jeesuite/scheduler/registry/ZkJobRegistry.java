@@ -390,12 +390,12 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		if(cmd == null)return;
 		
 		JobConfig config = schedulerConfgs.get(cmd.getJobName());
+		String key = cmd.getJobGroup() + ":" + cmd.getJobName();
+		final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(key);
 		if(MonitorCommond.TYPE_EXEC == cmd.getCmdType()){
 			if(config.isRunning()){
 				throw new RuntimeException("任务正在执行中，请稍后再执行");
 			}
-			String key = cmd.getJobGroup() + ":" + cmd.getJobName();
-			final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(key);
 			if(abstractJob != null){
 				new Thread(new Runnable() {
 					@Override
@@ -420,7 +420,9 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 					} catch (Exception e) {
 						throw new RuntimeException("cron表达式格式错误");
 					}
+					abstractJob.resetTriggerCronExpr(cmd.getBody().toString());
 					config.setCronExpr(cmd.getBody().toString());
+					
 				}
 				updateJobConfig(config);
 				if(JobContext.getContext().getConfigPersistHandler() != null){

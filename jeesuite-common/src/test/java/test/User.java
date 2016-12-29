@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.test.cache;
+package test;
 
 import java.io.Serializable;
 import java.util.Date;

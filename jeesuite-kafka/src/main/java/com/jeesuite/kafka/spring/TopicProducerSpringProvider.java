@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
+import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.partiton.DefaultPartitioner;
 import com.jeesuite.kafka.producer.DefaultTopicProducer;
@@ -21,7 +22,6 @@ import com.jeesuite.kafka.producer.TopicProducer;
 import com.jeesuite.kafka.producer.handler.SendCounterHandler;
 import com.jeesuite.kafka.producer.handler.SendErrorDelayRetryHandler;
 import com.jeesuite.kafka.serializer.MessageSerializer;
-import com.jeesuite.kafka.utils.NodeNameHolder;
 
 /**
  * 消息发布者集成spring封装对象

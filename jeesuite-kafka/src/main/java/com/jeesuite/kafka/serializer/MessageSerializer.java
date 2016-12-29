@@ -3,8 +3,9 @@ package com.jeesuite.kafka.serializer;
 import java.io.Serializable;
 import java.util.Map;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.kafka.common.serialization.Serializer;
+
+import com.jeesuite.common.serializer.SerializeUtils;
 
 
 /**
@@ -35,7 +36,7 @@ public class MessageSerializer implements Serializer<Serializable> {
      */
     @Override
     public byte[] serialize(String topic, Serializable data) {
-    	return SerializationUtils.serialize(data);
+    	return SerializeUtils.serialize(data);
     }
 
     /**

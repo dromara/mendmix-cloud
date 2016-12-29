@@ -1,4 +1,4 @@
-package com.jeesuite.rest.filter.format.annotation;
+package com.jeesuite.rest.filter.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -15,11 +15,16 @@ public @interface ResponseFormat {
 	 * @return
 	 */
 	FormatType type();
-	
+
 	/**
 	 * JSON是否自动包装
-	 *@author vakinge
+	 * 
+	 * @author vakinge
 	 * @return
 	 */
 	boolean jsonWrapper() default true;
+
+	public static enum FormatType {
+		JSON, XML, NONE
+	}
 }

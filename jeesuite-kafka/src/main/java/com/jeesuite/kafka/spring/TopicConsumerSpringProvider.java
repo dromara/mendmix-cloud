@@ -13,12 +13,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
+import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
 import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.serializer.MessageDeserializer;
-import com.jeesuite.kafka.utils.NodeNameHolder;
 
 
 /**

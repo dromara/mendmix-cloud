@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.jeesuite.common.util;
+package com.jeesuite.common.crypt;
 
 import java.io.IOException;
 import java.util.Random;

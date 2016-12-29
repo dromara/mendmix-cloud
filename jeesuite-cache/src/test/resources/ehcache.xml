@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="ehcache.xsd" updateCheck="false" monitoring="autodetect" dynamicConfig="true">
 
-	<diskStore path="${catalina.home}/temp/ehcache/payment/spring" />
+	<diskStore path="java.io.tmpdir" />
 	
 	<!--  
     name：Cache的唯一标识

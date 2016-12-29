@@ -28,6 +28,7 @@ public class DefaultMessage implements Serializable {
 	
 	private boolean consumerAck = false;//是否需要消费回执
 	
+	public DefaultMessage() {}
 
 	public DefaultMessage(Serializable body) {
 		super();
@@ -125,5 +126,27 @@ public class DefaultMessage implements Serializable {
 		}
 		return partitionHash;
 	}
+
+	public void setPartitionFactor(Serializable partitionFactor) {
+		this.partitionFactor = partitionFactor;
+	}
+
+	public void setHeaders(Map<String, Object> headers) {
+		this.headers = headers;
+	}
+
+	public void setPartitionHash(long partitionHash) {
+		this.partitionHash = partitionHash;
+	}
+
+	public void setBody(Serializable body) {
+		this.body = body;
+	}
+
+	public void setConsumerAck(boolean consumerAck) {
+		this.consumerAck = consumerAck;
+	}
+	
+	
 
 }

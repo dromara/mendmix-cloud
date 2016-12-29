@@ -61,7 +61,7 @@ public class CacheKeyUtils {
 	}
 	
 	public static String toString(Object obj){
-		if(obj == null)return null;
+		if(obj == null)return "_";
 		if(isSimpleDataType(obj)){
 			return obj.toString();
 		}else if(obj instanceof Collection){

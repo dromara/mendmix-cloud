@@ -3,17 +3,14 @@
  */
 package com.jeesuite.scheduler;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
-import org.apache.commons.lang3.RandomStringUtils;
-
+import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.scheduler.helper.ConsistencyHash;
 import com.jeesuite.scheduler.registry.NullJobRegistry;
 
@@ -24,8 +21,6 @@ import com.jeesuite.scheduler.registry.NullJobRegistry;
  */
 public class JobContext {
 
-	private String nodeId;
-	
 	private static JobContext context = new JobContext();
 	
 	private Set<String> activeNodes = new HashSet<String>();
@@ -39,15 +34,6 @@ public class JobContext {
 	private TaskRetryProcessor retryProcessor;
 	
 	private JobRegistry registry;
-
-
-	private JobContext() {
-		try {
-			nodeId = InetAddress.getLocalHost().getHostName() + "_" + RandomStringUtils.random(3, true, true).toLowerCase();
-		} catch (Exception e) {
-			nodeId = UUID.randomUUID().toString();
-		}
-	}
 	
 	public void startRetryProcessor(){
 		if(retryProcessor == null){
@@ -63,7 +49,7 @@ public class JobContext {
 	}
 
 	public String getNodeId() {
-		return nodeId;
+		return NodeNameHolder.getNodeId();
 	}
 	
 	public ConfigPersistHandler getConfigPersistHandler() {
@@ -110,7 +96,7 @@ public class JobContext {
 	public boolean matchCurrentNode(Object shardFactor){
 		if(activeNodes.size() == 1)return true;
 		String expectNodeId = hash.getAssignedRealNode(shardFactor);
-		return expectNodeId.equals(nodeId);
+		return expectNodeId.equals(getNodeId());
 	}
 	
 	public void addJob(AbstractJob job){

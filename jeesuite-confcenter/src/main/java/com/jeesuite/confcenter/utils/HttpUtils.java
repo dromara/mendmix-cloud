@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -63,5 +64,39 @@ public class HttpUtils {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public static String getContent(String requestUrl){
+		InputStream inputStream = null;
+		HttpURLConnection httpUrlConn = null;
+		BufferedReader bufferedReader = null;
+		InputStreamReader inputStreamReader = null;
+		
+		try {
+			URL url = new URL(requestUrl);  
+			 httpUrlConn = (HttpURLConnection) url.openConnection();  
+			 httpUrlConn.setDoInput(true);  
+			 httpUrlConn.setRequestMethod("GET");  
+			 inputStream = httpUrlConn.getInputStream(); 
+			 inputStreamReader = new InputStreamReader(inputStream, "utf-8");  
+			 bufferedReader = new BufferedReader(inputStreamReader); 
+			 
+			 StringBuffer buffer = new StringBuffer();  
+			 String str = null;  
+			 while ((str = bufferedReader.readLine()) != null) {  
+			    buffer.append(str);  
+			 } 
+			 
+			 return buffer.toString();
+			 
+		} catch (Exception e) {
+			// TODO: handle exception
+		}finally {
+			try {bufferedReader.close();} catch (Exception e2) {}
+			try {inputStreamReader.close();} catch (Exception e2) {}
+			try {inputStream.close();} catch (Exception e2) {}
+			try {httpUrlConn.disconnect();} catch (Exception e2) {}
+		}
+		return null;
 	}
 }

@@ -1,4 +1,4 @@
-package com.jeesuite.common.util;
+package com.jeesuite.common.crypt;
 
 import java.util.Arrays;
 

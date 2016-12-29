@@ -42,6 +42,7 @@ public class SchedulerMonitor implements Closeable{
 	}
 	
 	public List<JobGroupInfo> getAllJobGroups(){
+		
 		//zk registry
 		List<JobGroupInfo> result = new ArrayList<>();
 		String path = ZkJobRegistry.ROOT.substring(0,ZkJobRegistry.ROOT.length() - 1);

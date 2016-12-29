@@ -20,9 +20,9 @@ import org.I0Itec.zkclient.ZkClient;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.monitor.model.ProducerStat;
-import com.jeesuite.kafka.utils.NodeNameHolder;
 
 import kafka.utils.ZKStringSerializer$;
 

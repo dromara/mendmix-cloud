@@ -3,7 +3,7 @@ package com.jeesuite.rest.response;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.jeesuite.rest.filter.auth.RequestHeaderHolder;
+import com.jeesuite.rest.filter.RequestHeaderHolder;
 import com.jeesuite.rest.utils.I18nUtils;
 
 
