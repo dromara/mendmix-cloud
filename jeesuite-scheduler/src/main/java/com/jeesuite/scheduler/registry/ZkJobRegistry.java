@@ -57,9 +57,6 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	private String groupPath;
 	
 	private String nodeStateParentPath;
-
-	//是否第一个启动节点
-	boolean isFirstNode = false;
 	
 	private ScheduledExecutorService zkCheckTask;
 	
@@ -117,7 +114,9 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	}
 
 	@Override
-	public synchronized void register(JobConfig conf) {
+	public synchronized void register(JobConfig conf) {	
+		//是否第一个启动节点
+		boolean isFirstNode = false;
 		
 		Calendar now = Calendar.getInstance();
 		long currentTimeMillis = now.getTimeInMillis();
@@ -139,7 +138,9 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			zkClient.createPersistent(nodeStateParentPath, true);
 		}else{
 			//检查是否有节点
-			if(!isFirstNode)isFirstNode = zkClient.getChildren(nodeStateParentPath).isEmpty();
+			if(!isFirstNode){
+				isFirstNode = zkClient.getChildren(nodeStateParentPath).size() == 0;
+			}
 		}
 		
 		if(!zkClient.exists(path)){
@@ -195,6 +196,17 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 				schedulerConfgs.put(jobName, _jobConfig);
 			}
 		});
+        
+        //清除之前遗留节点
+        if(isFirstNode){
+        	List<String> historyJobNames = zkClient.getChildren(groupPath);
+        	for (String name : historyJobNames) {
+				if("nodes".equals(name) || conf.getJobName().equals(name))continue;
+				zkClient.delete(groupPath + "/" + name);
+				logger.info("delete history job path:{}/{}",groupPath,name);
+			}
+        	
+        }
         
         logger.info("finish register schConfig:{}",ToStringBuilder.reflectionToString(conf, ToStringStyle.MULTI_LINE_STYLE));
 	}

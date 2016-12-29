@@ -18,7 +18,7 @@
 * [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
 
 总体功能模块图&roadmap
-![image](http://7xq7jj.com1.z0.glb.clouddn.com/jeesuite.png)
+![image](http://7xq7jj.com1.z0.glb.clouddn.com/jeesuite.png?1)
 
 ## 文档
 * jeesuite-common
@@ -70,7 +70,7 @@
 - 基于注解自动缓存管理（所有查询方法结果自动缓存、自动更新，事务回滚缓存同步回滚机制）
 - 简单分库路由（不支持join等跨库操作）
 
-#### scheduler模块 (1.0.4)
+#### scheduler模块 (1.0.6)
 - 支持分布式保证单节点执行（按节点平均分配job）
 - 支持failvoer，自动切换故障节点
 - 支持多节点下并行计算

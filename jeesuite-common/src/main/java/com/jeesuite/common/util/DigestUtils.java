@@ -4,8 +4,6 @@
 package com.jeesuite.common.util;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -21,6 +19,8 @@ public class DigestUtils {
 
 	private static final String CARTSET_UTF_8 = "UTF-8";
 	private static final String MD5_NAME = "MD5";
+	private static final char[] saltChars = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./"
+			.toCharArray());
 	
 	
 	/**
@@ -54,6 +54,38 @@ public class DigestUtils {
 		return md5(content.toString().concat(salt));
 	}
 	
+
+	/**
+	 * 生成MD5短码（8位）
+	 * @param orig
+	 * @return
+	 */
+	public static String md5Short(String orig){
+		if(orig == null){
+			return null ;
+		}
+		//先得到url的32个字符的md5码
+		String md5 = DigestUtils.md5(orig) ;
+		//将32个字符的md5码分成4段处理，每段8个字符
+		//4段任意一段加密都可以，这里我们取第二段
+		int offset = 1 * 8 ;
+		String sub = md5.substring(offset, offset + 8) ; 
+		long sub16 = Long.parseLong(sub , 16) ; //将sub当作一个16进制的数，转成long  
+		// & 0X3FFFFFFF，去掉最前面的2位，只留下30位
+		sub16 &= 0X3FFFFFFF ;
+
+		StringBuilder sb = new StringBuilder() ;
+		//将剩下的30位分6段处理，每段5位
+		for (int j = 0; j < 6 ; j++) {
+			//得到一个 <= 61的数字
+			long t = sub16 & 0x0000003D ;
+			sb.append(saltChars[(int) t]) ;
+			sub16 >>= 5 ;  //将sub16右移5位
+
+		}
+		return sb.toString() ;
+	}
+	
 	public static String encodeBase64(String string){
 		try {
 			return Base64.encodeToString(string.getBytes(CARTSET_UTF_8), false);
@@ -83,51 +115,5 @@ public class DigestUtils {
 		}
 		return sb.toString();
 	}
-	
-	/**
-	 * MurMurHash算法，是非加密HASH算法，性能很高，
-	 * 比传统的CRC32,MD5，SHA-1（这两个算法都是加密HASH算法，复杂度本身就很高，带来的性能上的损害也不可避免）
-	 * 等HASH算法要快很多，而且据说这个算法的碰撞率很低. http://murmurhash.googlepages.com/
-	 */
-	public static Long hash(String key) {
-        if(key == null)return 0L;
-		ByteBuffer buf = ByteBuffer.wrap(key.getBytes());
-		int seed = 0x1234ABCD;
 
-		ByteOrder byteOrder = buf.order();
-		buf.order(ByteOrder.LITTLE_ENDIAN);
-
-		long m = 0xc6a4a7935bd1e995L;
-		int r = 47;
-
-		long h = seed ^ (buf.remaining() * m);
-
-		long k;
-		while (buf.remaining() >= 8) {
-			k = buf.getLong();
-
-			k *= m;
-			k ^= k >>> r;
-			k *= m;
-
-			h ^= k;
-			h *= m;
-		}
-
-		if (buf.remaining() > 0) {
-			ByteBuffer finish = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-			// for big-endian version, do this first:
-			// finish.position(8-buf.remaining());
-			finish.put(buf).rewind();
-			h ^= finish.getLong();
-			h *= m;
-		}
-
-		h ^= h >>> r;
-		h *= m;
-		h ^= h >>> r;
-
-		buf.order(byteOrder);
-		return Math.abs(h);
-	}
 }
