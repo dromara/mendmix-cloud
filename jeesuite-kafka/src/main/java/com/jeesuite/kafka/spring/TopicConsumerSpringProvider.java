@@ -18,7 +18,7 @@ import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
 import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
 import com.jeesuite.kafka.handler.MessageHandler;
-import com.jeesuite.kafka.serializer.MessageDeserializer;
+import com.jeesuite.kafka.serializer.KyroMessageDeserializer;
 
 
 /**
@@ -69,7 +69,7 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		configs.put("key.deserializer",StringDeserializer.class.getName());  
 		
 		if(!configs.containsKey("value.deserializer")){
-        	configs.put("value.deserializer", MessageDeserializer.class.getName());
+        	configs.put("value.deserializer", KyroMessageDeserializer.class.getName());
         }
 		
 		if(useNewAPI && "smallest".equals(configs.getProperty("auto.offset.reset"))){

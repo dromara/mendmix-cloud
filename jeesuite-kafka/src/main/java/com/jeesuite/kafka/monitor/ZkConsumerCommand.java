@@ -39,6 +39,7 @@ import scala.collection.Iterator;
 import scala.collection.Seq;
 
 /**
+ * 消费者信息获取命令工具（旧版API）
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年12月9日

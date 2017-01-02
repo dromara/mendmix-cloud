@@ -21,7 +21,7 @@ import com.jeesuite.kafka.producer.DefaultTopicProducer;
 import com.jeesuite.kafka.producer.TopicProducer;
 import com.jeesuite.kafka.producer.handler.SendCounterHandler;
 import com.jeesuite.kafka.producer.handler.SendErrorDelayRetryHandler;
-import com.jeesuite.kafka.serializer.MessageSerializer;
+import com.jeesuite.kafka.serializer.KyroMessageSerializer;
 
 /**
  * 消息发布者集成spring封装对象
@@ -70,7 +70,7 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
         }
         
         if(!configs.containsKey(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG)){
-        	configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, MessageSerializer.class.getName());
+        	configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KyroMessageSerializer.class.getName());
         }
         
         if(!configs.containsKey(ProducerConfig.PARTITIONER_CLASS_CONFIG)){

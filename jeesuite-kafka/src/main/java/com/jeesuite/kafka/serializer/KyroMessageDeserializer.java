@@ -12,7 +12,7 @@ import com.jeesuite.common.serializer.SerializeUtils;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月14日
  */
-public class MessageDeserializer implements Deserializer<Object> {
+public class KyroMessageDeserializer implements Deserializer<Object> {
     
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {}

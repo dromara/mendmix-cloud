@@ -14,7 +14,7 @@ import com.jeesuite.common.serializer.SerializeUtils;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月14日
  */
-public class MessageSerializer implements Serializer<Serializable> {
+public class KyroMessageSerializer implements Serializer<Serializable> {
 
     /**
      * Configure this class.
