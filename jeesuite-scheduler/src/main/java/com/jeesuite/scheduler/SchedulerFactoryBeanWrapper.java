@@ -55,6 +55,10 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	public void setRegistry(JobRegistry registry) {
 		JobContext.getContext().setRegistry(registry);
 	}
+	
+	public void setJobLogPersistHandler(JobLogPersistHandler jobLogPersistHandler) {
+		JobContext.getContext().setJobLogPersistHandler(jobLogPersistHandler);
+	}
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {

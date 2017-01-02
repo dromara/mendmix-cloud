@@ -33,6 +33,8 @@ public class JobContext {
 	
 	private TaskRetryProcessor retryProcessor;
 	
+	private JobLogPersistHandler jobLogPersistHandler;
+	
 	private JobRegistry registry;
 	
 	public void startRetryProcessor(){
@@ -58,6 +60,14 @@ public class JobContext {
 
 	public void setConfigPersistHandler(ConfigPersistHandler configPersistHandler) {
 		this.configPersistHandler = configPersistHandler;
+	}
+
+	public JobLogPersistHandler getJobLogPersistHandler() {
+		return jobLogPersistHandler;
+	}
+
+	public void setJobLogPersistHandler(JobLogPersistHandler jobLogPersistHandler) {
+		this.jobLogPersistHandler = jobLogPersistHandler;
 	}
 
 	public JobRegistry getRegistry() {

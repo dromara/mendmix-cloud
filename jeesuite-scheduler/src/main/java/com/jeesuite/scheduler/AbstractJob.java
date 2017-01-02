@@ -125,21 +125,38 @@ public abstract class AbstractJob implements DisposableBean{
 		}
 		//执行次数累加1
 		runCount.incrementAndGet();
-		JobContext.getContext().getRegistry().setStoping(jobName, getTrigger().getNextFireTime(),exception);
+		Date nextFireTime = getTrigger().getNextFireTime();
+		JobContext.getContext().getRegistry().setStoping(jobName, nextFireTime,exception);
+		//运行日志持久化
+		doJobLogPersist(schConf, exception, nextFireTime);
 		// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
 		cronTrigger = null;
+	}
+
+	/**
+	 * @param schConf
+	 * @param exception
+	 * @param nextFireTime
+	 */
+	private void doJobLogPersist(JobConfig schConf, Exception exception, Date nextFireTime) {
+		if(JobContext.getContext().getJobLogPersistHandler() != null){
+			try {				
+				if(exception == null){				
+					JobContext.getContext().getJobLogPersistHandler().onSucess(schConf, nextFireTime);
+				}else{
+					JobContext.getContext().getJobLogPersistHandler().onError(schConf, nextFireTime, exception);
+				}
+			} catch (Exception e) {
+				logger.warn("JobLogPersistHandler run error",e);
+			}
+		}
 	}
 
     
     private Date getPreviousFireTime(){
     	return getTrigger().getPreviousFireTime() == null ? new Date() : getTrigger().getPreviousFireTime();
     }
-    
-    private Date getNextFireTime(){
-    	if(getTrigger() == null)return null;
-    	return getTrigger().getNextFireTime();
-    }
-    
+  
     
     protected boolean currentNodeIgnore(JobConfig schConf) {
     	if(parallelEnabled())return false;

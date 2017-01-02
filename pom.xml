@@ -61,6 +61,7 @@
 		<module>jeesuite-rest</module>
 		<module>jeesuite-confcenter</module>
 		<module>jeesuite-common2</module>
+		<module>jeesuite-log</module>
 	</modules>
 
 	<dependencies>
