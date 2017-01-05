@@ -35,6 +35,7 @@
 #### cache模块（1.0.3） 
 - sentinel模式支持读写分离
 - 应用级namespace支持
+- 对象压缩
 
 #### confcenter（1.0.1） 
 - 基于ZK配置更新通知

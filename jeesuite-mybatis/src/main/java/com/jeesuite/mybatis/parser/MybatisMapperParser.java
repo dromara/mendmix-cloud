@@ -153,7 +153,7 @@ public class MybatisMapperParser {
 				entityInfo = new EntityInfo(mapperClass, entityClass);
 				
 				if(entityInfo.getErrorMsg() != null){				
-					log.warn(">>{},skip！！！！！",entityInfo.getErrorMsg());
+					log.warn("==================\n>>{},skip！！！！\n===============",entityInfo.getErrorMsg());
 					continue;
 				}
 				
@@ -165,6 +165,10 @@ public class MybatisMapperParser {
 					parseResultNode(entityInfo,xNode2);
 				}
 			}
+		}
+		
+		if(entityInfo.getErrorMsg() != null){
+			return;
 		}
 		for (XNode xNode : children) {
 			if ("select|insert|update|delete".contains(xNode.getName().toLowerCase())) {

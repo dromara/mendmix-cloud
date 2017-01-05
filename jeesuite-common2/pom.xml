@@ -7,7 +7,7 @@
 		<version>1</version>
 	</parent>
 	<artifactId>jeesuite-common2</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.1-SNAPSHOT</version>
 
 	<dependencies>
 		<dependency>
@@ -20,6 +20,34 @@
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-cache</artifactId>
 			<version>1.0.1</version>
+			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+			<version>3.15</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>3.15</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml-schemas</artifactId>
+			<version>3.15</version>
+			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-collections4</artifactId>
+			<version>4.1</version>
 			<optional>true</optional>
 		</dependency>
 	</dependencies>
