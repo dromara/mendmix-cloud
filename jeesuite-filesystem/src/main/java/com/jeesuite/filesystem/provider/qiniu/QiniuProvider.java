@@ -3,234 +3,182 @@ package com.jeesuite.filesystem.provider.qiniu;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.jeesuite.common.util.DateUtils;
-import com.jeesuite.filesystem.FSProvider;
 import com.jeesuite.filesystem.FileType;
+import com.jeesuite.filesystem.provider.AbstractProvider;
+import com.jeesuite.filesystem.provider.FSOperErrorException;
 import com.jeesuite.filesystem.utils.FilePathHelper;
-import com.jeesuite.filesystem.utils.HttpDownloader;
 import com.qiniu.common.QiniuException;
+import com.qiniu.common.Zone;
 import com.qiniu.http.Response;
 import com.qiniu.storage.BucketManager;
+import com.qiniu.storage.Configuration;
 import com.qiniu.storage.UploadManager;
 import com.qiniu.util.Auth;
 
 /**
  * 七牛文件服务
+ * 
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2017年1月5日
  */
-public class QiniuProvider implements FSProvider {
+public class QiniuProvider extends AbstractProvider {
 
-	/**
-	 * 
-	 */
-	private static final String CATALOG_SPLITER = "/";
+	public static final String NAME = "qiniu";
 
-	private static Logger logger = LoggerFactory.getLogger(QiniuProvider.class);
-	
-	private static final String DATE_PATTERN = "yyyyMMdd";
-	
-	private static UploadManager uploadManager = new UploadManager();
+	private static UploadManager uploadManager;
 	private static BucketManager bucketManager;
-	
 	private Auth auth;
-	
-	private String urlprefix; 
-	
-	private String bucketName; 
-	
-	public QiniuProvider(String urlprefix,String bucketName,String accessKey, String secretKey) {
-		this.urlprefix = urlprefix.endsWith(CATALOG_SPLITER) ? urlprefix : urlprefix + CATALOG_SPLITER;
+
+	public QiniuProvider(String urlprefix, String bucketName, String accessKey, String secretKey) {
+		this.urlprefix = urlprefix.endsWith(DIR_SPLITER) ? urlprefix : urlprefix + DIR_SPLITER;
 		this.bucketName = bucketName;
 		auth = Auth.create(accessKey, secretKey);
-		
-		if(bucketManager == null)bucketManager = new BucketManager(auth);
+
+		Zone z = Zone.autoZone();
+		Configuration c = new Configuration(z);
+		uploadManager = new UploadManager(c);
+		bucketManager = new BucketManager(auth,c);
 	}
 
 	@Override
-	public String upload(String catalog,String fileKey, File file,FileType fileType) {
-		try {		
-			fileKey = rawFileName(catalog,fileKey, fileType);
-			Response res = uploadManager.put(file, fileKey,getUpToken());
+	public String upload(String catalog, String fileName, File file) {
+		try {
+			if(fileName == null)fileName = file.getName();
+			fileName = rawFileName(catalog, fileName, null);
+			Response res = uploadManager.put(file, fileName, getUpToken());
 			return processUploadResponse(res);
 		} catch (QiniuException e) {
-			processUploadException(fileKey, e);
+			processUploadException(fileName, e);
 		}
 		return null;
 	}
 
 	@Override
-	public String upload(String catalog,String fileKey, byte[] data,FileType fileType) {
-		try {	
-			if(fileType == null)fileType = FileType.getFileSuffix(data);
-			
-			fileKey = rawFileName(catalog,fileKey, fileType);
-			Response res = uploadManager.put(data, fileKey,getUpToken());
+	public String upload(String catalog, String fileName, byte[] data, FileType fileType) {
+		try {
+			if (fileType == null)
+				fileType = FileType.getFileSuffix(data);
+
+			fileName = rawFileName(catalog, fileName, fileType);
+			Response res = uploadManager.put(data, fileName, getUpToken());
 			return processUploadResponse(res);
 		} catch (QiniuException e) {
-			processUploadException(fileKey, e);
+			processUploadException(fileName, e);
 		}
 		return null;
 	}
 
-
 	@Override
-	public String upload(String catalog,String fileKey, InputStream in,FileType fileType) {
-		try {			
+	public String upload(String catalog, String fileName, InputStream in, FileType fileType) {
+		try {
 			byte[] bs = IOUtils.toByteArray(in);
-			return upload(catalog,fileKey, bs,fileType);
+			return upload(catalog, fileName, bs, fileType);
 		} catch (IOException e) {
-			// TODO: handle exception
+			throw new FSOperErrorException(name(), e);
 		}
-		return null;
 	}
 
-
 	@Override
-	public String upload(String catalog,String fileKey, String origUrl) {
+	public String upload(String catalog, String fileName, String origUrl) {
 		try {
-			if(StringUtils.isBlank(fileKey)){	
+			if (StringUtils.isBlank(fileName)) {
 				FileType fileType = FilePathHelper.parseFileType(origUrl);
-				fileKey = rawFileName(catalog,fileKey, fileType);
-			}else{
-				fileKey = rawFileName(catalog,fileKey, null);
-			}			
-			
-			fileKey = bucketManager.fetch(origUrl, bucketName,fileKey).key;
-			
-			return getFullPath(fileKey);
+				fileName = rawFileName(catalog, fileName, fileType);
+			} else {
+				fileName = rawFileName(catalog, fileName, null);
+			}
+
+			fileName = bucketManager.fetch(origUrl, bucketName, fileName).key;
+
+			return getFullPath(fileName);
 		} catch (QiniuException e) {
-			processUploadException(fileKey, e);
+			processUploadException(fileName, e);
 		}
-		
+
 		return null;
 	}
-	
+
 	@Override
-	public boolean delete(String fileKey) {
+	public boolean delete(String fileName) {
 		try {
-			if(fileKey.contains(CATALOG_SPLITER))fileKey = fileKey.replace(urlprefix, "");
-			bucketManager.delete(bucketName, fileKey);
+			if (fileName.contains(DIR_SPLITER))
+				fileName = fileName.replace(urlprefix, "");
+			bucketManager.delete(bucketName, fileName);
 			return true;
 		} catch (QiniuException e) {
-			processUploadException(fileKey, e);
+			processUploadException(fileName, e);
 		}
 		return false;
 	}
 
-	@Override
-	public String getPath(String fileKey) {
-		try {
-			String url = getFullPath(fileKey);
-			if(HttpDownloader.read(url) == null){
-				throw new RuntimeException("文件不存在");
-			}
-			return url;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	private String getFullPath(String key){
-		return urlprefix + key;
-	}
-	
+
 	/**
 	 * 处理上传结果，返回文件url
+	 * 
 	 * @return
-	 * @throws QiniuException 
+	 * @throws QiniuException
 	 */
-	private String processUploadResponse(Response res) throws QiniuException{
-		if(res.isOK()){
+	private String processUploadResponse(Response res) throws QiniuException {
+		if (res.isOK()) {
 			UploadResult ret = res.jsonToObject(UploadResult.class);
 			return getFullPath(ret.key);
 		}
-		throw new RuntimeException("上传错误");
+		throw new FSOperErrorException(name(), res.toString());
 	}
-	
-	private void processUploadException(String fileKey,QiniuException e){
-        Response r = e.response;
-        // 请求失败时简单状态信息
-        logger.error(r.toString());
-        try {logger.error(r.bodyString());} catch (QiniuException e1) {}
-    
+
+	private void processUploadException(String fileName, QiniuException e) {
+		Response r = e.response;
+		String message;
+		try {
+			message = r.bodyString();
+		} catch (Exception e2) {
+			message = r.toString();
+		}
+		throw new FSOperErrorException(name(), e.code(), message);
 	}
-	
+
 	/**
-	 * @param fileKey
+	 * @param fileName
 	 * @param fileType
 	 * @return
 	 */
-	private static String rawFileName(String catalog,String fileKey, FileType fileType) {
-		if(StringUtils.isBlank(catalog))catalog = "other";
-		if(StringUtils.isBlank(fileKey)){
-			fileKey = UUID.randomUUID().toString().replaceAll("\\-", "") + (fileType == null ? "" : fileType.getSuffix());
-		}else if(fileType != null && !fileKey.contains(".")){
-			fileKey = fileKey + fileType.getSuffix();
+	private static String rawFileName(String catalog, String fileName, FileType fileType) {
+		if (StringUtils.isBlank(catalog))
+			catalog = "other";
+		if (StringUtils.isBlank(fileName)) {
+			fileName = UUID.randomUUID().toString().replaceAll("\\-", "")
+					+ (fileType == null ? "" : fileType.getSuffix());
+		} else if (fileType != null && !fileName.contains(".")) {
+			fileName = fileName + fileType.getSuffix();
 		}
-		//拼接目录/catalog/date/fileName
-		String today = DateUtils.format(new Date(), DATE_PATTERN);
-		
-		return new StringBuilder(catalog).append(CATALOG_SPLITER).append(today).append(CATALOG_SPLITER).append(fileKey).toString();
+		return new StringBuilder(catalog).append(DIR_SPLITER).append(fileName).toString();
 	}
-	
+
 	// 简单上传，使用默认策略
-	private String getUpToken(){
-	    return auth.uploadToken(bucketName);
-	}
-	
-	
-	public String overrideUpload(String catalog,String fileKey, File file,FileType fileType) {
-		try {		
-			fileKey = rawFileName(catalog,fileKey, fileType);
-			Response res = uploadManager.put(file, fileKey,auth.uploadToken(bucketName, fileKey));
-			return processUploadResponse(res);
-		} catch (QiniuException e) {
-			processUploadException(fileKey, e);
-		}
-		return null;
+	private String getUpToken() {
+		return auth.uploadToken(bucketName);
 	}
 
 	@Override
-	public String overrideUpload(String catalog, String fileKey, byte[] data, FileType fileType) {
-		try {	
-			if(fileType == null)fileType = FileType.getFileSuffix(data);
-			
-			fileKey = rawFileName(catalog,fileKey, fileType);
-			Response res = uploadManager.put(data, fileKey,auth.uploadToken(bucketName, fileKey));
-			return processUploadResponse(res);
-		} catch (QiniuException e) {
-			processUploadException(fileKey, e);
-		}
-		return null;
-	}
-	
-	@Override
-	public String overrideUpload(String catalog, String fileKey, InputStream in, FileType fileType) {
-		try {			
-			byte[] bs = IOUtils.toByteArray(in);
-			return overrideUpload(catalog,fileKey, bs,fileType);
-		} catch (IOException e) {
-			// TODO: handle exception
-		}
-		return null;
-	}
-
-	@Override
-	public String createUploadToken(String...fileKeys) {
-		if(fileKeys != null && fileKeys.length > 0 && fileKeys[0] != null){
-			return auth.uploadToken(bucketName,fileKeys[0]);
+	public String createUploadToken(String... fileNames) {
+		if (fileNames != null && fileNames.length > 0 && fileNames[0] != null) {
+			return auth.uploadToken(bucketName, fileNames[0]);
 		}
 		return auth.uploadToken(bucketName);
 	}
+
+	@Override
+	public String name() {
+		return NAME;
+	}
 	
+	@Override
+	public void close() throws IOException {}
+
 }

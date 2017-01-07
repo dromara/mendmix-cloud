@@ -21,14 +21,16 @@
 ![image](http://7xq7jj.com1.z0.glb.clouddn.com/jeesuite.png?1)
 
 ## 文档
-* jeesuite-common
-* jeesuite-common2
+* [jeesuite-common2](./docs/common.md)
+* [jeesuite-common2](./docs/common2.md)
 * [jeesuite-kafka](./docs/kafka.md) 
 * [jeesuite-cache](./docs/cache.md) 
 * [jeesuite-scheduler](./docs/scheduler.md)
 * [jeesuite-mybatis](./docs/mybatis.md) 
 * [jeesuite-rest](./docs/rest.md) 
 * [jeesuite-confcenter](./docs/confcenter.md)
+* [jeesuite-filesystem](./docs/filesystem.md)
+* [jeesuite-log](./docs/log.md)
 
 --- 
 ## 计划
@@ -93,6 +95,12 @@
 #### common2模块  (1.0.0)
 - 分布式锁
 - 分布式全局ID生成器
+- excel导入导出（支持大文件操作）
+
+#### filesystem模块  (1.0.0)
+- 七牛文件服务支持
+- fastDFS文件系统支持
+- 支持spring集成
 
 ---
 ### 你可以下载集成了所有模块的demo[jeesuite-demo](http://git.oschina.net/vakinge/jeesuite-demo) 

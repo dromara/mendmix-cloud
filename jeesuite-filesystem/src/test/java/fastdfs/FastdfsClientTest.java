@@ -3,7 +3,10 @@ package fastdfs;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,14 +35,22 @@ public class FastdfsClientTest {
     @Test
     public void testUpload() throws Exception {
         long current = System.currentTimeMillis();
-        CompletableFuture<FileId> path = client.upload(null, new File("/Users/ayg/Desktop/logo.gif"));
+        CompletableFuture<FileId> path = client.upload("group1", new File("/Users/ayg/Desktop/logo.gif"));
         System.out.println(path.get());
         System.out.println("==========");
         System.out.println(System.currentTimeMillis() - current + " ms");
     }
 
     @Test
-    public void testUploadAppend() throws Exception {
+    public void testUpload2() throws Exception {
+    	
+    	byte[] byteArray = FileUtils.readFileToByteArray(new File("/Users/ayg/Desktop/logo.gif"));
+    	CompletableFuture<FileId> path = client.upload("123.gif", byteArray);
+    	FileId fileId = path.get();
+    	System.out.println(fileId);
+    	CompletableFuture<FileMetadata> metadataGet = client.metadataGet(fileId);
+		System.out.println(metadataGet.get(10, TimeUnit.SECONDS));
+        System.out.println("==========");
     }
 
     @Test

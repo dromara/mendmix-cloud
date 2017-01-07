@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>com.qiniu</groupId>
 			<artifactId>qiniu-java-sdk</artifactId>
-			<version>7.0.8</version>
+			<version>7.2.2</version>
 			<optional>true</optional>
 		</dependency>
 
@@ -29,6 +29,13 @@
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
 			<version>1.0.1</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.jeesuite</groupId>
+			<artifactId>jeesuite-spring</artifactId>
+			<version>1.0.0</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
