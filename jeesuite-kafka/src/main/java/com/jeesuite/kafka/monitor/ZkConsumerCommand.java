@@ -107,7 +107,7 @@ public class ZkConsumerCommand {
 	public List<BrokerInfo> fetchAllBrokers(){
 		List<BrokerInfo> result = new ArrayList<>();
 		Seq<Broker> brokers = zkUtils.getAllBrokersInCluster();
-		Iterator<Broker> iterator = brokers.toIterator();
+		Iterator<Broker> iterator = brokers.toList().iterator();
 		while(iterator.hasNext()){
 			Broker broker = iterator.next();
 			Node node = broker.getNode(SecurityProtocol.PLAINTEXT);

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-libs</artifactId>
-	<version>1</version>
+	<version>2</version>
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
 	<name>jeesuite-libs</name>
@@ -38,7 +38,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<compiler.jdk.version>1.7</compiler.jdk.version>
+		<compiler.jdk.version>1.8</compiler.jdk.version>
 		<output.encoding>utf-8</output.encoding>
 		<spring.version>4.2.5.RELEASE</spring.version>
 		<kafka.version>0.10.0.1</kafka.version>
@@ -62,6 +62,7 @@
 		<module>jeesuite-confcenter</module>
 		<module>jeesuite-common2</module>
 		<module>jeesuite-log</module>
+		<module>jeesuite-filesystem</module>
 	</modules>
 
 	<dependencies>
