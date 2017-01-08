@@ -17,8 +17,25 @@
 * [sonatype](https://oss.sonatype.org/content/repositories/releases/com/jeesuite/) 
 * [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
 
-总体功能模块图&roadmap
+## 总体功能模块图&roadmap
 ![image](http://7xq7jj.com1.z0.glb.clouddn.com/jeesuite.png?1)
+
+## 技术栈（包括已实现和计划实现的部分）
+- 缓存：redis、ehcache、guava cache
+- 数据库:mysql、mybatis
+- 消息系统：kafka
+- rest：jesery、Jackson
+- 定时任务：zookeepr、quartz
+- 文件服务： qiniu、fastFDS、netty
+- 基础应用框架：spring、dubbo
+- 日志：log4j2、kafka、flume、elasticsearch、kibana，spark
+- 性能监控：
+  1. Pinpoint
+  2. [jeesuite-monitor](http://git.oschina.net/vakinge/jeesuite-monitor) `(轻量级方案)`
+- 链路跟踪：Zipkin/brave 
+- API网关：
+  1. kong
+  2. [jeesuite-apikeeper](http://git.oschina.net/vakinge/jeesuite-apikeeper) `(轻量级方案)`
 
 ## 文档
 * [jeesuite-common2](./docs/common.md)
@@ -88,9 +105,12 @@
 - 本地远程配置自由切换
 - 应用私有配置、全局配置同步支持
 
-#### rest模块  (1.0.0)
+#### rest模块  (1.0.1)
 - 自动resonse封装（xml、json）
+- i18n
+- request、response日志记录
 - 自动友好错误
+- 校验框架
 
 #### common2模块  (1.0.0)
 - 分布式锁
