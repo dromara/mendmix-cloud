@@ -24,9 +24,10 @@ public class DefaultMessage implements Serializable {
 
 	private Serializable body;
 	
-	private int priority = 1;//优先级 1-9  数字越大优先级 越高
+	private boolean ackRequired = false;//是否需要消费回执
 	
-	private boolean consumerAck = false;//是否需要消费回执
+	//兼容一些历史的consumer
+	private transient boolean sendBodyOnly = false;
 	
 	public DefaultMessage() {}
 
@@ -37,27 +38,26 @@ public class DefaultMessage implements Serializable {
 	
 	/**
 	 * @param body 消息体
-	 * @param consumerAck 是否需要消费回执
+	 * @param ackRequired 是否需要消费回执
 	 */
-	public DefaultMessage(Serializable body, boolean consumerAck) {
+	public DefaultMessage(Serializable body, boolean ackRequired) {
 		super();
 		this.body = body;
-		this.consumerAck = consumerAck;
-	}
-
-	public DefaultMessage(Serializable body, int priority) {
-		this(body, null, 1);
+		this.ackRequired = ackRequired;
 	}
 	
 	public DefaultMessage(Serializable body, Serializable partitionFactor) {
-		this(body, partitionFactor, 1);
-	}
-	
-	public DefaultMessage(Serializable body, Serializable partitionFactor, int priority) {
 		super();
 		this.body = body;
 		this.partitionFactor = partitionFactor;
-		this.priority = priority;
+	}
+
+	public DefaultMessage(Serializable body, long partitionHash, Serializable partitionFactor, boolean ackRequired) {
+		super();
+		this.body = body;
+		this.partitionHash = partitionHash;
+		this.partitionFactor = partitionFactor;
+		this.ackRequired = ackRequired;
 	}
 
 	public String getMsgId() {
@@ -97,26 +97,12 @@ public class DefaultMessage implements Serializable {
 		this.msgId = msgId;
 	}
 
-	public int getPriority() {
-		return priority;
-	}
-
-
-	public void setPriority(int priority) {
-		this.priority = priority;
+	public boolean isAckRequired() {
+		return ackRequired;
 	}
 	
-	public DefaultMessage priority(int priority) {
-		this.priority = priority;
-		return this;
-	}
-
-	public boolean isConsumerAck() {
-		return consumerAck;
-	}
-	
-	public DefaultMessage consumerAck(boolean consumerAck) {
-		this.consumerAck = consumerAck;
+	public DefaultMessage ackRequired(boolean ackRequired) {
+		this.ackRequired = ackRequired;
 		return this;
 	}
 
@@ -135,18 +121,27 @@ public class DefaultMessage implements Serializable {
 		this.headers = headers;
 	}
 
-	public void setPartitionHash(long partitionHash) {
+	public DefaultMessage partitionHash(long partitionHash) {
 		this.partitionHash = partitionHash;
+		return this;
 	}
 
 	public void setBody(Serializable body) {
 		this.body = body;
 	}
 
-	public void setConsumerAck(boolean consumerAck) {
-		this.consumerAck = consumerAck;
+	public void setAckRequired(boolean ackRequired) {
+		this.ackRequired = ackRequired;
+	}
+
+	public boolean isSendBodyOnly() {
+		return sendBodyOnly;
+	}
+
+	public DefaultMessage sendBodyOnly(boolean sendBodyOnly) {
+		this.sendBodyOnly = sendBodyOnly;
+		return this;
 	}
 	
-	
-
+    
 }

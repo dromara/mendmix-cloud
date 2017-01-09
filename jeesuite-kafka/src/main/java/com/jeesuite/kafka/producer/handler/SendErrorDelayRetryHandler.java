@@ -104,7 +104,8 @@ public class SendErrorDelayRetryHandler implements ProducerEventHandler{
 		public void run() {
 			try {	
 				logger.debug("begin re process message:"+this.toString());
-				topicProducer.send(new ProducerRecord<String, Object>(topicName, message.getMsgId(),message));
+				Object sendContent = message.isSendBodyOnly() ? message.getBody() : message;
+				topicProducer.send(new ProducerRecord<String, Object>(topicName, message.getMsgId(),sendContent));
 				//处理成功移除
 				messageIdsInQueue.remove(message.getMsgId());
 			} catch (Exception e) {

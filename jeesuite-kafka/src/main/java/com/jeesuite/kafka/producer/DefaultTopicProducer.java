@@ -1,10 +1,8 @@
 package com.jeesuite.kafka.producer;
 
 import java.io.Closeable;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.Validate;
@@ -52,11 +50,9 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
         	try {				
         		doAsynSend(topicName, message.getMsgId(),message);
 			} catch (Exception e) {
-				for (ProducerEventHandler handler : eventHanlders) {
-					handler.onError(topicName, message, asynSend);
-				}
 	        	log.error("kafka_send_fail,topic="+topicName+",messageId="+message.getMsgId(),e);
-				return false;
+	        	//同步发送直接抛异常
+	        	throw new RuntimeException(e);
 			}
         	return true;
         }else{        	
@@ -67,21 +63,19 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
 
 	private boolean doSyncSend(String topicName, String messageKey,DefaultMessage message){
 		try {			
-			Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message));
+			Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message.isSendBodyOnly() ? message.getBody() : message));
 			RecordMetadata metadata = future.get();
 			for (ProducerEventHandler handler : eventHanlders) {
-				handler.onSuccessed(topicName, metadata);
+				try {handler.onSuccessed(topicName, metadata);} catch (Exception e) {}
 			}
 			if (log.isDebugEnabled()) {
                 log.debug("kafka_send_success,topic=" + topicName + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
             }
 			return true;
 		} catch (Exception ex) {
-			for (ProducerEventHandler handler : eventHanlders) {
-				handler.onError(topicName, message, false);
-			}
         	log.error("kafka_send_fail,topic="+topicName+",messageId="+messageKey,ex);
-        	return false;
+        	//同步发送直接抛异常
+        	throw new RuntimeException(ex);
 		}
 	}
 
@@ -94,18 +88,18 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
 	 */
 	private void doAsynSend(final String topicName, final String messageKey,final DefaultMessage message) {
 		// 异步发送
-        this.kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message), new Callback() {
+        this.kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message.isSendBodyOnly() ? message.getBody() : message), new Callback() {
 
             @Override
             public void onCompletion(RecordMetadata metadata, Exception ex) {
                 if (ex != null) {
                 	for (ProducerEventHandler handler : eventHanlders) {
-    					handler.onError(topicName, message, true);
+                		try {handler.onError(topicName, message, true);} catch (Exception e) {}
     				}
                 	log.error("kafka_send_fail,topic="+topicName+",messageId="+messageKey,ex);
                 } else {
                 	for (ProducerEventHandler handler : eventHanlders) {
-    					handler.onSuccessed(topicName, metadata);
+                		try {handler.onSuccessed(topicName, metadata);} catch (Exception e) {}
     				}
                     if (log.isDebugEnabled()) {
                         log.debug("kafka_send_success,topic=" + topicName + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
@@ -124,41 +118,4 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
 		}
     }
 
-
-	@Override
-	public boolean publishNoWrapperObject(final String topic, final Serializable message, boolean asynSend) {
-
-		final String messageKey = UUID.randomUUID().toString();
-		
-		if(asynSend){
-			// 异步发送
-	        this.kafkaProducer.send(new ProducerRecord<String, Object>(topic, messageKey,message), new Callback() {
-	            @Override
-	            public void onCompletion(RecordMetadata metadata, Exception ex) {
-	                if (ex != null) {
-	                	log.error("kafka_send_fail,topic="+topic+",messageId="+messageKey,ex);
-	                } else {
-	                    if (log.isDebugEnabled()) {
-	                        log.debug("kafka_send_success,topic=" + topic + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
-	                    }
-	                }
-	            }
-	        });
-	        return true;
-		}else{
-			try {			
-				Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<String, Object>(topic, messageKey,message));
-				RecordMetadata metadata = future.get();
-				if (log.isDebugEnabled()) {
-	                log.debug("kafka_send_success,topic=" + topic + ", messageId=" + messageKey + ", partition=" + metadata.partition() + ", offset=" + metadata.offset());
-	            }
-				return true;
-			} catch (Exception ex) {
-	        	log.error("kafka_send_fail,topic="+topic+",messageId="+messageKey,ex);
-	        	throw new RuntimeException(ex);
-			}
-		}
-
-	}
-    
 }
