@@ -61,13 +61,6 @@ public class DefaultWebFilter implements ContainerRequestFilter, ContainerRespon
 		for (int i = 0; i < handlerCount; i++) {
 			filterHandlers.get(i).processRequest(requestContext, request, resourceInfo);
 		}
-
-		Method method = resourceInfo.getResourceMethod();
-		// 不需要鉴权
-		if (true == method.isAnnotationPresent(AuthIgnore.class)) {
-			return;
-		}
-
 	}
 
 	@Override
@@ -75,7 +68,7 @@ public class DefaultWebFilter implements ContainerRequestFilter, ContainerRespon
 			throws IOException {
 
 		for (int i = handlerCount - 1; i >= 0; i--) {
-			filterHandlers.get(i).processRequest(requestContext, request, resourceInfo);
+			filterHandlers.get(i).processResponse(requestContext, responseContext, resourceInfo);
 		}
 
 	}

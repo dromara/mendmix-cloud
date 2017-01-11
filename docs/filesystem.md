@@ -53,13 +53,21 @@ String url = provider.upload("test", null, new File("/Users/vakinge/logo.gif"));
 spring方式
 
 ```
-<bean id="jedisPoolConfig" class="com.jeesuite.filesystem.spring.FSProviderSpringFacade">
-		<property name="provider" value="qiniu" />
-		<property name="groupName" value="group1" />
-		<property name="accessKey" value="xxxxx-xxxx-xxx" />
-		<property name="secretKey" value="xxxxx-xxxx-xxx" />
-		<property name="urlprefix" value="http://www.jeesuite.com/pic" />
-	</bean>
+   <bean id="qiniuFSProvider" class="com.jeesuite.filesystem.spring.FSProviderSpringFacade">
+        <property name="provider" value="qiniu" />
+        <property name="groupName" value="demo1" />
+        <property name="accessKey" value="iqq3aa-ncqfdGGubCcS-N8EUV-qale2ezndnrtKS" />
+        <property name="secretKey" value="1RmdaMVjrjXkyRVPOmyMa6BzcdG5VDdF-SH_HUTe" />
+        <property name="urlprefix" value="http://7xq7jj.com1.z0.glb.clouddn.com" />
+    </bean>
+    
+    <bean id="fastDfsFSProvider" class="com.jeesuite.filesystem.spring.FSProviderSpringFacade">
+        <property name="provider" value="fastDFS" />
+        <property name="groupName" value="group1" />
+        <property name="servers" value="120.24.185.100:22122" />
+        <property name="urlprefix" value="http://120.24.185.100:81" />
+        <property name="connectTimeout" value="3000" />
+    </bean>
 ```
 ##### 用法
 

@@ -4,6 +4,7 @@
 package com.jeesuite.test.cache;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,6 +19,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.jeesuite.cache.command.RedisHashMap;
 import com.jeesuite.cache.command.RedisNumber;
 import com.jeesuite.cache.command.RedisObject;
+import com.jeesuite.cache.command.RedisSet;
 import com.jeesuite.cache.command.RedisSortSet;
 import com.jeesuite.cache.command.RedisString;
 import com.jeesuite.spring.InstanceFactory;
@@ -112,7 +114,33 @@ public class CacheCommondTest implements ApplicationContextAware{
 	
 	@Test
 	public void test11(){
+		RedisSet redisSet = new RedisSet("setkey");
 		
+		redisSet.remove();
+		
+		User user = new User(1, "jim");
+		
+		User user2 = new User();
+		user2.setMobile("13800138000");
+		user2.setEmail("@@@");
+		
+		User user3 = new User();
+		user3.setId(1);
+		user3.setMobile("13800138000");
+		user3.setEmail("@@@222222");
+		
+		redisSet.add(user,user2,user3);
+		
+//		for (int i = 0; i < 3; i++) {
+//			User userx = new User();
+//			userx.setId(1);
+//			userx.setName("name"+i);
+//			redisSet.add(userx);
+//		}
+		
+		Set<User> set = redisSet.get();
+		
+		System.out.println(set);
 	}
 	
 }

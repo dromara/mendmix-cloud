@@ -106,5 +106,11 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 	public String createUploadToken(String... fileNames) {
 		return fsProvider.createUploadToken(fileNames);
 	}
+
+	public void setConnectTimeout(long connectTimeout) {
+		this.connectTimeout = connectTimeout;
+	}
+	
+	
 	
 }

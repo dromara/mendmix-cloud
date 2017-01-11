@@ -27,7 +27,6 @@ import com.jeesuite.filesystem.utils.HttpDownloader;
 public class FdfsProvider extends AbstractProvider{
 
 	public static final String NAME = "fastDFS";
-	private String urlprefix;
 	private FastdfsClient client;
 	
 	public FdfsProvider(String urlprefix, String bucketName,String[] servers,long connectTimeout,int maxThreads) {
@@ -112,7 +111,6 @@ public class FdfsProvider extends AbstractProvider{
 
 	@Override
 	public String createUploadToken(String... fileNames) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
