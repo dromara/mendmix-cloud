@@ -38,16 +38,16 @@
   2. [jeesuite-apikeeper](http://git.oschina.net/vakinge/jeesuite-apikeeper) `(轻量级方案)`
 
 ## 文档
-* [jeesuite-common2](./docs/common.md)
-* [jeesuite-common2](./docs/common2.md)
-* [jeesuite-kafka](./docs/kafka.md) 
-* [jeesuite-cache](./docs/cache.md) 
-* [jeesuite-scheduler](./docs/scheduler.md)
-* [jeesuite-mybatis](./docs/mybatis.md) 
-* [jeesuite-rest](./docs/rest.md) 
-* [jeesuite-confcenter](./docs/confcenter.md)
-* [jeesuite-filesystem](./docs/filesystem.md)
-* [jeesuite-log](./docs/log.md)
+* [jeesuite-common2](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/common.md)
+* [jeesuite-common2](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/common2.md)
+* [jeesuite-kafka](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/kafka.md) 
+* [jeesuite-cache](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/cache.md) 
+* [jeesuite-scheduler](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/scheduler.md)
+* [jeesuite-mybatis](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/mybatis.md) 
+* [jeesuite-rest](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/rest.md) 
+* [jeesuite-confcenter](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/confcenter.md)
+* [jeesuite-filesystem](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/filesystem.md)
+* [jeesuite-log](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/log.md)
 
 --- 
 ## 计划
