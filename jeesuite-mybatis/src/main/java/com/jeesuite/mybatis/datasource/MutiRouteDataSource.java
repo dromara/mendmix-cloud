@@ -3,14 +3,12 @@
  */
 package com.jeesuite.mybatis.datasource;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
 
@@ -21,7 +19,6 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.jdbc.datasource.AbstractDataSource;
 import org.springframework.jdbc.datasource.lookup.DataSourceLookup;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
@@ -39,8 +36,6 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 
 	private static final String MASTER_KEY = "master";
 	
-	private String configLocation = "mysql.properties";
-
 	private ApplicationContext context;
 	
 	private Map<Object, DataSource> targetDataSources;
@@ -48,6 +43,9 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	private DataSource defaultDataSource;
 	
 	private int dbGroupNums = 1;//数据库分库组数
+	
+	//
+	private ConfigReader configReader;
 
 	private DataSourceLookup dataSourceLookup = new JndiDataSourceLookup();
 
@@ -62,22 +60,18 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	public void setDataSourceLookup(DataSourceLookup dataSourceLookup) {
 		this.dataSourceLookup = (dataSourceLookup != null ? dataSourceLookup : new JndiDataSourceLookup());
 	}
-
-	public void setConfigLocation(String configLocation) {
-		this.configLocation = configLocation;
+	
+	public void setConfigReader(ConfigReader configReader) {
+		this.configReader = configReader;
 	}
 
 	@Override
 	public void afterPropertiesSet() {
+		if(configReader == null) configReader = new DefaultConfigReader();
 		
-		File file = new File(Thread.currentThread().getContextClassLoader().getResource(configLocation).getPath());
+		Map<String, DataSourceInfo> map = parseDataSourceConfFromProperties();
 		
-		if(file == null || !file.exists()){
-			throw new RuntimeException("classpath 下无数据库配置文件[默认mysql.properties]或指定configLocation");
-		}
-		
-		Map<String, DataSourceInfo> map = parsePropertiesFile(file);
-		
+		if(map.isEmpty())throw new RuntimeException("Db config Not found..");
 		registerDataSources(map);
 		
 		if (this.targetDataSources == null || targetDataSources.isEmpty()) {
@@ -172,7 +166,8 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
         	DataSourceInfo dataSourceInfo = mapCustom.get(dsKey);
         	//如果当前库为最新一组数据库，注册beanName为master
         	
-			logger.info(" begin to initialize datasource："+dataSourceInfo);
+			logger.info(">>>>>begin to initialize datasource："+dsKey + "\n================\n" + dataSourceInfo.toString());
+			
         	BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(DruidDataSource.class);
         	beanDefinitionBuilder.addPropertyValue("driverClassName", dataSourceInfo.driveClassName);
         	beanDefinitionBuilder.addPropertyValue("url", dataSourceInfo.connUrl);
@@ -234,91 +229,34 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
     }  
 	
 	/** 
-     * 功能说明：解析属性文件，得到数据源Map 
+     * 功能说明：解析配置，得到数据源Map 
      * @return 
      * @throws IOException 
      */  
-    private Map<String, DataSourceInfo> parsePropertiesFile(File file){  
+    private Map<String, DataSourceInfo> parseDataSourceConfFromProperties(){  
         // 属性文件  
-        ResourcePropertySource props =  null;  
-        logger.info("开始解析数据源文件："+file.getAbsolutePath());
-        try {
-        	props =  new ResourcePropertySource(file.getName());  
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-          
-        Pattern pattern = Pattern.compile("^.*(master|slave\\d?)\\.db.*$");  
-          
         Map<String, DataSourceInfo> mapDataSource = new HashMap<String,DataSourceInfo>(); 
         
-        int dbGroupIndex = 0;
-        // 根据配置文件解析数据源  
-        logger.info("==========read db configs begin============");
-        for(String keyProp : props.getPropertyNames()) {  
-        	Object value = props.getProperty(keyProp);
-        	if(!keyProp.trim().endsWith("password"))logger.info(keyProp+ "   =   " + value);
-        	if(pattern.matcher(keyProp).matches()){
-        		
-        		boolean containGroup = keyProp.startsWith("group");
-				if(containGroup){
-        			dbGroupIndex = Integer.parseInt(keyProp.split("\\.")[0].replace("group", ""));
-        			if(dbGroupIndex > dbGroupNums - 1){
-        				dbGroupNums = dbGroupIndex + 1;
-        			}
-        		}
-        		String dsName = keyProp.substring(0,keyProp.indexOf(".db")).replace(".", "_"); 
-        		DataSourceInfo dsi = null; 
-        		if(mapDataSource.containsKey(dsName)){
-        			dsi = mapDataSource.get(dsName);
-        		}else{
-        			dsi = new DataSourceInfo(props); 
-        			mapDataSource.put(dsName, dsi);
-        			if(containGroup)dsi.dbGroupIndex = dbGroupIndex;
-        			if(keyProp.contains(MASTER_KEY)){
-        				dsi.master = true;
-        			}
-        		}
-        		if(value == null || StringUtils.isBlank(value.toString()))continue;
-				if(keyProp.trim().endsWith("url")){
-        			dsi.connUrl = (String)value;  
-        		}else if(keyProp.trim().endsWith("username")){
-        			dsi.userName = (String)value;  
-        		}else if(keyProp.trim().endsWith("password")){
-        			dsi.password = (String)value; 
-        		}else if(keyProp.trim().endsWith("initialSize")){
-        			dsi.initialSize = Integer.parseInt(value.toString()); 
-        		}else if(keyProp.trim().endsWith("maxActive")){
-        			dsi.maxActive = Integer.parseInt(value.toString()); 
-        		}else if(keyProp.trim().endsWith("minIdle")){
-        			dsi.minIdle = Integer.parseInt(value.toString()); 
-        		}else if(keyProp.trim().endsWith("maxIdle")){
-        			dsi.maxIdle = Integer.parseInt(value.toString()); 
-        		}else if(keyProp.trim().endsWith("maxWait")){
-        			dsi.maxWait = Long.parseLong(value.toString()); 
-        		}else if(keyProp.trim().endsWith("minEvictableIdleTimeMillis")){
-        			dsi.minEvictableIdleTimeMillis = Long.parseLong(value.toString()); 
-        		}else if(keyProp.trim().endsWith("timeBetweenEvictionRunsMillis")){
-        			dsi.timeBetweenEvictionRunsMillis = Long.parseLong(value.toString()); 
-        		}else if(keyProp.trim().endsWith("testOnBorrow")){
-        			dsi.testOnBorrow = Boolean.parseBoolean(value.toString()); 
-        		}else if(keyProp.trim().endsWith("testOnReturn")){
-        			dsi.testOnReturn = Boolean.parseBoolean(value.toString()); 
-        		}
-        	} 
-        }  
-        logger.info("dbGroupNums=" + dbGroupNums);
-        logger.info("==========read db configs end============");
+        dbGroupNums = Integer.parseInt(configReader.getIfAbent("db.group.size", 1));
+        logger.info(">>>>>>dbGroupNums:" + dbGroupNums);
+        for (int i = 0; i < dbGroupNums; i++) {
+			String groupPrefix = i == 0 ? "" : "group" + i ;
+			String datasourceKey = (StringUtils.isNotBlank(groupPrefix) ? groupPrefix + "." : "") + MASTER_KEY;
+			DataSourceInfo sourceInfo = new DataSourceInfo(i,datasourceKey); 
+			mapDataSource.put(datasourceKey, sourceInfo);
+			
+			//解析同组下面的slave
+			int index = 1;
+			wl:while(true){
+				datasourceKey = (StringUtils.isNotBlank(groupPrefix) ? groupPrefix + "." : "") + "slave" + index;
+				if(!configReader.containKey(datasourceKey + ".db.url"))break wl;
+				sourceInfo = new DataSourceInfo(i,datasourceKey); 
+				mapDataSource.put(datasourceKey, sourceInfo);
+				index++;
+			}
+		}
         return mapDataSource;  
     }  
-    protected static boolean propContains(ResourcePropertySource props ,String key){
-		boolean contains = props.containsProperty(key);
-		if(contains){
-			Object object = props.getProperty(key);
-			contains = object != null && !"".equals(object.toString().trim());
-		}
-		return contains;
-	}
 	
 	private class DataSourceInfo{  
 		//分库ID
@@ -340,44 +278,68 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
         public long timeBetweenEvictionRunsMillis;
         public boolean testOnBorrow;
         public boolean testOnReturn;
-        
-        //根据全局配置构造方法		
-		public DataSourceInfo(ResourcePropertySource props) {
-			this.driveClassName = props.getProperty("db.driverClass").toString();
-			if(propContains(props,"db.initialSize")){
-				this.initialSize = Integer.parseInt(props.getProperty("db.initialSize").toString());
+          
+		//根据全局配置构造方法		
+		public DataSourceInfo(int groupIndex,String keyPrefix) {
+			String tmpVal = null;
+			this.dbGroupIndex = groupIndex;
+			//全局配置
+			this.driveClassName = configReader.get("db.driverClass");
+			this.initialSize = Integer.parseInt(configReader.getIfAbent("db.initialSize","1"));
+			this.minIdle = Integer.parseInt(configReader.getIfAbent("db.minIdle","1"));
+			this.maxActive = Integer.parseInt(configReader.getIfAbent("db.maxActive","10"));
+			this.maxWait = Integer.parseInt(configReader.getIfAbent("db.maxWait","60000"));
+			this.minEvictableIdleTimeMillis = Integer.parseInt(configReader.getIfAbent("db.minEvictableIdleTimeMillis","300000"));
+			this.timeBetweenEvictionRunsMillis = Integer.parseInt(configReader.getIfAbent("db.timeBetweenEvictionRunsMillis","60000"));
+			this.testOnBorrow = Boolean.parseBoolean(configReader.getIfAbent("db.testOnBorrow","false"));
+			this.testOnReturn = Boolean.parseBoolean(configReader.getIfAbent("db.testOnReturn","false"));
+			
+			//私有配置
+			this.master = keyPrefix.contains(MASTER_KEY);
+			this.connUrl = configReader.get(keyPrefix + ".db.url");
+			this.userName = configReader.get(keyPrefix + ".db.username");
+			this.password = configReader.get(keyPrefix + ".db.password");
+			//覆盖全局配置
+			if((tmpVal = configReader.get(keyPrefix + ".db.initialSize")) != null){				
+				this.initialSize = Integer.parseInt(tmpVal);
 			}
-			if(propContains(props,"db.minIdle")){
-				this.minIdle = Integer.parseInt(props.getProperty("db.minIdle").toString());
+			if((tmpVal = configReader.get(keyPrefix + ".db.minIdle")) != null){				
+				this.minIdle = Integer.parseInt(tmpVal);
 			}
-			if(propContains(props,"db.maxActive")){
-				this.maxActive = Integer.parseInt(props.getProperty("db.maxActive").toString());
+			if((tmpVal = configReader.get(keyPrefix + ".db.maxActive")) != null){				
+				this.maxActive = Integer.parseInt(tmpVal);
 			}
-			if(propContains(props,"db.maxWait")){
-				this.maxWait = Long.parseLong(props.getProperty("db.maxWait").toString());
+			if((tmpVal = configReader.get(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
+				this.minEvictableIdleTimeMillis = Integer.parseInt(tmpVal);
 			}
-			if(propContains(props,"db.timeBetweenEvictionRunsMillis")){
-				this.timeBetweenEvictionRunsMillis = Long.parseLong(props.getProperty("db.timeBetweenEvictionRunsMillis").toString());
+			
+			if((tmpVal = configReader.get(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
+				this.minEvictableIdleTimeMillis = Integer.parseInt(tmpVal);
 			}
-			if(propContains(props,"db.minEvictableIdleTimeMillis")){
-				this.minEvictableIdleTimeMillis = Long.parseLong(props.getProperty("db.minEvictableIdleTimeMillis").toString());
+			
+			if((tmpVal = configReader.get(keyPrefix + ".db.timeBetweenEvictionRunsMillis")) != null){				
+				this.timeBetweenEvictionRunsMillis = Integer.parseInt(tmpVal);
 			}
-			if(propContains(props,"db.testOnBorrow")){
-				this.testOnBorrow = Boolean.parseBoolean(props.getProperty("db.testOnBorrow").toString());
+			
+			if((tmpVal = configReader.get(keyPrefix + ".db.testOnBorrow")) != null){				
+				this.testOnBorrow = Boolean.parseBoolean(tmpVal);
 			}
-			if(propContains(props,"db.testOnReturn")){
-				this.testOnReturn = Boolean.parseBoolean(props.getProperty("db.testOnReturn").toString());
+			
+			if((tmpVal = configReader.get(keyPrefix + ".db.testOnReturn")) != null){				
+				this.testOnReturn = Boolean.parseBoolean(tmpVal);
 			}
+			
 		}
 
 		@Override
 		public String toString() {
-			return "DataSourceInfo [dbGroupIndex=" + dbGroupIndex + ", driveClassName=" + driveClassName + ", connUrl="
-					+ connUrl + ", userName=" + userName + ", master=" + master + ", initialSize=" + initialSize
-					+ ", maxActive=" + maxActive + ", minIdle=" + minIdle + ", maxIdle=" + maxIdle + ", maxWait="
-					+ maxWait + ", minEvictableIdleTimeMillis=" + minEvictableIdleTimeMillis
-					+ ", timeBetweenEvictionRunsMillis=" + timeBetweenEvictionRunsMillis + ", testOnBorrow="
-					+ testOnBorrow + ", testOnReturn=" + testOnReturn + "]";
+			StringBuffer str = new StringBuffer();
+			str.append("dbGroupIndex").append(" = ").append(dbGroupIndex).append("\n");
+			str.append("role").append(" = ").append(master ? "master" : "slave").append("\n");
+			str.append("driveClassName").append(" = ").append(driveClassName).append("\n");
+			str.append("connUrl").append(" = ").append(connUrl).append("\n");
+			str.append("userName").append(" = ").append(userName);
+			return str.toString();
 		}    
     }  
 } 

@@ -23,7 +23,7 @@ public class StandardThreadExecutorTest {
 			executor.submit(new Runnable() {
 				@Override
 				public void run() {
-					System.out.println("---");
+					System.out.println(Thread.currentThread().getName() + ":" + Thread.currentThread().getId() + "---->>>>>");
 					try {Thread.sleep(RandomUtils.nextLong(100, 1000));} catch (Exception e) {}
 				}
 			});

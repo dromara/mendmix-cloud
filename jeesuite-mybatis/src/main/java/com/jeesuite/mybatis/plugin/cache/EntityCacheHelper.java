@@ -36,6 +36,15 @@ public class EntityCacheHelper {
 	 * @return
 	 */
 	public static <T> T queryTryCache(Class<? extends BaseEntity> entityClass,String key,long expireSeconds,Callable<T> dataCaller){
+		
+		if(CacheHandler.cacheProvider == null){
+			try {
+				return dataCaller.call();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
 		String entityClassName = entityClass.getSimpleName();
 		key = entityClassName + CacheHandler.SPLIT_PONIT + key;
 		T result = CacheHandler.cacheProvider.get(key);
@@ -59,6 +68,7 @@ public class EntityCacheHelper {
 	 * @param entityClass
 	 */
 	public static void removeCache(Class<? extends BaseEntity> entityClass){
+		if(CacheHandler.cacheProvider == null)return;
 		String entityClassName = entityClass.getSimpleName();
 		CacheHandler.cacheProvider.clearGroup(entityClassName);
 	}
@@ -69,6 +79,7 @@ public class EntityCacheHelper {
 	 * @param key
 	 */
     public static void removeCache(Class<? extends BaseEntity> entityClass,String key){
+    	if(CacheHandler.cacheProvider == null)return;
     	String entityClassName = entityClass.getSimpleName();
 		key = entityClassName + CacheHandler.SPLIT_PONIT + key;
 		String cacheGroupKey = entityClassName + CacheHandler.GROUPKEY_SUFFIX;

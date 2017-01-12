@@ -38,7 +38,7 @@
                 <bean class="com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext">
 					<property name="crudDriver" value="default" />
 				    <property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
-				    <property name="interceptorHandlers" value="cache" />
+				    <property name="interceptorHandlers" value="cache,rwRoute" />
 				</bean> 
             </array>
         </property>

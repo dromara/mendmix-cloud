@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,24 +22,24 @@ import org.slf4j.LoggerFactory;
 public class DataSourceContextHolder {
 
 	protected static final Logger logger = LoggerFactory.getLogger(DataSourceContextHolder.class);
+	
+	private final static AtomicInteger counter = new AtomicInteger(999);
 
 	private static final Map<String, String> masters = new HashMap<>();
 	private static final Map<String, List<String>> slaves = new HashMap<>();
 
 	private final ThreadLocal<DataSourceContextVals> contextVals = new ThreadLocal<DataSourceContextVals>();
 
-	private static DataSourceContextHolder holder;
+	private static volatile DataSourceContextHolder holder = new DataSourceContextHolder();
 
 	private DataSourceContextHolder() {
 	}
 
 	public static DataSourceContextHolder get() {
-		if (holder == null)
-			holder = new DataSourceContextHolder();
 		return holder;
 	}
 
-	public void registerDataSourceKey(String dsKey) {
+	protected void registerDataSourceKey(String dsKey) {
 		String dbIndex = "0";
 		if(dsKey.startsWith("group")){
 			dbIndex = dsKey.split("\\_")[0].replace("group", "");
@@ -73,28 +73,15 @@ public class DataSourceContextHolder {
 	/**
 	 * 设置是否使用从库
 	 * 
-	 * @param slave
+	 * @param useSlave
 	 */
-	public DataSourceContextHolder useSlave(boolean slave) {
+	public DataSourceContextHolder useSlave(boolean useSlave) {
 		DataSourceContextVals vals = contextVals.get();
 		if (vals == null)
 			vals = new DataSourceContextVals();
-		vals.userSlave = slave;
-		contextVals.set(vals);
-		return this;
-	}
-
-	/**
-	 * 设置强制使用主库
-	 * 
-	 * @return
-	 */
-	public DataSourceContextHolder forceMaster() {
-		DataSourceContextVals vals = contextVals.get();
-		if (vals == null)
-			vals = new DataSourceContextVals();
-		vals.userOne = true;
-		vals.userSlave = false;
+		vals.userSlave = useSlave;
+		//如果在一次操作中有一次路由到master，之后都用master
+		vals.forceMaster = !useSlave;
 		contextVals.set(vals);
 		return this;
 	}
@@ -104,35 +91,27 @@ public class DataSourceContextHolder {
 	 * 
 	 * @return
 	 */
-	public String getDataSourceKey() {
+	protected String getDataSourceKey() {
 		DataSourceContextVals vals = contextVals.get();
-		//TODO 
 		if(vals == null)return masters.get(0);
-		if (vals.userOne && vals.dsKey != null){
-			if(logger.isDebugEnabled()){
-				logger.debug("current force use dataSource key is [{}]!",vals.dsKey);
-			}
-			return vals.dsKey;
-		}
+		
 		int dbGoupId = vals.dbIndex;
 		String dsKey = null;
-		if (vals.userSlave) {
-			if (dbGoupId > 0 && slaves.size() <= dbGoupId + 1) {
-				throw new RuntimeException("expect db group number is :" + dbGoupId + ",actaul:" + (dbGoupId + 1));
-			}
-			dsKey = getLruSlave(dbGoupId);
-		} else {
+		
+        if (vals.forceMaster || !vals.userSlave){
 			if (dbGoupId > 0 && masters.size() <= dbGoupId + 1) {
 				throw new RuntimeException("expect db group number is :" + dbGoupId + ",actaul:" + (dbGoupId + 1));
 			}
 			dsKey = masters.get(String.valueOf(dbGoupId));
+		}else{
+			if (dbGoupId > 0 && slaves.size() <= dbGoupId + 1) {
+				throw new RuntimeException("expect db group number is :" + dbGoupId + ",actaul:" + (dbGoupId + 1));
+			}
+			dsKey = selectSlave(dbGoupId);
 		}
-
-		vals.dsKey = dsKey;
 		
-		if(logger.isDebugEnabled()){
-			logger.debug("current use dataSource key is [{}]!",dsKey);
-		}
+		vals.dsKey = dsKey;
+		logger.debug("current route rule is:userSlave[{}] forceMaster[{}], use dataSource key is [{}]!",vals.userSlave,vals.forceMaster,dsKey);
 
 		return dsKey;
 	}
@@ -142,32 +121,31 @@ public class DataSourceContextHolder {
 	 * 
 	 * @return
 	 */
-	public boolean isForceUseOne() {
+	public boolean isForceUseMaster() {
 		DataSourceContextVals vals = contextVals.get();
 		if (vals == null)
 			return false;
-		return vals.userOne;
+		return vals.forceMaster;
 	}
 
 	/**
-	 * 获取最近最少使用的从数据库
+	 * 轮循分配slave节点
 	 * 
 	 * @return
 	 */
-	private static String getLruSlave(Serializable dbIndex) {
+	private static String selectSlave(Serializable dbIndex) {
 		List<String> sameDbSlaves = slaves.get(dbIndex.toString());
 		//  无从库则路由到主库
 		if (sameDbSlaves == null || sameDbSlaves.isEmpty()) {
 			String masterKey = masters.get(dbIndex.toString());
-			if(logger.isDebugEnabled()){
-				logger.debug("current no slave found ,default use [{}]!",masterKey);
-			}
+			logger.debug("current no slave found ,default use [{}]!",masterKey);
 			return masterKey;
 		}
 		if (sameDbSlaves.size() == 1)
 			return sameDbSlaves.get(0);
-		// TODO
-		String slaveKey = sameDbSlaves.get(RandomUtils.nextInt(0, sameDbSlaves.size()));
+		
+		int selectIndex = counter.getAndIncrement() % sameDbSlaves.size();
+		String slaveKey = sameDbSlaves.get(selectIndex);
 		return slaveKey;
 	}
 
@@ -180,7 +158,7 @@ public class DataSourceContextHolder {
 
 		public int dbIndex;
 		public boolean userSlave; //
-		public boolean userOne;
+		public boolean forceMaster;
 		public String dsKey;
 	}
 }

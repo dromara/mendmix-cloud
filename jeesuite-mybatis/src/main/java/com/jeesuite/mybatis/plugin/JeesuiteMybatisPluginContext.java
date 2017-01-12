@@ -44,6 +44,8 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 	private String crudDriver = "default";
 	private List<InterceptorHandler> interceptorHandlers = new ArrayList<>();
 	
+	private static boolean cacheEnabled,rwRouteEnabled,dbShardEnabled;
+	
 	//cache,rwRoute,dbShard
 	public void setInterceptorHandlers(String interceptorHandlers) {
 		String[] handlerNames = StringUtils.tokenizeToStringArray(interceptorHandlers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
@@ -51,10 +53,13 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 		for (String name : handlerNames) {
 			if("cache".equals(name)){
 				this.interceptorHandlers.add(new CacheHandler());
+				cacheEnabled = true;
 			}else if("rwRoute".equals(name)){
 				this.interceptorHandlers.add(new RwRouteHandler());
+				rwRouteEnabled = true;
 			}else if("dbShard".equals(name)){
 				this.interceptorHandlers.add(new DatabaseRouteHandler());
+				dbShardEnabled = true;
 			}
 		}
 	}
@@ -126,6 +131,18 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 		for (InterceptorHandler handler : interceptorHandlers) {
 			handler.close();
 		}
+	}
+
+	public static boolean isCacheEnabled() {
+		return cacheEnabled;
+	}
+
+	public static boolean isRwRouteEnabled() {
+		return rwRouteEnabled;
+	}
+
+	public static boolean isDbShardEnabled() {
+		return dbShardEnabled;
 	}
 
 }

@@ -26,26 +26,24 @@ public class RwRouteHandler implements InterceptorHandler {
 
 	@Override
 	public Object onInterceptor(Invocation invocation) throws Throwable {
-		//已指定强制使用当前设置的
-		if(DataSourceContextHolder.get().isForceUseOne()){
-			return null;
-		}
 		
 		Object[] objects = invocation.getArgs();
 		MappedStatement ms = (MappedStatement) objects[0];
+		//已指定强制使用
+		if(DataSourceContextHolder.get().isForceUseMaster()){
+			logger.debug("Method[{}] force use Master..",ms.getId());
+			return null;
+		}
+		
 		//读方法
 		if(ms.getSqlCommandType().equals(SqlCommandType.SELECT)){
 			//!selectKey 为自增id查询主键(SELECT LAST_INSERT_ID() )方法，使用主库
 			if(!ms.getId().contains(SelectKeyGenerator.SELECT_KEY_SUFFIX)){				
 				DataSourceContextHolder.get().useSlave(true);
-				if(logger.isDebugEnabled()){
-					logger.debug("设置方法[{}] use Slave Strategy..",ms.getId());
-				}
+				logger.debug("Method[{} use Slave Strategy..",ms.getId());
 			}
 		}else{
-			if(logger.isDebugEnabled()){
-				logger.debug("设置方法[{}] use Master Strategy..",ms.getId());
-			}
+			logger.debug("Method[{}] use Master Strategy..",ms.getId());
 			DataSourceContextHolder.get().useSlave(false);
 		}
 		
