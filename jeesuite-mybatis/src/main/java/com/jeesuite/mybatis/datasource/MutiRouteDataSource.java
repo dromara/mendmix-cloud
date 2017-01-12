@@ -13,6 +13,9 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -34,6 +37,8 @@ import com.alibaba.druid.pool.DruidDataSource;
  */
 public class MutiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean{  
 
+	private static final Logger logger = LoggerFactory.getLogger(MutiRouteDataSource.class);
+	
 	private static final String MASTER_KEY = "master";
 	
 	private ApplicationContext context;
@@ -166,7 +171,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
         	DataSourceInfo dataSourceInfo = mapCustom.get(dsKey);
         	//如果当前库为最新一组数据库，注册beanName为master
         	
-			logger.info(">>>>>begin to initialize datasource："+dsKey + "\n================\n" + dataSourceInfo.toString());
+			logger.info(">>>>>begin to initialize datasource："+dsKey + "\n================\n" + dataSourceInfo.toString() + "\n==============");
 			
         	BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(DruidDataSource.class);
         	beanDefinitionBuilder.addPropertyValue("driverClassName", dataSourceInfo.driveClassName);
@@ -297,8 +302,13 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 			//私有配置
 			this.master = keyPrefix.contains(MASTER_KEY);
 			this.connUrl = configReader.get(keyPrefix + ".db.url");
+			Validate.notBlank(this.connUrl, "Config [%s.db.url] is required", keyPrefix);
+			
 			this.userName = configReader.get(keyPrefix + ".db.username");
+			Validate.notBlank(this.userName, "Config [%s.db.username] is required", keyPrefix);
+			
 			this.password = configReader.get(keyPrefix + ".db.password");
+			Validate.notBlank(this.password, "Config [%s.db.password] is required", keyPrefix);
 			//覆盖全局配置
 			if((tmpVal = configReader.get(keyPrefix + ".db.initialSize")) != null){				
 				this.initialSize = Integer.parseInt(tmpVal);

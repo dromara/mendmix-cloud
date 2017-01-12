@@ -148,22 +148,22 @@ public class MybatisMapperParser {
 		
 		List<XNode> children = evalNode.getChildren();
 		for (XNode xNode : children) {
-			if("resultMap".equals(xNode.getName()) && "BaseResultMap".equals(xNode.getStringAttribute("id"))){
-				entityClass = xNode.getStringAttribute("type");
-				entityInfo = new EntityInfo(mapperClass, entityClass);
-				
-				if(entityInfo.getErrorMsg() != null){				
-					log.warn("==================\n>>{},skip！！！！\n===============",entityInfo.getErrorMsg());
-					continue;
-				}
-				
-				entityInfos.add(entityInfo);
-				mapperRalateEntitys.put(mapperClass, entityInfo);
-				//
-				List<XNode> resultNodes = xNode.getChildren();
-				for (XNode xNode2 : resultNodes) {
-					parseResultNode(entityInfo,xNode2);
-				}
+			if(!"resultMap".equals(xNode.getName()) )continue;
+			if(!"BaseResultMap".equals(xNode.getStringAttribute("id")) )continue;
+			
+			entityClass = xNode.getStringAttribute("type");
+			entityInfo = new EntityInfo(mapperClass, entityClass);
+			
+			if(entityInfo.getErrorMsg() != null){				
+				log.warn("==================\n>>{},skip！！！！\n===============",entityInfo.getErrorMsg());
+				continue;
+			}
+			entityInfos.add(entityInfo);
+			mapperRalateEntitys.put(mapperClass, entityInfo);
+			//
+			List<XNode> resultNodes = xNode.getChildren();
+			for (XNode xNode2 : resultNodes) {
+				parseResultNode(entityInfo,xNode2);
 			}
 		}
 		

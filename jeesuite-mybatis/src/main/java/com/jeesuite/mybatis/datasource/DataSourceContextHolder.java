@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
  */
 public class DataSourceContextHolder {
 
-	protected static final Logger logger = LoggerFactory.getLogger(DataSourceContextHolder.class);
+	private static final Logger logger = LoggerFactory.getLogger(DataSourceContextHolder.class);
 	
-	private final static AtomicInteger counter = new AtomicInteger(999);
+	private final static AtomicLong counter = new AtomicLong(10);
 
 	private static final Map<String, String> masters = new HashMap<>();
 	private static final Map<String, List<String>> slaves = new HashMap<>();
@@ -85,6 +85,15 @@ public class DataSourceContextHolder {
 		contextVals.set(vals);
 		return this;
 	}
+	
+	public void reset(){
+		DataSourceContextVals vals = contextVals.get();
+		if (vals == null)return;
+		if(vals.forceMaster)return;
+		vals.dsKey = null;
+		vals.userSlave = false;
+		contextVals.set(vals);
+	}
 
 	/**
 	 * 获取当前数据源名
@@ -93,7 +102,13 @@ public class DataSourceContextHolder {
 	 */
 	protected String getDataSourceKey() {
 		DataSourceContextVals vals = contextVals.get();
-		if(vals == null)return masters.get(0);
+		if(vals == null){
+			vals = new DataSourceContextVals();
+			vals.forceMaster = true;
+			contextVals.set(vals);
+			
+			return masters.get(0);
+		}
 		
 		int dbGoupId = vals.dbIndex;
 		String dsKey = null;
@@ -111,7 +126,7 @@ public class DataSourceContextHolder {
 		}
 		
 		vals.dsKey = dsKey;
-		logger.debug("current route rule is:userSlave[{}] forceMaster[{}], use dataSource key is [{}]!",vals.userSlave,vals.forceMaster,dsKey);
+		logger.debug("current route rule is:userSlave[{}] forceMaster[{}], use dataSource key is [{}]!",vals.userSlave,vals.forceMaster,vals.dsKey);
 
 		return dsKey;
 	}
@@ -144,7 +159,7 @@ public class DataSourceContextHolder {
 		if (sameDbSlaves.size() == 1)
 			return sameDbSlaves.get(0);
 		
-		int selectIndex = counter.getAndIncrement() % sameDbSlaves.size();
+		int selectIndex = (int) (counter.getAndIncrement() % sameDbSlaves.size());
 		String slaveKey = sameDbSlaves.get(selectIndex);
 		return slaveKey;
 	}

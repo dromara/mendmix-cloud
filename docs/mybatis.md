@@ -85,7 +85,14 @@ slave1~n,group1~n依次递增(第一组group0默认省略)
 #####  spring配置
 ```
     <!--除了datasource配置外，其他都与原生配置一样-->
-    <bean id="routeDataSource" class="com.jeesuite.mybatis.datasource.MutiRouteDataSource" />
+    <bean id="routeDataSource" class="com.jeesuite.mybatis.datasource.MutiRouteDataSource">
+       <!-- 
+       如果你的数据库配置文件内容自定义了加解密规则，请自行重写ConfigReader
+       <property name="configReader">
+           <bean class="com.jeesuite.mybatis.datasource.MyConfigReader" />
+       </property>
+        -->
+    </bean>
 
 	<bean id="transactionTemplate"
 		class="org.springframework.transaction.support.TransactionTemplate">

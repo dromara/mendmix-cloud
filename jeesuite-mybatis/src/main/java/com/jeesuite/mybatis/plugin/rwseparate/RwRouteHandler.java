@@ -52,12 +52,12 @@ public class RwRouteHandler implements InterceptorHandler {
 
 	@Override
 	public void onFinished(Invocation invocation,Object result) {
-		
+		DataSourceContextHolder.get().reset();
 	}
 
 	@Override
 	public InterceptorType getInterceptorType() {
-		return InterceptorType.before;
+		return InterceptorType.around;
 	}
 
 	@Override

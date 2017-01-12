@@ -19,6 +19,10 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.mybatis.plugin.cache.EntityCacheHelper;
@@ -34,6 +38,8 @@ import com.jeesuite.spring.SpringInstanceProvider;
 public class MybatisTest implements ApplicationContextAware{
 	
 	@Autowired UserEntityMapper mapper;
+	
+	@Autowired TransactionTemplate transactionTemplate;
 
 	@Override
 	public void setApplicationContext(ApplicationContext arg0) throws BeansException {	
@@ -118,20 +124,42 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	
 	@Test
-	public void testCache2(){
-        UserEntity userEntity = mapper.findByMobile("15920558210");
-		
-		mapper.findByStatus((short)1);
+	@Transactional
+	public void testRwRouteWithTransaction(){
 		mapper.findByStatus((short)2);
 		
-		userEntity.setId(null);
-		mapper.countByExample(userEntity);
-		
-		mapper.countByType(1);
+		UserEntity entity = new UserEntity();
+		entity.setCreatedAt(new Date());
+		entity.setEmail(RandomStringUtils.random(6, true, true) + "@163.com");
+		entity.setMobile("13800"+RandomUtils.nextLong(100000, 999999));
+		entity.setType((short)1);
+		entity.setStatus((short)1);
+		mapper.insert(entity);
+	}
 	
-		EntityCacheHelper.removeCache(UserEntity.class);
+	@Test
+	public void testRwRouteWithTransaction2(){
 		
-	
+		mapper.findByStatus((short)1);
+		
+		transactionTemplate.execute(new TransactionCallback<Void>() {
+			@Override
+			public Void doInTransaction(TransactionStatus status) {
+
+				mapper.findByStatus((short)2);
+				
+				UserEntity entity = new UserEntity();
+				entity.setCreatedAt(new Date());
+				entity.setEmail(RandomStringUtils.random(6, true, true) + "@163.com");
+				entity.setMobile("13800"+RandomUtils.nextLong(100000, 999999));
+				entity.setType((short)1);
+				entity.setStatus((short)1);
+				mapper.insert(entity);
+				
+				return null;
+			}
+		});
+		System.out.println();
 	}
 	
 
