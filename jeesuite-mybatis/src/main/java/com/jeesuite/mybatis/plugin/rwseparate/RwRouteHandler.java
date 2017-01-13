@@ -51,13 +51,11 @@ public class RwRouteHandler implements InterceptorHandler {
 	}
 
 	@Override
-	public void onFinished(Invocation invocation,Object result) {
-		DataSourceContextHolder.get().reset();
-	}
+	public void onFinished(Invocation invocation,Object result) {}
 
 	@Override
 	public InterceptorType getInterceptorType() {
-		return InterceptorType.around;
+		return InterceptorType.before;
 	}
 
 	@Override

@@ -67,6 +67,7 @@ public class DataSourceContextHolder {
 		if (vals == null)
 			vals = new DataSourceContextVals();
 		vals.dbIndex = dbIndex;
+		vals.routedBeforeGetConn = true;
 		contextVals.set(vals);
 	}
 	
@@ -80,21 +81,11 @@ public class DataSourceContextHolder {
 		if (vals == null)
 			vals = new DataSourceContextVals();
 		vals.userSlave = useSlave;
-		//如果在一次操作中有一次路由到master，之后都用master
-		vals.forceMaster = !useSlave;
+		vals.routedBeforeGetConn = true;
 		contextVals.set(vals);
 		return this;
 	}
 	
-	public void reset(){
-		DataSourceContextVals vals = contextVals.get();
-		if (vals == null)return;
-		if(vals.forceMaster)return;
-		vals.dsKey = null;
-		vals.userSlave = false;
-		contextVals.set(vals);
-	}
-
 	/**
 	 * 获取当前数据源名
 	 * 
@@ -113,7 +104,7 @@ public class DataSourceContextHolder {
 		int dbGoupId = vals.dbIndex;
 		String dsKey = null;
 		
-        if (vals.forceMaster || !vals.userSlave){
+        if (vals.forceMaster || !vals.userSlave || !vals.routedBeforeGetConn){
 			if (dbGoupId > 0 && masters.size() <= dbGoupId + 1) {
 				throw new RuntimeException("expect db group number is :" + dbGoupId + ",actaul:" + (dbGoupId + 1));
 			}
@@ -126,8 +117,11 @@ public class DataSourceContextHolder {
 		}
 		
 		vals.dsKey = dsKey;
-		logger.debug("current route rule is:userSlave[{}] forceMaster[{}], use dataSource key is [{}]!",vals.userSlave,vals.forceMaster,vals.dsKey);
+		logger.debug("current route rule is:userSlave[{}]|forceMaster[{}]|routedBeforeGetConn[{}], use dataSource key is [{}]!",vals.userSlave,vals.forceMaster,vals.routedBeforeGetConn,vals.dsKey);
 
+		//重置路由状态
+		vals.routedBeforeGetConn = false;
+		
 		return dsKey;
 	}
 
@@ -175,6 +169,8 @@ public class DataSourceContextHolder {
 		public boolean userSlave; //
 		public boolean forceMaster;
 		public String dsKey;
+		//标记在获取连接前是否执行了路由，在事务的情况获取连接在路由之前
+		public boolean routedBeforeGetConn;
 	}
 }
 
