@@ -51,6 +51,7 @@ import com.jeesuite.mybatis.plugin.cache.annotation.CacheEvictCascade;
 import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
 import com.jeesuite.mybatis.plugin.cache.name.Mapper3CacheMethodDefine;
 import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
+import com.jeesuite.spring.InstanceFactory;
 
 
 /**
@@ -390,7 +391,11 @@ public class CacheHandler implements InterceptorHandler {
 			methodDefine = new DefaultCacheMethodDefine();
 		}
 		
-		if(cacheProvider == null)cacheProvider = new DefaultCacheProvider();
+		if(context.getInterceptorHandlerHooks().containsKey("cacheProvider")){
+			cacheProvider = InstanceFactory.getInstance(CacheProvider.class,context.getInterceptorHandlerHooks().get("cacheProvider"));
+		}else{
+			cacheProvider = new DefaultCacheProvider();
+		}
 		
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		
@@ -668,10 +673,5 @@ public class CacheHandler implements InterceptorHandler {
 		try {			
 			clearExpiredGroupKeysTimer.shutdown();
 		} catch (Exception e) {}
-	}
-	
-	public static void main(String[] args) {
-		String sql = "select * from user Where id=1";
-		System.out.println(sql.split(WHERE_REGEX)[1]);
 	}
 }

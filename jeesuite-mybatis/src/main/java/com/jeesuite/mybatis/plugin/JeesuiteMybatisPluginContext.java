@@ -1,7 +1,9 @@
 package com.jeesuite.mybatis.plugin;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.ibatis.executor.Executor;
@@ -43,6 +45,7 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 	//CRUD框架驱动 default，mapper3
 	private String crudDriver = "default";
 	private List<InterceptorHandler> interceptorHandlers = new ArrayList<>();
+	private Map<String, String> interceptorHandlerHooks = new HashMap<String, String>();
 	
 	private static boolean cacheEnabled,rwRouteEnabled,dbShardEnabled;
 	
@@ -74,6 +77,14 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 
 	public String getCrudDriver() {
 		return crudDriver;
+	}
+
+	public void setInterceptorHandlerHooks(Map<String, String> interceptorHandlerHooks) {
+		this.interceptorHandlerHooks = interceptorHandlerHooks;
+	}
+
+	public Map<String, String> getInterceptorHandlerHooks() {
+		return interceptorHandlerHooks;
 	}
 
 	@Override
