@@ -29,10 +29,10 @@
 	</bean>
 	
 	<!-- 使用spring-data-redis作为mybatis自动缓存提供者 -->
-	<bean class="com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider">
+	<!-- <bean class="com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider">
 	   <property name="redisTemplate"  ref="redisTemplate"/>
 	   <property name="stringRedisTemplate" ref="stringRedisTemplate" />
-	</bean>
+	</bean> -->
 
 	<bean id="routeSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="configLocation" value="classpath:mybatis-configuration.xml" />

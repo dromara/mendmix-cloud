@@ -183,7 +183,7 @@ public class CacheHandler implements InterceptorHandler {
 				}
 				//结果为集合的情况，增加key到cacheGroup
 				if(cacheInfo.groupRalated){
-					getCacheProvider().putGroupKeys(cacheInfo.cacheGroupKey, cacheKey,cacheInfo.expire);
+					getCacheProvider().putGroup(cacheInfo.cacheGroupKey, cacheKey,cacheInfo.expire);
 					logger.debug("_autocache_ method[{}] add key:[{}] to group key:[{}]",mt.getId(),cacheInfo.cacheGroupKey, cacheKey);
 				}else{
 					//
@@ -306,11 +306,11 @@ public class CacheHandler implements InterceptorHandler {
 	private void removeCacheByGroup(String msId, String mapperNameSpace) {
 		//删除cachegroup关联缓存
 		String entityName = mapperNameRalateEntityNames.get(mapperNameSpace);
-		String cacheGroup = entityName + GROUPKEY_SUFFIX;
-		getCacheProvider().clearGroupKeys(cacheGroup);
-		logger.debug("_autocache_ method[{}] remove cache Group:{}",msId,cacheGroup);
+		getCacheProvider().clearGroup(entityName,false);
+		logger.debug("_autocache_ method[{}] remove cache Group:{}",msId,entityName);
 		//关联缓存
 		if(cacheEvictCascades.containsKey(msId)){
+			String cacheGroup;
 			for (String entity : cacheEvictCascades.get(msId)) {
 				cacheGroup = entity + GROUPKEY_SUFFIX;
 				getCacheProvider().clearExpiredGroupKeys(entity + GROUPKEY_SUFFIX);

@@ -54,7 +54,7 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 
 
 	@Override
-	public void putGroupKeys(String cacheGroupKey, String key,long expireSeconds) {
+	public void putGroup(String cacheGroupKey, String key,long expireSeconds) {
 		long score = calcScoreInRegionKeysSet(expireSeconds);
 		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
 		try {			
@@ -65,28 +65,14 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 		}
 	}
 
-	@Override
-	public void clearGroupKeys(String cacheGroupKey) {
-		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
-		try {	
-			Set<String> keys = commands.zrange(cacheGroupKey, 0, -1);
-			//删除实际的缓存
-			if(keys != null && keys.size() > 0){
-				RedisBatchCommand.removeObjects(keys.toArray(new String[0]));
-			}
-			commands.del(cacheGroupKey);
-		} finally{
-			JedisProviderFactory.getJedisProvider(null).release();
-		}
-	}
 
 	@Override
-	public void clearGroupKey(String cacheGroupKey, String subKey) {
+	public void removeFromGroup(String cacheGroupKey, String key) {
 		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
 		try {			
-			commands.zrem(cacheGroupKey, subKey);
+			commands.zrem(cacheGroupKey, key);
 			//
-			commands.del(subKey);
+			commands.del(key);
 		} finally{
 			JedisProviderFactory.getJedisProvider(null).release();
 		}
@@ -94,7 +80,7 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 	
 	
 	@Override
-	public void clearGroup(String groupName) {
+	public void clearGroup(final String groupName,final boolean containPkCache) {
 
 		String cacheGroupKey = groupName + CacheHandler.GROUPKEY_SUFFIX;
 		JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
@@ -106,9 +92,11 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 			}
 			commands.del(cacheGroupKey);
 			//删除按ID缓存的
-			keys = JedisProviderFactory.getMultiKeyCommands(null).keys(groupName +".id:*");
-			if(keys != null && keys.size() > 0){
-				RedisBatchCommand.removeObjects(keys.toArray(new String[0]));
+			if(containPkCache){				
+				keys = JedisProviderFactory.getMultiKeyCommands(null).keys(groupName +".id:*");
+				if(keys != null && keys.size() > 0){
+					RedisBatchCommand.removeObjects(keys.toArray(new String[0]));
+				}
 			}
 			
 		} finally{

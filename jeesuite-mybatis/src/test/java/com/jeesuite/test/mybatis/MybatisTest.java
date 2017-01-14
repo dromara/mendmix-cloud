@@ -119,6 +119,7 @@ public class MybatisTest implements ApplicationContextAware{
 		userEntity.setId(null);
 		mapper.countByExample(userEntity);
 		
+		EntityCacheHelper.removeCache(UserEntity.class);
 		System.out.println();
 	}
 	

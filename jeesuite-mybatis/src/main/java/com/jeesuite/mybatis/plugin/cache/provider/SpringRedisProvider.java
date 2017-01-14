@@ -80,14 +80,23 @@ public class SpringRedisProvider extends AbstractCacheProvider implements Initia
 
 
 	@Override
-	public void putGroupKeys(String cacheGroupKey, String subKey, long expireSeconds) {
+	public void putGroup(String cacheGroupKey, String key, long expireSeconds) {
 		long score = calcScoreInRegionKeysSet(expireSeconds);
-		stringRedisTemplate.opsForZSet().add(cacheGroupKey, subKey, score);
+		stringRedisTemplate.opsForZSet().add(cacheGroupKey, key, score);
 	}
 
 
 	@Override
-	public void clearGroupKeys(String cacheGroupKey) {
+	public void removeFromGroup(String cacheGroupKey, String key) {
+		stringRedisTemplate.opsForZSet().remove(cacheGroupKey, key);
+		redisTemplate.delete(key);
+	}
+
+
+	@Override
+	public void clearGroup(final String groupName,final boolean containPkCache) {
+		//清除缓存组的key
+		String cacheGroupKey = groupName + CacheHandler.GROUPKEY_SUFFIX;
 		
 		Set<String> keys = stringRedisTemplate.opsForZSet().range(cacheGroupKey, 0, -1);
 		if(keys.isEmpty())return;
@@ -105,41 +114,20 @@ public class SpringRedisProvider extends AbstractCacheProvider implements Initia
 				connection.del(keyArray);
 				logger.debug("cascade remove cache keyPattern:{},size:{}",cacheGroupKey,keysToArray.length);
 			
-				return null;
-			}
-		});
-		
-		stringRedisTemplate.opsForZSet().remove(cacheGroupKey, keysToArray);
-	}
-
-
-	@Override
-	public void clearGroupKey(String cacheGroupKey, String subKey) {
-		stringRedisTemplate.opsForZSet().remove(cacheGroupKey, subKey);
-		redisTemplate.delete(subKey);
-	}
-
-
-	@Override
-	public void clearGroup(String groupName) {
-		//清除缓存组的key
-		clearGroupKeys(groupName + CacheHandler.GROUPKEY_SUFFIX);
-		
-		//清除按ID缓存的key
-		redisTemplate.execute(new RedisCallback<Void>() {
-			@Override
-			public Void doInRedis(RedisConnection connection) throws DataAccessException {
-				//删除ID的缓存
-				String idKeyPattern = groupName + ".id:*";
-				Set<byte[]> idKeys = connection.keys(idKeyPattern.getBytes());
-				if(idKeys.size() > 0){					
-					connection.del(idKeys.toArray(new byte[0][0]));
-					logger.debug("cascade remove cache keyPattern:{},size:{}",idKeyPattern,idKeys.size());
+				if(containPkCache){
+					//删除ID的缓存
+					String idKeyPattern = groupName + ".id:*";
+					Set<byte[]> idKeys = connection.keys(idKeyPattern.getBytes());
+					if(idKeys.size() > 0){					
+						connection.del(idKeys.toArray(new byte[0][0]));
+						logger.debug("cascade remove cache keyPattern:{},size:{}",idKeyPattern,idKeys.size());
+					}
 				}
 				return null;
 			}
 		});
 		
+		stringRedisTemplate.opsForZSet().remove(cacheGroupKey, keysToArray);
 	}
 	
 	@Override
