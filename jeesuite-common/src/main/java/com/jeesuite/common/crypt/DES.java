@@ -11,7 +11,7 @@ import javax.crypto.spec.IvParameterSpec;
 /**
  * 加密解密工具包
  */
-public class Des {
+public class DES {
 
 	public static final String ALGORITHM_DES = "DES/CBC/PKCS5Padding";
 	

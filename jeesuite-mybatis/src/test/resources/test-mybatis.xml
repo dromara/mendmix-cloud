@@ -27,6 +27,12 @@
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 		<property name="dataSource" ref="routeDataSource" />
 	</bean>
+	
+	<!-- 使用spring-data-redis作为mybatis自动缓存提供者 -->
+	<bean id="mybatisSpringRedisProvider" class="com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider">
+	   <property name="redisTemplate"  ref="redisTemplate"/>
+	   <property name="stringRedisTemplate" ref="stringRedisTemplate" />
+	</bean>
 
 	<bean id="routeSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="configLocation" value="classpath:mybatis-configuration.xml" />
@@ -39,9 +45,10 @@
 					<property name="crudDriver" value="default" />
 					<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
 					<property name="interceptorHandlers" value="cache,rwRoute" />
+					<!-- 拦截器一些自定义的内容 -->
 					<property name="interceptorHandlerHooks">
 						<map>
-							<entry key="cacheProvider" value="springdataredis" />
+							<entry key="cacheProvider" value="mybatisSpringRedisProvider" />
 						</map>
 					</property>
 				</bean>

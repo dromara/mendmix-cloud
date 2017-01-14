@@ -631,7 +631,7 @@ public class Crypt {
     salt.append(saltChars[random.nextInt(saltChars.length - 1)]);
 
     String password = "123456";
-    byte[] pwd = Crypt.crypt("NK".getBytes(encoding), password.getBytes(encoding));
+    byte[] pwd = Crypt.crypt("vakinge".getBytes(encoding), password.getBytes(encoding));
     System.out.println(new String(pwd));
   }
 

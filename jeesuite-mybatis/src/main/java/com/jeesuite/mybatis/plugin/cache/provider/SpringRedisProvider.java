@@ -7,10 +7,13 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.Validate;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
@@ -22,9 +25,10 @@ import com.jeesuite.mybatis.plugin.cache.CacheHandler;
  * @date 2017年1月13日
  */
 @SuppressWarnings("unchecked")
-public class SpringRedisProvider extends AbstractCacheProvider {
+public class SpringRedisProvider extends AbstractCacheProvider implements InitializingBean {
 
 	private RedisTemplate<String, Object> redisTemplate;
+	private StringRedisTemplate stringRedisTemplate;
 	@SuppressWarnings("rawtypes")//
 	private RedisSerializer keySerializer;
 	@SuppressWarnings("rawtypes")//
@@ -36,6 +40,12 @@ public class SpringRedisProvider extends AbstractCacheProvider {
 		this.valueSerializer = redisTemplate.getValueSerializer();
 	}
 
+	public void setStringRedisTemplate(StringRedisTemplate stringRedisTemplate) {
+		this.stringRedisTemplate = stringRedisTemplate;
+	}
+
+
+
 	@Override
 	public void close() throws IOException {}
 
@@ -46,13 +56,18 @@ public class SpringRedisProvider extends AbstractCacheProvider {
 
 	@Override
 	public String getStr(String key) {
-		return get(key);
+		return stringRedisTemplate.opsForValue().get(key);
 	}
 
 
 	@Override
 	public boolean set(String key, Object value, long expired) {
-		redisTemplate.opsForValue().set(key, value, expired, TimeUnit.SECONDS);
+		if(value == null)return false;
+		if(value instanceof String){
+			stringRedisTemplate.opsForValue().set(key, value.toString(), expired, TimeUnit.SECONDS);
+		}else{
+			redisTemplate.opsForValue().set(key, value, expired, TimeUnit.SECONDS);
+		}
 		return true;
 	}
 
@@ -67,59 +82,53 @@ public class SpringRedisProvider extends AbstractCacheProvider {
 	@Override
 	public void putGroupKeys(String cacheGroupKey, String subKey, long expireSeconds) {
 		long score = calcScoreInRegionKeysSet(expireSeconds);
-		redisTemplate.opsForZSet().add(cacheGroupKey, subKey, score);
+		stringRedisTemplate.opsForZSet().add(cacheGroupKey, subKey, score);
 	}
 
 
 	@Override
 	public void clearGroupKeys(String cacheGroupKey) {
+		
+		Set<String> keys = stringRedisTemplate.opsForZSet().range(cacheGroupKey, 0, -1);
+		if(keys.isEmpty())return;
+		final Object[] keysToArray = keys.toArray(new String[0]);
+		
 		redisTemplate.execute(new RedisCallback<Void>() {
 			@Override
 			public Void doInRedis(RedisConnection connection) throws DataAccessException {
-				byte[] keyBytes = keySerializer.serialize(cacheGroupKey);
-				//删除关联组的缓存
-				Set<byte[]> keysInGroup = connection.zRange(keyBytes, 0, -1);
-				if(keysInGroup != null && keysInGroup.size() > 0){
-					byte[][] keyArray = keysInGroup.toArray(new byte[0][0]);
-					connection.zRem(keyBytes, keyArray);
-					//先转成key的序列化格式
-					for (int i = 0; i < keyArray.length; i++) {
-						keyArray[i] = keySerializer.serialize(valueSerializer.deserialize(keyArray[i]));
-					}
-					connection.del(keyArray);
-					logger.debug("cascade remove cache keyPattern:{},size:{}",cacheGroupKey,keysInGroup.size());
+
+				byte[][] keyArray = new byte[keysToArray.length][];
+				//先转成key的序列化格式
+				for (int i = 0; i < keyArray.length; i++) {
+					keyArray[i] = keySerializer.serialize(keysToArray[i]);
 				}
+				connection.del(keyArray);
+				logger.debug("cascade remove cache keyPattern:{},size:{}",cacheGroupKey,keysToArray.length);
+			
 				return null;
 			}
 		});
+		
+		stringRedisTemplate.opsForZSet().remove(cacheGroupKey, keysToArray);
 	}
 
 
 	@Override
 	public void clearGroupKey(String cacheGroupKey, String subKey) {
-		redisTemplate.opsForZSet().remove(cacheGroupKey, subKey);
+		stringRedisTemplate.opsForZSet().remove(cacheGroupKey, subKey);
 		redisTemplate.delete(subKey);
 	}
 
 
 	@Override
 	public void clearGroup(String groupName) {
+		//清除缓存组的key
+		clearGroupKeys(groupName + CacheHandler.GROUPKEY_SUFFIX);
+		
+		//清除按ID缓存的key
 		redisTemplate.execute(new RedisCallback<Void>() {
 			@Override
 			public Void doInRedis(RedisConnection connection) throws DataAccessException {
-				byte[] keyBytes = keySerializer.serialize(groupName + CacheHandler.GROUPKEY_SUFFIX);
-				//删除关联组的缓存
-				Set<byte[]> keysInRegion = connection.zRange(keyBytes, 0, -1);
-				if(keysInRegion.size() > 0){
-					byte[][] keyArray = keysInRegion.toArray(new byte[0][0]);
-					connection.zRem(keyBytes, keyArray);
-					//先转成key的序列化格式
-					for (int i = 0; i < keyArray.length; i++) {
-						keyArray[i] = keySerializer.serialize(valueSerializer.deserialize(keyArray[i]));
-					}
-					connection.del(keyArray);
-					logger.debug("cascade remove cache keyPattern:{},size:{}",groupName,keysInRegion.size());
-				}
 				//删除ID的缓存
 				String idKeyPattern = groupName + ".id:*";
 				Set<byte[]> idKeys = connection.keys(idKeyPattern.getBytes());
@@ -136,8 +145,15 @@ public class SpringRedisProvider extends AbstractCacheProvider {
 	@Override
 	public void clearExpiredGroupKeys(String cacheGroup) {
 		long maxScore = System.currentTimeMillis()/1000 - this.baseScoreInRegionKeysSet;
-		redisTemplate.opsForZSet().removeRangeByScore(cacheGroup, 0, maxScore);
+		stringRedisTemplate.opsForZSet().removeRangeByScore(cacheGroup, 0, maxScore);
 		logger.debug("ClearExpiredRegionKeysTimer runing:cacheName:{} , score range:0~{}",cacheGroup,maxScore);
+	}
+
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		Validate.notNull(stringRedisTemplate," [stringRedisTemplate] is required");
+		Validate.notNull(redisTemplate," [redisTemplate] is required");
 	}
 
 }

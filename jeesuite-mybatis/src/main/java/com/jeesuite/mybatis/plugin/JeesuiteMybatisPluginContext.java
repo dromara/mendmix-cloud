@@ -15,8 +15,11 @@ import org.apache.ibatis.plugin.Plugin;
 import org.apache.ibatis.plugin.Signature;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.StringUtils;
 
@@ -26,6 +29,8 @@ import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
 import com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler;
+import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
  * mybatis 插件入口
@@ -40,7 +45,7 @@ import com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler;
     @Signature(type = Executor.class, method = "query", args = {  
             MappedStatement.class, Object.class, RowBounds.class,  
             ResultHandler.class }) })  
-public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBean,DisposableBean{
+public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBean,DisposableBean,ApplicationContextAware{
 
 	//CRUD框架驱动 default，mapper3
 	private String crudDriver = "default";
@@ -83,7 +88,7 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 		this.interceptorHandlerHooks = interceptorHandlerHooks;
 	}
 
-	public Map<String, String> getInterceptorHandlerHooks() {
+	public Map<String, String> getHandlerHooks() {
 		return interceptorHandlerHooks;
 	}
 
@@ -154,6 +159,11 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 
 	public static boolean isDbShardEnabled() {
 		return dbShardEnabled;
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
 	}
 
 }

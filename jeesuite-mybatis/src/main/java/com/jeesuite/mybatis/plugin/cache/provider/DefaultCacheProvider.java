@@ -44,7 +44,6 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 		}else{
 			return new RedisObject(key).set(value, expired);
 		}
-		
 	}
 
 

@@ -18,6 +18,8 @@ public abstract class AbstractCacheProvider implements CacheProvider {
 	
 	protected static final Logger logger = LoggerFactory.getLogger(AbstractCacheProvider.class);
 	
+	protected static final char[] ID_PREFIX_CHARS = ("123456789".toCharArray());
+	
 	// 计算关联key集合权重的基数
 	protected long baseScoreInRegionKeysSet = System.currentTimeMillis() / 1000 - CacheExpires.IN_1WEEK;
 
