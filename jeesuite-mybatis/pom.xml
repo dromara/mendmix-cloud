@@ -7,7 +7,7 @@
 		<version>2</version>
 	</parent>
 	<artifactId>jeesuite-mybatis</artifactId>
-	<version>1.0.5-SNAPSHOT</version>
+	<version>1.0.5</version>
 
 	<dependencies>
 		<dependency>

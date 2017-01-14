@@ -29,7 +29,7 @@
 	</bean>
 	
 	<!-- 使用spring-data-redis作为mybatis自动缓存提供者 -->
-	<bean id="mybatisSpringRedisProvider" class="com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider">
+	<bean class="com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider">
 	   <property name="redisTemplate"  ref="redisTemplate"/>
 	   <property name="stringRedisTemplate" ref="stringRedisTemplate" />
 	</bean>
@@ -45,12 +45,6 @@
 					<property name="crudDriver" value="default" />
 					<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
 					<property name="interceptorHandlers" value="cache,rwRoute" />
-					<!-- 拦截器一些自定义的内容 -->
-					<property name="interceptorHandlerHooks">
-						<map>
-							<entry key="cacheProvider" value="mybatisSpringRedisProvider" />
-						</map>
-					</property>
 				</bean>
 			</array>
 		</property>

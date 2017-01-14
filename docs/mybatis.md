@@ -3,7 +3,7 @@
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-mybatis</artifactId>
-	<version>1.0.3</version>
+	<version>1.0.5</version>
 </dependency>
 ```
 #### 一些说明
@@ -131,6 +131,25 @@ slave1~n,group1~n依次递增(第一组group0默认省略)
 		<property name="basePackage" value="com.jeesuite.demo.dao.mapper" />
     </bean>
 ```
+默认使用jeesuite-cache模块作为自动缓存支持，如果你需要使用`spring-data-redis`或者自定义，可以按如下配置
+```
+<bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+	<property name="connectionFactory" ref="jedisConnectionFactory" />
+    ....
+</bean>
+
+<bean id="stringRedisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">
+  <property name="connectionFactory" ref="jedisConnectionFactory" />
+</bean>
+
+<!-- 使用spring-data-redis作为mybatis自动缓存提供者 -->
+<bean class="com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider">
+	<property name="redisTemplate"  ref="redisTemplate"/>
+	<property name="stringRedisTemplate" ref="stringRedisTemplate" />
+</bean>
+```
+另外需要在自己项目加入spring-data-redis依赖
+
 #### 如何使用自动缓存
 只需要在mapper接口增加@com.jeesuite.mybatis.plugin.cache.annotation.Cache标注
 ```

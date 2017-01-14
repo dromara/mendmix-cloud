@@ -103,7 +103,13 @@ public class CacheHandler implements InterceptorHandler {
 	private static CacheProvider getCacheProvider() {
 		if(cacheProvider == null){
 			synchronized (CacheHandler.class) {
-				if(cacheProvider == null)cacheProvider = InstanceFactory.getInstance(CacheProvider.class);
+				if(cacheProvider == null){
+					cacheProvider = InstanceFactory.getInstance(CacheProvider.class);
+				}
+				if(cacheProvider == null){					
+					cacheProvider = new DefaultCacheProvider();
+				}
+				logger.info("Initializing cacheProvider use:{} ",cacheProvider.getClass().getName());
 			}
 		}
 		return cacheProvider;
@@ -401,16 +407,7 @@ public class CacheHandler implements InterceptorHandler {
 		}
 		
 		logger.info("crudDriver use:{}",context.getCrudDriver());
-		
-		String cacheProviderName = null;
-		if((cacheProviderName = context.getHandlerHooks().get("cacheProvider"))!= null){
-			//可能还没初始化完成
-			try {cacheProvider = InstanceFactory.getInstance(CacheProvider.class,cacheProviderName);} catch (Exception e) {}
-		}else{
-			cacheProvider = new DefaultCacheProvider();
-		}
-		logger.info("cacheProvider use:{}",cacheProviderName == null ? "default" : cacheProviderName);
-		
+
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		
 		QueryMethodCache methodCache = null;

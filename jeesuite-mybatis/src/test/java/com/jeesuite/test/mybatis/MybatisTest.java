@@ -156,6 +156,8 @@ public class MybatisTest implements ApplicationContextAware{
 				entity.setStatus((short)1);
 				mapper.insert(entity);
 				
+				mapper.findByStatus((short)2);
+				
 				return null;
 			}
 		});
