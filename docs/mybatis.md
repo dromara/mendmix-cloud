@@ -32,12 +32,12 @@
   2. 支持通过@CacheEvictCascade注解，级联缓存更新
   3. 支持通过EntityCacheHelper手动写入/更新缓存并自动纳入自动管理体系
 * 分库路由
-  1. 只适用基本的分库路由，不支持跨库join等，未上过生产系统。
+  1. 只适用基本的分库路由，不支持跨库join等，未经过严格测试也没上过生产系统（只当个研究用）。
 
 #### 配置
-##### mysql.properties配置，为了减少配置默认读取mysql.properties
 ```
 #mysql global config
+db.group.size=1
 db.shard.size=1000
 db.driverClass=com.mysql.jdbc.Driver
 db.initialSize=2
@@ -81,7 +81,13 @@ group1.slave1.db.url=jdbc:mysql://localhost:3306/demo_db2?seUnicode=true&amp;cha
 group1.slave1.db.username=root
 group1.slave1.db.password=123456
 ```
-slave1~n,group1~n依次递增(第一组group0默认省略)
+说明
+- `slave`序列从1开始,`group`序列从0开始(第一组group0默认省略，slave1~n,group1~n依次递增) 
+- 每个数据源的配置会覆盖全局配置
+- `db.group.size` 与 `db.shard.size` 都是分库用到配置，没有用到分库可以不配置
+
+
+
 #####  spring配置
 ```
     <!--除了datasource配置外，其他都与原生配置一样-->
