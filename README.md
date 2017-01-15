@@ -84,12 +84,13 @@
 - 多组缓存配置同时支持 （一个应用多个redis server）
 - 分布式模式开关
 
-#### mybatis模块 (1.0.5)
+#### mybatis模块 (1.0.6)
 - 代码生成、自动CRUD、可无缝对接mybaits增强框架Mapper
 - 基于properties配置多数据源支持，无需修改XML
 - 读写分离，事务内操作强制读主库
 - 基于注解自动缓存管理（所有查询方法结果自动缓存、自动更新，事务回滚缓存同步回滚机制）
 - 自动缓存实现基于`jeesuite-cache`和`spring-data-redis`
+- 集成PageHelper组件，自动分页
 - 简单分库路由（不支持join等跨库操作）
 
 #### scheduler模块 (1.0.6)

@@ -3,7 +3,7 @@
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-mybatis</artifactId>
-	<version>1.0.5</version>
+	<version>1.0.6</version>
 </dependency>
 ```
 #### 一些说明
@@ -19,8 +19,15 @@
 - selectAll
 
 ### 特别说明：
-已经无缝对接优秀的mybatis增强框架 [Mapper](http://git.oschina.net/free/Mapper) ，该框架功能强大，该部分推荐集成Mapper框架。
+- 已经无缝对接优秀的mybatis增强框架 [Mapper](http://git.oschina.net/free/Mapper) ，该框架功能强大，该部分推荐集成Mapper框架。
 
+```
+<dependency>
+    <groupId>tk.mybatis</groupId>
+    <artifactId>mapper</artifactId>
+    <version>3.3.9</version>
+</dependency>
+```
 ---
 ##### 其他功能说明
 * 读写分离
@@ -33,6 +40,20 @@
   3. 支持通过EntityCacheHelper手动写入/更新缓存并自动纳入自动管理体系
 * 分库路由
   1. 只适用基本的分库路由，不支持跨库join等，未经过严格测试也没上过生产系统（只当个研究用）。
+* 分页
+  1. 详细使用请参考项目主页：[Mybatis_PageHelper](http://git.oschina.net/free/Mybatis_PageHelper)（当前集成是5.0.0版本）
+  2. 提供了一个`PageTemplate`工具类
+  ```
+  PageInfo<UserEntity> page = PageTemplate.execute(pageNo, pageSize,
+	new PageDataLoader<UserEntity>() {
+		@Override
+		public List<SchemeDetailsEntity> load() {
+		  List<UserEntity> entitys = mapper.findAll();
+		  return entitys;
+	 }
+ });
+  ```
+  
 
 #### 配置
 ```

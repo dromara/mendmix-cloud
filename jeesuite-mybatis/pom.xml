@@ -7,13 +7,14 @@
 		<version>2</version>
 	</parent>
 	<artifactId>jeesuite-mybatis</artifactId>
-	<version>1.0.5</version>
+	<version>1.0.6</version>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.2</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
@@ -47,6 +48,12 @@
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis</artifactId>
 			<version>${mybatis.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.pagehelper</groupId>
+			<artifactId>pagehelper</artifactId>
+			<version>5.0.0</version>
 		</dependency>
 
 		<dependency>
