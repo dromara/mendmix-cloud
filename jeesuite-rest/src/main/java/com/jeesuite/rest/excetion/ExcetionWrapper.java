@@ -3,7 +3,7 @@
  */
 package com.jeesuite.rest.excetion;
 
-import com.jeesuite.rest.response.RestResponse;
+import com.jeesuite.rest.response.WrapperResponseEntity;
 
 /**
  * @description <br>
@@ -12,5 +12,5 @@ import com.jeesuite.rest.response.RestResponse;
  */
 public interface ExcetionWrapper {
 
-	RestResponse toResponse(Exception e);
+	WrapperResponseEntity toResponse(Exception e);
 }

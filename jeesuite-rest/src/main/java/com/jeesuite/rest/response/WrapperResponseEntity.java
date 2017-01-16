@@ -7,7 +7,7 @@ import com.jeesuite.rest.filter.RequestHeaderHolder;
 import com.jeesuite.rest.utils.I18nUtils;
 
 
-public class RestResponse {
+public class WrapperResponseEntity {
 
 	// 状态
 	private String code;
@@ -25,7 +25,7 @@ public class RestResponse {
 	@JsonIgnore
 	private boolean bizException;
 	
-	public RestResponse(){};
+	public WrapperResponseEntity(){};
 
 	/**
 	 * 构造函数
@@ -33,7 +33,7 @@ public class RestResponse {
 	 * @param responseCode
 	 * @param msg
 	 */
-	public RestResponse(HttpCodeType httpCode) {
+	public WrapperResponseEntity(HttpCodeType httpCode) {
 		this.code = String.valueOf(httpCode.getCode());
 		this.msg = I18nUtils.getMessage(RequestHeaderHolder.get(),String.valueOf(code), httpCode.getMsg());
 		this.httpStatus = httpCode.getCode();
@@ -45,7 +45,7 @@ public class RestResponse {
 	 * @param errorCode
 	 * @param msg
 	 */
-	public RestResponse(String errorCode, String msg,boolean bizException) {
+	public WrapperResponseEntity(String errorCode, String msg,boolean bizException) {
 		this.code = errorCode;
 		this.msg = I18nUtils.getMessage(RequestHeaderHolder.get(),String.valueOf(code), msg);
 		this.bizException = bizException;

@@ -11,7 +11,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.jeesuite.rest.filter.FilterHandler;
 import com.jeesuite.rest.response.ResponseCode;
-import com.jeesuite.rest.response.RestResponse;
+import com.jeesuite.rest.response.WrapperResponseEntity;
 
 /**
  * @description <br>
@@ -31,12 +31,12 @@ public class ResponseWrapperHandler implements FilterHandler {
 		MediaType mediaType = responseContext.getMediaType();
 		if (mediaType != null && MediaType.APPLICATION_JSON_TYPE.equals(mediaType)) {
 			Object responseData = responseContext.getEntity();
-			RestResponse jsonResponse;
+			WrapperResponseEntity jsonResponse;
 
-			if (responseData instanceof RestResponse) {
-				jsonResponse = (RestResponse) responseData;
+			if (responseData instanceof WrapperResponseEntity) {
+				jsonResponse = (WrapperResponseEntity) responseData;
 			} else {
-				jsonResponse = new RestResponse(ResponseCode.成功);
+				jsonResponse = new WrapperResponseEntity(ResponseCode.成功);
 				jsonResponse.setData(responseData);
 			}
 			responseContext.setStatus(ResponseCode.成功.getCode());
