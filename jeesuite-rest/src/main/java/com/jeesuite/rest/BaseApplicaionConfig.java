@@ -14,6 +14,8 @@ import com.jeesuite.rest.filter.DefaultWebFilter;
 import com.jeesuite.rest.resolver.ObjectMapperResolver;
 import com.jeesuite.rest.resolver.ValidationContextResolver;
 
+import io.swagger.jaxrs.listing.SwaggerSerializers;
+
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
@@ -31,6 +33,7 @@ public abstract class BaseApplicaionConfig extends ResourceConfig implements Cus
 	    property(ServerProperties.BV_DISABLE_VALIDATE_ON_EXECUTABLE_OVERRIDE_CHECK, true);
 				
 		this.packages(packages());
+		register(SwaggerSerializers.class);
 		register(ObjectMapperResolver.class);
 		register(JacksonFeature.class);
 		register(JacksonJsonProvider.class);

@@ -1,4 +1,4 @@
-package com.jeesuite.common2.excel.convert;
+package com.jeesuite.common2.excel;
 
 import java.io.IOException;
 import java.util.List;
@@ -9,38 +9,57 @@ import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackageAccess;
 import org.apache.poi.poifs.filesystem.OfficeXmlFileException;
 
-import com.jeesuite.common2.excel.ExcelOperBaseException;
+import com.jeesuite.common2.excel.convert.XLS2CSV;
+import com.jeesuite.common2.excel.convert.XLSX2CSV;
 import com.jeesuite.common2.excel.helper.ExcelBeanHelper;
 import com.jeesuite.common2.excel.helper.ExcelValidator;
 
-public class ExcelConvertCSVReader {
+/**
+ * 性能模式读取工具（适合大数据量读取，解决内存消耗过高的问题）
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2017年1月18日
+ */
+public class ExcelPerfModeReader {
 
-	
-	public static List<String> read(String path){
+    private final String   excelFilePath;
+    
+    
+    public ExcelPerfModeReader(String excelFilePath) {
+		super();
+		this.excelFilePath = excelFilePath;
+	}
+  
 
-		if(path.toLowerCase().endsWith(ExcelValidator.XLS_SIFFIX)){
+	private List<String> read(){
+
+		if(excelFilePath.toLowerCase().endsWith(ExcelValidator.XLS_SIFFIX)){
 			try {
-				return readAsXLS(path);
+				return readAsXLS(excelFilePath);
 			} catch (OfficeXmlFileException e) {
-				return readAsXLSX(path);
+				return readAsXLSX(excelFilePath);
 			}
 		}else{
 			try {
-				return readAsXLSX(path);
+				return readAsXLSX(excelFilePath);
 			} catch (OLE2NotOfficeXmlFileException e) {
-				return readAsXLS(path);
+				return readAsXLS(excelFilePath);
 			}
 		}
 	}
 	
-	public static <T> List<T> read(String path,Class<T> clazz){
-		List<String> rows = read(path);
+	public <T> List<T> read(Class<T> clazz){
+		List<String> rows = read();
 		if(rows == null || rows.size() <= 1)throw new ExcelOperBaseException("记录不存在");
 		return ExcelBeanHelper.setRowValues(clazz, rows);
 	} 
 	
 	
-	private static List<String> readAsXLS(String path){
+	public <T> void read(Class<T> clazz,ResultProcessor<T> processor){
+		
+	} 
+	
+	private List<String> readAsXLS(String path){
 		try {				
 			XLS2CSV xls2csv = new XLS2CSV(path, -1);
 			return xls2csv.process();
@@ -56,7 +75,7 @@ public class ExcelConvertCSVReader {
 	}
 	
 	
-	private static List<String> readAsXLSX(String path){
+	private List<String> readAsXLSX(String path){
 		OPCPackage opcPackage = null;
 		try {
 			opcPackage = OPCPackage.open(path, PackageAccess.READ);

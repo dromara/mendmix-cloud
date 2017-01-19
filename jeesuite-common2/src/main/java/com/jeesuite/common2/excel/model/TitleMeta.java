@@ -11,26 +11,26 @@ import java.util.List;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年12月23日
  */
-public class TitleCellBean {
+public class TitleMeta {
 
 	private String title;
 	
-	private int rowIndex;
+	private int rowIndex = 1;
 	
 	private int columnIndex;
 	
-	private TitleCellBean parent;
+	private TitleMeta parent;
 	
-	private List<TitleCellBean> children;
+	private List<TitleMeta> children;
 	
 
-	public TitleCellBean(String title, int rowIndex, int columnIndex) {
+	public TitleMeta(String title, int rowIndex, int columnIndex) {
 		this.title = title;
 		this.rowIndex = rowIndex;
 		this.columnIndex = columnIndex;
 	}
 	
-	public TitleCellBean(String title) {
+	public TitleMeta(String title) {
 		this.title = title;
 	}
 
@@ -58,15 +58,15 @@ public class TitleCellBean {
 		this.columnIndex = columnIndex;
 	}
 
-	public TitleCellBean getParent() {
+	public TitleMeta getParent() {
 		return parent;
 	}
 
-	public List<TitleCellBean> getChildren() {
-		return children == null ? (children = new ArrayList<TitleCellBean>()) : children;
+	public List<TitleMeta> getChildren() {
+		return children == null ? (children = new ArrayList<TitleMeta>()) : children;
 	}
 
-	public void addChildren(TitleCellBean child) {
+	public void addChildren(TitleMeta child) {
 		getChildren().add(child);
 		child.parent = this;
 	}

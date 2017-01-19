@@ -10,7 +10,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.poi.openxml4j.exceptions.OpenXML4JException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
-import org.apache.poi.openxml4j.opc.PackageAccess;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.ss.util.CellReference;
@@ -203,27 +202,4 @@ public class XLSX2CSV {
 		return results;
 	}
 
-	public static void main(String[] args) throws Exception {
-
-		long start = System.currentTimeMillis();
-		int minColumns = -1;
-
-		try {			
-			// The package open is instantaneous, as it should be.
-			OPCPackage p = OPCPackage.open("/Users/ayg/Desktop/testdata/insUserList1x.xlsx", PackageAccess.READ);
-			XLSX2CSV xlsx2csv = new XLSX2CSV(p, System.out, minColumns);
-			List<String> process = xlsx2csv.process();
-			p.close();
-			
-			for (String string : process) {
-				
-				System.out.println(string);
-			}
-			
-			System.out.println("time:" + (System.currentTimeMillis() - start));
-			System.out.println(process.size());
-		} catch (Exception e) {
-			System.out.println(e.getClass().getName());
-		}
-	}
 }

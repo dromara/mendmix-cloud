@@ -305,17 +305,4 @@ public class XLS2CSV implements HSSFListener {
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
-
-		long start = System.currentTimeMillis();
-		
-		XLS2CSV xls2csv = new XLS2CSV("/Users/ayg/Desktop/1.xls", -1);
-		List<String> process = xls2csv.process();
-		
-		
-		System.out.println("time:"+(System.currentTimeMillis() - start));
-		System.out.println(process.size());
-
-	}
-
 }

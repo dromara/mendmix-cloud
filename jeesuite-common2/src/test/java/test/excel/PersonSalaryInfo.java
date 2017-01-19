@@ -11,9 +11,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common2.excel.annotation.TitleCell;
-import com.jeesuite.common2.excel.model.TitleCellBean;
+import com.jeesuite.common2.excel.model.TitleMeta;
 
 /**
  * 个人工资数据
@@ -25,27 +24,27 @@ public class PersonSalaryInfo {
 
 	private int id;
 	
-	@TitleCell(name="*姓名",index = 0,notNull = true)
+	@TitleCell(name="*姓名",column = 1,notNull = true)
 	private String name;
-	@TitleCell(name="部门",index = 1)
+	@TitleCell(name="部门",column = 2)
 	private String department;
-	@TitleCell(name="身份证号",index = 2 )
+	@TitleCell(name="身份证号",column = 3 )
 	private String idCard;
-	@TitleCell(name="基本工资",index = 3,parentIndex = 3,parentName = "应发工资")
+	@TitleCell(name="基本工资",column = 4,row = 2,parentName = "应发工资")
 	private float baseSalary;//基本工资
-	@TitleCell(name="绩效工资",index = 4,parentIndex = 3,parentName = "应发工资")
+	@TitleCell(name="绩效工资",column = 5,row = 2,parentName = "应发工资")
 	private float performSalary;//绩效工资
-	@TitleCell(name="岗位工资",index = 5,parentIndex = 3,parentName = "应发工资")
+	@TitleCell(name="岗位工资",column = 6,row = 2,parentName = "应发工资")
 	private float postSalary;//岗位工资
-	@TitleCell(name="*福利津贴",index = 6,parentIndex = 3,parentName = "应发工资")
+	@TitleCell(name="*福利津贴",column = 7,row = 2,parentName = "应发工资")
 	private float subsidies;//福利津贴
-	@TitleCell(name="扣除金额",index = 7,parentIndex = 3,parentName = "应发工资")
+	@TitleCell(name="扣除金额",column = 8,row = 2,parentName = "应发工资")
 	private float deductSalary; //扣除金额
-	@TitleCell(name="*总计",index = 8,parentIndex = 3,parentName = "应发工资",notNull = true)
+	@TitleCell(name="*总计",column = 9,row = 2,parentName = "应发工资",notNull = true)
 	private float total;
-	@TitleCell(name="*公积金基数",index = 9,notNull = true)
+	@TitleCell(name="*公积金基数",column = 10,notNull = true)
 	private float housefundBase;
-	@TitleCell(name="*社保基数",index = 10,notNull = true)
+	@TitleCell(name="*社保基数",column = 11,notNull = true)
 	private float insuranceBase;//社保基数
 	
 	public int getId() {
@@ -124,24 +123,24 @@ public class PersonSalaryInfo {
 	}	
 	
 	public static void main(String[] args) {
-		List<TitleCellBean> titleCellBeans = new ArrayList<>();
+		List<TitleMeta> titleCellBeans = new ArrayList<>();
 		Field[] fields = PersonSalaryInfo.class.getDeclaredFields();
 		
-		Map<String, TitleCellBean> parentMap = new HashMap<>();
+		Map<String, TitleMeta> parentMap = new HashMap<>();
 		int index = 0,subIndex = 0;
 		for (Field field : fields) {
 			if(!field.isAnnotationPresent(TitleCell.class))continue;
 			TitleCell annotation = field.getAnnotation(TitleCell.class);
-			TitleCellBean cell = new TitleCellBean(annotation.name());
+			TitleMeta cell = new TitleMeta(annotation.name());
 			
 			if(StringUtils.isBlank(annotation.parentName())){
 				cell.setColumnIndex(++index);
 				titleCellBeans.add(cell);
 			}else{
-				TitleCellBean cellParent = parentMap.get(annotation.parentName());
+				TitleMeta cellParent = parentMap.get(annotation.parentName());
 				if(cellParent == null){
 					subIndex = index;
-					cellParent = new TitleCellBean(annotation.parentName());
+					cellParent = new TitleMeta(annotation.parentName());
 					cellParent.setColumnIndex(++index);
 					parentMap.put(annotation.parentName(), cellParent);
 					titleCellBeans.add(cellParent);
@@ -152,10 +151,10 @@ public class PersonSalaryInfo {
 			}
 		}
 		
-		for (TitleCellBean cell : titleCellBeans) {
+		for (TitleMeta cell : titleCellBeans) {
 			System.out.println(cell);
 			if(cell.getChildren().size() > 0){
-				for (TitleCellBean child : cell.getChildren()) {
+				for (TitleMeta child : cell.getChildren()) {
 					System.out.println("--" + child);
 					
 				}

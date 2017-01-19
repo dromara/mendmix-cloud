@@ -80,6 +80,12 @@
 			<version>${jackson.version}</version>
 		</dependency>
 
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-jersey2-jaxrs</artifactId>
+			<version>1.5.10</version>
+		</dependency>
+
 
 		<!-- jersey-media-multipart -->
 		<dependency>
