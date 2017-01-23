@@ -15,6 +15,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.common.util.NodeNameHolder;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.partiton.DefaultPartitioner;
 import com.jeesuite.kafka.producer.DefaultTopicProducer;
@@ -22,6 +23,7 @@ import com.jeesuite.kafka.producer.TopicProducer;
 import com.jeesuite.kafka.producer.handler.SendCounterHandler;
 import com.jeesuite.kafka.producer.handler.SendErrorDelayRetryHandler;
 import com.jeesuite.kafka.serializer.KyroMessageSerializer;
+import com.jeesuite.kafka.utils.KafkaConst;
 
 /**
  * 消息发布者集成spring封装对象
@@ -50,11 +52,17 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
     //延迟重试次数
     private int delayRetries = 3;
     
+    //环境路由
+    private String routeEnv;
+    
     @Override
     public void afterPropertiesSet() throws Exception {
 
         Validate.notEmpty(this.configs, "configs is required");
         
+        routeEnv = StringUtils.trimToNull(ResourceUtils.get(KafkaConst.PROP_ENV_ROUTE));
+        
+        if(routeEnv != null)log.info("current route Env value is:",routeEnv);
       //移除错误的或者未定义变量的配置
         Set<String> propertyNames = configs.stringPropertyNames();
         for (String propertyName : propertyNames) {
@@ -152,6 +160,7 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 	 * @return
 	 */
 	public boolean publish(String topicName, DefaultMessage message,boolean asynSend){
+		if(routeEnv != null)topicName = routeEnv + "." + topicName;
 		return producer.publish(topicName, message,asynSend);
 	}
 	
@@ -172,8 +181,9 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 	 * @param asynSend 是否异步发送
 	 * @return
 	 */
-	public boolean publishNoWrapperMessage(final String topicName, final Serializable message, boolean asynSend) {
+	public boolean publishNoWrapperMessage(String topicName, Serializable message, boolean asynSend) {
 		DefaultMessage defaultMessage = new DefaultMessage(message).sendBodyOnly(true);
+		if(routeEnv != null)topicName = routeEnv + "." + topicName;
 		return producer.publish(topicName, defaultMessage,asynSend);
 	}
 

@@ -45,16 +45,16 @@ public class BaseExceptionMapper implements ExceptionMapper<Exception> {
 
 		WrapperResponseEntity response = null;
 		if (e instanceof NotFoundException) {
-			response = new WrapperResponseEntity(ResponseCode.找不到路径);
+			response = new WrapperResponseEntity(ResponseCode.NOT_FOUND);
 		} else if (e instanceof NotAllowedException) {
-			response = new WrapperResponseEntity(ResponseCode.禁止访问);
+			response = new WrapperResponseEntity(ResponseCode.FORBIDDEN);
 		} else if (e instanceof JsonProcessingException) {
-			response = new WrapperResponseEntity(ResponseCode.错误JSON);
+			response = new WrapperResponseEntity(ResponseCode.ERROR_JSON);
 		} else if (e instanceof NotSupportedException) {
-			response = new WrapperResponseEntity(ResponseCode.不支持的媒体类型);
+			response = new WrapperResponseEntity(ResponseCode.UNSUPPORTED_MEDIA_TYPE);
 		} else {
 			response = excetionWrapper != null ? excetionWrapper.toResponse(e) : null;
-			if(response == null)response = new WrapperResponseEntity(ResponseCode.服务器异常);
+			if(response == null)response = new WrapperResponseEntity(ResponseCode.INTERNAL_SERVER_ERROR);
 		}
 		return Response.status(response.httpStatus()).type(MediaType.APPLICATION_JSON).entity(response).build();
 	}

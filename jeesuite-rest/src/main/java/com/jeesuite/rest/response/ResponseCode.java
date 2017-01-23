@@ -2,31 +2,29 @@ package com.jeesuite.rest.response;
 
 public enum ResponseCode implements HttpCodeType {
 	
-	成功(200, "成功"),
+	OK(200, "成功"),
 
-	错误请求(400, "错误请求"),
+	BAD_REQUEST(400, "错误请求"),
 
-	未授权(401, "未授权"),
+	UNAUTHORIZED(401, "未授权"),
 
-	要求付款(402, "要求付款"),
+	FORBIDDEN(403, "禁止访问"),
 
-	禁止访问(403, "禁止访问"),
+	NOT_FOUND(404, "找不到路径"),
 
-	找不到路径(404, "找不到路径"),
+	METHOD_NOT_ALLOWED(405, "不允许此方法"),
 
-	不允许此方法(405, "不允许此方法"),
-
-	不支持的媒体类型(415, "不支持的媒体类型"),
+	UNSUPPORTED_MEDIA_TYPE(415, "不支持的媒体类型"),
 	
-	不允许为空(418,"不允许为空"),
+	NOT_ALLOW_NULL(418,"不允许为空"),
 	
-	不允许重复(419,"不允许重复"),
+	NOT_ALLOWED_REPEAT(419,"不允许重复"),
 	
-	资源不存在(420,"资源不存在"),
+	NO_RESOURCES(420,"资源不存在"),
 
-	错误JSON(499, "错误JSON"),
+	ERROR_JSON(499, "错误JSON"),
 
-	服务器异常(500, "服务器异常");
+	INTERNAL_SERVER_ERROR(500, "服务器异常");
 
 	private int code;
 

@@ -36,10 +36,10 @@ public class ResponseWrapperHandler implements FilterHandler {
 			if (responseData instanceof WrapperResponseEntity) {
 				jsonResponse = (WrapperResponseEntity) responseData;
 			} else {
-				jsonResponse = new WrapperResponseEntity(ResponseCode.成功);
+				jsonResponse = new WrapperResponseEntity(ResponseCode.OK);
 				jsonResponse.setData(responseData);
 			}
-			responseContext.setStatus(ResponseCode.成功.getCode());
+			responseContext.setStatus(ResponseCode.OK.getCode());
 
 			responseContext.setEntity(jsonResponse);
 

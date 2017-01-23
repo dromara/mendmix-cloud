@@ -1,11 +1,13 @@
 package com.jeesuite.kafka.spring;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
@@ -14,11 +16,13 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.common.util.NodeNameHolder;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
 import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.serializer.KyroMessageDeserializer;
+import com.jeesuite.kafka.utils.KafkaConst;
 
 
 /**
@@ -54,12 +58,26 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
     //标记状态（0：未运行，1：启动中，2：运行中，3：停止中，4：重启中）
     private AtomicInteger status = new AtomicInteger(0);
     
+  //环境路由
+    private String routeEnv;
+    
 	@Override
     public void afterPropertiesSet() throws Exception {
 		
 		Validate.isTrue(topicHandlers != null && topicHandlers.size() > 0, "at latest one topic");
 		//当前状态
 		if(status.get() > 0)return;
+		
+		routeEnv = StringUtils.trimToNull(ResourceUtils.get(KafkaConst.PROP_ENV_ROUTE));
+		
+		if(routeEnv != null){
+			logger.info("current route Env value is:",routeEnv);
+			Map<String, MessageHandler> newTopicHandlers = new HashMap<>();
+			for (String origTopicName : topicHandlers.keySet()) {
+				newTopicHandlers.put(routeEnv + "." + origTopicName, topicHandlers.get(origTopicName));
+			}
+			topicHandlers = newTopicHandlers;
+		}
 		
 		//make sure that rebalance.max.retries * rebalance.backoff.ms > zookeeper.session.timeout.ms.
 		configs.put("rebalance.max.retries", "5");  
