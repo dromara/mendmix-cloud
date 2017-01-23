@@ -34,9 +34,11 @@ public class ExcelTest {
 
 		System.out.println(list);
 
-		ExcelWriter writer = new ExcelWriter("/Users/ayg/Desktop/test" + RandomUtils.nextInt(1000, 99999) + ".xlsx");
+		String excelFilePath = "/Users/ayg/Desktop/test" + RandomUtils.nextInt(1000, 99999) + ".xlsx";
+		ExcelWriter writer = new ExcelWriter(excelFilePath);
 		writer.write(list, PersonSalaryInfo.class);
 		writer.close();
+		System.out.println(excelFilePath);
 
 //		ExcelMeta excelMeta = ExcelBeanHelper.getExcelMeta(PersonSalaryInfo.class);
 //		// 写标题

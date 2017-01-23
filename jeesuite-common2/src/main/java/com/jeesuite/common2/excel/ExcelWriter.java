@@ -9,9 +9,16 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -95,6 +102,18 @@ public final class ExcelWriter implements Closeable {
 		try {
 			Sheet sheet = workbook.createSheet(this.sheetName);
 			sheet.setDefaultColumnWidth(15); 
+			CellStyle titleStyle = workbook.createCellStyle(); 
+			titleStyle.setAlignment(HorizontalAlignment.CENTER);
+			titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+			titleStyle.setFillForegroundColor(IndexedColors.GREY_40_PERCENT.getIndex());
+			titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+			titleStyle.setBorderBottom(BorderStyle.THIN); //下边框
+			titleStyle.setBorderLeft(BorderStyle.THIN);
+			Font font = workbook.createFont();
+			font.setFontName("黑体");
+			font.setFontHeightInPoints((short) 14);
+			titleStyle.setFont(font);
+			
 			//写标题
 			for (int i = 1; i <= excelMeta.getTitleRowNum(); i++) {
 				Row excelRow = sheet.createRow(i - 1);
@@ -102,13 +121,14 @@ public final class ExcelWriter implements Closeable {
 					TitleMeta titleMeta = excelMeta.getTitleMeta(i, j);
 					Cell cell = excelRow.createCell(j - 1);
 					cell.setCellValue(titleMeta == null ? "" : titleMeta.getTitle());
+					cell.setCellStyle(titleStyle);
 				}
 			}
 			//合并表头
             //sheet.addMergedRegion(new CellRangeAddress(0, 0, 3, 8));
 			//sheet.addMergedRegion(new CellRangeAddress(0, 1, 0, 0));
-			mergeColumns(sheet);
-			mergeRows(sheet,excelMeta);
+			mergeColumns(sheet,titleStyle);
+			mergeRows(sheet,titleStyle,excelMeta);
 			
 			// 行数
 			int rowsCount = sheet.getPhysicalNumberOfRows();
@@ -134,6 +154,7 @@ public final class ExcelWriter implements Closeable {
 			LOG.error("流异常", e);
 		} catch (Exception e) {
 			LOG.error("其他异常", e);
+		} finally {
 		} 
 		return false;
 	}
@@ -142,7 +163,7 @@ public final class ExcelWriter implements Closeable {
 	 /**
      * 合并列
      */
-    private void mergeColumns(Sheet sheet) {
+    private void mergeColumns(Sheet sheet,CellStyle cellStyle) {
         // 行数
         int rowsCount = sheet.getPhysicalNumberOfRows();
         // 列数
@@ -185,6 +206,8 @@ public final class ExcelWriter implements Closeable {
                         if (colSpan >= 1) {
                             // 合并行中连续相同的值的单元格
                             sheet.addMergedRegion(new CellRangeAddress(r, r, c - colSpan, c));
+                            Cell nowCell = sheet.getRow(r).getCell(c - colSpan);
+                    		nowCell.setCellStyle(cellStyle);
                             // 合并后重置colSpan
                             colSpan = 0;
                             continue;
@@ -201,7 +224,7 @@ public final class ExcelWriter implements Closeable {
      * 合并行
      */
     //TODO 暂时支持两行表头
-    private void mergeRows(Sheet sheet,ExcelMeta excelMeta) {
+    private void mergeRows(Sheet sheet,CellStyle cellStyle,ExcelMeta excelMeta) {
     	
     	Row row = null;
     	Cell cell = null;
@@ -214,7 +237,10 @@ public final class ExcelWriter implements Closeable {
                 	lastRowVals[c] = cell.getStringCellValue();
                 }else{                	
                 	if(StringUtils.equals(lastRowVals[c],cell.getStringCellValue())){
+                		cell.setCellValue("");
                 		sheet.addMergedRegion(new CellRangeAddress(0, r, c, c));
+                		Cell nowCell = sheet.getRow(0).getCell(c);
+                		nowCell.setCellStyle(cellStyle);
                 	}
                 }
                 
