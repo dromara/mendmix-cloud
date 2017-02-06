@@ -27,13 +27,14 @@ public class ExcelMeta {
 		this.titleCells = titleCells;
 		this.titleRowNum = titleRowNum;
 
-		// 排序
-		Collections.sort(titleCells, new Comparator<TitleMeta>() {
+		// 排序规则
+		Comparator<TitleMeta> comparator = new Comparator<TitleMeta>() {
 			@Override
 			public int compare(TitleMeta o1, TitleMeta o2) {
 				return o1.getColumnIndex() - o2.getColumnIndex();
 			}
-		});
+		};
+		Collections.sort(titleCells, comparator);
 
 		List<String> titleList = new ArrayList<>();
 		for (int i = 0; i < titleCells.size(); i++) {
@@ -42,6 +43,7 @@ public class ExcelMeta {
 				titleList.add(tit.getTitle());
 			} else {
 				List<TitleMeta> children = tit.getChildren();
+				Collections.sort(children, comparator);
 				for (TitleMeta titleCell : children) {
 					titleList.add(titleCell.getTitle());
 				}

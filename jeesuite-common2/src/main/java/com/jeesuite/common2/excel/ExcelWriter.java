@@ -110,8 +110,8 @@ public final class ExcelWriter implements Closeable {
 			titleStyle.setBorderBottom(BorderStyle.THIN); //下边框
 			titleStyle.setBorderLeft(BorderStyle.THIN);
 			Font font = workbook.createFont();
-			font.setFontName("黑体");
-			font.setFontHeightInPoints((short) 14);
+			font.setFontName("宋体");
+			font.setFontHeightInPoints((short) 13);
 			titleStyle.setFont(font);
 			
 			//写标题
