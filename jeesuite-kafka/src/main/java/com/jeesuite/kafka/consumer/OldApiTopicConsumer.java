@@ -8,7 +8,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -30,6 +29,7 @@ import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
+import kafka.message.MessageAndMetadata;
 import kafka.serializer.StringDecoder;
 import kafka.utils.VerifiableProperties;
 
@@ -47,7 +47,7 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 	
 	private Deserializer<Object> deserializer;
 	//
-	private Map<String, MessageHandler> topics;
+	private ConsumerContext consumerContext;
 	//接收线程
 	private StandardThreadExecutor fetchExecutor;
 	//默认处理线程
@@ -67,28 +67,28 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 	 * @param processThreads 
 	 */
 	@SuppressWarnings("unchecked")
-	public OldApiTopicConsumer(Properties configs, Map<String, MessageHandler> topics,int maxProcessThreads) {
+	public OldApiTopicConsumer(ConsumerContext context) {
 		
+		this.consumerContext = context;
 		try {
-			Class<?> deserializerClass = Class.forName(configs.getProperty("value.deserializer"));
+			Class<?> deserializerClass = Class.forName(context.getProperties().getProperty("value.deserializer"));
 			deserializer = (Deserializer<Object>) deserializerClass.newInstance();
 		} catch (Exception e) {}
-		this.connector = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(configs));
-		this.topics = topics;
+		this.connector = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(context.getProperties()));
 		
-		int poolSize = topics.size();
+		int poolSize = consumerContext.getMessageHandlers().size();
 		this.fetchExecutor = new StandardThreadExecutor(poolSize, poolSize,0, TimeUnit.SECONDS, poolSize,new StandardThreadFactory("KafkaFetcher"));
 		
-		this.defaultProcessExecutor = new StandardThreadExecutor(1, maxProcessThreads,30, TimeUnit.SECONDS, maxProcessThreads,new StandardThreadFactory("KafkaProcessor"),new PoolFullRunsPolicy());
+		this.defaultProcessExecutor = new StandardThreadExecutor(1, context.getMaxProcessThreads(),30, TimeUnit.SECONDS, context.getMaxProcessThreads(),new StandardThreadFactory("KafkaProcessor"),new PoolFullRunsPolicy());
 		
-		logger.info("Kafka Conumer ThreadPool initialized,fetchPool Size:{},defalutProcessPool Size:{} ",poolSize,maxProcessThreads);
+		logger.info("Kafka Conumer ThreadPool initialized,fetchPool Size:{},defalutProcessPool Size:{} ",poolSize,context.getMaxProcessThreads());
 	}
 
 
 	@Override
 	public void start() {
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-		for (String topicName : topics.keySet()) {
+		for (String topicName : consumerContext.getMessageHandlers().keySet()) {
 			int nThreads = 1;
 			topicCountMap.put(topicName, nThreads);
 			logger.info("topic[{}] assign fetch Threads {}",topicName,nThreads);
@@ -100,7 +100,7 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 		Map<String, List<KafkaStream<String, Object>>> consumerMap = this.connector.createMessageStreams(topicCountMap,
 				keyDecoder, valueDecoder);
 
-		for (String topicName : topics.keySet()) {
+		for (String topicName : consumerContext.getMessageHandlers().keySet()) {
 			final List<KafkaStream<String, Object>> streams = consumerMap.get(topicName);
 
 			for (final KafkaStream<String, Object> stream : streams) {
@@ -127,7 +127,7 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 		public MessageProcessor(String topicName, KafkaStream<String, Object> stream) {
 			this.stream = stream;
 			this.topicName = topicName;
-			this.messageHandler = topics.get(topicName);
+			this.messageHandler = consumerContext.getMessageHandlers().get(topicName);
 			this.processorName = this.messageHandler.getClass().getName();
 		}
 
@@ -150,17 +150,20 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 					try {Thread.sleep(200);} catch (Exception e) {}
 				}
 				try {					
-					Object _message = it.next().message();
+					MessageAndMetadata<String, Object> messageAndMeta = it.next();
+					Object _message = messageAndMeta.message();
 					DefaultMessage message = null;
 					try {
 						message = (DefaultMessage) _message;
 					} catch (ClassCastException e) {
 						message = new DefaultMessage((Serializable) _message);
 					}
+					//
+					consumerContext.saveOffsetsBeforeProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());
 					//第一阶段处理
 					messageHandler.p1Process(message);
 					//第二阶段处理
-					submitMessageToProcess(topicName,message);
+					submitMessageToProcess(topicName,messageAndMeta,message);
 				} catch (Exception e) {
 					logger.error("received_topic_error,topic:"+topicName,e);
 				}
@@ -173,7 +176,7 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 		 * 提交消息到处理线程队列
 		 * @param message
 		 */
-		private void submitMessageToProcess(final String topicName,final DefaultMessage message) {
+		private void submitMessageToProcess(final String topicName,final MessageAndMetadata<String, Object> messageAndMeta,final DefaultMessage message) {
 			defaultProcessExecutor.submit(new Runnable() {
 				@Override
 				public void run() {
@@ -184,6 +187,9 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 							long useTime = System.currentTimeMillis() - start;
 							if(useTime > 1000)logger.debug("received_topic_useTime [{}]process topic:{} use time {} ms",processorName,topicName,useTime);
 						}
+						
+						consumerContext.saveOffsetsAfterProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());
+						
 					} catch (Exception e) {
 						boolean processed = messageHandler.onProcessError(message);
 						if(processed == false){

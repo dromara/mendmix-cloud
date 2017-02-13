@@ -17,6 +17,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.kafka.consumer.ConsumerContext;
 import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
 import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
@@ -163,10 +164,11 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		}
 		logger.info("\n============kafka.Consumer.Config============\n" + sb.toString() + "\n");
 
+		ConsumerContext consumerContext = new ConsumerContext(configs, groupId, consumerId, topicHandlers, processThreads);
 		if(useNewAPI){			
-			consumer = new NewApiTopicConsumer(configs, topicHandlers,processThreads);
+			consumer = new NewApiTopicConsumer(consumerContext);
 		}else{
-			consumer = new OldApiTopicConsumer(configs, topicHandlers, processThreads);
+			consumer = new OldApiTopicConsumer(consumerContext);
 		}
 
         consumer.start();

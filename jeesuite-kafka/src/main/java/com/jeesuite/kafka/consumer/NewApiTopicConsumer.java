@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,7 +42,6 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConsumerWorker.class);
 
-	private Properties configs;
 	private Map<String, MessageHandler> topicHandlers;
 	
 	private ExecutorService fetcheExecutor;
@@ -58,17 +56,18 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	private final List<Future<Boolean>> committedOffsetFutures = new ArrayList<>();
 	
 	private boolean offsetAutoCommit;
+	private ConsumerContext consumerContext;
 	
-	public NewApiTopicConsumer(Properties configs, Map<String, MessageHandler> topicHandlers,int maxProcessThreads) {
+	public NewApiTopicConsumer(ConsumerContext context) {
 		super();
-		this.configs = configs;
-		this.topicHandlers = topicHandlers;
+		this.consumerContext = context;
+		this.topicHandlers = context.getMessageHandlers();
 		//
 	    fetcheExecutor = Executors.newFixedThreadPool(topicHandlers.size());
 	    //
-	    processExecutor = new StandardThreadExecutor(1, maxProcessThreads, 1000);
+	    processExecutor = new StandardThreadExecutor(1, context.getMaxProcessThreads(), 1000);
 	    //enable.auto.commit 默认为true
-	    offsetAutoCommit = configs.containsKey("enable.auto.commit") == false || Boolean.parseBoolean(configs.getProperty("enable.auto.commit"));
+	    offsetAutoCommit = context.getProperties().containsKey("enable.auto.commit") == false || Boolean.parseBoolean(context.getProperties().getProperty("enable.auto.commit"));
 	}
 
 	@Override
@@ -96,7 +95,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	}
 	
 	private <K extends Serializable, V extends DefaultMessage> void createKafkaConsumer(){
-		consumer = new KafkaConsumer<>(configs);
+		consumer = new KafkaConsumer<>(consumerContext.getProperties());
 		ConsumerRebalanceListener listener = new ConsumerRebalanceListener() {
 
 			@Override
@@ -211,6 +210,8 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		 */
 		private void processConsumerRecords(final ConsumerRecord<String, DefaultMessage> record) {
 			final MessageHandler messageHandler = topicHandlers.get(record.topic());
+			
+			consumerContext.saveOffsetsBeforeProcessed(record.topic(), record.partition(), record.offset());
 			//第一阶段处理
 			messageHandler.p1Process(record.value());
 			//第二阶段处理
@@ -219,6 +220,8 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 				public void run() {
 					try {									
 						messageHandler.p2Process(record.value());
+						//
+						consumerContext.saveOffsetsAfterProcessed(record.topic(), record.partition(), record.offset());
 					} catch (Exception e) {
 						boolean processed = messageHandler.onProcessError(record.value());
 						if(processed == false){
