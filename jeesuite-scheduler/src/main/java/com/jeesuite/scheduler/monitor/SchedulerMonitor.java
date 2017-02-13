@@ -10,6 +10,8 @@ import java.util.List;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.scheduler.model.JobConfig;
@@ -23,6 +25,8 @@ import com.jeesuite.scheduler.registry.ZkJobRegistry;
  */
 public class SchedulerMonitor implements Closeable{
 	
+	private static final Logger logger = LoggerFactory.getLogger(SchedulerMonitor.class);
+
 
 	private ZkClient zkClient;
 
@@ -81,6 +85,7 @@ public class SchedulerMonitor implements Closeable{
 		for (String node : nodeIds) {
 			String nodePath = path + "/" + node;
 			zkClient.writeData(nodePath, cmd);
+			logger.info("publishEvent finish，path:{},content:{}",nodePath,cmd);
 			break;
 		}
 		

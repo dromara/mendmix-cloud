@@ -249,7 +249,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			@Override
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				MonitorCommond cmd = (MonitorCommond) data;
-				logger.debug("收到commond:+" + cmd.toString());
+				logger.info("收到commond:" + cmd.toString());
 				execCommond(cmd);
 			}
 		});
@@ -406,19 +406,23 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(key);
 		if(MonitorCommond.TYPE_EXEC == cmd.getCmdType()){
 			if(config.isRunning()){
-				throw new RuntimeException("任务正在执行中，请稍后再执行");
+				logger.info("任务正在执行中，请稍后再执行");
+				return;
 			}
 			if(abstractJob != null){
 				new Thread(new Runnable() {
 					@Override
 					public void run() {
 						try {
+							logger.info("begin execute job[{}] by MonitorCommond",abstractJob.getJobName());
 							abstractJob.doJob(JobContext.getContext());
 						} catch (Exception e) {
-							e.printStackTrace();
+							logger.error(abstractJob.getJobName(),e);
 						}
 					}
 				}).start();
+			}else{
+				logger.warn("Not found job by key:{} !!!!",key);
 			}
 		}else if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType() 
 				|| MonitorCommond.TYPE_CRON_MOD == cmd.getCmdType()){
