@@ -23,4 +23,8 @@ public class FilterConfig {
 	public static boolean reqRspLogEnabled(){
 		return Boolean.parseBoolean(ResourceUtils.get("reqres.log.enabled", "false"));
 	}
+	
+	public static boolean apiDocEnabled(){
+		return Boolean.parseBoolean(ResourceUtils.get("apidoc.enabled", "true"));
+	}
 }
