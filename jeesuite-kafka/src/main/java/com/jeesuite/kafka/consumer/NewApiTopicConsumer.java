@@ -48,7 +48,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	private StandardThreadExecutor processExecutor;
 	private List<ConsumerWorker> consumerWorks = new ArrayList<>();
 
-	private KafkaConsumer<String, DefaultMessage> consumer;
+	private KafkaConsumer<String, Serializable> consumer;
 	
 	private ErrorMessageDefaultProcessor errorMessageProcessor = new ErrorMessageDefaultProcessor(1);
 	
@@ -94,7 +94,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		consumer.close();
 	}
 	
-	private <K extends Serializable, V extends DefaultMessage> void createKafkaConsumer(){
+	private <K extends Serializable, V extends Serializable> void createKafkaConsumer(){
 		consumer = new KafkaConsumer<>(consumerContext.getProperties());
 		ConsumerRebalanceListener listener = new ConsumerRebalanceListener() {
 
@@ -153,14 +153,15 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 			ExecutorService executor = Executors.newFixedThreadPool(1);
 
 			while (!closed.get()) {
-				ConsumerRecords<String,DefaultMessage> records = consumer.poll(1500);
+				ConsumerRecords<String,Serializable> records = consumer.poll(1500);
 				// no record found
 				if (records.isEmpty()) {
 					continue;
 				}
 				
 				if(offsetAutoCommit){
-					for (final ConsumerRecord<String,DefaultMessage> record : records) {						
+					for (final ConsumerRecord<String,Serializable> record : records) {	
+						
 						processConsumerRecords(record);
 					}
 					continue;
@@ -208,24 +209,26 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		/**
 		 * @param record
 		 */
-		private void processConsumerRecords(final ConsumerRecord<String, DefaultMessage> record) {
+		private void processConsumerRecords(final ConsumerRecord<String, Serializable> record) {
 			final MessageHandler messageHandler = topicHandlers.get(record.topic());
 			
 			consumerContext.saveOffsetsBeforeProcessed(record.topic(), record.partition(), record.offset());
+			//兼容没有包装的情况
+			final DefaultMessage message = record.value() instanceof DefaultMessage ? (DefaultMessage) record.value() : new DefaultMessage((Serializable) record.value());
 			//第一阶段处理
-			messageHandler.p1Process(record.value());
+			messageHandler.p1Process(message);
 			//第二阶段处理
 			processExecutor.submit(new Runnable() {
 				@Override
 				public void run() {
 					try {									
-						messageHandler.p2Process(record.value());
+						messageHandler.p2Process(message);
 						//
 						consumerContext.saveOffsetsAfterProcessed(record.topic(), record.partition(), record.offset());
 					} catch (Exception e) {
-						boolean processed = messageHandler.onProcessError(record.value());
+						boolean processed = messageHandler.onProcessError(message);
 						if(processed == false){
-							errorMessageProcessor.submit(record.value(), messageHandler);
+							errorMessageProcessor.submit(message, messageHandler);
 						}
 						logger.error("["+messageHandler.getClass().getSimpleName()+"] process Topic["+record.topic()+"] error",e);
 					}
@@ -239,10 +242,10 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 
 		private class ConsumeRecords implements Callable<Boolean> {
 
-			ConsumerRecords<String,DefaultMessage> records;
+			ConsumerRecords<String,Serializable> records;
 			Map<TopicPartition, Long> partitionToUncommittedOffsetMap;
 
-			public ConsumeRecords(ConsumerRecords<String,DefaultMessage> records,
+			public ConsumeRecords(ConsumerRecords<String,Serializable> records,
 					Map<TopicPartition, Long> partitionToUncommittedOffsetMap) {
 				this.records = records;
 				this.partitionToUncommittedOffsetMap = partitionToUncommittedOffsetMap;
@@ -253,7 +256,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 
 				logger.debug("Number of records received : {}", records.count());
 				try {
-					for (final ConsumerRecord<String,DefaultMessage> record : records) {
+					for (final ConsumerRecord<String,Serializable> record : records) {
 						TopicPartition tp = new TopicPartition(record.topic(), record.partition());
 						logger.info("Record received topicPartition : {}, offset : {}", tp,record.offset());
 						partitionToUncommittedOffsetMap.put(tp, record.offset());

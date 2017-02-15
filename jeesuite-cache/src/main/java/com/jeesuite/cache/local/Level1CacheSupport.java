@@ -141,6 +141,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 				if(subJedisClient == null){
 					try {
 						subJedisClient = new Jedis(host, port);
+						if(password != null)subJedisClient.auth(password);
 						if("PONG".equals(subJedisClient.ping())){							
 							logger.info("subscribe localCache sync channel.....");
 							subJedisClient.subscribe(listener, new String[]{channelName});
