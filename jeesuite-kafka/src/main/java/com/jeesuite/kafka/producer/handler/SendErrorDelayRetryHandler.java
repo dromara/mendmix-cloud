@@ -50,7 +50,11 @@ public class SendErrorDelayRetryHandler implements ProducerEventHandler{
 				while(true){
 					try {
 						PriorityTask task = taskQueue.take();
+						//空任务跳出循环
+						if(task.message == null)break;
 						if(task.nextFireTime < currentTimeMillis){
+							//重新放回去
+							taskQueue.add(task);
 							TimeUnit.MILLISECONDS.sleep(100);
 							continue;
 						}
@@ -78,7 +82,14 @@ public class SendErrorDelayRetryHandler implements ProducerEventHandler{
 	
 	@Override
 	public void close() throws IOException {
-		executor.shutdownNow();
+		// taskQueue里面没有任务会一直阻塞，所以先add一个新任务保证执行
+		taskQueue.add(new PriorityTask(null, null));
+		try {
+			Thread.sleep(1000);
+		} catch (Exception e) {
+		}
+		executor.shutdown();
+		logger.info("ErrorMessageDefaultProcessor closed");
 	}
 	
 	class PriorityTask implements Runnable,Comparable<PriorityTask>{
