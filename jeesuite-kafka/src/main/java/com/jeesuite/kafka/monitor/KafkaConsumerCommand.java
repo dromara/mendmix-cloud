@@ -49,8 +49,7 @@ public class KafkaConsumerCommand {
 		List<ConsumerGroupInfo> consumerGroups = new ArrayList<>();
 		List<String> groupIds = group();
 		for (String groupId : groupIds) {
-			KafkaConsumer<String, String> consumer = getConsumer(groupId);
-			consumerGroups.add(consumerGroup(consumer,groupId));
+			consumerGroups.add(consumerGroup(groupId));
 		}
 		return consumerGroups;
 	}
@@ -67,7 +66,9 @@ public class KafkaConsumerCommand {
 		return groups;
 	}
 	
-	protected ConsumerGroupInfo consumerGroup(KafkaConsumer<String, String> kafkaConsumer,String group){
+	public ConsumerGroupInfo consumerGroup(String group){
+		KafkaConsumer<String, String> kafkaConsumer = getConsumer(group);
+		
 		scala.collection.immutable.List<ConsumerSummary> consumers = adminClient.describeConsumerGroup(group);
 		if(consumers.isEmpty()){
 			System.out.println("Consumer group ["+group+"] does not exist or is rebalancing.");

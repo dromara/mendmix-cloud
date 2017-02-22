@@ -64,7 +64,11 @@ public class ConsumerContext {
 		this.offsetLogHanlder = offsetLogHanlder;
 	}
 	
-    public long getLatestProcessedOffsets(String topic,int partition){
+    public OffsetLogHanlder getOffsetLogHanlder() {
+		return offsetLogHanlder;
+	}
+
+	public long getLatestProcessedOffsets(String topic,int partition){
     	return offsetLogHanlder != null ? offsetLogHanlder.getLatestProcessedOffsets(groupId, topic, partition) : -1;
     }
 

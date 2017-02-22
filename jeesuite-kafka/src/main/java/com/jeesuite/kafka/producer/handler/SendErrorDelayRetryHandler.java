@@ -89,7 +89,7 @@ public class SendErrorDelayRetryHandler implements ProducerEventHandler{
 		} catch (Exception e) {
 		}
 		executor.shutdown();
-		logger.info("ErrorMessageDefaultProcessor closed");
+		logger.info("KAFKA producer SendErrorDelayRetryHandler closed");
 	}
 	
 	class PriorityTask implements Runnable,Comparable<PriorityTask>{

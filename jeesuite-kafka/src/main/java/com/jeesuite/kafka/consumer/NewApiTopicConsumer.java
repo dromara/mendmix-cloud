@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -30,6 +32,10 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
+import com.jeesuite.kafka.monitor.KafkaConsumerCommand;
+import com.jeesuite.kafka.monitor.model.ConsumerGroupInfo;
+import com.jeesuite.kafka.monitor.model.TopicInfo;
+import com.jeesuite.kafka.monitor.model.TopicPartitionInfo;
 import com.jeesuite.kafka.thread.StandardThreadExecutor;
 
 /**
@@ -73,12 +79,47 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	@Override
 	public void start() {
 		createKafkaConsumer();
+		//重置offset
+		if(consumerContext.getOffsetLogHanlder() != null){	
+			resetCorrectOffsets();
+		}
 		//按主题数创建ConsumerWorker线程
 		for (int i = 0; i < topicHandlers.size(); i++) {
 			ConsumerWorker consumer = new ConsumerWorker();
 			consumerWorks.add(consumer);
 			fetcheExecutor.submit(consumer);
 		}
+	}
+
+	/**
+	 * 按上次记录重置offsets
+	 */
+	private void resetCorrectOffsets() {
+		
+		KafkaConsumerCommand consumerCommand = new KafkaConsumerCommand(consumerContext.getProperties().getProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG));
+		try {
+			List<TopicInfo> topicInfos = consumerCommand.consumerGroup(consumerContext.getGroupId()).getTopics();
+			for (TopicInfo topic : topicInfos) {
+				List<TopicPartitionInfo> partitions = topic.getPartitions();
+				for (TopicPartitionInfo partition : partitions) {	
+					try {						
+						//期望的偏移
+						long expectOffsets = consumerContext.getLatestProcessedOffsets(topic.getTopicName(), partition.getPartition());
+						//
+						if(expectOffsets < partition.getOffset()){						
+							consumer.seek(new TopicPartition(topic.getTopicName(), partition.getPartition()), expectOffsets);
+							logger.info("seek Topic[{}] partition from {} to {}",topic.getTopicName(),partition.getOffset(),expectOffsets);
+						}
+					} catch (Exception e) {
+						logger.warn("try seek topic["+topic.getTopicName()+"] partition["+partition.getPartition()+"] offsets error",e);
+					}
+				}
+			}
+			
+		} catch (Exception e) {
+			logger.warn("KafkaConsumerCommand.consumerGroup("+consumerContext.getGroupId()+") error",e);
+		}
+		consumerCommand.close();
 	}
 
 	@Override
