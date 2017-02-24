@@ -55,6 +55,19 @@ public class ZkConsumerCommand {
 	private ZkClient zkClient;
 	private ZkUtils zkUtils;
 	
+   public ZkConsumerCommand(String zkServers,String kafkaServers) {
+		
+		kafkaServerList.addAll(Arrays.asList(kafkaServers.split(",")));
+		
+		if(zkClient == null){			
+			zkClient = new ZkClient(zkServers, 10000, 10000, ZKStringSerializer$.MODULE$);
+		}
+		zkClient = new ZkClient(zkServers, 10000, 10000, ZKStringSerializer$.MODULE$);
+		
+		boolean isSecureKafkaCluster = false;
+		zkUtils = new ZkUtils(zkClient, new ZkConnection(zkServers), isSecureKafkaCluster);
+	}
+	
 	public ZkConsumerCommand(ZkClient zkClient,String zkServers,String kafkaServers) {
 		
 		kafkaServerList.addAll(Arrays.asList(kafkaServers.split(",")));
@@ -175,6 +188,11 @@ public class ZkConsumerCommand {
 			result.add(tp);
 		}
 		return result;
+	}
+	
+	public void resetTopicOffsets(String groupId,String topic,int partition,long newOffsets){
+		String path = "/consumers/" + groupId + "/offsets/"+topic + "/" + partition;
+		zkClient.writeData(path, newOffsets);
 	}
 	
 	public String fetchPartitionOwner(String groupId,String topic,int partition){

@@ -108,7 +108,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 						//
 						if(expectOffsets < partition.getOffset()){						
 							consumer.seek(new TopicPartition(topic.getTopicName(), partition.getPartition()), expectOffsets);
-							logger.info("seek Topic[{}] partition from {} to {}",topic.getTopicName(),partition.getOffset(),expectOffsets);
+							logger.info("seek Topic[{}] partition[{}] from {} to {}",topic.getTopicName(), partition.getPartition(),partition.getOffset(),expectOffsets);
 						}
 					} catch (Exception e) {
 						logger.warn("try seek topic["+topic.getTopicName()+"] partition["+partition.getPartition()+"] offsets error",e);

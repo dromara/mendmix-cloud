@@ -15,12 +15,18 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.requests.MetadataResponse.PartitionMetadata;
+import org.apache.kafka.common.requests.MetadataResponse.TopicMetadata;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
+import com.jeesuite.kafka.monitor.ZkConsumerCommand;
+import com.jeesuite.kafka.monitor.model.TopicPartitionInfo;
 import com.jeesuite.kafka.serializer.MessageDecoder;
 import com.jeesuite.kafka.thread.StandardThreadExecutor;
 import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
@@ -87,6 +93,10 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 
 	@Override
 	public void start() {
+		//重置offset
+		if(consumerContext.getOffsetLogHanlder() != null){	
+			resetCorrectOffsets();
+		}
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		for (String topicName : consumerContext.getMessageHandlers().keySet()) {
 			int nThreads = 1;
@@ -110,6 +120,36 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 		}
 		//
 		runing.set(true);
+	}
+	
+	
+	/**
+	 * 按上次记录重置offsets
+	 */
+	private void resetCorrectOffsets() {
+		String kafkaServers = consumerContext.getProperties().getProperty("bootstrap.servers");
+		String zkServers = consumerContext.getProperties().getProperty("zookeeper.connect");
+		if(StringUtils.isAnyBlank(kafkaServers,zkServers)){
+			logger.warn("resetCorrectOffsets exit。Please check [bootstrap.servers] and [zookeeper.connect] is existing");
+			return;
+		}
+		ZkConsumerCommand command = new ZkConsumerCommand(zkServers, kafkaServers);
+		try {
+			List<String> topics = command.getSubscribeTopics(consumerContext.getGroupId());
+			for (String topic : topics) {
+				List<TopicPartitionInfo> partitions = command.getTopicOffsets(consumerContext.getGroupId(), topic);
+				for (TopicPartitionInfo partition : partitions) {
+					//期望的偏移
+					long expectOffsets = consumerContext.getLatestProcessedOffsets(topic, partition.getPartition());
+					//
+					if(expectOffsets < partition.getOffset()){			
+						command.resetTopicOffsets(consumerContext.getGroupId(), topic, partition.getPartition(), expectOffsets);
+						logger.info("seek Topic[{}] partition[{}] from {} to {}",topic,partition.getPartition(),partition.getOffset(),expectOffsets);
+					}
+				}
+			}
+		} catch (Exception e) {}
+		command.close();
 	}
 
 	/**
