@@ -19,6 +19,8 @@ public class TitleMeta {
 	
 	private int columnIndex;
 	
+	private Class<?> valueType;
+	
 	private TitleMeta parent;
 	
 	private List<TitleMeta> children;
@@ -64,6 +66,15 @@ public class TitleMeta {
 
 	public List<TitleMeta> getChildren() {
 		return children == null ? (children = new ArrayList<TitleMeta>()) : children;
+	}
+	
+
+	public Class<?> getValueType() {
+		return valueType;
+	}
+
+	public void setValueType(Class<?> valueType) {
+		this.valueType = valueType;
 	}
 
 	public void addChildren(TitleMeta child) {

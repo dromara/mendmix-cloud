@@ -34,4 +34,6 @@ public @interface TitleCell {
      * 嵌套父级列名称
      */
     String parentName() default "";
+    
+    Class<?> type() default String.class;
 }

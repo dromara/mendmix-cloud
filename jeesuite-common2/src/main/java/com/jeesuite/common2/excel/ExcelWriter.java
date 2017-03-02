@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -113,7 +114,8 @@ public final class ExcelWriter implements Closeable {
 			font.setFontName("宋体");
 			font.setFontHeightInPoints((short) 13);
 			titleStyle.setFont(font);
-			
+			//列值类型
+			Class<?>[] cellValueTypes = new Class<?>[excelMeta.getTitleColumnNum()];
 			//写标题
 			for (int i = 1; i <= excelMeta.getTitleRowNum(); i++) {
 				Row excelRow = sheet.createRow(i - 1);
@@ -122,6 +124,7 @@ public final class ExcelWriter implements Closeable {
 					Cell cell = excelRow.createCell(j - 1);
 					cell.setCellValue(titleMeta == null ? "" : titleMeta.getTitle());
 					cell.setCellStyle(titleStyle);
+					cellValueTypes[j-1] = titleMeta.getValueType();
 				}
 			}
 			//合并表头
@@ -145,7 +148,15 @@ public final class ExcelWriter implements Closeable {
 				Object[] vals = rows.get(i);
 				for (int j = 0; j < vals.length; j++) {
 					Cell cell = excelRow.createCell(j);
-					cell.setCellValue(vals[j] == null ? "" : vals[j].toString());
+					if(cellValueTypes[j] == int.class || cellValueTypes[j] == Integer.class){
+					    cell.setCellValue(vals[j] == null ? 0f : Integer.parseInt(vals[j].toString()));
+					}else if(cellValueTypes[j] == float.class || cellValueTypes[j] == Float.class 
+							|| cellValueTypes[j] == double.class || cellValueTypes[j] == Double.class
+							|| cellValueTypes[j] == BigDecimal.class){
+					    cell.setCellValue(vals[j] == null ? 0d : Double.parseDouble(vals[j].toString()));
+					}else{
+						cell.setCellValue(vals[j] == null ? "" : vals[j].toString());
+					}
 				}
 			}
 			workbook.write(outputStream);

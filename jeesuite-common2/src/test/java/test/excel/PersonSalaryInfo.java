@@ -30,22 +30,22 @@ public class PersonSalaryInfo {
 	private String department;
 	@TitleCell(name="身份证号",column = 3 )
 	private String idCard;
-	@TitleCell(name="基本工资",column = 4,row = 2,parentName = "应发工资")
+	@TitleCell(name="基本工资",column = 4,row = 2,parentName = "应发工资",type = Float.class)
 	private float baseSalary;//基本工资
-	@TitleCell(name="绩效工资",column = 5,row = 2,parentName = "应发工资")
-	private float performSalary;//绩效工资
-	@TitleCell(name="岗位工资",column = 6,row = 2,parentName = "应发工资")
+	@TitleCell(name="岗位工资",column = 5,row = 2,parentName = "应发工资",type = Float.class)
 	private float postSalary;//岗位工资
-	@TitleCell(name="*福利津贴",column = 7,row = 2,parentName = "应发工资")
+	@TitleCell(name="绩效工资",column = 6,row = 2,parentName = "应发工资",type = Float.class)
+	private float performSalary;//绩效工资
+	@TitleCell(name="*福利津贴",column = 7,row = 2,parentName = "应发工资",type = Float.class)
 	private float subsidies;//福利津贴
-	@TitleCell(name="扣除金额",column = 8,row = 2,parentName = "应发工资")
+	@TitleCell(name="扣除金额",column = 8,row = 2,parentName = "应发工资",type = Float.class)
 	private float deductSalary; //扣除金额
-	@TitleCell(name="*总计",column = 9,row = 2,parentName = "应发工资",notNull = true)
+	@TitleCell(name="*总计",column = 9,row = 2,parentName = "应发工资",notNull = true,type = Float.class)
 	private float total;
-	@TitleCell(name="*公积金基数",column = 10,notNull = true)
-	private float housefundBase;
-	@TitleCell(name="*社保基数",column = 11,notNull = true)
+	@TitleCell(name="*社保基数",column = 10,notNull = true,type = Float.class)
 	private float insuranceBase;//社保基数
+	@TitleCell(name="*公积金基数",column = 11,notNull = true,type = Float.class)
+	private float housefundBase;
 	
 	public int getId() {
 		return id;
@@ -120,7 +120,16 @@ public class PersonSalaryInfo {
 	}
 	public void setInsuranceBase(float insuranceBase) {
 		this.insuranceBase = insuranceBase;
-	}	
+	}
+	
+	@Override
+	public String toString() {
+		return "PersonSalaryInfo [id=" + id + ", name=" + name + ", department=" + department + ", idCard=" + idCard
+				+ ", baseSalary=" + baseSalary + ", performSalary=" + performSalary + ", postSalary=" + postSalary
+				+ ", subsidies=" + subsidies + ", deductSalary=" + deductSalary + ", total=" + total
+				+ ", housefundBase=" + housefundBase + ", insuranceBase=" + insuranceBase + "]";
+	}
+	
 	
 	public static void main(String[] args) {
 		List<TitleMeta> titleCellBeans = new ArrayList<>();

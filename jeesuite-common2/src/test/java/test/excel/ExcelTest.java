@@ -29,10 +29,10 @@ public class ExcelTest {
 	 */
 	public static void main(String[] args) throws InvalidFormatException, IOException {
 
-		List<PersonSalaryInfo> list = new ExcelPerfModeReader("/Users/ayg/Desktop/工资模板.xls")
+		List<PersonSalaryInfo> list = new ExcelPerfModeReader("/Users/ayg/Desktop/工资模板11.xls")
 				.read(PersonSalaryInfo.class);
 
-		System.out.println(list);
+		System.out.println(list.get(0));
 
 		String excelFilePath = "/Users/ayg/Desktop/test" + RandomUtils.nextInt(1000, 99999) + ".xlsx";
 		ExcelWriter writer = new ExcelWriter(excelFilePath);

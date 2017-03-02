@@ -7,7 +7,7 @@
 		<version>2</version>
 	</parent>
 	<artifactId>jeesuite-common2</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.2-SNAPSHOT</version>
 
 	<dependencies>
 		<dependency>
