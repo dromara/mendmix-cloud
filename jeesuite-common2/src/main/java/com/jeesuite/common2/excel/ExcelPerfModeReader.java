@@ -64,8 +64,11 @@ public class ExcelPerfModeReader {
 			XLS2CSV xls2csv = new XLS2CSV(path, -1);
 			return xls2csv.process();
 		} catch (Exception e) {
+			if(e instanceof org.apache.poi.poifs.filesystem.NotOLE2FileException){
+				throw new ExcelOperBaseException("请选择合法的excel文件");
+			}
 			if(e instanceof IOException){
-				throw new ExcelOperBaseException(path+"不存在");
+				throw new ExcelOperBaseException("文件读取失败");
 			}
 			if(e instanceof OfficeXmlFileException){
 				throw (OfficeXmlFileException)e;
