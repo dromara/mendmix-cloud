@@ -3,6 +3,7 @@
  */
 package com.jeesuite.kafka.monitor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,7 +35,7 @@ import scala.collection.Iterator;
  */
 public class KafkaConsumerCommand {
 
-	private Map<String, KafkaConsumer<String, String>> kafkaConsumers = new HashMap<>();
+	private Map<String, KafkaConsumer<String, Serializable>> kafkaConsumers = new HashMap<>();
 	private AdminClient adminClient;
 	private String bootstrapServer;
 
@@ -67,7 +68,11 @@ public class KafkaConsumerCommand {
 	}
 	
 	public ConsumerGroupInfo consumerGroup(String group){
-		KafkaConsumer<String, String> kafkaConsumer = getConsumer(group);
+		KafkaConsumer<String, Serializable> kafkaConsumer = getConsumer(group);
+		return consumerGroup(kafkaConsumer,group);
+	}
+	
+	public ConsumerGroupInfo consumerGroup(KafkaConsumer<String, Serializable> kafkaConsumer,String group){
 		
 		scala.collection.immutable.List<ConsumerSummary> consumers = adminClient.describeConsumerGroup(group);
 		if(consumers.isEmpty()){
@@ -110,8 +115,13 @@ public class KafkaConsumerCommand {
 		return consumerGroup;
 		
 	}
+	
+	public void resetTopicOffsets(String groupId,String topic,int partition,long newOffsets){
+		KafkaConsumer<String, Serializable> kafkaConsumer = getConsumer(groupId);
+		kafkaConsumer.seek(new TopicPartition(topic, partition), newOffsets);
+	}
 
-	protected long getLogSize(KafkaConsumer<String, String> kafkaConsumer,String topic, int partition) {
+	protected long getLogSize(KafkaConsumer<String, Serializable> kafkaConsumer,String topic, int partition) {
 		TopicPartition topicPartition = new TopicPartition(topic, partition);
 		List<TopicPartition> asList = Arrays.asList(topicPartition);
 		kafkaConsumer.assign(asList);
@@ -120,9 +130,9 @@ public class KafkaConsumerCommand {
 		return logEndOffset;
 	}
 
-	private KafkaConsumer<String, String> getConsumer(String groupId) {
+	private KafkaConsumer<String, Serializable> getConsumer(String groupId) {
 		
-		KafkaConsumer<String, String> kafkaConsumer = null; 
+		KafkaConsumer<String, Serializable> kafkaConsumer = null; 
 		if ((kafkaConsumer = kafkaConsumers.get(groupId))!= null)
 			return kafkaConsumer;
 		
@@ -134,7 +144,7 @@ public class KafkaConsumerCommand {
 		properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 		properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 
-		kafkaConsumer = new KafkaConsumer<String, String>(properties);
+		kafkaConsumer = new KafkaConsumer<String, Serializable>(properties);
 		kafkaConsumers.put(groupId, kafkaConsumer);
 		return kafkaConsumer;
 
@@ -143,7 +153,7 @@ public class KafkaConsumerCommand {
 	public void close() {
 		adminClient.close();
 		if (kafkaConsumers != null){
-			for (KafkaConsumer<String, String> kafkaConsumer : kafkaConsumers.values()) {				
+			for (KafkaConsumer<String, Serializable> kafkaConsumer : kafkaConsumers.values()) {				
 				kafkaConsumer.close();
 			}
 		}

@@ -192,7 +192,7 @@ public class ZkConsumerCommand {
 	
 	public void resetTopicOffsets(String groupId,String topic,int partition,long newOffsets){
 		String path = "/consumers/" + groupId + "/offsets/"+topic + "/" + partition;
-		zkClient.writeData(path, newOffsets);
+		zkClient.writeData(path, String.valueOf(newOffsets));
 	}
 	
 	public String fetchPartitionOwner(String groupId,String topic,int partition){

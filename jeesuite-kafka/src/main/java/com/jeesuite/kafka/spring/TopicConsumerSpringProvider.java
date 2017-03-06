@@ -22,6 +22,7 @@ import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
 import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
 import com.jeesuite.kafka.handler.MessageHandler;
+import com.jeesuite.kafka.handler.OffsetLogHanlder;
 import com.jeesuite.kafka.serializer.KyroMessageDeserializer;
 import com.jeesuite.kafka.utils.KafkaConst;
 
@@ -61,6 +62,8 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
     
   //环境路由
     private String routeEnv;
+    
+    private OffsetLogHanlder offsetLogHanlder;
     
 	@Override
     public void afterPropertiesSet() throws Exception {
@@ -170,6 +173,8 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		}else{
 			consumer = new OldApiTopicConsumer(consumerContext);
 		}
+		
+		consumerContext.setOffsetLogHanlder(offsetLogHanlder);
 
         consumer.start();
         //状态：运行中
@@ -201,6 +206,12 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 	public void setUseNewAPI(boolean useNewAPI) {
 		this.useNewAPI = useNewAPI;
 	}
+
+	public void setOffsetLogHanlder(OffsetLogHanlder offsetLogHanlder) {
+		this.offsetLogHanlder = offsetLogHanlder;
+	}
+
+
 
 	@Override
     public void destroy() throws Exception {

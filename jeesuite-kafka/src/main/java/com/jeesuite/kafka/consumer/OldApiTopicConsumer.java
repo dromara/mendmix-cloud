@@ -16,9 +16,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.requests.MetadataResponse.PartitionMetadata;
-import org.apache.kafka.common.requests.MetadataResponse.TopicMetadata;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,13 +139,15 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 					//期望的偏移
 					long expectOffsets = consumerContext.getLatestProcessedOffsets(topic, partition.getPartition());
 					//
-					if(expectOffsets < partition.getOffset()){			
+					if(expectOffsets >= 0 && expectOffsets < partition.getOffset()){			
 						command.resetTopicOffsets(consumerContext.getGroupId(), topic, partition.getPartition(), expectOffsets);
 						logger.info("seek Topic[{}] partition[{}] from {} to {}",topic,partition.getPartition(),partition.getOffset(),expectOffsets);
 					}
 				}
 			}
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		command.close();
 	}
 
