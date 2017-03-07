@@ -36,7 +36,7 @@ public class PersonSalaryInfo {
 	private float postSalary;//岗位工资
 	@TitleCell(name="绩效工资",column = 6,row = 2,parentName = "应发工资",type = Float.class)
 	private float performSalary;//绩效工资
-	@TitleCell(name="*福利津贴",column = 7,row = 2,parentName = "应发工资",type = Float.class)
+	@TitleCell(name="福利津贴",column = 7,row = 2,parentName = "应发工资",type = Float.class)
 	private float subsidies;//福利津贴
 	@TitleCell(name="扣除金额",column = 8,row = 2,parentName = "应发工资",type = Float.class)
 	private float deductSalary; //扣除金额

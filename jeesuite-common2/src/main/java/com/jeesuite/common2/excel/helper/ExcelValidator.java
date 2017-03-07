@@ -14,7 +14,7 @@ public class ExcelValidator {
 	public static final String XLSX_SIFFIX = "xlsx";
 	
 	public static final String FIELD_SPLIT = ":";
-	public final static String QUOTE = "\"";
+	public final static String QUOTE = "";
 	
 	public final static String BLANK = "";
 

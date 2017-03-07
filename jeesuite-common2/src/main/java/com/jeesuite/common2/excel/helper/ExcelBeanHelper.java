@@ -7,6 +7,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -38,25 +39,19 @@ public class ExcelBeanHelper {
 			
 			int titleRowCount = getExcelMeta(clazz).getTitleRowNum();
 			
-//			//解析内容标题内容为数组
-//			String[][] contentTitles = new String[titleRowCount][];
-//			for (int i = 0; i < titleRowCount; i++) {
-//				contentTitles[i] = contents.get(i).split(ExcelValidator.FIELD_SPLIT);
-//			}
-//			
-//			//校验excel的title和定义bean的title是否一致
-//			boolean colMatched;
-//            for (int i = 0; i < titles.length; i++) {
-//            	colMatched = false;
-//				inner:for (int j = 0; j < contentTitles.length; j++) {
-//					String contentTitle = clearWrapper(contentTitles[j][i]);
-//					System.out.println(titles[i] + "--" + contentTitle);
-//					if(colMatched = titles[i].equals(contentTitle)){
-//						break inner;
-//					}
-//				}
-//            	if(!colMatched)throw new ExcelOperBaseException("没有找到列["+titles[i] + "]");
-//			}
+			//解析内容标题内容为数组
+			List<String> contentTitles = new ArrayList<>();
+			for (int i = 0; i < titleRowCount; i++) {
+				contentTitles.addAll(Arrays.asList(contents.get(i).split(ExcelValidator.FIELD_SPLIT)));
+			}
+			
+			for (int i = 0; i < titles.length; i++) {
+				if(titleRowCount == 1){
+					if(!StringUtils.equals(titles[i], contentTitles.get(i)))throw new ExcelOperBaseException("格式错误，没有找到列["+titles[i] + "]");
+				}else{
+					if(!contentTitles.contains(titles[i]))throw new ExcelOperBaseException("格式错误，没有找到列["+titles[i] + "]");
+				}
+			}
 			
 			String[] vals = null;
 			for (int i = titleRowCount; i < contents.size(); i++) {
@@ -121,8 +116,11 @@ public class ExcelBeanHelper {
 	
 	
 	public static ExcelMeta getExcelMeta(Class<?> clazz){
-		if(titleCellBeanCache.isEmpty())getAliasPropertyDescriptors(clazz);
-		return titleCellBeanCache.get(clazz.getCanonicalName());
+		String key = clazz.getCanonicalName();
+		if(!titleCellBeanCache.containsKey(key)){
+			getAliasPropertyDescriptors(clazz);
+		}
+		return titleCellBeanCache.get(key);
 	}
 
 	
