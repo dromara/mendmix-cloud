@@ -41,7 +41,8 @@ public class ExcelBeanHelper {
 			
 			//解析内容标题内容为数组
 			List<String> contentTitles = new ArrayList<>();
-			for (int i = 0; i < titleRowCount; i++) {
+			//第一行为sheet信息
+			for (int i = 1; i <= titleRowCount; i++) {
 				contentTitles.addAll(Arrays.asList(contents.get(i).split(ExcelValidator.FIELD_SPLIT)));
 			}
 			
@@ -54,9 +55,13 @@ public class ExcelBeanHelper {
 			}
 			
 			String[] vals = null;
-			for (int i = titleRowCount; i < contents.size(); i++) {
+			for (int i = titleRowCount + 1; i < contents.size(); i++) {
+				String line = contents.get(i);
+				if(line.startsWith(ExcelValidator.SHEET_NAME_PREFIX)){
+					throw new ExcelOperBaseException("模板错误(暂不支持多个sheet)");
+				}
 				T instance = clazz.newInstance();
-				vals = contents.get(i).split(ExcelValidator.FIELD_SPLIT);
+				vals = line.split(ExcelValidator.FIELD_SPLIT);
 
 				boolean anyColumnNotEmpty = false;
 				inner:for (int j = 0; j < titles.length; j++) {
@@ -266,7 +271,7 @@ public class ExcelBeanHelper {
 	}
 	
 	private static String clearWrapper(String orig){
-		return orig.replaceAll(ExcelValidator.QUOTE, "");
+		return orig;
 	}
 	
 	public static class BeanConverterException extends RuntimeException {

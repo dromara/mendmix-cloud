@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.poi.openxml4j.exceptions.InvalidOperationException;
+import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException;
 import org.apache.poi.openxml4j.exceptions.OLE2NotOfficeXmlFileException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackageAccess;
+import org.apache.poi.poifs.filesystem.NotOLE2FileException;
 import org.apache.poi.poifs.filesystem.OfficeXmlFileException;
 
 import com.jeesuite.common2.excel.convert.XLS2CSV;
@@ -23,29 +25,36 @@ import com.jeesuite.common2.excel.helper.ExcelValidator;
 public class ExcelPerfModeReader {
 
     private final String   excelFilePath;
-    
+    private int titleStartAt = 1;
     
     public ExcelPerfModeReader(String excelFilePath) {
-		super();
 		this.excelFilePath = excelFilePath;
 	}
   
+    public ExcelPerfModeReader titleStartAt(int start){
+    	this.titleStartAt = start;
+    	return this;
+    }
 
 	private List<String> read(){
 
+		List<String> result = null;
 		if(excelFilePath.toLowerCase().endsWith(ExcelValidator.XLS_SIFFIX)){
 			try {
-				return readAsXLS(excelFilePath);
+				result = readAsXLS(excelFilePath);
 			} catch (OfficeXmlFileException e) {
-				return readAsXLSX(excelFilePath);
+				result = readAsXLSX(excelFilePath);
 			}
 		}else{
 			try {
-				return readAsXLSX(excelFilePath);
+				result = readAsXLSX(excelFilePath);
 			} catch (OLE2NotOfficeXmlFileException e) {
-				return readAsXLS(excelFilePath);
+				result =  readAsXLS(excelFilePath);
 			}
 		}
+		
+		removeLineBeforeTitle(result);
+		return result;
 	}
 	
 	public <T> List<T> read(Class<T> clazz){
@@ -55,23 +64,20 @@ public class ExcelPerfModeReader {
 	} 
 	
 	
-	public <T> void read(Class<T> clazz,ResultProcessor<T> processor){
-		
-	} 
+//	public <T> void read(Class<T> clazz,ResultProcessor<T> processor){
+//	   
+//	} 
 	
 	private List<String> readAsXLS(String path){
 		try {				
 			XLS2CSV xls2csv = new XLS2CSV(path, -1);
 			return xls2csv.process();
 		} catch (Exception e) {
-			if(e instanceof org.apache.poi.poifs.filesystem.NotOLE2FileException){
-				throw new ExcelOperBaseException("请选择合法的excel文件");
+			if(e instanceof NotOLE2FileException || e instanceof NotOfficeXmlFileException || e instanceof OfficeXmlFileException){
+				throw new ExcelOperBaseException("请选择正确格式excel文件");
 			}
 			if(e instanceof IOException){
 				throw new ExcelOperBaseException("文件读取失败");
-			}
-			if(e instanceof OfficeXmlFileException){
-				throw (OfficeXmlFileException)e;
 			}
 			throw new RuntimeException(e);
 		}
@@ -85,18 +91,26 @@ public class ExcelPerfModeReader {
 			XLSX2CSV xlsx2csv = new XLSX2CSV(opcPackage, System.out, -1);
 			return xlsx2csv.process();
 		} catch (Exception e) {
+			if(e instanceof OLE2NotOfficeXmlFileException || e instanceof NotOLE2FileException || e instanceof NotOfficeXmlFileException || e instanceof OfficeXmlFileException){
+				throw new ExcelOperBaseException("请选择正确格式excel文件");
+			}
 			if(e instanceof IOException){
-				throw new ExcelOperBaseException(path);
+				throw new ExcelOperBaseException("文件读取失败");
 			}
 			if(e instanceof InvalidOperationException){
 				throw new ExcelOperBaseException(e);
 			}
-			if(e instanceof OLE2NotOfficeXmlFileException){
-				throw (OLE2NotOfficeXmlFileException)e;
-			}
 			throw new RuntimeException(e);
 		}finally{
 			try {opcPackage.close();} catch (Exception e) {}
+		}
+	}
+	
+	private void removeLineBeforeTitle(List<String> lines){
+		//第一行固定为sheet名
+		if(titleStartAt == 1 || lines == null || lines.size() - 1 <= titleStartAt)return;
+		for (int i = 1; i < titleStartAt; i++) {
+			lines.remove(1);
 		}
 	}
 	

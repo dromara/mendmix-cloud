@@ -29,7 +29,7 @@ public class ExcelTest {
 	 */
 	public static void main(String[] args) throws InvalidFormatException, IOException {
 
-		List<PersonSalaryInfo> list = new ExcelPerfModeReader("/Users/ayg/Desktop/工资模板11.xls")
+		List<PersonSalaryInfo> list = new ExcelPerfModeReader("/Users/ayg/Desktop/人员导入模板.xlsx")
 				.read(PersonSalaryInfo.class);
 
 		System.out.println(list.get(0));

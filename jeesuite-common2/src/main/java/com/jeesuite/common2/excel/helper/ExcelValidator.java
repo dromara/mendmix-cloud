@@ -14,11 +14,12 @@ public class ExcelValidator {
 	public static final String XLSX_SIFFIX = "xlsx";
 	
 	public static final String FIELD_SPLIT = ":";
-	public final static String QUOTE = "";
 	
 	public final static String BLANK = "";
+	
+	public final static String SHEET_NAME_PREFIX = "{sheet}:";
 
-	private static Pattern blankPattern = Pattern.compile("^[,|\"]+$");
+	private static Pattern blankPattern = Pattern.compile("^["+FIELD_SPLIT+"|\"]+$");
 	
 	public static boolean isBlankCSVRow(String line){
 		if(StringUtils.isBlank(line))return true;

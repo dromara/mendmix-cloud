@@ -120,7 +120,7 @@ public class XLSX2CSV {
 				Double.parseDouble(formattedValue);
 				_resultRowTmp.append(formattedValue);
 			} catch (NumberFormatException e) {
-				_resultRowTmp.append(ExcelValidator.QUOTE).append(formattedValue).append(ExcelValidator.QUOTE);
+				_resultRowTmp.append(formattedValue);
 			}
 		}
 
@@ -192,8 +192,8 @@ public class XLSX2CSV {
 		while (iter.hasNext()) {
 			if(blankRowNum == 10)break;
 			InputStream stream = iter.next();
-			//String sheetName = iter.getSheetName();
-			//System.out.println(sheetName + " [index=" + index + "]:");
+			String sheetName = iter.getSheetName();
+			results.add(ExcelValidator.SHEET_NAME_PREFIX + sheetName);
 			processSheet(styles, strings, new SheetToCSV(), stream);
 			stream.close();
 			++index;
