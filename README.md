@@ -1,6 +1,8 @@
 **黄金位置放个小广告→**欢迎加交流群：230192763 （不限于讨论该框架热爱技术就行）
 ## 简介
-**jeesuite-libs**是整理的近几年封装的一些基础组件包，计划陆续整理成一个java后台服务开发套件，包括整合dubbo服务化，rest API接口发布等。目前这些模块可用于生产环境，1.0版在千万级会员、日UV200万某互联网公司稳定运行。[jeesuite-demo](http://git.oschina.net/vakinge/jeesuite-demo) 
+**jeesuite-libs**是整理的近几年封装的一些基础组件包，计划陆续整理成一个java后台服务开发套件，包括整合dubbo服务化，rest API接口发布等。所有release版都经过严格测试并在生产环境稳定运行。[项目模板jeesuite-bestpl](http://git.oschina.net/vakinge/jeesuite-bestpl) 
+
+##### PS:本项目和`JeeSite`没任何关系，JeeSite是一套基础业务系统，而`jeesuite`顾名思义是：j2ee开发套件，是一套开发框架、是一套分布式架构解决方案。
 
 **原则**
 - 不造轮子、全部基于主流的框架如：mybatis、kafka、jedis等封装

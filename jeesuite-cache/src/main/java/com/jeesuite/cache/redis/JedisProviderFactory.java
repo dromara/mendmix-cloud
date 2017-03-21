@@ -39,6 +39,10 @@ public class JedisProviderFactory {
 	
 	@SuppressWarnings("rawtypes")
 	private static Map<String, JedisProvider> jedisProviders = new ConcurrentHashMap<>();
+	
+	public static void setDefaultJedisProvider(JedisProvider<?, ?> defaultJedisProvider) {
+		JedisProviderFactory.defaultJedisProvider = defaultJedisProvider;
+	}
 
 	public static JedisProvider<?, ?> getJedisProvider(String groupName) {
 		if(defaultJedisProvider == null){			

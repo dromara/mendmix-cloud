@@ -208,13 +208,15 @@ public class RedisHashMap extends RedisCollection {
 		try {
 			List<byte[]> datas = null;
 			Map<String, T> result = new HashMap<>();
-			for (String field : fields) {
-				if (isCluster(groupName)) {
-					datas = getBinaryJedisClusterCommands(groupName).hmget(key, SafeEncoder.encode(field));
-				} else {
-					datas = getBinaryJedisCommands(groupName).hmget(key, SafeEncoder.encode(field));
-				}
-				result.put(field, (T)valueDerialize(datas.get(0)));
+			
+			byte[][] encodeFileds = SafeEncoder.encodeMany(fields);
+			if (isCluster(groupName)) {
+				datas = getBinaryJedisClusterCommands(groupName).hmget(key, encodeFileds);
+			} else {
+				datas = getBinaryJedisCommands(groupName).hmget(key, encodeFileds);
+			}
+			for (int i = 0; i < fields.length; i++) {
+				result.put(fields[i], (T)valueDerialize(datas.get(i)));
 			}
 			return result;
 		} finally {

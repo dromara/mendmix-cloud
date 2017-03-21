@@ -41,10 +41,14 @@ public class RedisBatchCommand {
 			keysValues[index++] = key;
 			keysValues[index++] = keyValueMap.get(key).toString();
 		}
-		if(JedisProviderFactory.isCluster(groupName)){
-			return JedisProviderFactory.getMultiKeyJedisClusterCommands(groupName).mset(keysValues).equals(RESP_OK);
-		}else{
-			return JedisProviderFactory.getMultiKeyCommands(groupName).mset(keysValues).equals(RESP_OK);
+		try {			
+			if(JedisProviderFactory.isCluster(groupName)){
+				return JedisProviderFactory.getMultiKeyJedisClusterCommands(groupName).mset(keysValues).equals(RESP_OK);
+			}else{
+				return JedisProviderFactory.getMultiKeyCommands(groupName).mset(keysValues).equals(RESP_OK);
+			}
+		} finally {
+			JedisProviderFactory.getJedisProvider(groupName).release();
 		}
 	}
 	
@@ -73,10 +77,15 @@ public class RedisBatchCommand {
 			keysValues[index++] = SafeEncoder.encode(key);
 			keysValues[index++] = SerializeUtils.serialize(keyValueMap.get(key));
 		}
-		if(JedisProviderFactory.isCluster(groupName)){
-			return JedisProviderFactory.getMultiKeyBinaryJedisClusterCommands(groupName).mset(keysValues).equals(RESP_OK);
-		}else{
-			return JedisProviderFactory.getMultiKeyBinaryCommands(groupName).mset(keysValues).equals(RESP_OK);
+		
+        try {			
+        	if(JedisProviderFactory.isCluster(groupName)){
+        		return JedisProviderFactory.getMultiKeyBinaryJedisClusterCommands(groupName).mset(keysValues).equals(RESP_OK);
+        	}else{
+        		return JedisProviderFactory.getMultiKeyBinaryCommands(groupName).mset(keysValues).equals(RESP_OK);
+        	}
+		} finally {
+			JedisProviderFactory.getJedisProvider(groupName).release();
 		}
 	}
 	
@@ -97,10 +106,14 @@ public class RedisBatchCommand {
 	 * @return list<String>
 	 */
 	public static List<String> getStringsWithGroup(String groupName,String...keys){
-		if(JedisProviderFactory.isCluster(groupName)){
-			return JedisProviderFactory.getMultiKeyJedisClusterCommands(groupName).mget(keys);
-		}else{
-			return JedisProviderFactory.getMultiKeyCommands(groupName).mget(keys);
+        try {
+        	if(JedisProviderFactory.isCluster(groupName)){
+        		return JedisProviderFactory.getMultiKeyJedisClusterCommands(groupName).mget(keys);
+        	}else{
+        		return JedisProviderFactory.getMultiKeyCommands(groupName).mget(keys);
+        	}
+		} finally {
+			JedisProviderFactory.getJedisProvider(groupName).release();
 		}
 	}
 
@@ -109,10 +122,14 @@ public class RedisBatchCommand {
 	}
 	
 	public static boolean removeStringsWithGroup(String groupName,String...keys){
-		if(JedisProviderFactory.isCluster(groupName)){
-			return JedisProviderFactory.getMultiKeyJedisClusterCommands(groupName).del(keys) == 1;
-		}else{
-			return JedisProviderFactory.getMultiKeyCommands(groupName).del(keys) == 1;
+        try {			
+        	if(JedisProviderFactory.isCluster(groupName)){
+        		return JedisProviderFactory.getMultiKeyJedisClusterCommands(groupName).del(keys) == 1;
+        	}else{
+        		return JedisProviderFactory.getMultiKeyCommands(groupName).del(keys) == 1;
+        	}
+		} finally {
+			JedisProviderFactory.getJedisProvider(groupName).release();
 		}
 	}
 	
@@ -123,10 +140,14 @@ public class RedisBatchCommand {
     
     public static boolean removeObjectsWithGroup(String groupName,String...keys){
     	byte[][] byteKeys = SafeEncoder.encodeMany(keys);
-		if(JedisProviderFactory.isCluster(groupName)){
-			return JedisProviderFactory.getMultiKeyBinaryJedisClusterCommands(groupName).del(byteKeys) == 1;
-		}else{
-			return JedisProviderFactory.getMultiKeyBinaryCommands(groupName).del(byteKeys) == 1;
+        try {			
+        	if(JedisProviderFactory.isCluster(groupName)){
+        		return JedisProviderFactory.getMultiKeyBinaryJedisClusterCommands(groupName).del(byteKeys) == 1;
+        	}else{
+        		return JedisProviderFactory.getMultiKeyBinaryCommands(groupName).del(byteKeys) == 1;
+        	}
+		} finally {
+			JedisProviderFactory.getJedisProvider(groupName).release();
 		}
 	}
 	
@@ -134,14 +155,20 @@ public class RedisBatchCommand {
     	return removeObjectsWithGroup(null, keys);
 	}
 	
-	public static <T> List<T> getObjectsWithGroup(String groupName,String...keys){
+	public static <T> List<T> getObjectsWithGroup(String groupName, String... keys) {
 		byte[][] byteKeys = SafeEncoder.encodeMany(keys);
-		if(JedisProviderFactory.isCluster(groupName)){
-			List<byte[]> bytes = JedisProviderFactory.getMultiKeyBinaryJedisClusterCommands(groupName).mget(byteKeys);
-			return listDerialize(bytes);
-		}else{
-			List<byte[]> bytes = JedisProviderFactory.getMultiKeyBinaryCommands(groupName).mget(byteKeys);
-			return listDerialize(bytes);
+
+		try {
+			if (JedisProviderFactory.isCluster(groupName)) {
+				List<byte[]> bytes = JedisProviderFactory.getMultiKeyBinaryJedisClusterCommands(groupName)
+						.mget(byteKeys);
+				return listDerialize(bytes);
+			} else {
+				List<byte[]> bytes = JedisProviderFactory.getMultiKeyBinaryCommands(groupName).mget(byteKeys);
+				return listDerialize(bytes);
+			}
+		} finally {
+			JedisProviderFactory.getJedisProvider(groupName).release();
 		}
 	}
 	
