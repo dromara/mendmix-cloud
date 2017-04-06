@@ -57,6 +57,15 @@ public class ResourceUtils {
 			}
 		}
 	}
+	
+
+	/**
+	 * 获取所有配置的副本
+	 * @return
+	 */
+	public static Map<String, String> getAllProperties() {
+		return new HashMap<>(propertiesMap);
+	}
 
 	public static String get(String key, String...defaultValue) {
 		if(!inited){
@@ -82,6 +91,10 @@ public class ResourceUtils {
 		String v = get(key);
 		if(v != null)return Long.parseLong(v);
 		return defalutValue;
+	}
+	
+	public void add(String key,String value){
+		propertiesMap.put(key, value);
 	}
 	
 }

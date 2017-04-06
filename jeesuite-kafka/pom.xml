@@ -3,10 +3,10 @@
   <parent>
     <groupId>com.jeesuite</groupId>
     <artifactId>jeesuite-libs</artifactId>
-    <version>2</version>
+    <version>3</version>
   </parent>
   <artifactId>jeesuite-kafka</artifactId>
-  <version>1.0.3-SNAPSHOT</version>
+  <version>1.1.0</version>
 
 	<dependencies>
 

@@ -70,6 +70,8 @@ public class CacheHandler implements InterceptorHandler {
 	private static final String QUERY_IDS_SUFFIX = "_ralateIds";
 	protected static final String SPLIT_PONIT = ".";
 	public static final String GROUPKEY_SUFFIX = "~keys";
+	//null缓存占位符（避免频繁查询不存在对象造成缓存穿透导致频繁查询db）
+	public static final String NULL_PLACEHOLDER = "~null";
 	
 	//需要缓存的所有mapper
 	private static List<String> cacheEnableMappers = new ArrayList<>();
@@ -126,30 +128,28 @@ public class CacheHandler implements InterceptorHandler {
 			QueryMethodCache cacheInfo = getQueryMethodCache(mt.getId());
 			if(cacheInfo == null)return null;
 			final String cacheKey = genarateQueryCacheKey(cacheInfo.keyPattern, args[1]);
+			
+			Object cacheObject = null;
 			//按主键查询以及标记非引用关系的缓存直接读取缓存
 			if(cacheInfo.isSecondQueryById() == false){
 				//从缓存读取
-				Object object = getCacheProvider().get(cacheKey);
-				if(object != null){
-					//mybatis返回都是list，所以这里要包装一下
-					if(object instanceof List == false){						
-						object = new ArrayList<>(Arrays.asList(object));
-					}
-					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] find result from cacheKey:{}",mt.getId(),cacheKey);
-				}
-				return object;
+				cacheObject = getCacheProvider().get(cacheKey);
+				if(cacheObject != null && logger.isDebugEnabled())logger.debug("_autocache_ method[{}] find result from cacheKey:{}",mt.getId(),cacheKey);
 			}else{
 				//新根据缓存KEY找到与按ID缓存的KEY
 				String cacheKeyById = getCacheProvider().getStr(cacheKey);
-				if(cacheKeyById == null)return null;
-				Object object = getCacheProvider().get(cacheKeyById);
-				if(object != null){
-					object = new ArrayList<>(Arrays.asList(object));
-					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] find result from cacheKey:{} ,ref by:{}",mt.getId(),cacheKeyById,cacheKey);
+				if(cacheKeyById != null){
+					cacheObject = getCacheProvider().get(cacheKeyById);
+					if(cacheObject != null && logger.isDebugEnabled())logger.debug("_autocache_ method[{}] find result from cacheKey:{} ,ref by:{}",mt.getId(),cacheKeyById,cacheKey);
 				}
-				
-				return object;
 			}
+			
+			if(cacheObject != null){
+				if(!NULL_PLACEHOLDER.equals(cacheObject.toString())){					
+					cacheObject = new ArrayList<>(Arrays.asList(cacheObject));
+				}
+			}
+			return cacheObject;
 		}
 		
 		return null;
@@ -167,15 +167,19 @@ public class CacheHandler implements InterceptorHandler {
 		
 		QueryMethodCache cacheInfo = null;
 		if(mt.getSqlCommandType().equals(SqlCommandType.SELECT)){	
-			if(result == null)return;  
+			if(result == null)return; 
 			if((cacheInfo = getQueryMethodCache(mt.getId())) == null)return;
 			
+			final String cacheKey = genarateQueryCacheKey(cacheInfo.keyPattern, args[1]);
+			if(NULL_PLACEHOLDER.equals(result)){
+				getCacheProvider().set(cacheKey,result, cacheInfo.expire);
+				return;
+			}
 			if(result instanceof List){
 				List list = (List)result;
 				if(list.isEmpty())return;
 				result = cacheInfo.collectionResult ? result : list.get(0);
 			}
-			final String cacheKey = genarateQueryCacheKey(cacheInfo.keyPattern, args[1]);
 			//按主键查询以及标记非引用关系的缓存直接读取缓存
 			if(cacheInfo.isSecondQueryById() == false){
 				if(getCacheProvider().set(cacheKey,result, cacheInfo.expire)){

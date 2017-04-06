@@ -100,11 +100,20 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 			if(result == null){
 				result = invocation.proceed();
 				proceed = true;
+			}else{
+				if(cacheEnabled && CacheHandler.NULL_PLACEHOLDER.equals(result)){
+					return null;
+				}
 			}
 			return result;
 		} finally {
 			for (InterceptorHandler handler : interceptorHandlers) {
-				handler.onFinished(invocation,proceed ? result : null);
+				if(!proceed)continue;
+				if(handler.getInterceptorType().equals(InterceptorType.before))continue;
+				if(result == null && handler instanceof CacheHandler){
+					result = CacheHandler.NULL_PLACEHOLDER;
+				}
+				handler.onFinished(invocation,result);
 			}
 		}
 	}

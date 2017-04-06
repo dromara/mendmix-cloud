@@ -24,6 +24,7 @@ import com.jeesuite.kafka.monitor.model.TopicInfo;
 import com.jeesuite.kafka.monitor.model.TopicPartitionInfo;
 
 import kafka.admin.AdminClient;
+import kafka.admin.AdminClient.ConsumerGroupSummary;
 import kafka.admin.AdminClient.ConsumerSummary;
 import kafka.coordinator.GroupOverview;
 import scala.collection.Iterator;
@@ -74,7 +75,8 @@ public class KafkaConsumerCommand {
 	
 	public ConsumerGroupInfo consumerGroup(KafkaConsumer<String, Serializable> kafkaConsumer,String group){
 		
-		scala.collection.immutable.List<ConsumerSummary> consumers = adminClient.describeConsumerGroup(group);
+		ConsumerGroupSummary groupSummary = adminClient.describeConsumerGroup(group);
+		scala.collection.immutable.List<ConsumerSummary> consumers = groupSummary.consumers().get();
 		if(consumers.isEmpty()){
 			System.out.println("Consumer group ["+group+"] does not exist or is rebalancing.");
 			return null;
@@ -89,7 +91,7 @@ public class KafkaConsumerCommand {
 			if(!consumerGroup.getClusterNodes().contains(consumer.clientId())){
 				consumerGroup.getClusterNodes().add(consumer.clientId());
 			}
-			String owner = consumer.clientId() + consumer.clientHost();
+			String owner = consumer.clientId() + consumer.host();
 			scala.collection.immutable.List<TopicPartition> partitions = consumer.assignment();
 			Iterator<TopicPartition> iterator2 = partitions.iterator();
 			

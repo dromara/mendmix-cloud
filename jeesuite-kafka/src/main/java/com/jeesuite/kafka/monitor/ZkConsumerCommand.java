@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
 import org.apache.kafka.common.Node;
+import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.requests.MetadataResponse.TopicMetadata;
 import org.apache.zookeeper.data.Stat;
@@ -123,7 +124,7 @@ public class ZkConsumerCommand {
 		Iterator<Broker> iterator = brokers.toList().iterator();
 		while(iterator.hasNext()){
 			Broker broker = iterator.next();
-			Node node = broker.getNode(SecurityProtocol.PLAINTEXT);
+			Node node = broker.getNode(ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT));
 			result.add(new BrokerInfo(node.idString(), node.host(), node.port()));
 		}
 		return result;
