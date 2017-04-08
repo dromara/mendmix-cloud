@@ -7,7 +7,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.core.InterceptorType;
-import com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext;
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 /**
  * 分库自动路由处理
@@ -51,7 +51,7 @@ public class TableRouteHandler implements InterceptorHandler,InitializingBean {
 	 * @see com.jeesuite.mybatis.core.InterceptorHandler#onStart()
 	 */
 	@Override
-	public void start(JeesuiteMybatisPluginContext context) {
+	public void start(JeesuiteMybatisInterceptor context) {
 		// TODO Auto-generated method stub
 		
 	}

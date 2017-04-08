@@ -21,7 +21,7 @@ import com.jeesuite.mybatis.datasource.DataSourceContextHolder;
 import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
-import com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext;
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 /**
  * 分库自动路由处理
@@ -160,7 +160,7 @@ public class DatabaseRouteHandler implements InterceptorHandler {
 
 
 	@Override
-	public void start(JeesuiteMybatisPluginContext context) {
+	public void start(JeesuiteMybatisInterceptor context) {
 		
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		

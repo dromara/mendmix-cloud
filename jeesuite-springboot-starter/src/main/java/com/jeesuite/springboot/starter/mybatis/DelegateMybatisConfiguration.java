@@ -24,15 +24,19 @@
 
 package com.jeesuite.springboot.starter.mybatis;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import javax.sql.DataSource;
 
+import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.autoconfigure.OverrideAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -43,15 +47,21 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.TransactionManagementConfigurer;
 
+import com.github.pagehelper.PageInterceptor;
 import com.jeesuite.mybatis.datasource.MutiRouteDataSource;
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 import tk.mybatis.spring.mapper.MapperScannerConfigurer;
 
 
 @Configuration
+@EnableConfigurationProperties(MybatisProperties.class)
 @EnableTransactionManagement
 public class DelegateMybatisConfiguration implements TransactionManagementConfigurer {
 
+	@Autowired
+	private MybatisProperties properties;
+	
 	private MutiRouteDataSource dataSource;
 	
 	@Bean(name = "dataSource")
@@ -69,17 +79,49 @@ public class DelegateMybatisConfiguration implements TransactionManagementConfig
     public SqlSessionFactory sqlSessionFactoryBean(@Qualifier("dataSource") DataSource dataSource) {
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
-        bean.setTypeAliasesPackage("com.jeesuite.apikeeper.dao.entity");
+        bean.setTypeAliasesPackage(properties.getTypeAliasesPackage());
 
         //添加XML目录
         ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         try {
-            bean.setMapperLocations(resolver.getResources("classpath:mapper/*.xml"));
+            bean.setMapperLocations(resolver.getResources(properties.getMapperLocations()));
+            List<Interceptor> plugins = new ArrayList<>();
+            //分页
+            if(properties.isPaginationEnabled()){
+            	PageInterceptor interceptor = new PageInterceptor();
+            	plugins.add(interceptor);
+            }
+            //
+            String interceptorHandlers = null;
+            if(properties.isCacheEnabled()){
+            	interceptorHandlers = "cache";
+            }
+            
+            if(properties.isRwRouteEnabled()){
+            	interceptorHandlers = interceptorHandlers == null ? "rwRoute" : interceptorHandlers + ",rwRoute";
+            }
+            
+            if(properties.isDbShardEnabled()){
+            	interceptorHandlers = interceptorHandlers == null ? "dbShard" : interceptorHandlers + ",dbShard";
+            }
+            
+            if(interceptorHandlers != null){            	
+            	JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor();
+            	interceptor.setCrudDriver("mapper3");
+            	interceptor.setMapperLocations(properties.getMapperLocations());
+            	interceptor.setInterceptorHandlers(interceptorHandlers);
+            	plugins.add(interceptor);
+            }
+            
+           if(plugins.size() > 0){
+        	   bean.setPlugins(plugins.toArray(new Interceptor[0]));
+           }
             return bean.getObject();
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+        
     }
 
     @Bean
@@ -100,9 +142,11 @@ public class DelegateMybatisConfiguration implements TransactionManagementConfig
     public MapperScannerConfigurer mapperScannerConfigurer() {
         MapperScannerConfigurer mapperScannerConfigurer = new MapperScannerConfigurer();
         mapperScannerConfigurer.setSqlSessionFactoryBeanName("sqlSessionFactory");
-        mapperScannerConfigurer.setBasePackage("com.jeesuite.apikeeper.dao.mapper");
+        mapperScannerConfigurer.setBasePackage(properties.getMapperBasePackage());
         Properties properties = new Properties();
-        properties.setProperty("mappers", "tk.mybatis.mapper.common.BaseMapper");
+        if(this.properties.getBaseMapperClass() != null){        	
+        	properties.setProperty("mappers", this.properties.getBaseMapperClass());
+        }
         properties.setProperty("notEmpty", "false");
         properties.setProperty("IDENTITY", "MYSQL");
         mapperScannerConfigurer.setProperties(properties);

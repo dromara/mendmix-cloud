@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.core.InterceptorType;
 import com.jeesuite.mybatis.datasource.DataSourceContextHolder;
-import com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext;
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 
 /**
@@ -59,7 +59,7 @@ public class RwRouteHandler implements InterceptorHandler {
 	}
 
 	@Override
-	public void start(JeesuiteMybatisPluginContext context) {}
+	public void start(JeesuiteMybatisInterceptor context) {}
 
 
 	@Override

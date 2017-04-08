@@ -43,7 +43,7 @@ import com.jeesuite.spring.SpringInstanceProvider;
     @Signature(type = Executor.class, method = "query", args = {  
             MappedStatement.class, Object.class, RowBounds.class,  
             ResultHandler.class }) })  
-public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBean,DisposableBean,ApplicationContextAware{
+public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,DisposableBean,ApplicationContextAware{
 
 	//CRUD框架驱动 default，mapper3
 	private String crudDriver = "default";

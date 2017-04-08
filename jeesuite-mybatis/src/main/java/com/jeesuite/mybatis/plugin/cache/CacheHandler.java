@@ -46,7 +46,7 @@ import com.jeesuite.mybatis.kit.CacheKeyUtils;
 import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
-import com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext;
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheEvictCascade;
 import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
@@ -408,7 +408,7 @@ public class CacheHandler implements InterceptorHandler {
 
 
 	@Override
-	public void start(JeesuiteMybatisPluginContext context) {
+	public void start(JeesuiteMybatisInterceptor context) {
 		if("mapper3".equalsIgnoreCase(context.getCrudDriver())){
 			methodDefine = new Mapper3CacheMethodDefine();
 		}else{

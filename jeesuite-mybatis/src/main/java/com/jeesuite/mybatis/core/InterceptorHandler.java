@@ -2,7 +2,7 @@ package com.jeesuite.mybatis.core;
 
 import org.apache.ibatis.plugin.Invocation;
 
-import com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext;
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 /**
  * mybatis插件拦截处理器接口
@@ -13,7 +13,7 @@ import com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext;
  */
 public interface InterceptorHandler {
 	
-	void start(JeesuiteMybatisPluginContext context);
+	void start(JeesuiteMybatisInterceptor context);
 	
 	void close();
 
