@@ -61,9 +61,9 @@ public class SpringRedisProvider extends AbstractCacheProvider implements Initia
 
 
 	@Override
-	public boolean set(String key, Object value, long expired) {
+	public boolean set(String key, Object value, long expired,boolean forceStoreAsBytes) {
 		if(value == null)return false;
-		if(value instanceof String){
+		if(forceStoreAsBytes == false && isStoreAsString(value)){
 			stringRedisTemplate.opsForValue().set(key, value.toString(), expired, TimeUnit.SECONDS);
 		}else{
 			redisTemplate.opsForValue().set(key, value, expired, TimeUnit.SECONDS);

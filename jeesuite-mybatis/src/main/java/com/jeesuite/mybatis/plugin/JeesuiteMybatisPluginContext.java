@@ -102,7 +102,7 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 				proceed = true;
 			}else{
 				if(cacheEnabled && CacheHandler.NULL_PLACEHOLDER.equals(result)){
-					return null;
+					return new ArrayList<>();
 				}
 			}
 			return result;
@@ -110,7 +110,7 @@ public class JeesuiteMybatisPluginContext implements Interceptor,InitializingBea
 			for (InterceptorHandler handler : interceptorHandlers) {
 				if(!proceed)continue;
 				if(handler.getInterceptorType().equals(InterceptorType.before))continue;
-				if(result == null && handler instanceof CacheHandler){
+				if((result == null || (result instanceof List) && ((List<?>)result).isEmpty())&& handler instanceof CacheHandler){
 					result = CacheHandler.NULL_PLACEHOLDER;
 				}
 				handler.onFinished(invocation,result);

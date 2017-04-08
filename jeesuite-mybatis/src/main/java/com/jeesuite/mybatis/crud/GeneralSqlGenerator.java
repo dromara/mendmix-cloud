@@ -31,10 +31,10 @@ public class GeneralSqlGenerator {
 	
 	public GeneralSqlGenerator(Configuration configuration) {
 		this.configuration = configuration;
-		this.languageDriver = configuration.getDefaultScriptingLanuageInstance();
+		this.languageDriver = configuration.getDefaultScriptingLanguageInstance();
 	}
 	public void generate() {
-		if(languageDriver == null)languageDriver = configuration.getDefaultScriptingLanuageInstance();
+		if(languageDriver == null)languageDriver = configuration.getDefaultScriptingLanguageInstance();
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		for (EntityInfo entity : entityInfos) {
 			GetByPrimaryKeyBuilder.build(configuration, languageDriver,entity);

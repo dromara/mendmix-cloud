@@ -51,17 +51,17 @@ public class RedisSet extends RedisCollection {
 		super(key,groupName,expireTime);
 	}
 	
-	public boolean add(Object... objects) {
+	public long add(Object... objects) {
         try {   
-        	boolean result = false;
+        	long result = 0;
         	byte[][] datas = valuesSerialize(objects);
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).sadd(key,datas) >= 1;
+        		result = getBinaryJedisClusterCommands(groupName).sadd(key,datas);
         	}else{
-        		result = getBinaryJedisCommands(groupName).sadd(key,datas) >= 1;
+        		result = getBinaryJedisCommands(groupName).sadd(key,datas);
         	}
         	//设置超时时间
-        	if(result)setExpireIfNot(expireTime);
+        	if(result > 0)setExpireIfNot(expireTime);
 			return result;
     	} finally{
 			getJedisProvider(groupName).release();

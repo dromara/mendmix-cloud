@@ -17,7 +17,7 @@ public interface CacheProvider extends Closeable{
 	
 	String getStr(String key);
 	
-	boolean set(String key,Object value,long expired);
+	boolean set(String key,Object value,long expired,boolean forceStoreAsBytes);
 	
 	boolean remove(String key);
 	

@@ -39,6 +39,7 @@ public class UserEntity extends BaseEntity {
      * @param id
      */
     public void setId(Integer id) {
+    	if(this.id != null && id != null)return;
         this.id = id;
     }
 

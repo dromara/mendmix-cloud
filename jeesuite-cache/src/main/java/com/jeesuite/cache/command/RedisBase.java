@@ -11,12 +11,14 @@ import static com.jeesuite.cache.redis.JedisProviderFactory.isCluster;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.cache.CacheExpires;
+import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common.serializer.SerializeUtils;
 
 import redis.clients.util.SafeEncoder;
@@ -115,9 +117,9 @@ public abstract class RedisBase {
 		if(seconds <= 0)return true;
 		try {
 			if(isCluster(groupName)){
-				return getBinaryJedisClusterCommands(groupName).pexpire(key, seconds * 1000) == 1;
+				return getBinaryJedisClusterCommands(groupName).expire(key, (int)seconds) == 1;
 			}
-			return getBinaryJedisCommands(groupName).pexpire(key, seconds * 1000) == 1;
+			return getBinaryJedisCommands(groupName).expire(key, (int)seconds) == 1;
 		} finally {
 			getJedisProvider(groupName).release();
 		}
@@ -162,14 +164,12 @@ public abstract class RedisBase {
 	}
 
 	/**
-	 * 返回给定 key 的剩余生存时间
+	 * 返回给定 key 的剩余生存时间(单位：秒)
 	 * 
 	 * @param key
 	 * @return 当 key 不存在时，返回 -2 。
-	 * 
 	 *         当 key 存在但没有设置剩余生存时间时，返回 -1 。
-	 * 
-	 *         否则，以毫秒为单位，返回 key的剩余生存时间。
+	 *         否则返回 key的剩余生存时间。
 	 */
 	public Long getTtl() {
 		try {
@@ -231,6 +231,16 @@ public abstract class RedisBase {
 			getJedisProvider(groupName).release();
 		}
 
+	}
+	
+	/**
+	 * 查找所有符合给定模式 pattern 的 key
+	 * @param pattern
+	 * @return
+	 */
+	public Set<String> keys(String pattern){
+		Set<String> keys = JedisProviderFactory.getMultiKeyCommands(groupName).keys(pattern);
+		return keys;
 	}
 
 	protected byte[] valueSerialize(Object value) {

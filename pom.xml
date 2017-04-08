@@ -63,6 +63,7 @@
 		<module>jeesuite-common2</module>
 		<module>jeesuite-log</module>
 		<module>jeesuite-filesystem</module>
+		<module>jeesuite-springboot-starter</module>
 	</modules>
 
 	<dependencies>

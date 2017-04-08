@@ -123,6 +123,11 @@ public class MybatisTest implements ApplicationContextAware{
 		System.out.println();
 	}
 	
+	@Test
+	public void testFindNotExists(){
+		UserEntity entity = mapper.findByMobile("13800138000");
+		System.out.println("==========>" + entity);
+	}
 	
 	@Test
 	@Transactional
@@ -166,8 +171,4 @@ public class MybatisTest implements ApplicationContextAware{
 	}
 	
 
-	public static void main(String[] args) {
-		System.out.println(List.class.isAssignableFrom(Iterable.class) );
-	}
-	
 }

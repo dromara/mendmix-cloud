@@ -52,7 +52,7 @@ public class EntityCacheHelper {
 			try {				
 				result = dataCaller.call();
 				if(result != null){
-					CacheHandler.cacheProvider.set(key, result, expireSeconds);
+					CacheHandler.cacheProvider.set(key, result, expireSeconds,false);
 					String cacheGroupKey = entityClassName + CacheHandler.GROUPKEY_SUFFIX;
 					CacheHandler.cacheProvider.putGroup(cacheGroupKey, key, expireSeconds);
 				}

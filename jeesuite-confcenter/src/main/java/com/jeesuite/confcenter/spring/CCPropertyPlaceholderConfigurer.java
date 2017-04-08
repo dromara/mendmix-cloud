@@ -65,8 +65,8 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 	protected Properties mergeProperties() throws IOException {
 		Properties properties = super.mergeProperties();
 		if(remoteEnabled){
-			//
-			initZkClient();
+			//TODO 暂时不同步zk（这一块交互逻辑还没想清楚。 同步到zk通过管理界面呈现？？ 通过zk动态更新配置？？）
+			//initZkClient();
 			
 			URL resource = Thread.currentThread().getContextClassLoader().getResource("confcenter.properties");
 			if(resource == null)throw new FileNotFoundException("配置文件[confcenter.properties]缺失");

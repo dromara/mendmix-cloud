@@ -172,7 +172,7 @@ public class RedisString {
 	 */
 	public boolean setExpire(long seconds) {
 		try {
-			return getJedisCommands(groupName).pexpire(key, seconds * 1000) == 1;
+			return getJedisCommands(groupName).expire(key, (int)seconds) == 1;
 		} finally {
 			getJedisProvider(groupName).release();
 		}

@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 /**
  * 格式校验工具
  */
-public class FormatCheckUtils {  
+public class FormatValidateUtils {  
 	
 	private static Map<String, Pattern> patterns = new ConcurrentHashMap<>();
     //------------------常量定义  

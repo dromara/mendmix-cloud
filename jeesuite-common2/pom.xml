@@ -13,13 +13,13 @@
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.0.2</version>
+			<version>1.1.0</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-cache</artifactId>
-			<version>1.0.1</version>
+			<version>1.1.0</version>
 			<optional>true</optional>
 		</dependency>
 		

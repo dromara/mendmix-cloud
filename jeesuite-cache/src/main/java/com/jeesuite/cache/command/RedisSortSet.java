@@ -137,15 +137,15 @@ public class RedisSortSet extends RedisCollection {
 		}
 	}
     
-    public boolean removeByScore(long min,long max){
+    public long removeByScore(long min,long max){
         try {   
-        	boolean result = false;
+        	long result = 0;
         	byte[] start = SafeEncoder.encode(String.valueOf(min));
         	byte[] end = SafeEncoder.encode(String.valueOf(max));
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).zremrangeByScore(key, start, end) >= 1;
+        		result = getBinaryJedisClusterCommands(groupName).zremrangeByScore(key, start, end);
         	}else{
-        		result = getBinaryJedisCommands(groupName).zremrangeByScore(key, start, end) >= 1;
+        		result = getBinaryJedisCommands(groupName).zremrangeByScore(key, start, end);
         	}
 			return result;
     	} finally{
