@@ -11,36 +11,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @date 2016年12月31日
  */
 @ConfigurationProperties(prefix="jeesuite.mybatis")
-public class MybatisProperties {
+public class PluginProperties {
 
-	
-	private String typeAliasesPackage;
-	private String mapperLocations;
-	private String mapperBasePackage;
-	private String baseMapperClass;
 	private boolean cacheEnabled = false;
 	private boolean rwRouteEnabled = false;
 	private boolean dbShardEnabled = false;
 	private boolean paginationEnabled = false;
 	
-	public String getTypeAliasesPackage() {
-		return typeAliasesPackage;
-	}
-	public void setTypeAliasesPackage(String typeAliasesPackage) {
-		this.typeAliasesPackage = typeAliasesPackage;
-	}
-	public String getMapperLocations() {
-		return mapperLocations;
-	}
-	public void setMapperLocations(String mapperLocations) {
-		this.mapperLocations = mapperLocations;
-	}
-	public String getMapperBasePackage() {
-		return mapperBasePackage;
-	}
-	public void setMapperBasePackage(String mapperBasePackage) {
-		this.mapperBasePackage = mapperBasePackage;
-	}
+
 	public boolean isCacheEnabled() {
 		return cacheEnabled;
 	}
@@ -66,11 +44,6 @@ public class MybatisProperties {
 	public void setPaginationEnabled(boolean paginationEnabled) {
 		this.paginationEnabled = paginationEnabled;
 	}
-	public String getBaseMapperClass() {
-		return baseMapperClass;
-	}
-	public void setBaseMapperClass(String baseMapperClass) {
-		this.baseMapperClass = baseMapperClass;
-	}
+
 
 }

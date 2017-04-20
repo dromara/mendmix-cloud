@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.springboot.starter.mybatis;
+package com.jeesuite.springboot.starter.kafka;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Import;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import({JeesuiteMybatisConfiguration.class,JeesuiteDataSourceConfiguration.class})
-public @interface EnableJeesuiteMybatis {
+@Import(DelegateKafkaProducerConfiguration.class)
+public @interface EnableJeesuiteKafkaProducer {
 
 }
