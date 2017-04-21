@@ -7,19 +7,19 @@
 		<version>3</version>
 	</parent>
 	<artifactId>jeesuite-common2</artifactId>
-	<version>1.1.0</version>
+	<version>1.1.0-SNAPSHOT</version>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.1.0</version>
+			<version>1.1.0-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-cache</artifactId>
-			<version>1.1.0</version>
+			<version>1.1.0-SNAPSHOT</version>
 			<optional>true</optional>
 		</dependency>
 		

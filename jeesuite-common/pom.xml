@@ -7,7 +7,7 @@
 		<version>3</version>
 	</parent>
 	<artifactId>jeesuite-common</artifactId>
-	<version>1.1.0</version>
+	<version>1.1.0-SNAPSHOT</version>
 	<description>基础工具类支持</description>
 
 	<dependencies>
