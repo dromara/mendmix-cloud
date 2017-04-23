@@ -1,6 +1,7 @@
 package com.jeesuite.springboot.starter.mybatis;
 
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration;
@@ -39,8 +40,10 @@ public class JeesuiteMybatisConfiguration implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		//
 		try {
-			Class.forName("com.github.pagehelper.PageInterceptor");
 			PageInterceptor interceptor = new PageInterceptor();
+			Properties properties = new Properties();
+			properties.setProperty("dialect", "com.github.pagehelper.PageHelper");
+			interceptor.setProperties(properties);
 			sqlSessionFactory.getConfiguration().addInterceptor(interceptor);
 		} catch (Exception e) {}
 
