@@ -33,8 +33,9 @@ public class DelegateCacheConfiguration {
 		bean.setDatabase(cacheProperties.getDatabase());
 		bean.setJedisPoolConfig(config);
 		bean.setMode(cacheProperties.getMode());
-		bean.setPassword(cacheProperties.getPassword());
 		bean.setServers(cacheProperties.getServers());
+		bean.setPassword(cacheProperties.getPassword());
+		bean.setMasterName(cacheProperties.getMasterName());
 		return bean;
 	}
 
@@ -43,6 +44,7 @@ public class DelegateCacheConfiguration {
 		JedisPoolConfig config = new JedisPoolConfig();
 		config.setMaxTotal(cacheProperties.getMaxPoolSize());
 		config.setMaxIdle(cacheProperties.getMaxPoolIdle());
+		config.setMinIdle(cacheProperties.getMinPoolIdle());
 		config.setMaxWaitMillis(cacheProperties.getMaxPoolWaitMillis());
 		return config;
 	}

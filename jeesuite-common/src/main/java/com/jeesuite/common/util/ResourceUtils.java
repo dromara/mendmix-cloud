@@ -7,9 +7,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * 资源文件加载工具类
@@ -26,8 +31,40 @@ public class ResourceUtils {
 	private synchronized static void load() {
 		try {
             if(inited)return;
-			File dir = new File(Thread.currentThread().getContextClassLoader().getResource("").getPath());
-			loadPropertiesFromFile(dir);
+			URL url = Thread.currentThread().getContextClassLoader().getResource("");
+			if (url.getProtocol().equals("file")) {				
+				loadPropertiesFromFile(new File(url.getPath()));
+			}else if (url.getProtocol().equals("jar")) {
+				try {					
+					String jarFilePath = url.getFile();	
+					jarFilePath = jarFilePath.split("jar!")[0] + "jar";
+					jarFilePath = jarFilePath.substring("file:".length());
+					jarFilePath = java.net.URLDecoder.decode(jarFilePath, "UTF-8");
+					JarFile jarFile = new JarFile(jarFilePath);
+					
+					Enumeration<JarEntry> entries = jarFile.entries(); 
+			        while (entries.hasMoreElements()) {  
+			        	JarEntry entry = entries.nextElement();
+			        	if(entry.getName().endsWith(".properties")){
+			        		InputStream inputStream = jarFile.getInputStream(jarFile.getJarEntry(entry.getName()));
+			        		Properties properties = new Properties();
+			        		properties.load(inputStream);
+			        		try {inputStream.close();} catch (Exception e) {}
+			        		for(String key : properties.stringPropertyNames()) { 
+			        			String value = properties.getProperty(key);
+			        			if(value != null && !"".equals(value.toString().trim())){
+			        				propertiesMap.put(key, value);
+			        			}
+			        		}
+			        	}
+			 
+			        } 
+			        jarFile.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			
+			}
 			inited = true;
 		} catch (Exception e) {
 			inited = true;

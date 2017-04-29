@@ -106,7 +106,7 @@ public class MybatisMapperParser {
 						String jarFilePath = resource.getFile();	
 						
 						//file:/Users/vakinge/.m2/repository/com/jeesuite/demo/demo-dao/1.0-SNAPSHOT/demo-dao-1.0-SNAPSHOT.jar!/mapper;
-						jarFilePath = jarFilePath.split("!/")[0];
+						jarFilePath = jarFilePath.split("jar!")[0] + "jar";
 						jarFilePath = jarFilePath.substring("file:".length());
 						log.info("mapper file in jar:{}",jarFilePath);
 						jarFilePath = java.net.URLDecoder.decode(jarFilePath, "UTF-8");
@@ -118,6 +118,7 @@ public class MybatisMapperParser {
 							for (String fileName : fileNames) {
 								InputStream inputStream = jarFile.getInputStream(jarFile.getJarEntry(fileName));
 								parseMapperFile(inputStream);
+								try {inputStream.close();} catch (Exception e) {}
 							}
 						}
 						
