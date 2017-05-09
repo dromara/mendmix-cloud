@@ -66,6 +66,8 @@ public class JeesuiteMybatisConfiguration implements InitializingBean {
 			interceptor.setMapperLocations(mapperLocations);
 			interceptor.setInterceptorHandlers(interceptorHandlers);
 			sqlSessionFactory.getConfiguration().addInterceptor(interceptor);
+		}else{
+			MybatisMapperParser.setMapperLocations(mapperLocations);
 		}
 
 		//

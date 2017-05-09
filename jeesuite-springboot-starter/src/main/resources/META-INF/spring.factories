@@ -1,0 +1,4 @@
+# Auto Configure
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.jeesuite.springboot.starter.mybatis.JeesuiteMybatisConfiguration,\
+com.jeesuite.springboot.starter.cache.DelegateCacheConfiguration

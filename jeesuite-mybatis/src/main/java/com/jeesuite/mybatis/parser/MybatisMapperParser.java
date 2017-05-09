@@ -44,6 +44,7 @@ public class MybatisMapperParser {
 	private static String mapperFileSuffix = "Mapper.xml";
 	private static String mapperBaseDir;
 	public static void setMapperLocations(String mapperLocations){
+		if(mapperBaseDir != null)return;
 		//classpath:META-INF/mapper/*Mapper.xml
 		mapperLocations = mapperLocations.split(":")[1];
 		int spitPos = mapperLocations.lastIndexOf("/");
