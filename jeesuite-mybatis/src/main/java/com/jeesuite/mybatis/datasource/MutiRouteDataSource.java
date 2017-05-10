@@ -22,6 +22,8 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.EnvironmentAware;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.AbstractDataSource;
 import org.springframework.jdbc.datasource.lookup.DataSourceLookup;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
@@ -35,7 +37,7 @@ import com.alibaba.druid.pool.DruidDataSource;
  * @date 2015年11月18日
  * @Copyright (c) 2015, jwww
  */
-public class MutiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean{  
+public class MutiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean,EnvironmentAware{  
 
 	private static final Logger logger = LoggerFactory.getLogger(MutiRouteDataSource.class);
 	
@@ -50,7 +52,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	private int dbGroupNums = 1;//数据库分库组数
 	
 	//
-	private ConfigReader configReader;
+	private Environment environment;
 
 	private DataSourceLookup dataSourceLookup = new JndiDataSourceLookup();
 
@@ -66,14 +68,13 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 		this.dataSourceLookup = (dataSourceLookup != null ? dataSourceLookup : new JndiDataSourceLookup());
 	}
 	
-	public void setConfigReader(ConfigReader configReader) {
-		this.configReader = configReader;
-	}
+	@Override
+	public void setEnvironment(Environment environment) {
+		this.environment = environment;
+	}  
 
 	@Override
 	public void afterPropertiesSet() {
-		if(configReader == null) configReader = new DefaultConfigReader();
-		
 		Map<String, DataSourceInfo> map = parseDataSourceConfFromProperties();
 		
 		if(map.isEmpty())throw new RuntimeException("Db config Not found..");
@@ -242,7 +243,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
         // 属性文件  
         Map<String, DataSourceInfo> mapDataSource = new HashMap<String,DataSourceInfo>(); 
         
-        dbGroupNums = Integer.parseInt(configReader.getIfAbent("db.group.size", 1));
+        dbGroupNums = Integer.parseInt(environment.getProperty("db.group.size", "1"));
         logger.info(">>>>>>dbGroupNums:" + dbGroupNums);
         for (int i = 0; i < dbGroupNums; i++) {
 			String groupPrefix = i == 0 ? "" : "group" + i ;
@@ -254,7 +255,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 			int index = 1;
 			wl:while(true){
 				datasourceKey = (StringUtils.isNotBlank(groupPrefix) ? groupPrefix + "." : "") + "slave" + index;
-				if(!configReader.containKey(datasourceKey + ".db.url"))break wl;
+				if(!environment.containsProperty(datasourceKey + ".db.url"))break wl;
 				sourceInfo = new DataSourceInfo(i,datasourceKey); 
 				mapDataSource.put(datasourceKey, sourceInfo);
 				index++;
@@ -289,53 +290,53 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 			String tmpVal = null;
 			this.dbGroupIndex = groupIndex;
 			//全局配置
-			this.driveClassName = configReader.get("db.driverClass");
-			this.initialSize = Integer.parseInt(configReader.getIfAbent("db.initialSize","1"));
-			this.minIdle = Integer.parseInt(configReader.getIfAbent("db.minIdle","1"));
-			this.maxActive = Integer.parseInt(configReader.getIfAbent("db.maxActive","10"));
-			this.maxWait = Integer.parseInt(configReader.getIfAbent("db.maxWait","60000"));
-			this.minEvictableIdleTimeMillis = Integer.parseInt(configReader.getIfAbent("db.minEvictableIdleTimeMillis","300000"));
-			this.timeBetweenEvictionRunsMillis = Integer.parseInt(configReader.getIfAbent("db.timeBetweenEvictionRunsMillis","60000"));
-			this.testOnBorrow = Boolean.parseBoolean(configReader.getIfAbent("db.testOnBorrow","false"));
-			this.testOnReturn = Boolean.parseBoolean(configReader.getIfAbent("db.testOnReturn","false"));
+			this.driveClassName = environment.getProperty("db.driverClass");
+			this.initialSize = Integer.parseInt(environment.getProperty("db.initialSize","1"));
+			this.minIdle = Integer.parseInt(environment.getProperty("db.minIdle","1"));
+			this.maxActive = Integer.parseInt(environment.getProperty("db.maxActive","10"));
+			this.maxWait = Integer.parseInt(environment.getProperty("db.maxWait","60000"));
+			this.minEvictableIdleTimeMillis = Integer.parseInt(environment.getProperty("db.minEvictableIdleTimeMillis","300000"));
+			this.timeBetweenEvictionRunsMillis = Integer.parseInt(environment.getProperty("db.timeBetweenEvictionRunsMillis","60000"));
+			this.testOnBorrow = Boolean.parseBoolean(environment.getProperty("db.testOnBorrow","false"));
+			this.testOnReturn = Boolean.parseBoolean(environment.getProperty("db.testOnReturn","false"));
 			
 			//私有配置
 			this.master = keyPrefix.contains(MASTER_KEY);
-			this.connUrl = configReader.get(keyPrefix + ".db.url");
+			this.connUrl = environment.getProperty(keyPrefix + ".db.url");
 			Validate.notBlank(this.connUrl, "Config [%s.db.url] is required", keyPrefix);
 			
-			this.userName = configReader.get(keyPrefix + ".db.username");
+			this.userName = environment.getProperty(keyPrefix + ".db.username");
 			Validate.notBlank(this.userName, "Config [%s.db.username] is required", keyPrefix);
 			
-			this.password = configReader.get(keyPrefix + ".db.password");
+			this.password = environment.getProperty(keyPrefix + ".db.password");
 			Validate.notBlank(this.password, "Config [%s.db.password] is required", keyPrefix);
 			//覆盖全局配置
-			if((tmpVal = configReader.get(keyPrefix + ".db.initialSize")) != null){				
+			if((tmpVal = environment.getProperty(keyPrefix + ".db.initialSize")) != null){				
 				this.initialSize = Integer.parseInt(tmpVal);
 			}
-			if((tmpVal = configReader.get(keyPrefix + ".db.minIdle")) != null){				
+			if((tmpVal = environment.getProperty(keyPrefix + ".db.minIdle")) != null){				
 				this.minIdle = Integer.parseInt(tmpVal);
 			}
-			if((tmpVal = configReader.get(keyPrefix + ".db.maxActive")) != null){				
+			if((tmpVal = environment.getProperty(keyPrefix + ".db.maxActive")) != null){				
 				this.maxActive = Integer.parseInt(tmpVal);
 			}
-			if((tmpVal = configReader.get(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
+			if((tmpVal = environment.getProperty(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
 				this.minEvictableIdleTimeMillis = Integer.parseInt(tmpVal);
 			}
 			
-			if((tmpVal = configReader.get(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
+			if((tmpVal = environment.getProperty(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
 				this.minEvictableIdleTimeMillis = Integer.parseInt(tmpVal);
 			}
 			
-			if((tmpVal = configReader.get(keyPrefix + ".db.timeBetweenEvictionRunsMillis")) != null){				
+			if((tmpVal = environment.getProperty(keyPrefix + ".db.timeBetweenEvictionRunsMillis")) != null){				
 				this.timeBetweenEvictionRunsMillis = Integer.parseInt(tmpVal);
 			}
 			
-			if((tmpVal = configReader.get(keyPrefix + ".db.testOnBorrow")) != null){				
+			if((tmpVal = environment.getProperty(keyPrefix + ".db.testOnBorrow")) != null){				
 				this.testOnBorrow = Boolean.parseBoolean(tmpVal);
 			}
 			
-			if((tmpVal = configReader.get(keyPrefix + ".db.testOnReturn")) != null){				
+			if((tmpVal = environment.getProperty(keyPrefix + ".db.testOnReturn")) != null){				
 				this.testOnReturn = Boolean.parseBoolean(tmpVal);
 			}
 			
@@ -351,5 +352,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 			str.append("userName").append(" = ").append(userName);
 			return str.toString();
 		}    
-    }  
+    }
+
+	
 } 
