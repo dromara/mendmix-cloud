@@ -1,9 +1,11 @@
 package com.jeesuite.confcenter;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
+import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.confcenter.utils.HttpUtils;
 
 
@@ -16,7 +18,7 @@ public class ConfigcenterContext {
 	private String apiBaseUrl;
 	private String app;
 	private String env;
-	private String version = "1.0.0";
+	private String version = "0.0.0";
 	
 	public static ConfigcenterContext getInstance() {
 		return instance;
@@ -56,15 +58,24 @@ public class ConfigcenterContext {
 	
 	public Properties getAllRemoteProperties(){
 		if(!remoteEnabled)return null;
-		Map<String, String> params = new HashMap<>();
+		Properties properties = new Properties();
 		try {	
 			String url = String.format("%s/admin/api/fetch_all_configs?appName=%s&env=%s&version=%s", apiBaseUrl,app,env,version);
-			String content = HttpUtils.getContent(url);
-			System.out.println(content);
+			String jsonString = HttpUtils.getContent(url);
+			Map<String,Object> map = JsonUtils.toObject(jsonString, Map.class);
+			if(map.containsKey("code")){
+				throw new RuntimeException(map.get("msg").toString());
+			}
+			Set<String> keys = map.keySet();
+			for (String key : keys) {
+				properties.put(key, map.get(key));
+				//
+				ResourceUtils.add(key, map.get(key).toString());  
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return null;
+		return properties;
 	}
 
 }
