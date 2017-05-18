@@ -5,11 +5,13 @@ package com.jeesuite.springboot.starter.kafka;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.jeesuite.cache.redis.JedisProviderFactoryBean;
+import com.jeesuite.kafka.spring.TopicProducerSpringProvider;
 
 import redis.clients.jedis.JedisPoolConfig;
 
@@ -20,18 +22,22 @@ import redis.clients.jedis.JedisPoolConfig;
  */
 @Configuration
 @EnableConfigurationProperties(KafkaProducerProperties.class)
+@ConditionalOnClass(TopicProducerSpringProvider.class)
 public class DelegateKafkaProducerConfiguration {
 
 	@Autowired
 	private KafkaProducerProperties producerProperties;
 
-	
 	@Bean
-	public JedisProviderFactoryBean jedisPool() {
+	public TopicProducerSpringProvider producerProvider() {
 
-		JedisProviderFactoryBean bean = new JedisProviderFactoryBean();
+		TopicProducerSpringProvider bean = new TopicProducerSpringProvider();
+		bean.setConfigs(producerProperties.getConfigs());
+		bean.setDefaultAsynSend(producerProperties.isDefaultAsynSend());
+		bean.setDelayRetries(producerProperties.getDelayRetries());
+		bean.setMonitorZkServers(producerProperties.getMonitorZkServers());
+		bean.setProducerGroup(producerProperties.getProducerGroup());
 
-		System.out.println(producerProperties);
 		return bean;
 	}
 

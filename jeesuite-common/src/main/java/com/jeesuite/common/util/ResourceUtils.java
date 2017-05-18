@@ -22,11 +22,11 @@ import java.util.jar.JarFile;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2013年2月25日
  */
-public class ResourceUtils {
+public final class ResourceUtils {
 
 	static boolean inited;
 	
-	static Map<String, String> propertiesMap = new HashMap<>();
+	final static Map<String, String> propertiesMap = new HashMap<>();
 
 	private synchronized static void load() {
 		try {
@@ -130,7 +130,7 @@ public class ResourceUtils {
 		return defalutValue;
 	}
 	
-	public void add(String key,String value){
+	public synchronized static void add(String key,String value){
 		propertiesMap.put(key, value);
 	}
 	

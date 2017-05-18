@@ -1,7 +1,10 @@
 package com.jeesuite.confcenter.springboot;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 import org.springframework.boot.env.PropertySourceLoader;
 import org.springframework.core.PriorityOrdered;
@@ -45,8 +48,14 @@ public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrde
 			
 			if(ccContext.getApiBaseUrl() != null){
 				Properties remoteProperties = ccContext.getAllRemoteProperties();
-				if(remoteProperties != null && !remoteProperties.isEmpty()){
-					properties.putAll(remoteProperties);
+				if(remoteProperties != null){
+					Set<Entry<Object, Object>> entrySet = remoteProperties.entrySet();
+					for (Entry<Object, Object> entry : entrySet) {
+						//本地配置优先原则
+						if(properties.containsKey(entry.getKey()))continue;
+						properties.put(entry.getKey(), entry.getValue());
+					}
+					//properties.putAll(remoteProperties);
 				}
 			}
 			
