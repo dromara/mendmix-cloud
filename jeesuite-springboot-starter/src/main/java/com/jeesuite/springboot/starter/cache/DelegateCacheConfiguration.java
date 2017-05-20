@@ -6,6 +6,7 @@ package com.jeesuite.springboot.starter.cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ import redis.clients.jedis.JedisPoolConfig;
 @Configuration
 @EnableConfigurationProperties(CacheProperties.class)
 @ConditionalOnClass(JedisProviderFactoryBean.class)
+@ConditionalOnProperty(name="jeesuite.cache.mode")
 public class DelegateCacheConfiguration {
 
 	@Autowired
@@ -29,7 +31,7 @@ public class DelegateCacheConfiguration {
 
 	
 	@Bean
-	public JedisProviderFactoryBean jedisPool(@Qualifier("jedisPoolConfig") JedisPoolConfig config) {
+	public JedisProviderFactoryBean jedisProviderFactory(@Qualifier("jedisPoolConfig") JedisPoolConfig config) {
 
 		JedisProviderFactoryBean bean = new JedisProviderFactoryBean();
 		bean.setDatabase(cacheProperties.getDatabase());
