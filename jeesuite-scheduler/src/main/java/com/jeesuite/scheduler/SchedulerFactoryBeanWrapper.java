@@ -183,7 +183,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
                         Class<?> clazz = Class.forName(className);
                         if(clazz.isAnnotationPresent(ScheduleConf.class)){
                         	ScheduleConf annotation = clazz.getAnnotation(ScheduleConf.class);
-                        	AbstractJob job = (AbstractJob) clazz.newInstance();
+                        	AbstractJob job = (AbstractJob) context.getBean(clazz);
                         	job.setCronExpr(annotation.cronExpr());
                         	job.setExecuteOnStarted(annotation.executeOnStarted());
                         	job.setGroup(groupName);
@@ -200,6 +200,9 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
                 }
                 logger.info("<<scan package["+scanBasePackage+"] finished!");
             } catch (Exception e) {
+            	if(e instanceof org.springframework.beans.factory.NoSuchBeanDefinitionException){
+            		throw (org.springframework.beans.factory.NoSuchBeanDefinitionException)e;
+            	}
             	logger.error("<<scan package["+scanBasePackage+"] error", e);
             }
 		}

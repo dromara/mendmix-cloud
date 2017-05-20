@@ -10,6 +10,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import com.jeesuite.scheduler.JobRegistry;
 import com.jeesuite.scheduler.SchedulerFactoryBeanWrapper;
@@ -41,7 +43,8 @@ public class DelegateScheConfiguration {
 		}
 	}
 	
-	@Bean()
+	@Bean
+	@Order(Ordered.LOWEST_PRECEDENCE)
 	public SchedulerFactoryBeanWrapper schedulerFactoryBean(JobRegistry jobRegistry) {
 		SchedulerFactoryBeanWrapper bean = new SchedulerFactoryBeanWrapper();
 		bean.setGroupName(cacheProperties.getGroupName());

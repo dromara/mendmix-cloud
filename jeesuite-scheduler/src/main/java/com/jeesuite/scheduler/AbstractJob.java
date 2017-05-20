@@ -222,6 +222,7 @@ public abstract class AbstractJob implements DisposableBean{
      */
     public boolean isAbnormalabort(JobConfig schConf){
     	if(schConf.getLastFireTime() == null)return false;
+    	if(schConf.getLastFireTime() == null || getTrigger().getPreviousFireTime() == null)return false;
     	//上次开始执行到当前执行时长
     	long runingTime = DateUtils.getDiffSeconds(schConf.getLastFireTime(), getTrigger().getPreviousFireTime());
     	//正常阀值

@@ -4,6 +4,7 @@
 package com.jeesuite.test.sch;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.springframework.stereotype.Service;
 
 import com.jeesuite.scheduler.AbstractJob;
 import com.jeesuite.scheduler.JobContext;
@@ -15,6 +16,7 @@ import com.jeesuite.scheduler.annotation.ScheduleConf;
  * @date 2016年1月28日
  * @Copyright (c) 2015, lifesense.com
  */
+@Service
 @ScheduleConf(cronExpr="0/5 * * * * ?",jobName="demoTask",executeOnStarted = true)
 public class DemoTask extends AbstractJob{
 
