@@ -7,6 +7,7 @@ import org.apache.commons.lang3.RandomUtils;
 
 import com.jeesuite.scheduler.AbstractJob;
 import com.jeesuite.scheduler.JobContext;
+import com.jeesuite.scheduler.annotation.ScheduleConf;
 
 /**
  * @description <br>
@@ -14,6 +15,7 @@ import com.jeesuite.scheduler.JobContext;
  * @date 2016年1月28日
  * @Copyright (c) 2015, lifesense.com
  */
+@ScheduleConf(cronExpr="0/5 * * * * ?",jobName="demoTask",executeOnStarted = true)
 public class DemoTask extends AbstractJob{
 
 	int count = 1;

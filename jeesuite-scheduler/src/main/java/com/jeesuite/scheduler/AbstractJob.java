@@ -308,6 +308,31 @@ public abstract class AbstractJob implements DisposableBean{
 	}
 
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((jobName == null) ? 0 : jobName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AbstractJob other = (AbstractJob) obj;
+		if (jobName == null) {
+			if (other.jobName != null)
+				return false;
+		} else if (!jobName.equals(other.jobName))
+			return false;
+		return true;
+	}
+
 	/**
 	 * 是否开启并行处理
 	 * @return

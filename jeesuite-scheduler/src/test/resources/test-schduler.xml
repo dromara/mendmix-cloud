@@ -22,6 +22,12 @@
 	       <bean class="com.jeesuite.test.sch.DbConfigPersistHandler" />
 	    </property>
 	    <property name="registry" ref="jobRegistry" />
+	    <!-- 
+	     scanPackages 和 schedulers 必配置一个
+	     配置了scanPackages：将扫描该包下面@ScheduleConf 标注的job并注册成任务
+	    -->
+	    <!-- 多个用“,”或者“;”隔开 -->
+	    <property name="scanPackages" value="com.jeesuite.test.sch" />
 		<property name="schedulers">
 			<list>
 			    <!-- 以下配置每个任务列表 -->
