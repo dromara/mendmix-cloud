@@ -59,7 +59,7 @@
 		<module>jeesuite-scheduler</module>
 		<module>jeesuite-mybatis</module>
 		<module>jeesuite-rest</module>
-		<module>jeesuite-confcenter</module>
+		<module>jeesuite-confcenter-client</module>
 		<module>jeesuite-common2</module>
 		<module>jeesuite-log</module>
 		<module>jeesuite-filesystem</module>
@@ -202,9 +202,11 @@
 
 	<distributionManagement>
 		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
-		<!-- <snapshotRepository> <id>ossrh</id> <url>https://oss.sonatype.org/content/repositories/snapshots</url> 
-			</snapshotRepository> -->
-		
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+
 		<repository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
