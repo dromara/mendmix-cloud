@@ -34,6 +34,7 @@ public class ConfigcenterContext {
 		return apiBaseUrl;
 	}
 	public void setApiBaseUrl(String apiBaseUrl) {
+		if(apiBaseUrl != null)if(apiBaseUrl.endsWith("/"))apiBaseUrl = apiBaseUrl.substring(0, apiBaseUrl.length() - 1);
 		this.apiBaseUrl = apiBaseUrl;
 	}
 	public String getApp() {
@@ -60,7 +61,7 @@ public class ConfigcenterContext {
 		if(!remoteEnabled)return null;
 		Properties properties = new Properties();
 		try {	
-			String url = String.format("%s/admin/api/fetch_all_configs?appName=%s&env=%s&version=%s", apiBaseUrl,app,env,version);
+			String url = String.format("%s/api/fetch_all_configs?appName=%s&env=%s&version=%s", apiBaseUrl,app,env,version);
 			String jsonString = HttpUtils.getContent(url);
 			Map<String,Object> map = JsonUtils.toObject(jsonString, Map.class);
 			if(map.containsKey("code")){
