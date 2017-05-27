@@ -45,34 +45,49 @@ public class SchedulerMonitor implements Closeable{
 		if(zkClient != null)zkClient.close();
 	}
 	
-	public List<JobGroupInfo> getAllJobGroups(){
-		
-		//zk registry
-		List<JobGroupInfo> result = new ArrayList<>();
-		String path = ZkJobRegistry.ROOT.substring(0,ZkJobRegistry.ROOT.length() - 1);
-		List<String> groupNames = zkClient.getChildren(path);
-		if(groupNames == null)return result;
-		for (String groupName : groupNames) {
-			JobGroupInfo groupInfo = new JobGroupInfo();
-			groupInfo.setName(groupName);
-			//
-			path = ZkJobRegistry.ROOT + groupName;
-			List<String> children = zkClient.getChildren(path);
-			for (String child : children) {
-				if("nodes".equals(child)){
-					path = ZkJobRegistry.ROOT + groupName + "/nodes";
-					groupInfo.setClusterNodes(zkClient.getChildren(path));
-				}else{
-					path = ZkJobRegistry.ROOT + groupName + "/" + child;
-					Object data = zkClient.readData(path);
-					if(data != null){						
-						JobConfig jobConfig = JsonUtils.toObject(data.toString(), JobConfig.class);
-						groupInfo.getJobs().add(jobConfig);
-					}
+	public JobGroupInfo getJobGroupInfo(String groupName){
+
+		JobGroupInfo groupInfo = new JobGroupInfo();
+		groupInfo.setName(groupName);
+		//
+		String path = ZkJobRegistry.ROOT + groupName;
+		List<String> children = zkClient.getChildren(path);
+		for (String child : children) {
+			if("nodes".equals(child)){
+				path = ZkJobRegistry.ROOT + groupName + "/nodes";
+				groupInfo.setClusterNodes(zkClient.getChildren(path));
+			}else{
+				path = ZkJobRegistry.ROOT + groupName + "/" + child;
+				Object data = zkClient.readData(path);
+				if(data != null){						
+					JobConfig jobConfig = JsonUtils.toObject(data.toString(), JobConfig.class);
+					groupInfo.getJobs().add(jobConfig);
 				}
 			}
+		}
+		
+		if(groupInfo.getClusterNodes().size() > 0){				
+			return groupInfo;
+		}
+		
+		return null;
+	
+	}
+	
+	public List<String> getGroups(){
+		String path = ZkJobRegistry.ROOT.substring(0,ZkJobRegistry.ROOT.length() - 1);
+		return zkClient.getChildren(path);
+	}
+	
+	public List<JobGroupInfo> getAllJobGroups(){
+		//zk registry
+		List<JobGroupInfo> result = new ArrayList<>();
+		List<String> groupNames = getGroups();
+		if(groupNames == null)return result;
+		for (String groupName : groupNames) {
+			JobGroupInfo groupInfo = getJobGroupInfo(groupName);
 			
-			if(groupInfo.getClusterNodes().size() > 0){				
+			if(groupInfo != null){				
 				result.add(groupInfo);
 			}
 		}
