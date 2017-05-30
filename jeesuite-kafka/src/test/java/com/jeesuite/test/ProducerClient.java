@@ -37,7 +37,7 @@ public class ProducerClient implements ApplicationContextAware{
 		
 		final AtomicInteger count = new AtomicInteger(0);
 		
-		final int nums = 5000;
+		final int nums = 100;
 		timer.schedule(new TimerTask() {
 			
 			@Override
@@ -51,14 +51,14 @@ public class ProducerClient implements ApplicationContextAware{
 					pool.submit(new Runnable() {			
 						@Override
 						public void run() {
-							String topic = new Random().nextBoolean() ? "demo-topic" : "demo2-topic";
+							String topic = new Random().nextBoolean() ? "demo-topic1" : "demo-topic2";
                             topicProducer.publish(topic, new DefaultMessage(RandomStringUtils.random(5, true, true)));
 							count.incrementAndGet();
 						}
 					});
 				}
 			}
-		}, 3000, 3000);
+		}, 1000, 500);
 		
 		while(true){
 			if(count.get() >= nums){

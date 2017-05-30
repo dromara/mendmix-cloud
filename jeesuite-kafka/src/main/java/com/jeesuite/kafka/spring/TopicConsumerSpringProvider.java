@@ -12,11 +12,22 @@ import org.apache.commons.lang3.Validate;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
+import org.springframework.core.type.classreading.MetadataReader;
+import org.springframework.core.type.classreading.MetadataReaderFactory;
+import org.springframework.util.ClassUtils;
 
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.kafka.annotation.ConsumerHandler;
 import com.jeesuite.kafka.consumer.ConsumerContext;
 import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
 import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
@@ -33,10 +44,12 @@ import com.jeesuite.kafka.utils.KafkaConst;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月25日
  */
-public class TopicConsumerSpringProvider implements InitializingBean, DisposableBean {
+public class TopicConsumerSpringProvider implements InitializingBean, DisposableBean,ApplicationContextAware {
 	
 	private final static Logger logger = LoggerFactory.getLogger(TopicConsumerSpringProvider.class);
 
+	private ApplicationContext context;
+	
     private TopicConsumer consumer;
 
     /**
@@ -49,7 +62,9 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
     
     private boolean useNewAPI = false;
     
-    private Map<String, MessageHandler> topicHandlers;
+    private String scanPackages;
+    
+    private Map<String, MessageHandler> topicHandlers = new  HashMap<>();
     
     private int processThreads = 200;
     
@@ -67,6 +82,11 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
     
 	@Override
     public void afterPropertiesSet() throws Exception {
+		
+		if(StringUtils.isNotBlank(scanPackages)){
+			String[] packages = org.springframework.util.StringUtils.tokenizeToStringArray(this.scanPackages, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+			scanAndRegisterAnnotationJobs(packages);
+		}
 		
 		Validate.isTrue(topicHandlers != null && topicHandlers.size() > 0, "at latest one topic");
 		//当前状态
@@ -211,11 +231,57 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		this.offsetLogHanlder = offsetLogHanlder;
 	}
 
-
+	public void setScanPackages(String scanPackages) {
+		this.scanPackages = scanPackages;
+	}
 
 	@Override
     public void destroy() throws Exception {
 		consumer.close();
     }
+	
+	private void scanAndRegisterAnnotationJobs(String[] scanBasePackages){
+    	String RESOURCE_PATTERN = "/**/*.class";
+    	
+    	ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
+    	for (String scanBasePackage : scanBasePackages) {
+    		logger.info(">>begin scan package [{}] with Annotation[ScheduleConf] jobs ",scanBasePackage);
+    		try {
+                String pattern = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + ClassUtils.convertClassNameToResourcePath(scanBasePackage)
+                        + RESOURCE_PATTERN;
+                org.springframework.core.io.Resource[] resources = resourcePatternResolver.getResources(pattern);
+                MetadataReaderFactory readerFactory = new CachingMetadataReaderFactory(resourcePatternResolver);
+                for (org.springframework.core.io.Resource resource : resources) {
+                    if (resource.isReadable()) {
+                        MetadataReader reader = readerFactory.getMetadataReader(resource);
+                        String className = reader.getClassMetadata().getClassName();
+                        Class<?> clazz = Class.forName(className);
+                        if(clazz.isAssignableFrom(ConsumerHandler.class)){
+                        	ConsumerHandler annotation = clazz.getAnnotation(ConsumerHandler.class);
+                        	MessageHandler hander = (MessageHandler) context.getBean(clazz);
+                        	if(!topicHandlers.containsKey(annotation.topic())){                        		
+                        		topicHandlers.put(annotation.topic(), hander);
+                        		logger.info("register new MessageHandler:{}-{}",annotation.topic(),clazz.getName());
+                        	}
+                        }
+                    }
+                }
+                logger.info("<<scan package["+scanBasePackage+"] finished!");
+            } catch (Exception e) {
+            	if(e instanceof org.springframework.beans.factory.NoSuchBeanDefinitionException){
+            		throw (org.springframework.beans.factory.NoSuchBeanDefinitionException)e;
+            	}
+            	logger.error("<<scan package["+scanBasePackage+"] error", e);
+            }
+		}
+    	
+	}
+
+
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.context = applicationContext;
+	}
 
 }
