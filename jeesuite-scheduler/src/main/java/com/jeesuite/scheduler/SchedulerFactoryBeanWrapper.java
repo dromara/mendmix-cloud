@@ -21,6 +21,8 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.Ordered;
+import org.springframework.core.PriorityOrdered;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
@@ -41,7 +43,7 @@ import com.jeesuite.spring.SpringInstanceProvider;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年8月17日
  */
-public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,InitializingBean,DisposableBean{
+public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,InitializingBean,DisposableBean,PriorityOrdered{
 	
 	protected static final Logger logger = LoggerFactory.getLogger(SchedulerFactoryBeanWrapper.class);
 
@@ -214,6 +216,11 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	@Override
 	public void destroy() throws Exception {
 		JobContext.getContext().close();
+	}
+	
+	@Override
+	public int getOrder() {
+		return Ordered.LOWEST_PRECEDENCE;
 	}
 
 }

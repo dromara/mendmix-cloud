@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.jeesuite.kafka.spring.TopicConsumerSpringProvider;
-import com.jeesuite.kafka.spring.TopicProducerSpringProvider;
 
 /**
  * @description <br>

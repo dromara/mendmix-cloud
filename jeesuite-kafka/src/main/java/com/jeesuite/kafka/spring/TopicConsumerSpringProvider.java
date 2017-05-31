@@ -18,6 +18,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.Ordered;
+import org.springframework.core.PriorityOrdered;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
@@ -44,7 +46,7 @@ import com.jeesuite.kafka.utils.KafkaConst;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月25日
  */
-public class TopicConsumerSpringProvider implements InitializingBean, DisposableBean,ApplicationContextAware {
+public class TopicConsumerSpringProvider implements InitializingBean, DisposableBean,ApplicationContextAware,PriorityOrdered {
 	
 	private final static Logger logger = LoggerFactory.getLogger(TopicConsumerSpringProvider.class);
 
@@ -85,7 +87,7 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		
 		if(StringUtils.isNotBlank(scanPackages)){
 			String[] packages = org.springframework.util.StringUtils.tokenizeToStringArray(this.scanPackages, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-			scanAndRegisterAnnotationJobs(packages);
+			scanAndRegisterAnnotationTopics(packages);
 		}
 		
 		Validate.isTrue(topicHandlers != null && topicHandlers.size() > 0, "at latest one topic");
@@ -240,12 +242,12 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		consumer.close();
     }
 	
-	private void scanAndRegisterAnnotationJobs(String[] scanBasePackages){
+	private void scanAndRegisterAnnotationTopics(String[] scanBasePackages){
     	String RESOURCE_PATTERN = "/**/*.class";
     	
     	ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
     	for (String scanBasePackage : scanBasePackages) {
-    		logger.info(">>begin scan package [{}] with Annotation[ScheduleConf] jobs ",scanBasePackage);
+    		logger.info(">>begin scan package [{}] with Annotation[ConsumerHandler] MessageHanlder ",scanBasePackage);
     		try {
                 String pattern = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + ClassUtils.convertClassNameToResourcePath(scanBasePackage)
                         + RESOURCE_PATTERN;
@@ -256,7 +258,7 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
                         MetadataReader reader = readerFactory.getMetadataReader(resource);
                         String className = reader.getClassMetadata().getClassName();
                         Class<?> clazz = Class.forName(className);
-                        if(clazz.isAssignableFrom(ConsumerHandler.class)){
+                        if(clazz.isAnnotationPresent(ConsumerHandler.class)){
                         	ConsumerHandler annotation = clazz.getAnnotation(ConsumerHandler.class);
                         	MessageHandler hander = (MessageHandler) context.getBean(clazz);
                         	if(!topicHandlers.containsKey(annotation.topic())){                        		
@@ -282,6 +284,13 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.context = applicationContext;
+	}
+
+
+
+	@Override
+	public int getOrder() {
+		return Ordered.LOWEST_PRECEDENCE;
 	}
 
 }

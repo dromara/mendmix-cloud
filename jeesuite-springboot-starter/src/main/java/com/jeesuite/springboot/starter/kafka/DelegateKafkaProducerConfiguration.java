@@ -4,16 +4,12 @@
 package com.jeesuite.springboot.starter.kafka;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.jeesuite.cache.redis.JedisProviderFactoryBean;
 import com.jeesuite.kafka.spring.TopicProducerSpringProvider;
-
-import redis.clients.jedis.JedisPoolConfig;
 
 /**
  * @description <br>
