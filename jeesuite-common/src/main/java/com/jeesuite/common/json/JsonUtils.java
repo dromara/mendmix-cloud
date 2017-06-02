@@ -1,5 +1,7 @@
 package com.jeesuite.common.json;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -67,4 +69,10 @@ public class JsonUtils {
             return getJsonNodeValue(node.get(s1), s2);  
         }  
     }  
+	
+	public static void main(String[] args) {
+		List<Object> list = new ArrayList<>();
+		list.add(new Date());
+		System.out.println(toJson(list));
+	}
 }

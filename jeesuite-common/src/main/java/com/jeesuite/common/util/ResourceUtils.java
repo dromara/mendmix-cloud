@@ -134,4 +134,8 @@ public final class ResourceUtils {
 		propertiesMap.put(key, value);
 	}
 	
+	public static boolean  containsProperty(String key){
+		return propertiesMap.containsKey(key);
+	}
+	
 }
