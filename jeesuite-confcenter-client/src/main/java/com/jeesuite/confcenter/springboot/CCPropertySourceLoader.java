@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.env.PropertySourceLoader;
 import org.springframework.core.PriorityOrdered;
 import org.springframework.core.env.PropertiesPropertySource;
@@ -29,7 +30,9 @@ public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrde
 		if (profile == null) {
 			Properties properties = PropertiesLoaderUtils.loadProperties(resource);
 			if(ccContext.getApp() == null){
-				ccContext.setApp(properties.getProperty("spring.application.name"));
+				String appName = properties.getProperty("jeesuite.configcenter.appName");
+				if(StringUtils.isBlank(appName))appName = properties.getProperty("spring.application.name");
+				ccContext.setApp(appName);
 				
 			}
 			if(ccContext.getApp() != null){

@@ -28,6 +28,13 @@
       SELECT * FROM users where mobile = #{mobile} 
   </select>
   
+   <select id="findMobileByIds" parameterType="java.util.List" resultType="String">
+      SELECT mobile FROM users where id in
+     <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
+			#{id}
+	 </foreach>
+  </select>
+  
   <select id="countByExample" resultType="int" parameterType="com.jeesuite.mybatis.test.entity.UserEntity">
       SELECT count(0) FROM users where 1=1
       <if test="name != null">  

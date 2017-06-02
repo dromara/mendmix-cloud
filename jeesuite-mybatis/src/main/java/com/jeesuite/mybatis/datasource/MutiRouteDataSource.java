@@ -29,6 +29,7 @@ import org.springframework.jdbc.datasource.lookup.DataSourceLookup;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.jeesuite.common.util.ResourceUtils;
 
 /**
  * 自动路由多数据源（读写分离 and 水平分库路由）
@@ -243,7 +244,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
         // 属性文件  
         Map<String, DataSourceInfo> mapDataSource = new HashMap<String,DataSourceInfo>(); 
         
-        dbGroupNums = Integer.parseInt(environment.getProperty("db.group.size", "1"));
+        dbGroupNums = Integer.parseInt(getProperty("db.group.size", "1"));
         logger.info(">>>>>>dbGroupNums:" + dbGroupNums);
         for (int i = 0; i < dbGroupNums; i++) {
 			String groupPrefix = i == 0 ? "" : "group" + i ;
@@ -255,7 +256,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 			int index = 1;
 			wl:while(true){
 				datasourceKey = (StringUtils.isNotBlank(groupPrefix) ? groupPrefix + "." : "") + "slave" + index;
-				if(!environment.containsProperty(datasourceKey + ".db.url"))break wl;
+				if(!containsProperty(datasourceKey + ".db.url"))break wl;
 				sourceInfo = new DataSourceInfo(i,datasourceKey); 
 				mapDataSource.put(datasourceKey, sourceInfo);
 				index++;
@@ -263,6 +264,18 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 		}
         return mapDataSource;  
     }  
+    
+    private String getProperty(String key,String...defs){
+    	String value = null;
+    	String defValue = defs != null && defs.length > 0 && defs[0] != null ? defs[0] : null;
+    	value = environment.getProperty(key);
+    	if(StringUtils.isBlank(value))value = ResourceUtils.get(key);
+    	return StringUtils.isBlank(value) ? defValue : value;
+    }
+    
+    private boolean containsProperty(String key){
+    	return environment.containsProperty(key) || StringUtils.isNotBlank(ResourceUtils.get(key));
+    }
 	
 	private class DataSourceInfo{  
 		//分库ID
@@ -290,53 +303,53 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 			String tmpVal = null;
 			this.dbGroupIndex = groupIndex;
 			//全局配置
-			this.driveClassName = environment.getProperty("db.driverClass");
-			this.initialSize = Integer.parseInt(environment.getProperty("db.initialSize","1"));
-			this.minIdle = Integer.parseInt(environment.getProperty("db.minIdle","1"));
-			this.maxActive = Integer.parseInt(environment.getProperty("db.maxActive","10"));
-			this.maxWait = Integer.parseInt(environment.getProperty("db.maxWait","60000"));
-			this.minEvictableIdleTimeMillis = Integer.parseInt(environment.getProperty("db.minEvictableIdleTimeMillis","300000"));
-			this.timeBetweenEvictionRunsMillis = Integer.parseInt(environment.getProperty("db.timeBetweenEvictionRunsMillis","60000"));
-			this.testOnBorrow = Boolean.parseBoolean(environment.getProperty("db.testOnBorrow","false"));
-			this.testOnReturn = Boolean.parseBoolean(environment.getProperty("db.testOnReturn","false"));
+			this.driveClassName = getProperty("db.driverClass");
+			this.initialSize = Integer.parseInt(getProperty("db.initialSize","1"));
+			this.minIdle = Integer.parseInt(getProperty("db.minIdle","1"));
+			this.maxActive = Integer.parseInt(getProperty("db.maxActive","10"));
+			this.maxWait = Integer.parseInt(getProperty("db.maxWait","60000"));
+			this.minEvictableIdleTimeMillis = Integer.parseInt(getProperty("db.minEvictableIdleTimeMillis","300000"));
+			this.timeBetweenEvictionRunsMillis = Integer.parseInt(getProperty("db.timeBetweenEvictionRunsMillis","60000"));
+			this.testOnBorrow = Boolean.parseBoolean(getProperty("db.testOnBorrow","false"));
+			this.testOnReturn = Boolean.parseBoolean(getProperty("db.testOnReturn","false"));
 			
 			//私有配置
 			this.master = keyPrefix.contains(MASTER_KEY);
-			this.connUrl = environment.getProperty(keyPrefix + ".db.url");
+			this.connUrl = getProperty(keyPrefix + ".db.url");
 			Validate.notBlank(this.connUrl, "Config [%s.db.url] is required", keyPrefix);
 			
-			this.userName = environment.getProperty(keyPrefix + ".db.username");
+			this.userName = getProperty(keyPrefix + ".db.username");
 			Validate.notBlank(this.userName, "Config [%s.db.username] is required", keyPrefix);
 			
-			this.password = environment.getProperty(keyPrefix + ".db.password");
+			this.password = getProperty(keyPrefix + ".db.password");
 			Validate.notBlank(this.password, "Config [%s.db.password] is required", keyPrefix);
 			//覆盖全局配置
-			if((tmpVal = environment.getProperty(keyPrefix + ".db.initialSize")) != null){				
+			if((tmpVal = getProperty(keyPrefix + ".db.initialSize")) != null){				
 				this.initialSize = Integer.parseInt(tmpVal);
 			}
-			if((tmpVal = environment.getProperty(keyPrefix + ".db.minIdle")) != null){				
+			if((tmpVal = getProperty(keyPrefix + ".db.minIdle")) != null){				
 				this.minIdle = Integer.parseInt(tmpVal);
 			}
-			if((tmpVal = environment.getProperty(keyPrefix + ".db.maxActive")) != null){				
+			if((tmpVal = getProperty(keyPrefix + ".db.maxActive")) != null){				
 				this.maxActive = Integer.parseInt(tmpVal);
 			}
-			if((tmpVal = environment.getProperty(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
+			if((tmpVal = getProperty(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
 				this.minEvictableIdleTimeMillis = Integer.parseInt(tmpVal);
 			}
 			
-			if((tmpVal = environment.getProperty(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
+			if((tmpVal = getProperty(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
 				this.minEvictableIdleTimeMillis = Integer.parseInt(tmpVal);
 			}
 			
-			if((tmpVal = environment.getProperty(keyPrefix + ".db.timeBetweenEvictionRunsMillis")) != null){				
+			if((tmpVal = getProperty(keyPrefix + ".db.timeBetweenEvictionRunsMillis")) != null){				
 				this.timeBetweenEvictionRunsMillis = Integer.parseInt(tmpVal);
 			}
 			
-			if((tmpVal = environment.getProperty(keyPrefix + ".db.testOnBorrow")) != null){				
+			if((tmpVal = getProperty(keyPrefix + ".db.testOnBorrow")) != null){				
 				this.testOnBorrow = Boolean.parseBoolean(tmpVal);
 			}
 			
-			if((tmpVal = environment.getProperty(keyPrefix + ".db.testOnReturn")) != null){				
+			if((tmpVal = getProperty(keyPrefix + ".db.testOnReturn")) != null){				
 				this.testOnReturn = Boolean.parseBoolean(tmpVal);
 			}
 			

@@ -3,6 +3,8 @@
  */
 package com.jeesuite.test.mybatis;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -124,9 +126,23 @@ public class MybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
+	public void test111(){
+		UserEntity entity = mapper.findByMobile("13800392371");
+		System.out.println("==========>" + entity);
+	}
+	
+	@Test
 	public void testFindNotExists(){
 		UserEntity entity = mapper.findByMobile("13800138000");
 		System.out.println("==========>" + entity);
+	}
+	
+	@Test
+	public void testFindMobileByIds(){
+		List<String> mobiles = mapper.findMobileByIds(new ArrayList<>(Arrays.asList(21,23)));
+		for (String mobile : mobiles) {
+			System.out.println("------>>>>" + mobile);
+		}
 	}
 	
 	@Test

@@ -32,6 +32,7 @@ public interface UserEntityMapper extends BaseMapper<UserEntity, Integer> {
 	
 	void updateType2(UserEntity user);
 	
-	
+	@Cache(expire=300)
+	public List<String> findMobileByIds(List<Integer> ids);
 	
 }

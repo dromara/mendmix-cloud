@@ -150,8 +150,10 @@ public class CacheHandler implements InterceptorHandler {
 			}
 			
 			if(cacheObject != null){
-				if(!NULL_PLACEHOLDER.equals(cacheObject)){					
-					cacheObject = new ArrayList<>(Arrays.asList(cacheObject));
+				if(!NULL_PLACEHOLDER.equals(cacheObject)){	
+					if(!(cacheObject instanceof Collection)){						
+						cacheObject = new ArrayList<>(Arrays.asList(cacheObject));
+					}
 				}
 			}
 			return cacheObject;
@@ -366,8 +368,12 @@ public class CacheHandler implements InterceptorHandler {
 		if(param instanceof Map){
 			Map<String, Object> map = (Map<String, Object>) param;
 			Object[] args = new String[map.size()/2];
-			for (int i = 0; i < args.length; i++) {
-				args[i] = CacheKeyUtils.toString(map.get("param" + (i+1)));
+			if(map.containsKey("collection") || map.containsKey("list")){
+				args[0] = CacheKeyUtils.toString(map.containsKey("collection") ? map.get("collection") : map.get("list"));
+			}else{				
+				for (int i = 0; i < args.length; i++) {
+					args[i] = CacheKeyUtils.toString(map.get("param" + (i+1)));
+				}
 			}
 			return String.format(keyPattern, args);
 		}else if(param instanceof BaseEntity){
@@ -636,7 +642,7 @@ public class CacheHandler implements InterceptorHandler {
 		public String cacheGroupKey;//缓存组key
 		public String methodName;
 		public String keyPattern;
-		public long expire = CacheExpires.IN_1WEEK;//过期时间（秒）
+		public long expire = CacheExpires.IN_1DAY;//过期时间（秒）
 		public boolean isPk = false;//主键查询
 		public boolean collectionResult = false;//查询结果是集合
 		public boolean groupRalated = false; //是否需要关联group

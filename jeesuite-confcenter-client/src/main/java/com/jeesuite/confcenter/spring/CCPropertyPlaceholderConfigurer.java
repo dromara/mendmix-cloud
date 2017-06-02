@@ -63,10 +63,10 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 		Properties config = new Properties();
 		config.load(new FileReader(new File(resource.getPath())));
 		
-		ccContext.setApiBaseUrl(config.getProperty("confcenter.base.url"));
-		ccContext.setApp(config.getProperty("confcenter.appName"));
-		ccContext.setEnv(config.getProperty("confcenter.env"));
-		ccContext.setVersion(config.getProperty("confcenter.version","0.0.0"));
+		ccContext.setApiBaseUrl(config.getProperty("jeesuite.configcenter.base.url"));
+		ccContext.setApp(config.getProperty("jeesuite.configcenter.appName"));
+		ccContext.setEnv(config.getProperty("jeesuite.configcenter.profile"));
+		ccContext.setVersion(config.getProperty("jeesuite.configcenter.version","0.0.0"));
 
 		Properties remoteProperties = ccContext.getAllRemoteProperties();
 		if(remoteProperties.size() > 0){			
