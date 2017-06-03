@@ -132,6 +132,14 @@ public class MybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
+	public void testFindBystatus(){
+		List<UserEntity> list = mapper.findByStatus((short)1);
+		for (UserEntity userEntity : list) {
+			System.out.println(userEntity.getMobile());
+		}
+	}
+	
+	@Test
 	public void testFindNotExists(){
 		UserEntity entity = mapper.findByMobile("13800138000");
 		System.out.println("==========>" + entity);

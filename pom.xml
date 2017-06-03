@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-libs</artifactId>
-	<version>3</version>
+	<version>4</version>
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
 	<name>jeesuite-libs</name>
@@ -206,7 +206,6 @@
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
-
 		<repository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
