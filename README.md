@@ -43,30 +43,7 @@
   2. [jeesuite-apikeeper](http://git.oschina.net/vakinge/jeesuite-apikeeper) `(轻量级方案)`
 
 ## 文档
-* [jeesuite-common2](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/common.md)
-* [jeesuite-common2](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/common2.md)
-* [jeesuite-kafka](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/kafka.md) 
-* [jeesuite-cache](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/cache.md) 
-* [jeesuite-scheduler](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/scheduler.md)
-* [jeesuite-mybatis](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/mybatis.md) 
-* [jeesuite-rest](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/rest.md) 
-* [jeesuite-confcenter](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/confcenter.md)
-* [jeesuite-filesystem](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/filesystem.md)
-* [jeesuite-log](http://git.oschina.net/vakinge/jeesuite-libs/blob/master/docs/log.md)
-
---- 
-## 计划
-#### cache模块（1.0.3） 
-- sentinel模式支持读写分离
-- 应用级namespace支持
-- 对象压缩
-
-#### confcenter（1.0.1） 
-- 基于ZK配置更新通知
-
-#### kafka模块  (1.0.3)
-- 多环境(开发、测试、预发布等)自动隔离支持
-- 高可靠消息消费确认保障机制
+请查看各个子模块readme文件，详细文档还在完善中。。
 
 
 ---

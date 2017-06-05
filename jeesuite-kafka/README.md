@@ -1,11 +1,11 @@
-- 基于kafka版本kafka_2.10-0.10.0.1
+- 基于kafka版本kafka_2.10-0.10.x.x，由于Kafka限制，必须客户端的版本和server版本一致，所以请自行配置对应版本，默认依赖`kafka_2.10-0.10.2.0`。
 
 #### 添加依赖
 ```
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-kafka</artifactId>
-	<version>1.0.1</version>
+	<version>1.1.0</version>
 </dependency>
 ```
 ---

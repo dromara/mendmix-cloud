@@ -4,7 +4,7 @@
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-filesystem</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 </dependency>
 
 <!--七牛需要依赖-->
