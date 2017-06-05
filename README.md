@@ -108,5 +108,5 @@
 - 支持spring集成
 
 ---
-### 你可以下载集成了所有模块的demo[jeesuite-demo](http://git.oschina.net/vakinge/jeesuite-demo) 
+### 你可以下载集成了所有模块的demo[jeesuite-bestpl](http://git.oschina.net/vakinge/jeesuite-bestpl) 
 ### jeesuite统一管理平台[jeesuite-admin](http://git.oschina.net/vakinge/jeesuite-admin) 
