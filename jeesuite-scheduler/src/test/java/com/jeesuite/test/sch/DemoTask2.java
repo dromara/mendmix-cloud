@@ -3,8 +3,11 @@
  */
 package com.jeesuite.test.sch;
 
+import java.util.Date;
+
 import org.apache.commons.lang3.RandomUtils;
 
+import com.jeesuite.common.util.DateUtils;
 import com.jeesuite.scheduler.AbstractJob;
 import com.jeesuite.scheduler.JobContext;
 
@@ -16,12 +19,10 @@ import com.jeesuite.scheduler.JobContext;
  */
 public class DemoTask2 extends AbstractJob{
 
-	int count = 1;
 	@Override
 	public void doJob(JobContext context) throws Exception {
-		System.out.println("\n=============\nDemoTask2=====>"+count+"\n===============\n");
+		System.out.println("\n=============\nDemoTask_2=====>"+context.getNodeId()+"--"+DateUtils.format(new Date())+"\n===============\n");
 		Thread.sleep(RandomUtils.nextLong(1000, 2000));
-		count++;
 	}
 
 	@Override

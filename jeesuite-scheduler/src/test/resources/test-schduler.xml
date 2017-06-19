@@ -35,7 +35,8 @@
 				<bean class="com.jeesuite.test.sch.DemoTask2">
 					<property name="jobName" value="demoTask2" />
 					<property name="retries" value="1" />
-					<property name="cronExpr" value="0 0 1 * * ?" />
+					<!-- 0/15 * * * * ?   / 30 * * * * ? -->
+					<property name="cronExpr" value="30 * * * * ?" />
 					<!-- 启动完成立即执行一次 -->
 					<property name="executeOnStarted" value="false" />
 				</bean>

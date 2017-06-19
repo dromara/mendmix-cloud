@@ -178,9 +178,6 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		}
 		schedulerConfgs.put(conf.getJobName(), conf);
 		
-		//
-		regAndSubscribeNodeEvent();
-        
 		//订阅同步信息变化
         zkClient.subscribeDataChanges(path, new IZkDataListener() {
 			
@@ -196,6 +193,9 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 				schedulerConfgs.put(jobName, _jobConfig);
 			}
 		});
+        
+        //
+		regAndSubscribeNodeEvent();
         
         //清除之前遗留节点
         if(isFirstNode){
@@ -249,8 +249,10 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			@Override
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				MonitorCommond cmd = (MonitorCommond) data;
-				logger.info("收到commond:" + cmd.toString());
-				execCommond(cmd);
+				if(cmd != null){					
+					logger.info("收到commond:" + cmd.toString());
+					execCommond(cmd);
+				}
 			}
 		});
         
@@ -296,12 +298,13 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	@Override
 	public synchronized JobConfig getConf(String jobName,boolean forceRemote) {
 		JobConfig config = schedulerConfgs.get(jobName);
-		//如果只有一个节点就不从强制同步了
-		if(schedulerConfgs.size() == 1){
-			config.setCurrentNodeId(JobContext.getContext().getNodeId());
-			return config;
-		}
-		if(forceRemote){			
+		
+		if(forceRemote){	
+			//如果只有一个节点就不从强制同步了
+			if(JobContext.getContext().getActiveNodes().size() == 1){
+				config.setCurrentNodeId(JobContext.getContext().getNodeId());
+				return config;
+			}
 			String path = getPath(config);
 			try {				
 				config = getConfigFromZK(path,null);
@@ -342,7 +345,6 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			JobConfig config = getConf(jobName,false);
 			config.setRunning(true);
 			config.setLastFireTime(fireTime);
-			config.setCurrentNodeId(JobContext.getContext().getNodeId());
 			config.setModifyTime(Calendar.getInstance().getTimeInMillis());
 			config.setErrorMsg(null);
 			//更新本地
