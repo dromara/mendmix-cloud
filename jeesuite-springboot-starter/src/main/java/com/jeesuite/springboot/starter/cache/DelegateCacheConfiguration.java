@@ -11,6 +11,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.jeesuite.cache.local.EhCacheLevel1CacheProvider;
+import com.jeesuite.cache.local.GuavaLevel1CacheProvider;
+import com.jeesuite.cache.local.Level1CacheSupport;
 import com.jeesuite.cache.redis.JedisProviderFactoryBean;
 
 import redis.clients.jedis.JedisPoolConfig;
@@ -21,13 +24,16 @@ import redis.clients.jedis.JedisPoolConfig;
  * @date 2017年3月28日
  */
 @Configuration
-@EnableConfigurationProperties(CacheProperties.class)
+@EnableConfigurationProperties({CacheProperties.class,Level1CacheProperties.class})
 @ConditionalOnClass(JedisProviderFactoryBean.class)
 @ConditionalOnProperty(name="jeesuite.cache.mode")
 public class DelegateCacheConfiguration {
 
 	@Autowired
 	private CacheProperties cacheProperties;
+	
+	@Autowired
+	private Level1CacheProperties level1CacheProperties;
 
 	
 	@Bean
@@ -53,5 +59,25 @@ public class DelegateCacheConfiguration {
 		return config;
 	}
 	
-	
+	@Bean
+	public Level1CacheSupport level1CacheSupport(){
+		Level1CacheSupport support = new Level1CacheSupport();
+		if(level1CacheProperties != null){			
+			support.setBcastScope(level1CacheProperties.getBcastScope());
+			support.setBcastServer(level1CacheProperties.getBcastServer());
+			support.setCacheNames(level1CacheProperties.getCacheNames());
+			support.setDistributedMode(level1CacheProperties.isDistributedMode());
+			support.setPassword(level1CacheProperties.getPassword());
+			if("guavacache".equals(level1CacheProperties.getCacheProvider())){
+				GuavaLevel1CacheProvider cacheProvider = new GuavaLevel1CacheProvider();
+				cacheProvider.setMaxSize(level1CacheProperties.getMaxCacheSize());
+				cacheProvider.setTimeToLiveSeconds(level1CacheProperties.getTimeToLiveSeconds());
+				support.setCacheProvider(cacheProvider);
+			}else{
+				EhCacheLevel1CacheProvider cacheProvider = new EhCacheLevel1CacheProvider();
+				support.setCacheProvider(cacheProvider);
+			}
+		}
+		return support;
+	}
 }
