@@ -90,13 +90,12 @@ public class HttpUtils {
 			 return buffer.toString();
 			 
 		} catch (Exception e) {
-			// TODO: handle exception
+			throw new RuntimeException(e);
 		}finally {
 			try {bufferedReader.close();} catch (Exception e2) {}
 			try {inputStreamReader.close();} catch (Exception e2) {}
 			try {inputStream.close();} catch (Exception e2) {}
 			try {httpUrlConn.disconnect();} catch (Exception e2) {}
 		}
-		return null;
 	}
 }

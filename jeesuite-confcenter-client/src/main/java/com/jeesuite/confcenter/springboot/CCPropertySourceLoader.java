@@ -1,7 +1,6 @@
 package com.jeesuite.confcenter.springboot;
 
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
@@ -30,21 +29,21 @@ public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrde
 		if (profile == null) {
 			Properties properties = PropertiesLoaderUtils.loadProperties(resource);
 			if(ccContext.getApp() == null){
-				String appName = properties.getProperty("jeesuite.configcenter.appName");
-				if(StringUtils.isBlank(appName))appName = properties.getProperty("spring.application.name");
+				String appName = getValue(properties,"jeesuite.configcenter.appName");
+				if(StringUtils.isBlank(appName))appName = getValue(properties,"spring.application.name");
 				ccContext.setApp(appName);
-				
+				ccContext.setRemoteEnabled(Boolean.parseBoolean(getValue(properties,"jeesuite.configcenter.enabled","true")));
 			}
 			if(ccContext.getApp() != null){
 				if(!properties.containsKey("spring.profiles.active")){
-					ccContext.setEnv(properties.getProperty("jeesuite.configcenter.profile"));
-					ccContext.setApiBaseUrl(properties.getProperty("jeesuite.configcenter.base.url"));
+					ccContext.setEnv(getValue(properties,"jeesuite.configcenter.profile"));
+					ccContext.setApiBaseUrl(getValue(properties,"jeesuite.configcenter.base.url"));
 				}else{
-					ccContext.setEnv(properties.getProperty("spring.profiles.active"));
+					ccContext.setEnv(getValue(properties,"spring.profiles.active"));
 				}
 			}else{
 				if(name.contains(ccContext.getEnv())){
-					String baseUrl = properties.getProperty("jeesuite.configcenter.base.url");
+					String baseUrl = getValue(properties,"jeesuite.configcenter.base.url");
 					ccContext.setApiBaseUrl(baseUrl);
 				}
 			}
@@ -67,6 +66,20 @@ public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrde
 			}
 		}
 		return null;
+	}
+	
+	private String getValue(Properties prop,String key,String...defVal){
+		String value = StringUtils.trimToNull(prop.getProperty(key));
+		if(StringUtils.isNotBlank(value)){	
+			if(value.startsWith("${")){
+				String refKey = value.substring(2, value.length() - 1).trim();
+				value = (String) prop.getProperty(refKey);
+			}
+		}
+		if(StringUtils.isBlank(value) && defVal != null && defVal.length >0 && defVal[0] != null){
+			value = defVal[0]; 
+		}
+		return value;
 	}
 	
 	@Override

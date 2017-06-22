@@ -57,22 +57,37 @@ public class ConfigcenterContext {
 	}
 
 	
+	@SuppressWarnings("unchecked")
 	public Properties getAllRemoteProperties(){
 		if(!remoteEnabled)return null;
 		Properties properties = new Properties();
 		try {	
 			String url = String.format("%s/api/fetch_all_configs?appName=%s&env=%s&version=%s", apiBaseUrl,app,env,version);
-			String jsonString = HttpUtils.getContent(url);
+			System.out.println("fetch configs url:" + url);
+			
+			String jsonString = null;
+			try {
+				jsonString = HttpUtils.getContent(url);
+			} catch (Exception e) {
+				try {Thread.sleep(500);} catch (Exception e2) {}
+				//重试一次
+				jsonString = HttpUtils.getContent(url);
+			}
 			Map<String,Object> map = JsonUtils.toObject(jsonString, Map.class);
 			if(map.containsKey("code")){
 				throw new RuntimeException(map.get("msg").toString());
 			}
 			Set<String> keys = map.keySet();
+			System.out.println("==================remote config list =======================");
 			for (String key : keys) {
 				properties.put(key, map.get(key));
 				//
 				ResourceUtils.add(key, map.get(key).toString());  
+				if(!key.contains("password")){					
+					System.out.println(String.format("%s=%s", key,map.get(key).toString()));
+				}
 			}
+			System.out.println("==================remote config list=======================");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
