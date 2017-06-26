@@ -4,14 +4,17 @@ import java.io.Closeable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,7 +22,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -50,8 +55,6 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	private StandardThreadExecutor processExecutor;
 	private List<ConsumerWorker> consumerWorks = new ArrayList<>();
 
-	private KafkaConsumer<String, Serializable> consumer;
-	
 	private ErrorMessageDefaultProcessor errorMessageProcessor = new ErrorMessageDefaultProcessor(1);
 	
 	private final Map<TopicPartition, Long> partitionToUncommittedOffsetMap = new ConcurrentHashMap<>();
@@ -59,6 +62,8 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	
 	private boolean offsetAutoCommit;
 	private ConsumerContext consumerContext;
+	
+	private ConsumerPool consumerPool;
 	
 	public NewApiTopicConsumer(ConsumerContext context) {
 		super();
@@ -74,7 +79,9 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 
 	@Override
 	public void start() {
-		createKafkaConsumer();
+		
+		consumerPool = new ConsumerPool(topicHandlers.size() + 1);
+		subscribeTopic();
 		//按主题数创建ConsumerWorker线程
 		for (int i = 0; i < topicHandlers.size(); i++) {
 			ConsumerWorker consumer = new ConsumerWorker();
@@ -86,41 +93,46 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 			resetCorrectOffsets();
 		}
 	}
-
+	
 	/**
 	 * 按上次记录重置offsets
 	 */
 	private void resetCorrectOffsets() {
-		consumer.pause(consumer.assignment());
-		Map<String, List<PartitionInfo>> topicInfos = consumer.listTopics();
-		Set<String> topics = topicInfos.keySet();
-		
-		List<String> expectTopics = new ArrayList<>(topicHandlers.keySet());
-		
-		List<PartitionInfo> patitions = null;
-		for (String topic : topics) {
-			if(!expectTopics.contains(topic))continue;
+		KafkaConsumer<String, Serializable> consumer = consumerPool.get();
+		try {			
+			consumer.pause(consumer.assignment());
+			Map<String, List<PartitionInfo>> topicInfos = consumer.listTopics();
+			Set<String> topics = topicInfos.keySet();
 			
-			patitions = topicInfos.get(topic);
-			for (PartitionInfo partition : patitions) {
-				try {						
-					//期望的偏移
-					long expectOffsets = consumerContext.getLatestProcessedOffsets(topic, partition.partition());
-					//
-					TopicPartition topicPartition = new TopicPartition(topic, partition.partition());
-					OffsetAndMetadata metadata = consumer.committed(new TopicPartition(partition.topic(), partition.partition()));
-					if(expectOffsets >= 0){						
-						if(expectOffsets < metadata.offset()){	
-							consumer.seek(topicPartition, expectOffsets);
-							logger.info("seek Topic[{}] partition[{}] from {} to {}",topic, partition.partition(),metadata.offset(),expectOffsets);
+			List<String> expectTopics = new ArrayList<>(topicHandlers.keySet());
+			
+			List<PartitionInfo> patitions = null;
+			for (String topic : topics) {
+				if(!expectTopics.contains(topic))continue;
+				
+				patitions = topicInfos.get(topic);
+				for (PartitionInfo partition : patitions) {
+					try {						
+						//期望的偏移
+						long expectOffsets = consumerContext.getLatestProcessedOffsets(topic, partition.partition());
+						//
+						TopicPartition topicPartition = new TopicPartition(topic, partition.partition());
+						OffsetAndMetadata metadata = consumer.committed(new TopicPartition(partition.topic(), partition.partition()));
+						if(expectOffsets >= 0){						
+							if(expectOffsets < metadata.offset()){	
+								consumer.seek(topicPartition, expectOffsets);
+								logger.info("seek Topic[{}] partition[{}] from {} to {}",topic, partition.partition(),metadata.offset(),expectOffsets);
+							}
 						}
+					} catch (Exception e) {
+						logger.warn("try seek topic["+topic+"] partition["+partition.partition()+"] offsets error");
 					}
-				} catch (Exception e) {
-					logger.warn("try seek topic["+topic+"] partition["+partition.partition()+"] offsets error");
 				}
 			}
+			consumer.resume(consumer.assignment());
+		} finally {
+			consumerPool.offer(consumer);
 		}
-		consumer.resume(consumer.assignment());
 	}
 
 	@Override
@@ -133,11 +145,12 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		fetcheExecutor.shutdown();
 		processExecutor.shutdown();
 		errorMessageProcessor.close();
-		consumer.close();
+		consumerPool.close();
 	}
 	
-	private <K extends Serializable, V extends Serializable> void createKafkaConsumer(){
-		consumer = new KafkaConsumer<>(consumerContext.getProperties());
+	private <K extends Serializable, V extends Serializable> void subscribeTopic(){
+		KafkaConsumer<String, Serializable> consumer = consumerPool.get();
+		
 		ConsumerRebalanceListener listener = new ConsumerRebalanceListener() {
 
 			@Override
@@ -180,6 +193,8 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		}else{
 			consumer.subscribe(topics, listener);
 		}
+		
+		consumerPool.offer(consumer);
 	}
 	
 	
@@ -192,7 +207,13 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 			}
 
 			logger.debug("committing the offsets : {}", partitionToMetadataMap);
-			consumer.commitSync(partitionToMetadataMap);
+			
+			KafkaConsumer<String, Serializable> consumer = consumerPool.get();
+			try {				
+				consumer.commitSync(partitionToMetadataMap);
+			} finally {
+				consumerPool.offer(consumer);
+			}
 			partitionToOffsetMap.clear();
 		}
 	}
@@ -200,6 +221,13 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	private class ConsumerWorker implements Runnable {
 
 		private AtomicBoolean closed = new AtomicBoolean();
+		KafkaConsumer<String, Serializable> consumer;
+		
+		
+		public ConsumerWorker() {
+			consumer = consumerPool.get();
+		}
+
 
 		@Override
 		public void run() {
@@ -207,7 +235,8 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 			ExecutorService executor = Executors.newFixedThreadPool(1);
 
 			while (!closed.get()) {
-				ConsumerRecords<String,Serializable> records = consumer.poll(1500);
+				ConsumerRecords<String,Serializable> records = null;
+				records = consumer.poll(1500);
 				// no record found
 				if (records.isEmpty()) {
 					continue;
@@ -233,7 +262,12 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 						isCompleted = future.get(3, TimeUnit.SECONDS); 
 					} catch (TimeoutException e) {
 						logger.debug("heartbeats the coordinator");
-						consumer.poll(0); // does heart-beat
+						consumer = consumerPool.get();
+						try {
+							consumer.poll(0); // does heart-beat
+						} finally {
+							consumerPool.offer(consumer);
+						}
 						commitOffsets(partitionToUncommittedOffsetMap);
 					} catch (CancellationException e) {
 						logger.debug("ConsumeRecords Job got cancelled");
@@ -245,6 +279,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 				}
 				committedOffsetFutures.remove(future);
 				consumer.resume(consumer.assignment());
+				
 				commitOffsets(partitionToUncommittedOffsetMap);
 			}
 
@@ -325,5 +360,54 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		}
 
 	}
+	
+	private class ConsumerPool {
+        private final Deque<KafkaConsumer<String, Serializable>> consumerDeque = new ConcurrentLinkedDeque<KafkaConsumer<String, Serializable>>();
+
+        private AtomicInteger curPoolSize = new AtomicInteger(0);
+        private int maxPoolSize = 1;
+        private Properties properties;
+        private String clientIdPrefix;
+        
+        public ConsumerPool(int maxPoolSize) {
+			this.maxPoolSize = maxPoolSize;
+			this.properties = consumerContext.getProperties();
+			this.clientIdPrefix = properties.getProperty(ConsumerConfig.CLIENT_ID_CONFIG);
+		}
+
+		public KafkaConsumer<String, Serializable> get() {
+            KafkaConsumer<String, Serializable> consumer = consumerDeque.pollFirst();   
+            return consumer == null ? creatInstnce() : consumer;
+        }
+
+        public KafkaConsumer<String, Serializable> creatInstnce() {
+        	if(curPoolSize.get() >= maxPoolSize){
+        		long startMillis = System.currentTimeMillis();
+        		while(true){
+        			try {Thread.sleep(100);} catch (Exception e) {}
+        			KafkaConsumer<String, Serializable> consumer = consumerDeque.pollFirst(); 
+        			if(consumer != null)return consumer;
+        			if(System.currentTimeMillis() - startMillis > 10000)break;
+        		}
+        	}
+        	properties.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, clientIdPrefix + "_" + curPoolSize.incrementAndGet());
+        	
+        	logger.info("create new KafkaConsumer[{}]",properties.getProperty(ConsumerConfig.CLIENT_ID_CONFIG));
+            return new KafkaConsumer<String, Serializable>(properties);
+        }
+
+        public void offer(KafkaConsumer<String, Serializable> consumer) {
+        	consumerDeque.addLast(consumer);
+        }
+        
+        public void close(){
+        	for (int i = 0; i < consumerDeque.size(); i++) {
+				try {
+					consumerDeque.pollFirst().close();
+					logger.info("close consumer{} ok",i);
+				} catch (Exception e) {}
+			}
+        }
+    }
 
 }

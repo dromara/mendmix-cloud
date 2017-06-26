@@ -14,7 +14,7 @@
         <!-- 标识同一集群，监控需要 -->
         <property name="producerGroup" value="demo" />
         <!-- 配置zkServers用于监控信息同步，不配置则不开启producer监控 -->
-        <property name="monitorZkServers" value="127.0.0.1:2181" />
+        <property name="monitorZkServers" value="${kafka.zkServers}" />
         <!-- 
           延迟重试次数，默认为3。 
           延迟重试与kafka自身重试不同。如果开启了延时重试、kafka重试retries建议设置为1或者0
