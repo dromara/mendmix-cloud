@@ -5,6 +5,7 @@ package com.jeesuite.scheduler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -34,6 +35,7 @@ import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.util.ClassUtils;
 
 import com.jeesuite.scheduler.annotation.ScheduleConf;
+import com.jeesuite.scheduler.helper.AopTargetUtils;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 
@@ -55,6 +57,8 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	
 	private String scanPackages;
 	
+	private int threadPoolSize;
+	
 	public void setGroupName(String groupName) {
 		this.groupName = groupName;
 	}
@@ -65,6 +69,10 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 
 	public void setScanPackages(String scanPackages) {
 		this.scanPackages = scanPackages;
+	}
+
+	public void setThreadPoolSize(int threadPoolSize) {
+		this.threadPoolSize = threadPoolSize;
 	}
 
 	public void setConfigPersistHandler(ConfigPersistHandler configPersistHandler) {
@@ -103,36 +111,40 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			sch.init();
 			triggers.add(registerSchedulerTriggerBean(acf,sch));
 		}
-		//
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				InstanceFactory.waitUtilInitialized();
-				for (AbstractJob sch : schedulers) {
-					sch.afterInitialized();
-				}
-			}
-		}).start();
 		
 		String beanName = "schedulerFactory";
 		BeanDefinitionBuilder beanDefBuilder = BeanDefinitionBuilder.genericBeanDefinition(SchedulerFactoryBean.class);
 		beanDefBuilder.addPropertyValue("triggers", triggers);
+		
+		Properties quartzProperties = new Properties();
+		
+		threadPoolSize = threadPoolSize > 0 ? threadPoolSize : (schedulers.size() > 10 ? (schedulers.size()/2 + 1)  : schedulers.size());
+		quartzProperties.setProperty(SchedulerFactoryBean.PROP_THREAD_COUNT, String.valueOf(threadPoolSize));
+		beanDefBuilder.addPropertyValue("quartzProperties", quartzProperties);
+		logger.info("init Scheduler threadPoolSize:"+threadPoolSize);
+		
 		acf.registerBeanDefinition(beanName, beanDefBuilder.getRawBeanDefinition());
 		
-		for (final AbstractJob sch : schedulers) {
+		for ( AbstractJob sch : schedulers) {
+			
+			final AbstractJob job = (AbstractJob) AopTargetUtils.getTarget(sch);
 			//
-			JobContext.getContext().addJob(sch);
+			JobContext.getContext().addJob(job);
 			//
-			if(sch.isExecuteOnStarted()){
-				new Thread(new Runnable() {
-					@Override
-					public void run() {						
-						logger.info("<<Job[{}] execute on startup....",sch.jobName);
-						sch.execute();
-						logger.info(">>Job[{}] execute on startup ok!",sch.jobName);
+			JobContext.getContext().submitSyncTask(new Runnable() {
+				@Override
+				public void run() {	
+					InstanceFactory.waitUtilInitialized();
+					job.afterInitialized();
+					if(job.isExecuteOnStarted()){						
+						logger.info("<<Job[{}] execute on startup....",job.jobName);
+						job.execute();
+						logger.info(">>Job[{}] execute on startup ok!",job.jobName);
 					}
-				}).start();
-			}
+				}
+			});
+			
+			logger.info(">>>>>>> Job[{}][{}]-Class[{}]  initialized finish ",job.group,job.jobName,job.getClass().getName());
 		}
 	}
 
@@ -162,7 +174,6 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		beanDefBuilder.addPropertyValue("group", groupName);
 		acf.registerBeanDefinition(triggerBeanName, beanDefBuilder.getRawBeanDefinition());
 		
-		logger.info("register scheduler task [{}] ok!!",sch.getJobName());
 		return (Trigger) context.getBean(triggerBeanName);
 		
 	}
@@ -209,9 +220,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
             }
 		}
     	
-	}
-	
-
+	}  
 
 	@Override
 	public void destroy() throws Exception {
