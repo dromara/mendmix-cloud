@@ -18,6 +18,7 @@ public class SchedulerProperties {
 	private String registryServers;
 	private String groupName;
 	private String scanPackages;
+	private int threadPoolSize;
 	
 	public String getRegistryType() {
 		return registryType;
@@ -42,6 +43,12 @@ public class SchedulerProperties {
 	}
 	public void setScanPackages(String scanPackages) {
 		this.scanPackages = scanPackages;
+	}
+	public int getThreadPoolSize() {
+		return threadPoolSize;
+	}
+	public void setThreadPoolSize(int threadPoolSize) {
+		this.threadPoolSize = threadPoolSize;
 	}
 	
 	

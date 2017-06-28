@@ -48,6 +48,7 @@ public class DelegateScheConfiguration {
 	public SchedulerFactoryBeanWrapper schedulerFactoryBean(JobRegistry jobRegistry) {
 		SchedulerFactoryBeanWrapper bean = new SchedulerFactoryBeanWrapper();
 		bean.setGroupName(cacheProperties.getGroupName());
+		bean.setThreadPoolSize(cacheProperties.getThreadPoolSize());
 		bean.setRegistry(jobRegistry);
 		bean.setScanPackages(cacheProperties.getScanPackages());
 		return bean;
