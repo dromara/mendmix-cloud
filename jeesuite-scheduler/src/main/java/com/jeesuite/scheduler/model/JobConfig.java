@@ -1,8 +1,10 @@
 package com.jeesuite.scheduler.model;
 
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -10,6 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.jeesuite.common.json.deserializer.DateTimeConvertDeserializer;
 import com.jeesuite.common.json.serializer.DateTimeConvertSerializer;
+import com.jeesuite.common.util.DateUtils;
 
 /**
  * 任务配置
@@ -149,6 +152,18 @@ public class JobConfig implements Serializable {
 	}
 
 	public String getErrorMsg() {
+		if(StringUtils.isBlank(errorMsg)){
+			if(lastFireTime != null && nextFireTime != null){
+				long interval = nextFireTime.getTime() - lastFireTime.getTime();
+				long expectNextFireTime = nextFireTime.getTime() + interval;
+				//
+				long allowDeviation = 1000 * 60 * 10;
+				if(Calendar.getInstance().getTimeInMillis() - expectNextFireTime > (interval < allowDeviation ? interval : allowDeviation)){
+					errorMsg = String.format("expect NextFireTime:%s,but actual is:%s",DateUtils.format(new Date(expectNextFireTime)), DateUtils.format(nextFireTime));
+				}
+				
+			}
+		}
 		return errorMsg;
 	}
 

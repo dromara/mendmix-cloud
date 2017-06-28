@@ -412,7 +412,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 				return;
 			}
 			if(abstractJob != null){
-				new Thread(new Runnable() {
+				JobContext.getContext().submitSyncTask(new Runnable() {
 					@Override
 					public void run() {
 						try {
@@ -422,7 +422,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 							logger.error(abstractJob.getJobName(),e);
 						}
 					}
-				}).start();
+				});
 			}else{
 				logger.warn("Not found job by key:{} !!!!",key);
 			}

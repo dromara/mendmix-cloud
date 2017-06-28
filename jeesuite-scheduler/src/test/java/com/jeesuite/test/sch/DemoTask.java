@@ -20,7 +20,7 @@ import com.jeesuite.scheduler.annotation.ScheduleConf;
  * @Copyright (c) 2015, lifesense.com
  */
 @Service
-@ScheduleConf(cronExpr="0/30 * * * * ?",jobName="demoTask",executeOnStarted = false)
+@ScheduleConf(cronExpr="0/30 * * * * ?",jobName="demoTask",executeOnStarted = true)
 public class DemoTask extends AbstractJob{
 
 	@Override

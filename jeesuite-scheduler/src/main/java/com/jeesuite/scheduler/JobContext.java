@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.scheduler.helper.ConsistencyHash;
@@ -36,6 +38,8 @@ public class JobContext {
 	private JobLogPersistHandler jobLogPersistHandler;
 	
 	private JobRegistry registry;
+	
+	private ExecutorService syncExecutor = Executors.newFixedThreadPool(1);
 	
 	public void startRetryProcessor(){
 		if(retryProcessor == null){
@@ -122,10 +126,15 @@ public class JobContext {
 		return activeNodes;
 	}
 	
+	public void submitSyncTask(Runnable task){
+		syncExecutor.execute(task);
+	}
+	
 	public void close(){
 		if(retryProcessor != null){
 			retryProcessor.close();
 		}
+		syncExecutor.shutdown();
 	}
 
 }

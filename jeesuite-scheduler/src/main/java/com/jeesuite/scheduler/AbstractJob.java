@@ -50,7 +50,7 @@ public abstract class AbstractJob implements DisposableBean{
     private long jobFireInterval = 0;//任务执行间隔（毫秒）
     
     //默认允许多个节点时间误差
-    private static final long DEFAULT_ALLOW_DEVIATION = 10000;
+    private static final long DEFAULT_ALLOW_DEVIATION = 1000 * 60 * 15;
     
     private boolean executeOnStarted;//启动是否立即执行
     
@@ -60,7 +60,7 @@ public abstract class AbstractJob implements DisposableBean{
     private AtomicInteger runCount = new AtomicInteger(0);
 
 	public void setGroup(String group) {
-		this.group = group;
+		this.group = StringUtils.trimToNull(group);
 	}
 	
 	public String getJobName() {
@@ -68,7 +68,7 @@ public abstract class AbstractJob implements DisposableBean{
 	}
 
 	public void setJobName(String jobName) {
-		this.jobName = jobName;
+		this.jobName = StringUtils.trimToNull(jobName);
 	}
 
 	public String getCronExpr() {
@@ -76,7 +76,7 @@ public abstract class AbstractJob implements DisposableBean{
 	}
 
 	public void setCronExpr(String cronExpr) {
-		this.cronExpr = cronExpr;
+		this.cronExpr = StringUtils.trimToNull(cronExpr);
 	}
 
 	public boolean isExecuteOnStarted() {
@@ -164,41 +164,41 @@ public abstract class AbstractJob implements DisposableBean{
     	if(parallelEnabled())return false;
         try {
             if (!schConf.isActive()) {
-            	logger.trace("Job_{} 已禁用,终止执行", jobName);
+            	logger.debug("Job_{} 已禁用,终止执行", jobName);
                 return true;
             }
             
             //执行间隔（秒）
-            long interval = getJobFireInterval();
+           // long interval = getJobFireInterval();
             long currentTimes = Calendar.getInstance().getTime().getTime();
             
             if(schConf.getNextFireTime() != null){
-            	//如果多个节点做了时间同步，那么误差应该为0才触发任务执行，但是考虑一些误差因素，可以做一个误差容错
-            	if(schConf.getLastFireTime() != null){            		
-            		long deviation = Math.abs(currentTimes - schConf.getLastFireTime().getTime() - interval);
-            		if(interval > 0 && deviation > DEFAULT_ALLOW_DEVIATION){
-            			return true;
-            		}
-            	}
-            	
-            	  //下次执行时间 < 当前时间强制执行
+            	//下次执行时间 < 当前时间强制执行
             	if(currentTimes - schConf.getNextFireTime().getTime() > DEFAULT_ALLOW_DEVIATION){
-                	logger.info("NextFireTime[{}] before currentTime[{}],re-join-execute task ",currentTimes,schConf.getNextFireTime().getTime());
+                	logger.debug("Job_{} NextFireTime[{}] before currentTime[{}],re-join-execute task ",jobName,currentTimes,schConf.getNextFireTime().getTime());
                 	return false;
                 }
+            	//如果多个节点做了时间同步，那么误差应该为0才触发任务执行，但是考虑一些误差因素，可以做一个误差容错
+//            	if(schConf.getLastFireTime() != null){            		
+//            		long deviation = Math.abs(currentTimes - schConf.getLastFireTime().getTime() - interval);
+//            		if(interval > 0 && deviation > DEFAULT_ALLOW_DEVIATION){
+//            			logger.info("Job_{} interval:{},currentTimes:{},expect tiggertime:{}", jobName,interval,currentTimes, schConf.getLastFireTime().getTime());
+//            			return true;
+//            		}
+//            	}
             }
 			
             
           //如果执行节点不为空,且不等于当前节点
             if(StringUtils.isNotBlank(schConf.getCurrentNodeId()) 
             		&& !JobContext.getContext().getNodeId().equals(schConf.getCurrentNodeId())){
-            	logger.trace("Job_{} 指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
+            	logger.debug("Job_{} 指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
             	return true;
             }
 
             if (schConf.isRunning()) {
             	//如果某个节点开始了任务但是没有正常结束导致没有更新任务执行状态
-                logger.trace("Job_{} 其他节点[{}]正在执行,终止当前执行", schConf.getCurrentNodeId(),jobName);
+                logger.info("Job_{} 其他节点[{}]正在执行,终止当前执行", schConf.getCurrentNodeId(),jobName);
                 return true;
             }
             
