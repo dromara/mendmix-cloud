@@ -25,7 +25,7 @@ public class ProducerSimpleClient implements ApplicationContextAware{
         //默认模式（异步/ ）发送
 		for (int i = 0; i < 5; i++) {			
 			topicProducer.publish("demo-topic1", new DefaultMessage("hello,man"));
-			//topicProducer.publish("demo-topic2", new DefaultMessage("hello,women"));
+			topicProducer.publish("demo-topic2", new DefaultMessage("hello,women"));
 		}
 //		
 //		DefaultMessage msg = new DefaultMessage("hello,man")

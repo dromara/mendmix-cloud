@@ -15,6 +15,9 @@
         <property name="useNewAPI" value="true" />
         <!-- 默认最大处理线程，可以配置大一下空闲会自动回收 -->
         <property name="processThreads" value="100" />
+        <!-- <property name="offsetLogHanlder">
+           <bean class="com.jeesuite.test.MysqlOffsetLogHanlder" />
+        </property> -->
         <property name="configs">
             <!--参考 http://kafka.apache.org/documentation.html#newconsumerconfigs -->
             <props>
