@@ -10,5 +10,5 @@ package com.jeesuite.mybatis.core;
  * @Copyright (c) 2015, jwww
  */
 public enum InterceptorType {
-   before,after,around
+   init,before,after,around
 }

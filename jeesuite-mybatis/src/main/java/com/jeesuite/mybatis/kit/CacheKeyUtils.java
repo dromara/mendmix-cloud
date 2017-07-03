@@ -65,7 +65,8 @@ public class CacheKeyUtils {
 		if(isSimpleDataType(obj)){
 			return obj.toString();
 		}else if(obj instanceof Collection){
-			return obj.toString().replaceAll("\\s{0,}", "");
+			String toString = obj.toString().replaceAll("\\s{0,}", "");
+			return toString.length() > 32 ? md5(toString) : toString;
 		}else{
 			String toString = ToStringBuilder.reflectionToString(obj, ToStringStyle.SHORT_PREFIX_STYLE);
 			

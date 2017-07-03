@@ -127,7 +127,8 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void test111(){
-		UserEntity entity = mapper.findByMobile("13800392371");
+		UserEntity entity = mapper.findByMobile("13800733379");
+		mapper.updateType2(entity);
 		System.out.println("==========>" + entity);
 	}
 	

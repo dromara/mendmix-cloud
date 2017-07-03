@@ -64,6 +64,10 @@ import com.jeesuite.spring.InstanceFactory;
  */
 public class CacheHandler implements InterceptorHandler {
 
+	private static final String STR_PARAM = "param";
+	private static final String STR_LIST = "list";
+	private static final String STR_COLLECTION = "collection";
+
 	protected static final Logger logger = LoggerFactory.getLogger(CacheHandler.class);
 
 	private static final String ID_CACHEKEY_JOIN = ".id:";
@@ -368,11 +372,11 @@ public class CacheHandler implements InterceptorHandler {
 		if(param instanceof Map){
 			Map<String, Object> map = (Map<String, Object>) param;
 			Object[] args = new String[map.size()/2];
-			if(map.containsKey("collection") || map.containsKey("list")){
-				args[0] = CacheKeyUtils.toString(map.containsKey("collection") ? map.get("collection") : map.get("list"));
+			if(map.containsKey(STR_COLLECTION) || map.containsKey(STR_LIST)){
+				args[0] = CacheKeyUtils.toString(map.containsKey(STR_COLLECTION) ? map.get(STR_COLLECTION) : map.get(STR_LIST));
 			}else{				
 				for (int i = 0; i < args.length; i++) {
-					args[i] = CacheKeyUtils.toString(map.get("param" + (i+1)));
+					args[i] = CacheKeyUtils.toString(map.get(STR_PARAM + (i+1)));
 				}
 			}
 			return String.format(keyPattern, args);
@@ -650,7 +654,8 @@ public class CacheHandler implements InterceptorHandler {
 		public QueryMethodCache() {}
 		//缓存时间加上随机，防止造成缓存同时失效雪崩
 		public long getExpire() {
-			return expire + RandomUtils.nextLong(1, CacheExpires.IN_1DAY);
+			long rnd = RandomUtils.nextLong(0, expire/3);
+			return expire + (rnd > CacheExpires.IN_1HOUR ? CacheExpires.IN_1HOUR : rnd);
 		}
 
 

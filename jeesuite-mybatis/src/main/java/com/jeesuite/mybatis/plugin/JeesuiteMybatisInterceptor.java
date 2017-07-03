@@ -1,6 +1,7 @@
 package com.jeesuite.mybatis.plugin;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -135,8 +136,14 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		for (InterceptorHandler handler : interceptorHandlers) {
+		Iterator<InterceptorHandler> it = interceptorHandlers.iterator();
+		while(it.hasNext()){
+			InterceptorHandler handler = it.next();
 			handler.start(this);
+			//初始化的类型只启动初始化一次
+		    if(handler.getInterceptorType().equals(InterceptorType.init)){
+		        it.remove();
+		    }
 		}
 	}
 
