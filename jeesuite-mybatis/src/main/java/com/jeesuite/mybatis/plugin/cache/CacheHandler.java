@@ -42,6 +42,7 @@ import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.core.InterceptorType;
 import com.jeesuite.mybatis.crud.builder.SqlTemplate;
+import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.kit.CacheKeyUtils;
 import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
@@ -183,7 +184,7 @@ public class CacheHandler implements InterceptorHandler {
 			
 			final String cacheKey = genarateQueryCacheKey(cacheInfo.keyPattern, args[1]);
 			if(NULL_PLACEHOLDER.equals(result)){
-				getCacheProvider().set(cacheKey,result, CacheExpires.IN_1HOUR,true);
+				getCacheProvider().set(cacheKey,result, CacheExpires.IN_1MIN,true);
 				return;
 			}
 			if(result instanceof List){
@@ -208,7 +209,7 @@ public class CacheHandler implements InterceptorHandler {
 				//之前没有按主键的缓存，增加按主键缓存
 				String idCacheKey = genarateQueryCacheKey(getQueryByPkMethodCache(mt.getId()).keyPattern,result);
 				
-				if(idCacheKey != null && cacheKey != null && getCacheProvider().set(idCacheKey,result, cacheInfo.getExpire(),false) 
+				if(idCacheKey != null && cacheKey != null && getCacheProvider().set(idCacheKey,result, cacheInfo.getExpire(),true) 
 						&& getCacheProvider().set(cacheKey,idCacheKey, cacheInfo.getExpire(),true)){
 					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] put result to cache，cacheKey:{},and add ref cacheKey:{}",mt.getId(),idCacheKey,cacheKey);
 				}
@@ -230,7 +231,7 @@ public class CacheHandler implements InterceptorHandler {
 					if(insertCommond || mt.getSqlCommandType().equals(SqlCommandType.UPDATE)){
 						if(result != null){
 							QueryMethodCache queryByPkMethodCache = getQueryByPkMethodCache(mt.getId());
-							getCacheProvider().set(cacheByPkKey,args[1], queryByPkMethodCache.getExpire(),false);
+							getCacheProvider().set(cacheByPkKey,args[1], queryByPkMethodCache.getExpire(),true);
 							if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] update cacheKey:{}",mt.getId(),cacheByPkKey);
 							//插入其他唯一字段引用
 							if(insertCommond)cacheUniqueSelectRef(args[1], mt, cacheByPkKey);
@@ -262,6 +263,7 @@ public class CacheHandler implements InterceptorHandler {
 			Object parameterObject = args[1];
 			EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperNameSpace);
 			MappedStatement statement = getQueryIdsMappedStatementForUpdateCache(mt,entityInfo);
+			if(statement == null)return ;
 			List<?> idsResult = executor.query(statement, parameterObject, RowBounds.DEFAULT, null);
 			if(idsResult != null){
 				for (Object id : idsResult) {							
@@ -287,6 +289,9 @@ public class CacheHandler implements InterceptorHandler {
     	
     	synchronized (configuration) {
 			String sql = entityInfo.getMapperSqls().get(mt.getId());
+			if(!sql.toLowerCase().contains(entityInfo.getTableName().toLowerCase())){
+				return null;
+			}
     		sql = "select "+entityInfo.getIdColumn()+" from "+entityInfo.getTableName()+" WHERE " + sql.split(WHERE_REGEX)[1];
     		sql = String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
     		SqlSource sqlSource = configuration.getDefaultScriptingLanguageInstance().createSqlSource(configuration, sql, Object.class);
@@ -629,7 +634,15 @@ public class CacheHandler implements InterceptorHandler {
 						break inner;
 					}
 				}
+				if(!methodCache.groupRalated && !MybatisMapperParser.entityHasProperty(entityClass, fieldName)){
+					throw new MybatisHanlerInitException(String.format("@Cache 查询方法[%s] @Param 绑定实体字段[%s]在实体[%s]不存在", methodName,fieldName,entityClass.getName()));
+				}
 				methodCache.fieldNames[i] = fieldName;
+				
+			}else{
+				if(!methodCache.groupRalated){
+					throw new MybatisHanlerInitException(String.format("unique查询方法[%s] 使用了自动缓存Annotation @Cache,参数必须使用 @Param 绑定实体字段", methodName));
+				}
 			}
 			//
 			sb.append(i == 0 ? ":" : "_").append("%s");

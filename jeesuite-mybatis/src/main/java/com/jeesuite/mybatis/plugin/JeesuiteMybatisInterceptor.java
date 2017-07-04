@@ -103,7 +103,7 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 				proceed = true;
 			}else{
 				if(cacheEnabled && CacheHandler.NULL_PLACEHOLDER.equals(result)){
-					return new ArrayList<>();
+					result = new ArrayList<>();
 				}
 			}
 			return result;

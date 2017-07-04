@@ -77,9 +77,9 @@ public class MybatisTest implements ApplicationContextAware{
 	public void testCache(){
 		System.out.println("------------");
 		UserEntity userEntity = mapper.getByKey(20);
-		mapper.findByMobile("13800951371");
+		mapper.findByMobile("13800000001");
 		System.out.println("------------");
-		mapper.findByMobile("13800639997");
+		mapper.findByMobile("13800349112");
 		System.out.println("------------");
 		mapper.findByMobile("13800639997");
 		
@@ -126,10 +126,17 @@ public class MybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
-	public void test111(){
-		UserEntity entity = mapper.findByMobile("13800733379");
-		mapper.updateType2(entity);
-		System.out.println("==========>" + entity);
+	public void testFindNotExistsThenInsert(){
+		String mobile = "13800000001";
+		UserEntity entity = mapper.findByMobile(mobile);
+		if(entity != null)return;
+		entity = new UserEntity();
+		entity.setCreatedAt(new Date());
+		entity.setEmail(mobile + "@163.com");
+		entity.setMobile(mobile);
+		entity.setType((short)1);
+		entity.setStatus((short)1);
+		mapper.insert(entity);
 	}
 	
 	@Test
