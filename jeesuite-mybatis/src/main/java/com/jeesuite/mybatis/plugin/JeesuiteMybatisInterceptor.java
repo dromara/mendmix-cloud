@@ -1,6 +1,8 @@
 package com.jeesuite.mybatis.plugin;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -23,7 +25,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.StringUtils;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.core.InterceptorType;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
@@ -68,6 +69,14 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 				dbShardEnabled = true;
 			}
 		}
+		//排序
+		Collections.sort(this.interceptorHandlers, new Comparator<InterceptorHandler>() {
+			@Override
+			public int compare(InterceptorHandler o1, InterceptorHandler o2) {
+				return Integer.compare(o1.interceptorOrder(), o2.interceptorOrder());
+			}
+		});
+		
 	}
 	
 	public void setMapperLocations(String mapperLocations){
@@ -85,38 +94,23 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 	@Override
 	public Object intercept(Invocation invocation) throws Throwable {
 		
-		boolean proceed = false;
 		Object result = null;
-		try {
-			for (InterceptorHandler handler : interceptorHandlers) {
-				Object object = handler.onInterceptor(invocation);
-				if(handler.getInterceptorType().equals(InterceptorType.around)){
-					result = object;
-					//查询缓存命中，则不执行分库和读写分离的处理器
-					if(result != null && handler instanceof CacheHandler){
-						break;
-					}
-				}
-			}
-			if(result == null){
-				result = invocation.proceed();
-				proceed = true;
-			}else{
-				if(cacheEnabled && CacheHandler.NULL_PLACEHOLDER.equals(result)){
-					result = new ArrayList<>();
-				}
-			}
-			return result;
-		} finally {
-			for (InterceptorHandler handler : interceptorHandlers) {
-				if(!proceed)continue;
-				if(handler.getInterceptorType().equals(InterceptorType.before))continue;
-				if((result == null || (result instanceof List) && ((List<?>)result).isEmpty())&& handler instanceof CacheHandler){
-					result = CacheHandler.NULL_PLACEHOLDER;
-				}
-				handler.onFinished(invocation,result);
-			}
+		boolean proceed = false;
+		for (InterceptorHandler handler : interceptorHandlers) {
+			result = handler.onInterceptor(invocation);
+			if(result != null)break;
 		}
+		
+		if(result == null){
+			result = invocation.proceed();
+			proceed = true;
+		}
+		
+		for (InterceptorHandler handler : interceptorHandlers) {
+			handler.onFinished(invocation,proceed ? result : null);
+		}
+		
+		return result;
 	}
 
 	@Override
@@ -140,10 +134,6 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 		while(it.hasNext()){
 			InterceptorHandler handler = it.next();
 			handler.start(this);
-			//初始化的类型只启动初始化一次
-		    if(handler.getInterceptorType().equals(InterceptorType.init)){
-		        it.remove();
-		    }
 		}
 	}
 

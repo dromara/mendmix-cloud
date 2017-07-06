@@ -42,6 +42,8 @@ public class MybatisTest implements ApplicationContextAware{
 	@Autowired UserEntityMapper mapper;
 	
 	@Autowired TransactionTemplate transactionTemplate;
+	
+	static String[] mobiles = new String[10];
 
 	@Override
 	public void setApplicationContext(ApplicationContext arg0) throws BeansException {	
@@ -51,23 +53,15 @@ public class MybatisTest implements ApplicationContextAware{
 	@Test
 	public void testCRUD(){
 		
-		for (int i = 0; i < 5; i++) {
-			
+		for (int i = 0; i < mobiles.length; i++) {
+			mobiles[i] = "13800"+RandomUtils.nextLong(100000, 999999);
 			UserEntity entity = new UserEntity();
 			entity.setCreatedAt(new Date());
-			entity.setEmail(RandomStringUtils.random(6, true, true) + "@163.com");
-			entity.setMobile("13800"+RandomUtils.nextLong(100000, 999999));
-			entity.setType((short)1);
-			entity.setStatus((short)1);
+			entity.setEmail(mobiles[i] + "@163.com");
+			entity.setMobile(mobiles[i]);
+			entity.setType((short)(i % 2 == 0 ? 1 : 2));
+			entity.setStatus((short)(i % 3 == 0 ? 1 : 2));
 			mapper.insert(entity);
-			
-			entity = new UserEntity();
-			entity.setCreatedAt(new Date());
-			entity.setEmail(RandomStringUtils.random(6, true, true) + "@163.com");
-			entity.setMobile("13800"+RandomUtils.nextLong(100000, 999999));
-			entity.setType((short)2);
-			entity.setStatus((short)2);
-			mapper.insertSelective(entity);
 		}
 		
 		
@@ -76,12 +70,12 @@ public class MybatisTest implements ApplicationContextAware{
 	@Test
 	public void testCache(){
 		System.out.println("------------");
-		UserEntity userEntity = mapper.getByKey(20);
-		mapper.findByMobile("13800000001");
+		UserEntity userEntity = mapper.getByKey(1);
+		mapper.findByMobile(mobiles[0]);
 		System.out.println("------------");
-		mapper.findByMobile("13800349112");
+		mapper.findByMobile(mobiles[1]);
 		System.out.println("------------");
-		mapper.findByMobile("13800639997");
+		mapper.findByMobile(mobiles[2]);
 		
 		mapper.findByStatus((short)1);
 		mapper.findByStatus((short)2);
@@ -127,9 +121,12 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testFindNotExistsThenInsert(){
-		String mobile = "13800000001";
+		String mobile = "13800000002";
 		UserEntity entity = mapper.findByMobile(mobile);
-		if(entity != null)return;
+		if(entity != null){
+			System.out.println(entity.getMobile());
+			return;
+		}
 		entity = new UserEntity();
 		entity.setCreatedAt(new Date());
 		entity.setEmail(mobile + "@163.com");
@@ -149,8 +146,7 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testFindNotExists(){
-		UserEntity entity = mapper.findByMobile("13800138000");
-		System.out.println("==========>" + entity);
+		mapper.queryByExample(new UserEntity());
 	}
 	
 	@Test

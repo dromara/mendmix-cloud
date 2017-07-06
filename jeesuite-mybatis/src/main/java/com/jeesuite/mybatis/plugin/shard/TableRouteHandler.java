@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.core.InterceptorType;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 /**
@@ -41,11 +40,6 @@ public class TableRouteHandler implements InterceptorHandler,InitializingBean {
 		
 	}
 
-	@Override
-	public InterceptorType getInterceptorType() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	/* (non-Javadoc)
 	 * @see com.jeesuite.mybatis.core.InterceptorHandler#onStart()
@@ -63,6 +57,12 @@ public class TableRouteHandler implements InterceptorHandler,InitializingBean {
 	public void close() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public int interceptorOrder() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 } 
 

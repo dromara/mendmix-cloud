@@ -3,7 +3,6 @@ package com.jeesuite.mybatis.test.mapper;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.Select;
 
 import com.jeesuite.mybatis.core.BaseMapper;
@@ -22,7 +21,10 @@ public interface UserEntityMapper extends BaseMapper<UserEntity, Integer> {
 	UserEntity findByMobile(@Param("mobile") String mobile);
 	
 	@Cache
-	List<UserEntity> countByExample(UserEntity user);
+	List<UserEntity> queryByExample(UserEntity user);
+	
+	@Cache
+	int countByExample(UserEntity user);
 	
 	@Cache
 	@Select("SELECT count(*) FROM users where type=#{type}")

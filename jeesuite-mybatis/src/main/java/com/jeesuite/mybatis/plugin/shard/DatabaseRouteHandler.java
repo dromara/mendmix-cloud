@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.core.InterceptorType;
 import com.jeesuite.mybatis.datasource.DataSourceContextHolder;
 import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
@@ -102,10 +101,6 @@ public class DatabaseRouteHandler implements InterceptorHandler {
 
 	}
 
-	@Override
-	public InterceptorType getInterceptorType() {
-		return InterceptorType.before;
-	}
 	
 	/**
 	 * 判断该条sql是否需要分库
@@ -226,6 +221,11 @@ public class DatabaseRouteHandler implements InterceptorHandler {
 	@Override
 	public void close() {
 		
+	}
+
+	@Override
+	public int interceptorOrder() {
+		return 2;
 	}
 
 } 

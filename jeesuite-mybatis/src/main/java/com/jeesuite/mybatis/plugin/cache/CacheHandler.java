@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.core.InterceptorType;
 import com.jeesuite.mybatis.crud.builder.SqlTemplate;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.kit.CacheKeyUtils;
@@ -155,10 +154,10 @@ public class CacheHandler implements InterceptorHandler {
 			}
 			
 			if(cacheObject != null){
-				if(!NULL_PLACEHOLDER.equals(cacheObject)){	
-					if(!(cacheObject instanceof Collection)){						
-						cacheObject = new ArrayList<>(Arrays.asList(cacheObject));
-					}
+				if(NULL_PLACEHOLDER.equals(cacheObject)){
+					cacheObject = new ArrayList<>();
+				}else if(!(cacheObject instanceof Collection)){						
+					cacheObject = new ArrayList<>(Arrays.asList(cacheObject));
 				}
 			}
 			return cacheObject;
@@ -183,13 +182,12 @@ public class CacheHandler implements InterceptorHandler {
 			if((cacheInfo = getQueryMethodCache(mt.getId())) == null)return;
 			
 			final String cacheKey = genarateQueryCacheKey(cacheInfo.keyPattern, args[1]);
-			if(NULL_PLACEHOLDER.equals(result)){
-				getCacheProvider().set(cacheKey,result, CacheExpires.IN_1MIN,true);
-				return;
-			}
 			if(result instanceof List){
 				List list = (List)result;
-				if(list.isEmpty())return;
+				if(list.isEmpty()){
+					getCacheProvider().set(cacheKey,NULL_PLACEHOLDER, CacheExpires.IN_5MINS,true);
+					return;
+				}
 				result = cacheInfo.collectionResult ? result : list.get(0);
 			}
 			//按主键查询以及标记非引用关系的缓存直接读取缓存
@@ -361,7 +359,7 @@ public class CacheHandler implements InterceptorHandler {
 				getCacheProvider().set(fieldCacheKey,cacheKey, methodCache.getExpire(),true);
 				if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] add ref cacheKey:{}",mt.getId(),fieldCacheKey);
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.warn("cacheUniqueSelectRef:"+cacheKey,e);
 			}
 		}
 	}
@@ -400,10 +398,6 @@ public class CacheHandler implements InterceptorHandler {
 	}
 	
 
-	@Override
-	public InterceptorType getInterceptorType() {
-		return InterceptorType.around;
-	}
 	
 	private QueryMethodCache getQueryMethodCache(String mtId){
 		String key1 = mtId.substring(0, mtId.lastIndexOf(SPLIT_PONIT));
@@ -458,7 +452,7 @@ public class CacheHandler implements InterceptorHandler {
 				if(method.isAnnotationPresent(Cache.class)){
 					annotationCache = method.getAnnotation(Cache.class);
 					if(tmpMap.containsKey(fullMethodName))continue;
-					methodCache = generateQueryMethodCacheByMethod(mapperClass, ei.getEntityClass(), method);
+					methodCache = generateQueryMethodCacheByMethod(ei, method);
 					methodCache.expire = annotationCache.expire();
 					tmpMap.put(fullMethodName, methodCache);
 					logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",methodCache.methodName,methodCache.keyPattern);
@@ -604,8 +598,10 @@ public class CacheHandler implements InterceptorHandler {
 	 * @param method
 	 * @return
 	 */
-	private QueryMethodCache generateQueryMethodCacheByMethod(Class<?> mapperClass,Class<?> entityClass,Method method){
+	private QueryMethodCache generateQueryMethodCacheByMethod(EntityInfo entityInfo,Method method){
 
+		Class<?> mapperClass = entityInfo.getMapperClass();
+		Class<?> entityClass = entityInfo.getEntityClass();
 		QueryMethodCache methodCache = new QueryMethodCache();
 		String methodName = mapperClass.getName() + SPLIT_PONIT + method.getName();
 		methodCache.methodName = methodName;
@@ -647,6 +643,10 @@ public class CacheHandler implements InterceptorHandler {
 			//
 			sb.append(i == 0 ? ":" : "_").append("%s");
 		}
+		
+		if(!methodCache.groupRalated && methodCache.fieldNames.length == 1 && entityInfo.getIdProperty().equals(methodCache.fieldNames[0])){
+			throw new MybatisHanlerInitException(String.format("按主键查询方法[%s] 使用了自动缓存Annotation @Cache,请使用默认方法[%s]代替", methodName,methodDefine.selectName()));
+			}
 		methodCache.keyPattern = sb.toString();
 		
 		return methodCache;
@@ -723,5 +723,10 @@ public class CacheHandler implements InterceptorHandler {
 		try {			
 			clearExpiredGroupKeysTimer.shutdown();
 		} catch (Exception e) {}
+	}
+
+	@Override
+	public int interceptorOrder() {
+		return 0;
 	}
 }

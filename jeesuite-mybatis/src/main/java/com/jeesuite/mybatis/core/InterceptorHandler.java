@@ -21,5 +21,7 @@ public interface InterceptorHandler {
 	
 	void onFinished(Invocation invocation,Object result);
 	
-	InterceptorType getInterceptorType(); 
+	int interceptorOrder();
+	
+	
 }
