@@ -27,7 +27,13 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.jeesuite.cache.redis.JedisProviderFactory;
+import com.jeesuite.mybatis.parser.EntityInfo;
+import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.EntityCacheHelper;
+import com.jeesuite.mybatis.plugin.pagination.Page;
+import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
+import com.jeesuite.mybatis.plugin.pagination.PageExecutor.PageDataLoader;
+import com.jeesuite.mybatis.plugin.pagination.PageParams;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 import com.jeesuite.mybatis.test.mapper.UserEntityMapper;
 import com.jeesuite.spring.InstanceFactory;
@@ -146,7 +152,31 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testFindNotExists(){
-		mapper.queryByExample(new UserEntity());
+		EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper("com.jeesuite.mybatis.test.mapper.UserEntityMapper");
+		
+		String sql = entityInfo.getMapperSqls().get("com.jeesuite.mybatis.test.mapper.UserEntityMapper.queryByExample");
+		System.out.println(sql);
+		
+		System.out.println(sql.replaceAll("<(.*)>.*order by.*</(.*)>", ""));
+	}
+	
+	@Test
+	public void testPage(){
+		Page<UserEntity> pageInfo = PageExecutor.pagination(new PageParams(), new PageDataLoader<UserEntity>() {
+			@Override
+			public List<UserEntity> load() {
+				return mapper.findByStatus((short)1);
+			}
+		});
+		
+		System.out.println(pageInfo);
+	}
+	
+	@Test
+	public void testPage2(){
+		Page<UserEntity> pageInfo = mapper.pageQuery(new PageParams(1,5));
+		
+		System.out.println(pageInfo);
 	}
 	
 	@Test
@@ -198,5 +228,4 @@ public class MybatisTest implements ApplicationContextAware{
 		System.out.println();
 	}
 	
-
 }

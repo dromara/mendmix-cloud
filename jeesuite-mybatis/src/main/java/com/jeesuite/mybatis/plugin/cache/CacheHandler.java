@@ -286,6 +286,8 @@ public class CacheHandler implements InterceptorHandler {
 		} catch (Exception e) {}
     	
     	synchronized (configuration) {
+    		if(configuration.hasStatement(msId))return configuration.getMappedStatement(msId);
+    		
 			String sql = entityInfo.getMapperSqls().get(mt.getId());
 			if(!sql.toLowerCase().contains(entityInfo.getTableName().toLowerCase())){
 				return null;

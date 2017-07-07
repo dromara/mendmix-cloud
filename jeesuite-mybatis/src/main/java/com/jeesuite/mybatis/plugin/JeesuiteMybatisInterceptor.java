@@ -27,6 +27,7 @@ import org.springframework.util.StringUtils;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
+import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
 import com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler;
 import com.jeesuite.spring.InstanceFactory;
@@ -67,6 +68,8 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 			}else if("dbShard".equals(name)){
 				this.interceptorHandlers.add(new DatabaseRouteHandler());
 				dbShardEnabled = true;
+			}else if("page".equals(name)){
+				this.interceptorHandlers.add(new PaginationHandler());
 			}
 		}
 		//排序

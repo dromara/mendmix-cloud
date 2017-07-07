@@ -7,6 +7,9 @@ import org.apache.ibatis.annotations.Select;
 
 import com.jeesuite.mybatis.core.BaseMapper;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
+import com.jeesuite.mybatis.plugin.pagination.Page;
+import com.jeesuite.mybatis.plugin.pagination.PageParams;
+import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 
 public interface UserEntityMapper extends BaseMapper<UserEntity, Integer> {
@@ -15,6 +18,7 @@ public interface UserEntityMapper extends BaseMapper<UserEntity, Integer> {
 	List<UserEntity> findByType(short type);
 	
 	@Cache
+	@Pageable
 	List<UserEntity> findByStatus(short status);
 	
 	@Cache
@@ -36,5 +40,8 @@ public interface UserEntityMapper extends BaseMapper<UserEntity, Integer> {
 	
 	@Cache(expire=300)
 	public List<String> findMobileByIds(List<Integer> ids);
+	
+	@Select("SELECT * FROM users where 1=1")
+    Page<UserEntity> pageQuery(@Param("pageParam") PageParams pageParam);
 	
 }
