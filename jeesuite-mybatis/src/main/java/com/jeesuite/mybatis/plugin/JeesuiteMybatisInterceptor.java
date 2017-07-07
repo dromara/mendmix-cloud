@@ -48,8 +48,8 @@ import com.jeesuite.spring.SpringInstanceProvider;
             ResultHandler.class }) })  
 public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,DisposableBean,ApplicationContextAware{
 
+	private Properties properties;
 	//CRUD框架驱动 default，mapper3
-	private String crudDriver = "default";
 	private List<InterceptorHandler> interceptorHandlers = new ArrayList<>();
 	
 	private static boolean cacheEnabled,rwRouteEnabled,dbShardEnabled;
@@ -86,14 +86,6 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 		MybatisMapperParser.setMapperLocations(mapperLocations);
 	}
 
-	public void setCrudDriver(String crudDriver) {
-		this.crudDriver = crudDriver;
-	}
-
-	public String getCrudDriver() {
-		return crudDriver;
-	}
-
 	@Override
 	public Object intercept(Invocation invocation) throws Throwable {
 		
@@ -128,7 +120,9 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 	}
 
 	@Override
-	public void setProperties(Properties properties) {}
+	public void setProperties(Properties properties) {
+		this.properties = properties;
+	}
 
 
 	@Override
@@ -147,6 +141,15 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 		}
 	}
 
+	public String getProperty(String key){
+		return properties == null ? null : properties.getProperty(key);
+	}
+	
+	public String getProperty(String key,String defaultVal){
+		String property = getProperty(key);
+		return property == null ? defaultVal : property;
+	}
+	
 	public static boolean isCacheEnabled() {
 		return cacheEnabled;
 	}

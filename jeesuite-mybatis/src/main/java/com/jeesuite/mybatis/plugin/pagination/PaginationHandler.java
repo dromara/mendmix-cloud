@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.BoundSql;
@@ -29,6 +30,7 @@ import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.jeesuite.mybatis.plugin.PluginConfig;
 import com.jeesuite.mybatis.plugin.pagination.PageSqlUtils.DbType;
 import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
 
@@ -46,6 +48,7 @@ public class PaginationHandler implements InterceptorHandler {
 	private DbType dbType = DbType.MYSQL;
 	
 	public void setDbType(String dbType){
+		if(StringUtils.isBlank(dbType))return;
 		DbType[] dbTypes = DbType.values();
 		for (DbType dt : dbTypes) {
 			if(dt.name().equalsIgnoreCase(dbType)){
@@ -57,6 +60,11 @@ public class PaginationHandler implements InterceptorHandler {
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
+
+		setDbType(context.getProperty(PluginConfig.DB_TYPE));
+		
+		logger.info("dbType:{}",dbType.name());
+		
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		for (EntityInfo ei : entityInfos) {
 			Class<?> mapperClass = ei.getMapperClass();
@@ -151,7 +159,7 @@ public class PaginationHandler implements InterceptorHandler {
 		String orignSql = boundSql.getSql().replaceAll(";$", "");
 		// count sql
 		String countSql = PageSqlUtils.getCountSql(orignSql);
-
+		
 		BoundSql countBoundSql = new BoundSql(countMs.getConfiguration(), countSql, boundSql.getParameterMappings(),
 				parameter);
 		// 执行 count 查询

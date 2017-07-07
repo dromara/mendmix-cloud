@@ -5,11 +5,14 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.builder.xml.XMLMapperEntityResolver;
 import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.parsing.XPathParser;
@@ -114,7 +117,7 @@ public class MybatisMapperParser {
 
 						JarFile jarFile = new JarFile(jarFilePath);
 						
-						List<String> fileNames = FileUtils.listFiles(jarFile, mapperFileSuffix);
+						List<String> fileNames = listFiles(jarFile, mapperFileSuffix);
 						if (fileNames != null && fileNames.size() > 0) {
 							for (String fileName : fileNames) {
 								InputStream inputStream = jarFile.getInputStream(jarFile.getJarEntry(fileName));
@@ -239,5 +242,22 @@ public class MybatisMapperParser {
 	    return sql.toString();
 	  }
 	
-	
+	public static List<String> listFiles(JarFile jarFile, String extensions) {
+		if (jarFile == null || StringUtils.isEmpty(extensions))
+			return null;
+		
+		List<String> files = new ArrayList<String>();
+		
+		Enumeration<JarEntry> entries = jarFile.entries(); 
+        while (entries.hasMoreElements()) {  
+        	JarEntry entry = entries.nextElement();
+        	String name = entry.getName();
+    		
+    		if (name.endsWith(extensions)) {
+    			files.add(name);
+    		}
+        } 
+        
+        return files;
+	}
 }

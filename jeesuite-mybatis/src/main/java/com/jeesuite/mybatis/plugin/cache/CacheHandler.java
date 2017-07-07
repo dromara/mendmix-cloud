@@ -47,6 +47,7 @@ import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.jeesuite.mybatis.plugin.PluginConfig;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheEvictCascade;
 import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
@@ -64,6 +65,10 @@ import com.jeesuite.spring.InstanceFactory;
  */
 public class CacheHandler implements InterceptorHandler {
 
+	public final static long IN_5MINS = 60 * 5;
+    public final static long IN_1HOUR = 60 * 60;
+	public final static long DEFAULT_CACHER_SECONDS = IN_1HOUR * 24;
+	
 	private static final String STR_PARAM = "param";
 	private static final String STR_LIST = "list";
 	private static final String STR_COLLECTION = "collection";
@@ -185,7 +190,7 @@ public class CacheHandler implements InterceptorHandler {
 			if(result instanceof List){
 				List list = (List)result;
 				if(list.isEmpty()){
-					getCacheProvider().set(cacheKey,NULL_PLACEHOLDER, CacheExpires.IN_5MINS,true);
+					getCacheProvider().set(cacheKey,NULL_PLACEHOLDER, IN_5MINS,true);
 					return;
 				}
 				result = cacheInfo.collectionResult ? result : list.get(0);
@@ -420,13 +425,15 @@ public class CacheHandler implements InterceptorHandler {
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
-		if("mapper3".equalsIgnoreCase(context.getCrudDriver())){
+		
+		String crudDriver = context.getProperty(PluginConfig.CRUD_DRIVER,"default");
+		if("mapper3".equalsIgnoreCase(crudDriver)){
 			methodDefine = new Mapper3CacheMethodDefine();
 		}else{
 			methodDefine = new DefaultCacheMethodDefine();
 		}
 		
-		logger.info("crudDriver use:{}",context.getCrudDriver());
+		logger.info("crudDriver use:{}",crudDriver);
 
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		
@@ -661,7 +668,7 @@ public class CacheHandler implements InterceptorHandler {
 		public String cacheGroupKey;//缓存组key
 		public String methodName;
 		public String keyPattern;
-		public long expire = CacheExpires.IN_1DAY;//过期时间（秒）
+		public long expire = DEFAULT_CACHER_SECONDS;//过期时间（秒）
 		public boolean isPk = false;//主键查询
 		public boolean collectionResult = false;//查询结果是集合
 		public boolean groupRalated = false; //是否需要关联group
@@ -670,7 +677,7 @@ public class CacheHandler implements InterceptorHandler {
 		//缓存时间加上随机，防止造成缓存同时失效雪崩
 		public long getExpire() {
 			long rnd = RandomUtils.nextLong(0, expire/3);
-			return expire + (rnd > CacheExpires.IN_1HOUR ? CacheExpires.IN_1HOUR : rnd);
+			return expire + (rnd > IN_1HOUR ? IN_1HOUR : rnd);
 		}
 
 
