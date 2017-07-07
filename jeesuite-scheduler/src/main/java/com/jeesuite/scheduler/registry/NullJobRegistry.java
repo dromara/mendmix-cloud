@@ -66,4 +66,8 @@ public class NullJobRegistry implements JobRegistry {
 		return new ArrayList<>(schedulerConfgs.values());
 	}
 
+
+	@Override
+	public void onRegistered() {}
+
 }

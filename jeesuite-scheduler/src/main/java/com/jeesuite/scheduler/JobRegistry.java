@@ -39,4 +39,6 @@ public interface JobRegistry {
 	void unregister(String jobName);
 	
 	List<JobConfig> getAllJobs();
+	
+	void onRegistered();
 }

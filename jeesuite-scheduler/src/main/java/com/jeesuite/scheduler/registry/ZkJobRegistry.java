@@ -161,6 +161,11 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 					updateConfInZK = true;
 				}else if(currentTimeMillis - configFromZK.getModifyTime() > TimeUnit.MINUTES.toMillis(30)){
 					updateConfInZK = true;
+				}else{
+					if(!JobContext.getContext().getNodeId().equals(configFromZK.getCurrentNodeId())){				   
+						List<String> nodes = zkClient.getChildren(nodeStateParentPath);
+						updateConfInZK = !nodes.contains(configFromZK.getCurrentNodeId());
+					}
 				}
 			}else{
 				//zookeeper 该job不存在？
@@ -196,17 +201,6 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
         
         //
 		regAndSubscribeNodeEvent();
-        
-        //清除之前遗留节点
-        if(isFirstNode){
-        	List<String> historyJobNames = zkClient.getChildren(groupPath);
-        	for (String name : historyJobNames) {
-				if("nodes".equals(name) || conf.getJobName().equals(name))continue;
-				zkClient.delete(groupPath + "/" + name);
-				logger.info("delete history job path:{}/{}",groupPath,name);
-			}
-        	
-        }
         
         logger.info("finish register schConfig:{}",ToStringBuilder.reflectionToString(conf, ToStringStyle.MULTI_LINE_STYLE));
 	}
@@ -455,6 +449,30 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		config.setModifyTime(Calendar.getInstance().getTimeInMillis());
 		zkClient.writeData(getPath(config), JsonUtils.toJson(config));
 		schedulerConfgs.put(config.getJobName(), config);
+	}
+
+	@Override
+	public void onRegistered() {
+
+    	List<String> groups = zkClient.getChildren(ROOT.substring(0, ROOT.length() - 1));
+    	logger.info("==============clear Invalid jobs=================");
+    	for (String group : groups) {
+    		String groupPath = ROOT + group;
+    		if(this.groupPath.equals(groupPath))continue;
+    		String nodeStateParentPath = groupPath + "/nodes";
+			if(zkClient.exists(nodeStateParentPath) == false || zkClient.getChildren(nodeStateParentPath).isEmpty()){
+				List<String> jobs = zkClient.getChildren(groupPath);
+				for (String job : jobs) {
+					zkClient.delete(groupPath + "/" + job);
+					logger.info("delete path:{}/{}",groupPath,job);
+				}
+				zkClient.delete(groupPath);
+				logger.info("delete path:{}",groupPath);
+			}
+		}
+    	logger.info("==============clear Invalid jobs end=================");
+    	
+    
 	}
 	
 }

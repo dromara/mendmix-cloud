@@ -146,6 +146,9 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			
 			logger.info(">>>>>>> Job[{}][{}]-Class[{}]  initialized finish ",job.group,job.jobName,job.getClass().getName());
 		}
+		
+		//
+		JobContext.getContext().getRegistry().onRegistered();
 	}
 
 	/**

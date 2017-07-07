@@ -13,11 +13,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import com.github.pagehelper.PageInterceptor;
 import com.jeesuite.mybatis.datasource.MutiRouteDataSource;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.jeesuite.mybatis.plugin.PluginConfig;
 
 import tk.mybatis.mapper.entity.Config;
 import tk.mybatis.mapper.mapperhelper.MapperHelper;
@@ -39,13 +39,6 @@ public class JeesuiteMybatisConfiguration implements InitializingBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		//
-		try {
-			PageInterceptor interceptor = new PageInterceptor();
-			Properties properties = new Properties();
-			properties.setProperty("dialect", "com.github.pagehelper.PageHelper");
-			interceptor.setProperties(properties);
-			sqlSessionFactory.getConfiguration().addInterceptor(interceptor);
-		} catch (Exception e) {}
 
 		String interceptorHandlers = null;
 		if (properties.isCacheEnabled()) {
@@ -59,13 +52,22 @@ public class JeesuiteMybatisConfiguration implements InitializingBean {
 		if (properties.isDbShardEnabled()) {
 			interceptorHandlers = interceptorHandlers == null ? "dbShard" : interceptorHandlers + ",dbShard";
 		}
+		
+		if (properties.isPaginationEnabled()) {
+			interceptorHandlers = interceptorHandlers == null ? "page" : interceptorHandlers + ",page";
+		}
 
 		if (interceptorHandlers != null) {
 			JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor();
-			interceptor.setCrudDriver("mapper3");
 			interceptor.setMapperLocations(mapperLocations);
 			interceptor.setInterceptorHandlers(interceptorHandlers);
 			sqlSessionFactory.getConfiguration().addInterceptor(interceptor);
+			
+			Properties p = new Properties();
+			p.setProperty(PluginConfig.CRUD_DRIVER, properties.getCrudDriver());
+			p.setProperty(PluginConfig.DB_TYPE, properties.getDbType());
+			
+			interceptor.setProperties(p);
 			interceptor.afterPropertiesSet();
 		}else{
 			MybatisMapperParser.setMapperLocations(mapperLocations);

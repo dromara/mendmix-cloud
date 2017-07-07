@@ -190,17 +190,20 @@ public abstract class AbstractJob implements DisposableBean{
 			
             
           //如果执行节点不为空,且不等于当前节点
-            if(StringUtils.isNotBlank(schConf.getCurrentNodeId()) 
-            		&& !JobContext.getContext().getNodeId().equals(schConf.getCurrentNodeId())){
-            	logger.debug("Job_{} 指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
-            	return true;
+            if(StringUtils.isNotBlank(schConf.getCurrentNodeId()) ){            	
+            	if(!JobContext.getContext().getNodeId().equals(schConf.getCurrentNodeId())){
+            		logger.debug("Job_{} 指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
+            		return true;
+            	}
+            	//如果分配了节点，则可以保证本节点不会重复执行则不需要判断runing状态
+            }else{  
+            	if (schConf.isRunning()) {
+            		//如果某个节点开始了任务但是没有正常结束导致没有更新任务执行状态
+            		logger.info("Job_{} 其他节点[{}]正在执行,终止当前执行", schConf.getCurrentNodeId(),jobName);
+            		return true;
+            	}
             }
 
-            if (schConf.isRunning()) {
-            	//如果某个节点开始了任务但是没有正常结束导致没有更新任务执行状态
-                logger.info("Job_{} 其他节点[{}]正在执行,终止当前执行", schConf.getCurrentNodeId(),jobName);
-                return true;
-            }
             
             this.cronExpr = schConf.getCronExpr();
         } catch (Exception e) {

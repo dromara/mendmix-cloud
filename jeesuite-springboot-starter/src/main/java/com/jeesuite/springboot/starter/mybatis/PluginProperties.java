@@ -13,10 +13,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix="jeesuite.mybatis")
 public class PluginProperties {
 
+	private String dbType = "MySQL";
+	private String crudDriver = "mapper3";
 	private boolean cacheEnabled = false;
 	private boolean rwRouteEnabled = false;
 	private boolean dbShardEnabled = false;
-	private boolean paginationEnabled = false;
+	private boolean paginationEnabled = true;
 	
 
 	public boolean isCacheEnabled() {
@@ -44,6 +46,19 @@ public class PluginProperties {
 	public void setPaginationEnabled(boolean paginationEnabled) {
 		this.paginationEnabled = paginationEnabled;
 	}
+	public String getDbType() {
+		return dbType;
+	}
+	public void setDbType(String dbType) {
+		this.dbType = dbType;
+	}
+	public String getCrudDriver() {
+		return crudDriver;
+	}
+	public void setCrudDriver(String crudDriver) {
+		this.crudDriver = crudDriver;
+	}
 
+	
 
 }

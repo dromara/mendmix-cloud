@@ -41,9 +41,14 @@
 		<property name="plugins">
 			<array>
 				<bean class="com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor">
-					<property name="crudDriver" value="default" />
 					<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
 					<property name="interceptorHandlers" value="cache,rwRoute,page" />
+					<property name="properties">
+                    <props>
+                      <prop key="crudDriver" >default</prop>
+                      <prop key="dbType" >Mysql</prop>
+                    </props>
+        </property>
 				</bean>
 			</array>
 		</property>
