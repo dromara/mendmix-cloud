@@ -151,8 +151,14 @@ public class MybatisMapperParser {
 		String entityClass = null;
 		EntityInfo entityInfo = null;
 		
+		Map<String, String> includes = new HashMap<>();
+		
 		List<XNode> children = evalNode.getChildren();
 		for (XNode xNode : children) {
+			if("sql".equalsIgnoreCase(xNode.getName())){
+				includes.put(xNode.getStringAttribute("id"), xNode.getStringBody());
+				continue;
+			}
 			if(!"resultMap".equals(xNode.getName()) )continue;
 			if(!"BaseResultMap".equals(xNode.getStringAttribute("id")) )continue;
 			
@@ -177,7 +183,7 @@ public class MybatisMapperParser {
 		}
 		for (XNode xNode : children) {
 			if ("select|insert|update|delete".contains(xNode.getName().toLowerCase())) {
-				String sql = parseSql(xNode);
+				String sql = parseSql(xNode,includes);
 				entityInfo.addSql(xNode.getStringAttribute("id"), sql);
 			}
 		}
@@ -226,7 +232,7 @@ public class MybatisMapperParser {
 		
 	}
 	
-	private static String parseSql(XNode node) {
+	private static String parseSql(XNode node,Map<String, String> includeContents) {
 	    StringBuilder sql = new StringBuilder();
 	    NodeList children = node.getNode().getChildNodes();
 	    for (int i = 0; i < children.getLength(); i++) {
@@ -234,12 +240,17 @@ public class MybatisMapperParser {
 	      String data;
 	      if("#text".equals(child.getName())){
 	    	  data = child.getStringBody("");
+	      }else if("include".equals(child.getName())){
+	    	  String refId = child.getStringAttribute("refid");
+	    	  data = child.toString();
+	    	  data = data.replaceAll("<\\s?include.*("+refId+").*>", includeContents.get(refId));
+	    	  
 	      }else{
 	    	  data = child.toString();
 	      }
-	        sql.append(data);
+	      sql.append(data);
 	    }
-	    return sql.toString();
+	    return sql.toString().replaceAll("(\\n+)|(\\s{2,})", " ");
 	  }
 	
 	public static List<String> listFiles(JarFile jarFile, String extensions) {
@@ -259,5 +270,10 @@ public class MybatisMapperParser {
         } 
         
         return files;
+	}
+	
+	public static void main(String[] args) {
+		String sql = "SELECT <include refid=\"base_fields\" /> dd > FROM users where type = #{type} ";
+		System.out.println(sql.replaceAll("<\\s?include.*(base_fields).*>", "xxxx"));
 	}
 }

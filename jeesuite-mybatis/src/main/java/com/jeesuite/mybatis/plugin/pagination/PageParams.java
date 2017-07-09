@@ -30,6 +30,6 @@ public class PageParams {
 	}
     
 	public int getOffset() {
-		return pageNo * pageSize;
+		return (pageNo - 1) * pageSize;
 	}
 }

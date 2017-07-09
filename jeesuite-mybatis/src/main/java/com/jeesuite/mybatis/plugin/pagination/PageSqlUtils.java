@@ -30,15 +30,17 @@ public class PageSqlUtils {
 	}
 	
 	public static String getCountSql(String sql){
-		String[] segments = sql.split(SQL_SPLIT_PATTERN);
-		return SQL_COUNT_PREFIX.concat(segments[1]);
+		String[] segments = sql.replaceAll("\\n+", " ").split(SQL_SPLIT_PATTERN);
+		return SQL_COUNT_PREFIX.concat(segments[1]).replaceAll("\\s{2,}", " ");
 	}
 	
 	public static void main(String[] args) {
-		String sql = "SELECT * FROM user u LEFT OUTER JOIN account a ON u.id = a.user_id WHERE a.name is NULL order by create_at desc";
+		String sql = "SELECT   id,user_id,user_name,source,title,languege_id,framework_id,like_count,comment_count,view_count,is_recommend,is_original,tags,created_at FROM sc_posts where 1=1  \n\n\n\n and is_recommend = 1 order by created_at desc";
 		String[] strings = sql.split(SQL_SPLIT_PATTERN);
 		for (String string : strings) {
 			System.out.println("----->" + string);
 		}
+		
+		System.out.println(">>>>" +getCountSql(sql));
 	}
 }

@@ -99,13 +99,14 @@ public class PaginationHandler implements InterceptorHandler {
 		
 		final Executor executor = (Executor) invocation.getTarget();
 		final Object[] args = invocation.getArgs();
+		final MappedStatement orignMappedStatement = (MappedStatement)args[0];
+		
+		if(!orignMappedStatement.getSqlCommandType().equals(SqlCommandType.SELECT))return null;
+		if(!pageMappedStatements.keySet().contains(orignMappedStatement.getId()))return null;
+		
 		final RowBounds rowBounds = (RowBounds) args[2];
 		final ResultHandler resultHandler = (ResultHandler) args[3];
-        final MappedStatement orignMappedStatement = (MappedStatement)args[0];
         final Object parameter = args[1];
-        
-        if(!orignMappedStatement.getSqlCommandType().equals(SqlCommandType.SELECT))return null;
-        if(!pageMappedStatements.keySet().contains(orignMappedStatement.getId()))return null;
         
         PageParams pageParams = PageExecutor.getPageParams();
         
