@@ -3,7 +3,7 @@
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-mybatis</artifactId>
-	<version>1.0.6</version>
+	<version>最新版本</version>
 </dependency>
 ```
 #### 一些说明
@@ -41,19 +41,8 @@
 * 分库路由
   1. 只适用基本的分库路由，不支持跨库join等，未经过严格测试也没上过生产系统（只当个研究用）。
 * 分页
-  1. 详细使用请参考项目主页：[Mybatis_PageHelper](http://git.oschina.net/free/Mybatis_PageHelper)（当前集成是5.0.0版本）
-  2. 提供了一个`PageTemplate`工具类
-  ```
-  PageInfo<UserEntity> page = PageTemplate.execute(pageNo, pageSize,
-	new PageDataLoader<UserEntity>() {
-		@Override
-		public List<SchemeDetailsEntity> load() {
-		  List<UserEntity> entitys = mapper.findAll();
-		  return entitys;
-	 }
- });
-  ```
-  
+  1. 支持通过标注或者定义page方法实现物理分页
+ 
 
 #### 配置
 ```
@@ -139,18 +128,23 @@ group1.slave1.db.password=123456
 		<property name="dataSource" ref="routeDataSource" />
 		<property name="typeAliasesPackage" value="com.jeesuite.demo.dao.entity" />
 		<property name="plugins">
-            <array>
-                <bean class="com.jeesuite.mybatis.plugin.JeesuiteMybatisPluginContext">
-                    <!--可选值:default(默认),mapper3(集成mapper框架)-->
-					<property name="crudDriver" value="default" />
-				    <property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
-				    <!--
-				      可选值：cache(自动缓存),rwRoute(读写分离),dbShard(分库路由)
+			<array>
+				<bean class="com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor">
+					<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
+					<!--
+				      可选值：cache(自动缓存),rwRoute(读写分离),dbShard(分库路由,page:自动分页)
 				    -->
-				    <property name="interceptorHandlers" value="cache" />
-				</bean> 
-            </array>
-        </property>
+					<property name="interceptorHandlers" value="cache,rwRoute,page" />
+					<property name="properties">
+						<props>
+						    <!--可选值:default(默认),mapper3(集成mapper框架)-->
+							<prop key="crudDriver">mapper3</prop>
+							<prop key="dbType">Mysql</prop>
+						</props>
+					</property>
+				</bean>
+			</array>
+		</property>
 	</bean>
 	<!--集成Mapper框架的配置,此处修改为tk.mybatis.spring.mapper.MapperScannerConfigurer-->
 	<bean class="com.jeesuite.mybatis.spring.MapperScannerConfigurer">
@@ -225,5 +219,31 @@ EntityCacheHelper.queryTryCache(UserEntity.class, "findByStatus:2", new Callable
    }
 });
 ```
+
+#### 如何使用分页
+##### 1.标注方式(`@Pageable`)
+```
+//mapper接口
+@Pageable
+List<UserEntity> findByStatus(short status);
+
+//调用
+Page<UserEntity> pageInfo = mapper.pageQuery(new PageParams(1,5));
+```
+##### 2.page方法定义方式
+```
+//mapper接口
+@Select("SELECT * FROM users where 1=1")
+Page<UserEntity> pageQuery(@Param("pageParam") PageParams pageParam);
+
+//调用
+Page<UserEntity> pageInfo = PageExecutor.pagination(new PageParams(1,10), new PageDataLoader<UserEntity>() {
+	@Override
+	public List<UserEntity> load() {
+	   return mapper.findByStatus((short)1);
+	}
+});
+```
+
 
 
