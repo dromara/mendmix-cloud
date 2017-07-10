@@ -248,9 +248,13 @@ public class MybatisMapperParser {
 	      }else{
 	    	  data = child.toString();
 	      }
-	      sql.append(data);
+	      data = data.replaceAll("\\n+|\\t+", "");
+	      if(StringUtils.isNotBlank(data)){	    	  
+	    	  sql.append(data).append("\t").append("\n");
+	      }
 	    }
-	    return sql.toString().replaceAll("(\\n+)|(\\s{2,})", " ");
+	    // return sql.toString().replaceAll("\\s{2,}", " ");
+		return sql.toString();
 	  }
 	
 	public static List<String> listFiles(JarFile jarFile, String extensions) {

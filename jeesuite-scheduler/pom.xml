@@ -13,12 +13,12 @@
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.1.0</version>
+			<version>1.1.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-spring</artifactId>
-			<version>1.1.0</version>
+			<version>1.1.2-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>

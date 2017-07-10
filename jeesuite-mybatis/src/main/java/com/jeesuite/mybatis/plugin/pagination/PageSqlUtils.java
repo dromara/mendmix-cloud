@@ -2,6 +2,12 @@ package com.jeesuite.mybatis.plugin.pagination;
 
 public class PageSqlUtils {
 	
+	private static final String BLANK_STR = " ";
+
+	private static final String REGEX_MULT_BLANK = "\\s{2,}";
+
+	private static final String REGEX_LINE = "\\n+";
+
 	private static final String SQL_SPLIT_PATTERN = "(select|SELECT).*(FROM|from)|(order|ORDER)\\s+(by|BY)";
 
 	private static final String SQL_COUNT_PREFIX = "SELECT count(1) FROM ";
@@ -30,8 +36,8 @@ public class PageSqlUtils {
 	}
 	
 	public static String getCountSql(String sql){
-		String[] segments = sql.replaceAll("\\n+", " ").split(SQL_SPLIT_PATTERN);
-		return SQL_COUNT_PREFIX.concat(segments[1]).replaceAll("\\s{2,}", " ");
+		String[] segments = sql.replaceAll(REGEX_LINE, BLANK_STR).split(SQL_SPLIT_PATTERN);
+		return SQL_COUNT_PREFIX.concat(segments[1]).replaceAll(REGEX_MULT_BLANK, BLANK_STR);
 	}
 	
 	public static void main(String[] args) {

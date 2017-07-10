@@ -35,9 +35,9 @@ import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.util.ClassUtils;
 
 import com.jeesuite.scheduler.annotation.ScheduleConf;
-import com.jeesuite.scheduler.helper.AopTargetUtils;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
+import com.jeesuite.spring.helper.SpringAopHelper;
 
 /**
  * 
@@ -127,7 +127,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		
 		for ( AbstractJob sch : schedulers) {
 			
-			final AbstractJob job = (AbstractJob) AopTargetUtils.getTarget(sch);
+			final AbstractJob job = (AbstractJob) SpringAopHelper.getTarget(sch);
 			//
 			JobContext.getContext().addJob(job);
 			//
