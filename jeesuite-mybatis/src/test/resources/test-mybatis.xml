@@ -42,13 +42,17 @@
 			<array>
 				<bean class="com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor">
 					<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
+					<!--
+				      可选值：cache(自动缓存),rwRoute(读写分离),dbShard(分库路由)
+				    -->
 					<property name="interceptorHandlers" value="cache,rwRoute,page" />
 					<property name="properties">
-                    <props>
-                      <prop key="crudDriver" >default</prop>
-                      <prop key="dbType" >Mysql</prop>
-                    </props>
-        </property>
+						<props>
+						    <!--可选值:default(默认),mapper3(集成mapper框架)-->
+							<prop key="crudDriver">mapper3</prop>
+							<prop key="dbType">Mysql</prop>
+						</props>
+					</property>
 				</bean>
 			</array>
 		</property>

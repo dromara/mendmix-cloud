@@ -162,7 +162,7 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testPage(){
-		Page<UserEntity> pageInfo = PageExecutor.pagination(new PageParams(), new PageDataLoader<UserEntity>() {
+		Page<UserEntity> pageInfo = PageExecutor.pagination(new PageParams(1,10), new PageDataLoader<UserEntity>() {
 			@Override
 			public List<UserEntity> load() {
 				return mapper.findByStatus((short)1);

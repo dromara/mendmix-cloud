@@ -4,6 +4,7 @@
 package com.jeesuite.mybatis.parser;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -13,6 +14,9 @@ import javax.persistence.Column;
 import javax.persistence.Table;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 /**
  * @description <br>
@@ -66,6 +70,23 @@ public class EntityInfo {
 				return;
 			}
 			mapperClass = Class.forName(mapperClassName);
+			//
+			Method[] methods = mapperClass.getDeclaredMethods();
+			String sql = null;
+            for (Method method : methods) {
+            	sql = null;
+				if(method.isAnnotationPresent(Select.class)){
+					sql = method.getAnnotation(Select.class).value()[0];
+				}else if(method.isAnnotationPresent(Update.class)){
+					sql = method.getAnnotation(Update.class).value()[0];
+				}else if(method.isAnnotationPresent(Delete.class)){
+					sql = method.getAnnotation(Delete.class).value()[0];
+				}
+				if(sql != null){	
+					String key = mapperClass.getName() + "." + method.getName();
+					mapperSqls.put(key, sql);
+				}
+			}
 		} catch (ClassNotFoundException e) {
 			errorMsg = e.getMessage();
 		}catch (Exception e) {

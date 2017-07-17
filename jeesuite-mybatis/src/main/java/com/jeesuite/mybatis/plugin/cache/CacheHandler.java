@@ -20,10 +20,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ResultMap;
@@ -504,23 +501,6 @@ public class CacheHandler implements InterceptorHandler {
 			
 			//更新缓存方法
 			generateUpdateByPkCacheMethod(mapperClass, ei.getEntityClass(), keyPatternForPK);
-			
-			//解析方法标注的sql
-			String sql = null;
-            for (Method method : methods) {
-            	sql = null;
-				if(method.isAnnotationPresent(Select.class)){
-					sql = method.getAnnotation(Select.class).value()[0];
-				}else if(method.isAnnotationPresent(Update.class)){
-					sql = method.getAnnotation(Update.class).value()[0];
-				}else if(method.isAnnotationPresent(Delete.class)){
-					sql = method.getAnnotation(Delete.class).value()[0];
-				}
-				if(sql != null){	
-					String key = ei.getMapperClass().getName() + "." + method.getName();
-					ei.getMapperSqls().put(key, sql);
-				}
-			}
 		}
 		
 		//

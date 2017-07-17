@@ -3,6 +3,7 @@ package com.jeesuite.mybatis.test.mapper;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.Select;
 
 import com.jeesuite.mybatis.core.BaseMapper;
@@ -42,6 +43,7 @@ public interface UserEntityMapper extends BaseMapper<UserEntity, Integer> {
 	public List<String> findMobileByIds(List<Integer> ids);
 	
 	@Select("SELECT * FROM users where 1=1")
+	@ResultMap("BaseResultMap")
     Page<UserEntity> pageQuery(@Param("pageParam") PageParams pageParam);
 	
 }
