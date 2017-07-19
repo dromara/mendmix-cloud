@@ -11,24 +11,18 @@ public class SimpleCryptUtils {
 
 	private static final String KEY_TAIL = "j@";
 	
-	 private static final String CIPHER = "{Cipher}";
-
 	public static String encode(String key,String data) {
 		 key = DigestUtils.md5Short(key) + KEY_TAIL;
 		 String encode = DES.encode(key, data);
 		 byte[] bytes = Base64.encodeToByte(encode.getBytes(StandardCharsets.UTF_8), true);
-		 return CIPHER + new String(bytes, StandardCharsets.UTF_8);
+		 return new String(bytes, StandardCharsets.UTF_8);
 	 }
 	 
 	 public static String decode(String key,String data) {
-		 if(data.startsWith(CIPHER)){
-			 key = DigestUtils.md5Short(key) + KEY_TAIL;
-			 data = data.replace(CIPHER, "");
-			 byte[] bytes = Base64.decode(data);
-			 data = new String(bytes, StandardCharsets.UTF_8);
-			 return DES.decode(key, data);
-		 }
-		 return data;
+		 key = DigestUtils.md5Short(key) + KEY_TAIL;
+		 byte[] bytes = Base64.decode(data);
+		 data = new String(bytes, StandardCharsets.UTF_8);
+		 return DES.decode(key, data);
 	 }
 	 
 	 
