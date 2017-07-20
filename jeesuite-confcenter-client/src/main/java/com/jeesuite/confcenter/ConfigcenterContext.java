@@ -11,6 +11,8 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
 import com.jeesuite.common.crypt.RSA;
 import com.jeesuite.common.json.JsonUtils;
@@ -21,8 +23,6 @@ import com.jeesuite.confcenter.utils.HttpUtils;
 
 public class ConfigcenterContext {
 
-	private final static Logger logger = LoggerFactory.getLogger(ConfigcenterContext.class);
-	
 	private static ConfigcenterContext instance = new ConfigcenterContext();
 	
 	private PrivateKey rsaPrivateKey;
@@ -56,19 +56,24 @@ public class ConfigcenterContext {
 		
 		version = getValue("jeesuite.configcenter.version","0.0.0");
 		
-		logger.info(String.format("\n=====configcenter=====\nappName:%s\nenv:%s\nversion:%s\nremoteEnabled:%s\n=====configcenter=====", app,env,version,remoteEnabled));
+		System.out.println(String.format("\n=====configcenter=====\nappName:%s\nenv:%s\nversion:%s\nremoteEnabled:%s\n=====configcenter=====", app,env,version,remoteEnabled));
 		
-		String location = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-location");
+		String location = StringUtils.trimToNull(ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-location"));
 		String storeType = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-type", "JCEKS");
 		String storePass = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-password");
 		String alias = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-alias");
 		String keyPass = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-keyPassword", storePass);
 		try {			
 			if(StringUtils.isNotBlank(location)){
+				if(location.toLowerCase().startsWith("classpath")){
+					Resource resource = new ClassPathResource(location.substring(location.indexOf(":") + 1));
+					location = resource.getFile().getAbsolutePath();
+				}
 				rsaPrivateKey = RSA.loadPrivateKeyFromKeyStore(location, alias, storeType, storePass, keyPass);
 			}
 		} catch (Exception e) {
-			logger.warn("load private key:"+location,e);
+			System.out.println("load private key:"+location);
+			e.printStackTrace();
 		}
 	}
 
@@ -127,7 +132,7 @@ public class ConfigcenterContext {
 		Properties properties = new Properties();
 		
 		String url = String.format("%s/api/fetch_all_configs?appName=%s&env=%s&version=%s", apiBaseUrl,app,env,version);
-		logger.info("fetch configs url:" + url);
+		System.out.println("fetch configs url:" + url);
 		
 		String jsonString = null;
 		try {
@@ -142,17 +147,17 @@ public class ConfigcenterContext {
 			throw new RuntimeException(map.get("msg").toString());
 		}
 		Set<String> keys = map.keySet();
-		logger.info("==================remote config list =======================");
+		System.out.println("==================remote config list =======================");
 		for (String key : keys) {
 			Object value = decodeEncryptIfRequire(map.get(key));
 			properties.put(key, value);
 			//
 			ResourceUtils.add(key, value.toString());  
 			if(!key.contains("password")){					
-				logger.info(String.format("%s=%s", key,hideSensitive(key,value.toString())));
+				System.out.println(String.format("%s=%s", key,hideSensitive(key,value.toString())));
 			}
 		}
-		logger.info("==================remote config list=======================");
+		System.out.println("==================remote config list=======================");
 	
 		remoteFirst = Boolean.parseBoolean(properties.getProperty("remote.config.first", "false"));
 		return properties;
@@ -161,7 +166,7 @@ public class ConfigcenterContext {
 	private Object decodeEncryptIfRequire(Object data) {
 		if (data.toString().startsWith(RSA_PREFIX)) {
 			if(rsaPrivateKey == null){
-				throw new RuntimeException("configcenter [secrrsaPrivateKeyet] is required");
+				throw new RuntimeException("configcenter [rsaPrivateKey] is required");
 			}
 			data = data.toString().replace(RSA_PREFIX, "");
 			return RSA.decode(rsaPrivateKey, data.toString());
