@@ -31,16 +31,33 @@ public class ConfigcenterContext {
 
 	private static final String RSA_PREFIX = "{Cipher:RSA}";
 	
-	private boolean remoteEnabled = true;
+	private Boolean remoteEnabled;
 
 	private String apiBaseUrl;
 	private String app;
 	private String env;
-	private String version = "0.0.0";
+	private String version;
 	private String secret;
+	private boolean remoteFirst = false;
 	
-	private ConfigcenterContext() {
+	private ConfigcenterContext() {}
+
+	public void init() {
 		secret =  ResourceUtils.get("jeesuite.configcenter.encrypt-secret");
+		
+		String defaultAppName = getValue("spring.application.name");
+		app = getValue("jeesuite.configcenter.appName",defaultAppName);
+		if(remoteEnabled == null)remoteEnabled = Boolean.parseBoolean(getValue("jeesuite.configcenter.enabled","true"));
+		
+		String defaultEnv = getValue("spring.profiles.active");
+		env = getValue("jeesuite.configcenter.profile",defaultEnv);
+		
+		setApiBaseUrl(getValue("jeesuite.configcenter.base.url"));
+		
+		version = getValue("jeesuite.configcenter.version","0.0.0");
+		
+		logger.info(String.format("\n=====configcenter=====\nappName:%s\nenv:%s\nversion:%s\nremoteEnabled:%s\n=====configcenter=====", app,env,version,remoteEnabled));
+		
 		String location = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-location");
 		String storeType = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-type", "JCEKS");
 		String storePass = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-password");
@@ -98,14 +115,19 @@ public class ConfigcenterContext {
 	public void setSecret(String secret) {
 		this.secret = secret;
 	}
+	
+	public boolean isRemoteFirst() {
+		return remoteFirst;
+	}
 
 	@SuppressWarnings("unchecked")
 	public Properties getAllRemoteProperties(){
 		if(!remoteEnabled)return null;
+		if(StringUtils.isBlank(apiBaseUrl))return null;
 		Properties properties = new Properties();
 		
 		String url = String.format("%s/api/fetch_all_configs?appName=%s&env=%s&version=%s", apiBaseUrl,app,env,version);
-		System.out.println("fetch configs url:" + url);
+		logger.info("fetch configs url:" + url);
 		
 		String jsonString = null;
 		try {
@@ -120,18 +142,19 @@ public class ConfigcenterContext {
 			throw new RuntimeException(map.get("msg").toString());
 		}
 		Set<String> keys = map.keySet();
-		System.out.println("==================remote config list =======================");
+		logger.info("==================remote config list =======================");
 		for (String key : keys) {
 			Object value = decodeEncryptIfRequire(map.get(key));
 			properties.put(key, value);
 			//
 			ResourceUtils.add(key, value.toString());  
 			if(!key.contains("password")){					
-				System.out.println(String.format("%s=%s", key,hideSensitive(key,value.toString())));
+				logger.info(String.format("%s=%s", key,hideSensitive(key,value.toString())));
 			}
 		}
-		System.out.println("==================remote config list=======================");
+		logger.info("==================remote config list=======================");
 	
+		remoteFirst = Boolean.parseBoolean(properties.getProperty("remote.config.first", "false"));
 		return properties;
 	}
 
@@ -160,5 +183,16 @@ public class ConfigcenterContext {
 		}
 		if(is)return orign.substring(0, orign.length()/2).concat("****");
 		return orign;
+	}
+	
+	private String getValue(String key,String...defVal){
+		String value = StringUtils.trimToNull(ResourceUtils.get(key,defVal));
+		if(StringUtils.isNotBlank(value)){	
+			if(value.startsWith("${")){
+				String refKey = value.substring(2, value.length() - 1).trim();
+				value = ResourceUtils.get(refKey);
+			}
+		}
+		return value;
 	}
 }

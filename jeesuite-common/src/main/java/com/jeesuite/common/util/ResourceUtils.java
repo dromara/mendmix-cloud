@@ -10,11 +10,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 资源文件加载工具类
@@ -26,7 +26,7 @@ public final class ResourceUtils {
 
 	static boolean inited;
 	
-	final static Map<String, String> propertiesMap = new HashMap<>();
+	final static Properties allProperties = new Properties();
 
 	private synchronized static void load() {
 		try {
@@ -50,12 +50,7 @@ public final class ResourceUtils {
 			        		Properties properties = new Properties();
 			        		properties.load(inputStream);
 			        		try {inputStream.close();} catch (Exception e) {}
-			        		for(String key : properties.stringPropertyNames()) { 
-			        			String value = properties.getProperty(key);
-			        			if(value != null && !"".equals(value.toString().trim())){
-			        				propertiesMap.put(key, value);
-			        			}
-			        		}
+			        		allProperties.putAll(properties);
 			        	}
 			 
 			        } 
@@ -83,12 +78,7 @@ public final class ResourceUtils {
 					if(path.contains("i18n"))continue;
 					Properties p = new Properties();
 					p.load(new FileReader(file));
-					for(String key : p.stringPropertyNames()) { 
-						String value = p.getProperty(key);
-						if(value != null && !"".equals(value.toString().trim())){
-							propertiesMap.put(key, value);
-						}
-					}
+					allProperties.putAll(p);
 					System.out.println("load properties from file:" + path);
 				}
 			}
@@ -100,16 +90,16 @@ public final class ResourceUtils {
 	 * 获取所有配置的副本
 	 * @return
 	 */
-	public static Map<String, String> getAllProperties() {
-		return new HashMap<>(propertiesMap);
+	public static Properties getAllProperties() {
+		return new Properties(allProperties);
 	}
 
 	public static String get(String key, String...defaultValue) {
 		if(!inited){
 			load();
 		}
-		if (propertiesMap.containsKey(key)) {
-			return propertiesMap.get(key);
+		if (allProperties.containsKey(key)) {
+			return allProperties.getProperty(key);
 		}
 		if (defaultValue != null && defaultValue.length > 0 && defaultValue[0] != null) {
 			return defaultValue[0];
@@ -130,12 +120,18 @@ public final class ResourceUtils {
 		return defalutValue;
 	}
 	
+	public synchronized static void merge(Properties properties){
+		if(properties == null || properties.isEmpty())return;
+		allProperties.putAll(properties);
+	}
+	
 	public synchronized static void add(String key,String value){
-		propertiesMap.put(key, value);
+		if(StringUtils.isAnyBlank(key,value))return;
+		allProperties.put(key, value);
 	}
 	
 	public static boolean  containsProperty(String key){
-		return propertiesMap.containsKey(key);
+		return allProperties.containsKey(key);
 	}
 	
 }

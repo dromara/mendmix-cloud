@@ -21,6 +21,7 @@ public class InstanceFactory {
 	 * @param provider 一个实例提供者的实例。
 	 */
 	public static void setInstanceProvider(SpringInstanceProvider provider) {
+		if(instanceProvider != null)return;
 		instanceProvider = provider;
 		initialized.set(true);
 	}

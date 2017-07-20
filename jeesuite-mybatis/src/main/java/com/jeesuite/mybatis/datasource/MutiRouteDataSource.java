@@ -30,6 +30,8 @@ import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
  * 自动路由多数据源（读写分离 and 水平分库路由）
@@ -153,6 +155,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.context = applicationContext;
+		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
 	}
 
 
