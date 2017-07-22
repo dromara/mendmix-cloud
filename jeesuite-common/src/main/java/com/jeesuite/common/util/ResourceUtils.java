@@ -101,11 +101,15 @@ public final class ResourceUtils {
 		if (allProperties.containsKey(key)) {
 			return allProperties.getProperty(key);
 		}
+		
+		String value = System.getProperty(key);
+		if(StringUtils.isNotBlank(value))return value;
+		
 		if (defaultValue != null && defaultValue.length > 0 && defaultValue[0] != null) {
 			return defaultValue[0];
-		} else {
-			return System.getProperty(key);
 		}
+		
+		return null;
 	}
 	
 	public static int getInt(String key,int defalutValue){

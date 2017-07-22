@@ -2,6 +2,7 @@ package com.jeesuite.common.crypt;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -47,13 +48,24 @@ public class RSA {
 
     /** RSA密钥长度必须是64的倍数，在512~65536之间。默认是1024 */
     private static final int KEY_SIZE = 1024; 
+    
+    /** 
+     * RSA最大加密明文大小:明文长度(bytes) <= 密钥长度(bytes)-11
+     */  
+    private static final int MAX_ENCRYPT_BLOCK = KEY_SIZE / 8 - 11 ;  
+      
+    /** 
+     * RSA最大解密密文大小 
+     */  
+    private static final int MAX_DECRYPT_BLOCK = KEY_SIZE / 8;  
+  
 
     public static void main(String[] args) throws Exception {
     	
-    	String PLAIN_TEXT = "@3dfggh$H32hv(*^%N";
-    	 PrivateKey privateKey = loadPrivateKeyFromKeyStore("/Users/jiangwei/test.jks", "test", "JCEKS", "112233", "123456");
+    	String PLAIN_TEXT = "srtt46y7u";
+    	 PrivateKey privateKey = loadPrivateKeyFromKeyStore("/Users/jiangwei/secretkey/test1.jks", "test1", "JCEKS", "123456", "123456");
          // 加密
-         PublicKey publicKey = loadPublicKeyFromKeyStore("/Users/jiangwei/test.jks", "test", "JCEKS", "112233", "123456");
+         PublicKey publicKey = loadPublicKeyFromKeyStore("/Users/jiangwei/secretkey/test1.jks", "test1", "JCEKS", "123456", "123456");
          
          String encodedText = encode(publicKey, PLAIN_TEXT);
          System.out.println("RSA encoded: " + encodedText);
@@ -354,10 +366,31 @@ public class RSA {
      */
     public static byte[] encode(PublicKey key, byte[] plainBytes) {
 
+    	ByteArrayOutputStream out = null;
         try {
             Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
             cipher.init(Cipher.ENCRYPT_MODE, key);
-            return cipher.doFinal(plainBytes);
+            
+            int inputLen = plainBytes.length;  
+            if(inputLen <= MAX_ENCRYPT_BLOCK){
+            	return cipher.doFinal(plainBytes);
+            }
+            out = new ByteArrayOutputStream();  
+            int offSet = 0;  
+            byte[] cache;  
+            int i = 0;  
+            // 对数据分段加密  
+            while (inputLen - offSet > 0) {  
+                if (inputLen - offSet > MAX_ENCRYPT_BLOCK) {  
+                    cache = cipher.doFinal(plainBytes, offSet, MAX_ENCRYPT_BLOCK);  
+                } else {  
+                    cache = cipher.doFinal(plainBytes, offSet, inputLen - offSet);  
+                }  
+                out.write(cache, 0, cache.length);  
+                i++;  
+                offSet = i * MAX_ENCRYPT_BLOCK;  
+            }  
+            return out.toByteArray();
         } catch (NoSuchAlgorithmException e) {  
             throw new RuntimeException("无此解密算法");  
         } catch (NoSuchPaddingException e) {  
@@ -369,6 +402,8 @@ public class RSA {
             throw new RuntimeException("密文长度非法");  
         } catch (BadPaddingException e) {  
             throw new RuntimeException("密文数据已损坏");  
+        }finally{
+        	try {if(out != null)out.close(); } catch (Exception e2) {}
         }
     }
     
@@ -386,10 +421,32 @@ public class RSA {
      */
     public static String decode(PrivateKey key, byte[] encodedText) {
 
+    	ByteArrayOutputStream out = null;
         try {
             Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(encodedText),DEFAULT_CHARSET);
+            int inputLen = encodedText.length; 
+            
+            if(inputLen <= MAX_DECRYPT_BLOCK){
+            	return new String(cipher.doFinal(encodedText),DEFAULT_CHARSET);
+            }
+            
+            out = new ByteArrayOutputStream();  
+            int offSet = 0;  
+            byte[] cache;  
+            int i = 0;  
+            // 对数据分段解密  
+            while (inputLen - offSet > 0) {  
+                if (inputLen - offSet > MAX_DECRYPT_BLOCK) {  
+                    cache = cipher.doFinal(encodedText, offSet, MAX_DECRYPT_BLOCK);  
+                } else {  
+                    cache = cipher.doFinal(encodedText, offSet, inputLen - offSet);  
+                }  
+                out.write(cache, 0, cache.length);  
+                i++;  
+                offSet = i * MAX_DECRYPT_BLOCK;  
+            }  
+            return new String(out.toByteArray(),DEFAULT_CHARSET);
         } catch (NoSuchAlgorithmException e) {  
             throw new RuntimeException("无此解密算法");  
         } catch (NoSuchPaddingException e) {  
@@ -401,6 +458,8 @@ public class RSA {
             throw new RuntimeException("密文长度非法");  
         } catch (BadPaddingException e) {  
             throw new RuntimeException("密文数据已损坏");  
+        }finally{
+        	try {if(out != null)out.close(); } catch (Exception e2) {}
         }
     }
     
