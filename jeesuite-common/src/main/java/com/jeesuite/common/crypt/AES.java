@@ -32,7 +32,7 @@ public class AES {
 	 * 加密
 	 * @throws Exception 
 	 */
-	public static byte[] encryptAES(byte[] data, byte[] key) throws Exception{
+	public static byte[] encrypt(byte[] data, byte[] key) throws Exception{
 		//恢复密钥
 		SecretKey secretKey = new SecretKeySpec(key, "AES");
 		//Cipher完成加密
@@ -47,7 +47,7 @@ public class AES {
 	/**
 	 * 解密
 	 */
-	public static byte[] decryptAES(byte[] data, byte[] key) throws Exception{
+	public static byte[] decrypt(byte[] data, byte[] key) throws Exception{
 		//恢复密钥生成器
 		SecretKey secretKey = new SecretKeySpec(key, "AES");
 		//Cipher完成解密

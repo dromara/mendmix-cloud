@@ -3,14 +3,14 @@ package com.jeesuite.confcenter;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -162,6 +162,27 @@ public class ConfigcenterContext {
 		remoteFirst = Boolean.parseBoolean(properties.getProperty("remote.config.first", "false"));
 		return properties;
 	}
+	
+	public void notifyFinalConfig(Properties properties){
+		if(!remoteEnabled)return;
+		Map<String, String> params = new  HashMap<>();
+		
+		params.put("appName", app);
+		params.put("env", env);
+		params.put("version", version);
+		
+		Set<Entry<Object, Object>> entrySet = properties.entrySet();
+		for (Entry<Object, Object> entry : entrySet) {
+			String key = entry.getKey().toString();
+			String value = entry.getValue().toString();
+			params.put(key, hideSensitive(key, value));
+		}
+		
+		String url = apiBaseUrl + "/api/notify_final_config";
+		
+		HttpUtils.postAsJson(url, params);
+		
+	}
 
 	private Object decodeEncryptIfRequire(Object data) {
 		if (data.toString().startsWith(RSA_PREFIX)) {
@@ -169,13 +190,13 @@ public class ConfigcenterContext {
 				throw new RuntimeException("configcenter [rsaPrivateKey] is required");
 			}
 			data = data.toString().replace(RSA_PREFIX, "");
-			return RSA.decode(rsaPrivateKey, data.toString());
+			return RSA.decrypt(rsaPrivateKey, data.toString());
 		} else if (data.toString().startsWith(DES_PREFIX)) {
 			if(StringUtils.isBlank(secret)){
 				throw new RuntimeException("configcenter [secret] is required");
 			}
 			data = data.toString().replace(DES_PREFIX, "");
-			return SimpleCryptUtils.decode(secret, data.toString());
+			return SimpleCryptUtils.decrypt(secret, data.toString());
 		}
 		return data;
 	}
@@ -190,7 +211,10 @@ public class ConfigcenterContext {
 		return orign;
 	}
 	
-	private String getValue(String key,String...defVal){
+	private String getValue(String key){
+		return getValue(key,null);
+	}
+	private String getValue(String key,String defVal){
 		String value = StringUtils.trimToNull(ResourceUtils.get(key,defVal));
 		if(StringUtils.isNotBlank(value)){	
 			if(value.startsWith("${")){

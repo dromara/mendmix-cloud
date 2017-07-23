@@ -9,8 +9,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
+
+import com.jeesuite.common.json.JsonUtils;
 
 /**
  * @description <br>
@@ -97,5 +101,45 @@ public class HttpUtils {
 			try {inputStream.close();} catch (Exception e2) {}
 			try {httpUrlConn.disconnect();} catch (Exception e2) {}
 		}
+	}
+	
+	public static String postAsJson(String requestUrl,Map<String, String> params){
+		try {
+			URL url = new URL(requestUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+            conn.setUseCaches(false);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Connection", "Keep-Alive");
+            conn.setRequestProperty("Accept", "*/*");
+            conn.setRequestProperty("Charset", "UTF-8");
+            byte[] data = (JsonUtils.toJson(params)).getBytes();
+            conn.setRequestProperty("Content-Length", String.valueOf(data.length));
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            conn.connect();
+            OutputStream  out = conn.getOutputStream();     
+            // 写入请求的字符串
+            out.write(data);
+            out.flush();
+            out.close();
+            // 请求返回的状态
+            if (conn.getResponseCode() == 200) {
+                // 请求返回的数据
+                InputStream in = conn.getInputStream();
+                try {
+                    byte[] data1 = new byte[in.available()];
+                    in.read(data1);
+                    // 转成字符串
+                    return new String(data1);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            } 
+
+            conn.disconnect();
+        } catch (Exception e) {
+		}
+		return null;
 	}
 }

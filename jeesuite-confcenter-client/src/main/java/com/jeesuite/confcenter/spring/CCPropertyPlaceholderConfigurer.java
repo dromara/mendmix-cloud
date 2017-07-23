@@ -67,6 +67,9 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 				properties.put(entry.getKey(), entry.getValue());
 			}
 		}
+		
+		ccContext.notifyFinalConfig(properties);
+		
 		return properties;
 		//
 	}

@@ -93,8 +93,12 @@ public final class ResourceUtils {
 	public static Properties getAllProperties() {
 		return new Properties(allProperties);
 	}
+	
+	public static String get(String key) {
+		return get(key, null);
+	}
 
-	public static String get(String key, String...defaultValue) {
+	public static String get(String key, String defaultValue) {
 		if(!inited){
 			load();
 		}
@@ -104,12 +108,11 @@ public final class ResourceUtils {
 		
 		String value = System.getProperty(key);
 		if(StringUtils.isNotBlank(value))return value;
-		
-		if (defaultValue != null && defaultValue.length > 0 && defaultValue[0] != null) {
-			return defaultValue[0];
-		}
-		
-		return null;
+		return defaultValue;
+	}
+	
+	public static int getInt(String key){
+		return getInt(key,0);
 	}
 	
 	public static int getInt(String key,int defalutValue){
@@ -118,10 +121,18 @@ public final class ResourceUtils {
 		return defalutValue;
 	}
 	
+	public static long getLong(String key){
+		return getLong(key,0L);
+	}
+	
 	public static long getLong(String key,long defalutValue){
 		String v = get(key);
 		if(v != null)return Long.parseLong(v);
 		return defalutValue;
+	}
+	
+	public static boolean getBoolean(String key){
+		return Boolean.parseBoolean(get(key));
 	}
 	
 	public synchronized static void merge(Properties properties){

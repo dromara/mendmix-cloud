@@ -11,28 +11,28 @@ public class SimpleCryptUtils {
 
 	private static final String KEY_TAIL = "j@";
 	
-	public static String encode(String key,String data) {
+	public static String encrypt(String key,String data) {
 		 key = DigestUtils.md5Short(key) + KEY_TAIL;
-		 String encode = DES.encode(key, data);
+		 String encode = DES.encrypt(key, data);
 		 byte[] bytes = Base64.encodeToByte(encode.getBytes(StandardCharsets.UTF_8), true);
 		 return new String(bytes, StandardCharsets.UTF_8);
 	 }
 	 
-	 public static String decode(String key,String data) {
+	 public static String decrypt(String key,String data) {
 		 key = DigestUtils.md5Short(key) + KEY_TAIL;
 		 byte[] bytes = Base64.decode(data);
 		 data = new String(bytes, StandardCharsets.UTF_8);
-		 return DES.decode(key, data);
+		 return DES.decrypt(key, data);
 	 }
 	 
 	 
 	 public static void main(String[] args) {
 		 long s = System.currentTimeMillis();
-		 for (int i = 0; i < 1000000; i++) {			
+		 for (int i = 0; i < 2; i++) {			
 			 String key = UUID.randomUUID().toString().replaceAll("-", "");
 			 String data = UUID.randomUUID().toString().replaceAll("-", "").substring(0,16);
-			 String encode = encode(key, data);
-			 if(!data.equals(decode(key, encode))){
+			 String encode = encrypt(key, data);
+			 if(!data.equals(decrypt(key, encode))){
 				 System.out.println(encode);
 			 }
  

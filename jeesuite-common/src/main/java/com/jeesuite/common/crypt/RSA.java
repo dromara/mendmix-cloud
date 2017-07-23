@@ -67,11 +67,11 @@ public class RSA {
          // 加密
          PublicKey publicKey = loadPublicKeyFromKeyStore("/Users/jiangwei/secretkey/test1.jks", "test1", "JCEKS", "123456", "123456");
          
-         String encodedText = encode(publicKey, PLAIN_TEXT);
+         String encodedText = encrypt(publicKey, PLAIN_TEXT);
          System.out.println("RSA encoded: " + encodedText);
 
          // 解密
-         System.out.println("RSA decoded: "  + decode(privateKey, encodedText));
+         System.out.println("RSA decoded: "  + decrypt(privateKey, encodedText));
     }
 
     /** 
@@ -364,7 +364,7 @@ public class RSA {
      * @param plainBytes
      * @return
      */
-    public static byte[] encode(PublicKey key, byte[] plainBytes) {
+    public static byte[] encrypt(PublicKey key, byte[] plainBytes) {
 
     	ByteArrayOutputStream out = null;
         try {
@@ -407,8 +407,8 @@ public class RSA {
         }
     }
     
-    public static String encode(PublicKey key, String plainText){
-    	byte[] encodeBytes = encode(key, plainText.getBytes(DEFAULT_CHARSET));
+    public static String encrypt(PublicKey key, String plainText){
+    	byte[] encodeBytes = encrypt(key, plainText.getBytes(DEFAULT_CHARSET));
 		return Base64.encodeToString(encodeBytes,false);
     }
 
@@ -419,7 +419,7 @@ public class RSA {
      * @param encodedText
      * @return
      */
-    public static String decode(PrivateKey key, byte[] encodedText) {
+    public static String decrypt(PrivateKey key, byte[] encodedText) {
 
     	ByteArrayOutputStream out = null;
         try {
@@ -463,8 +463,8 @@ public class RSA {
         }
     }
     
-    public static String decode(PrivateKey key, String encodedText) {
+    public static String decrypt(PrivateKey key, String encodedText) {
     	byte[] bytes = Base64.decode(encodedText);
-    	return decode(key, bytes);
+    	return decrypt(key, bytes);
     }
 }

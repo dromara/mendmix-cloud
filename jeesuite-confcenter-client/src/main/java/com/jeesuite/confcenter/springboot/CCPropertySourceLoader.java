@@ -42,6 +42,8 @@ public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrde
 				}
 			}
 			
+			ccContext.notifyFinalConfig(properties);
+			
 			if (!properties.isEmpty()) {
 				return new PropertiesPropertySource(name, properties);
 			}

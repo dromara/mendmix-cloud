@@ -13,6 +13,7 @@ import javax.crypto.spec.IvParameterSpec;
  */
 public class DES {
 
+	private static final byte[] IV_PARAMS_BYTES = "jeesuite".getBytes();
 	public static final String ALGORITHM_DES = "DES/CBC/PKCS5Padding";
 	
     /**
@@ -24,7 +25,7 @@ public class DES {
      * @throws InvalidAlgorithmParameterException 
      * @throws Exception 
      */
-    public static String encode(String key,String data) {
+    public static String encrypt(String key,String data) {
     	if(data == null)
     		return null;
     	try{
@@ -33,8 +34,7 @@ public class DES {
 	        //key的长度不能够小于8位字节
 	        Key secretKey = keyFactory.generateSecret(dks);
 	        Cipher cipher = Cipher.getInstance(ALGORITHM_DES);
-	        IvParameterSpec iv = new IvParameterSpec("12345678".getBytes());
-	        AlgorithmParameterSpec paramSpec = iv;
+	        AlgorithmParameterSpec paramSpec = new IvParameterSpec(IV_PARAMS_BYTES);;
 	        cipher.init(Cipher.ENCRYPT_MODE, secretKey,paramSpec);           
 	        byte[] bytes = cipher.doFinal(data.getBytes());            
 	        return byte2hex(bytes);
@@ -52,7 +52,7 @@ public class DES {
      * @return 解密后的字节数组
      * @throws Exception 异常
      */
-    public static String decode(String key,String data) {
+    public static String decrypt(String key,String data) {
     	if(data == null)
     		return null;
         try {
@@ -61,8 +61,7 @@ public class DES {
             //key的长度不能够小于8位字节
             Key secretKey = keyFactory.generateSecret(dks);
             Cipher cipher = Cipher.getInstance(ALGORITHM_DES);
-            IvParameterSpec iv = new IvParameterSpec("12345678".getBytes());
-            AlgorithmParameterSpec paramSpec = iv;
+            AlgorithmParameterSpec paramSpec = new IvParameterSpec(IV_PARAMS_BYTES);
             cipher.init(Cipher.DECRYPT_MODE, secretKey, paramSpec);
             return new String(cipher.doFinal(hex2byte(data.getBytes())));
         } catch (Exception e){
