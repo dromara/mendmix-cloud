@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -453,22 +454,17 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 
 	@Override
 	public void onRegistered() {
-
-    	List<String> groups = zkClient.getChildren(ROOT.substring(0, ROOT.length() - 1));
     	logger.info("==============clear Invalid jobs=================");
-    	for (String group : groups) {
-    		String groupPath = ROOT + group;
-    		if(this.groupPath.equals(groupPath))continue;
-    		String nodeStateParentPath = groupPath + "/nodes";
-			if(zkClient.exists(nodeStateParentPath) == false || zkClient.getChildren(nodeStateParentPath).isEmpty()){
-				List<String> jobs = zkClient.getChildren(groupPath);
-				for (String job : jobs) {
-					zkClient.delete(groupPath + "/" + job);
-					logger.info("delete path:{}/{}",groupPath,job);
-				}
-				zkClient.delete(groupPath);
-				logger.info("delete path:{}",groupPath);
-			}
+    	List<String> jobs = zkClient.getChildren(groupPath);
+    	
+    	List<String> registerJobs = new ArrayList<>(JobContext.getContext().getAllJobs().keySet());
+    	String groupName = JobContext.getContext().getGroupName();
+    	String jobPath;
+    	for (String job : jobs) {
+    		if(job.equals("nodes"))continue;
+    		if(registerJobs.contains(groupName + ":" + job))continue;
+			jobPath = groupPath + "/" + job;
+			zkClient.delete(jobPath);
 		}
     	logger.info("==============clear Invalid jobs end=================");
     	

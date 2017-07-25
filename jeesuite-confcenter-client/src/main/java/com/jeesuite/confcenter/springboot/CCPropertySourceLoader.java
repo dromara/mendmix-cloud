@@ -39,10 +39,12 @@ public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrde
 					//本地配置优先
 					if(ccContext.isRemoteFirst() == false && properties.containsKey(entry.getKey()))continue;
 					properties.put(entry.getKey(), entry.getValue());
+					//
+					ResourceUtils.add(entry.getKey().toString(), entry.getValue().toString());
 				}
 			}
 			
-			ccContext.notifyFinalConfig(properties);
+			ccContext.onLoadFinish(properties);
 			
 			if (!properties.isEmpty()) {
 				return new PropertiesPropertySource(name, properties);

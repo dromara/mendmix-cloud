@@ -272,12 +272,12 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
     	String value = null;
     	String defValue = defs != null && defs.length > 0 && defs[0] != null ? defs[0] : null;
     	value = environment.getProperty(key);
-    	if(StringUtils.isBlank(value))value = ResourceUtils.get(key);
+    	if(StringUtils.isBlank(value))value = ResourceUtils.getProperty(key);
     	return StringUtils.isBlank(value) ? defValue : value;
     }
     
     private boolean containsProperty(String key){
-    	return environment.containsProperty(key) || StringUtils.isNotBlank(ResourceUtils.get(key));
+    	return environment.containsProperty(key) || StringUtils.isNotBlank(ResourceUtils.getProperty(key));
     }
 	
 	private class DataSourceInfo{  

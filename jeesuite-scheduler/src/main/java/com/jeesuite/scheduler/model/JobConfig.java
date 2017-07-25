@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -151,17 +150,22 @@ public class JobConfig implements Serializable {
 		this.modifyTime = modifyTime;
 	}
 
+	private static long allowDeviation = 1000 * 60 * 10;
 	public String getErrorMsg() {
-		if(StringUtils.isBlank(errorMsg)){
+		if(errorMsg == null){
 			if(lastFireTime != null && nextFireTime != null){
 				long interval = nextFireTime.getTime() - lastFireTime.getTime();
-				long expectNextFireTime = nextFireTime.getTime() + interval;
-				//
-				long allowDeviation = 1000 * 60 * 10;
-				if(Calendar.getInstance().getTimeInMillis() - expectNextFireTime > (interval < allowDeviation ? interval : allowDeviation)){
-					errorMsg = String.format("expect NextFireTime:%s,but actual is:%s",DateUtils.format(new Date(expectNextFireTime)), DateUtils.format(nextFireTime));
+				long nextFireTimeMils;
+				if(running){
+					nextFireTimeMils = lastFireTime.getTime() + interval;
+				}else{
+					nextFireTimeMils = nextFireTime.getTime();
 				}
-				
+				if(Calendar.getInstance().getTimeInMillis() - nextFireTimeMils > (interval < allowDeviation ? interval : allowDeviation)){
+					errorMsg = String.format("expect NextFire:%s,but:%s",DateUtils.format(new Date(nextFireTimeMils)), DateUtils.format(nextFireTime));
+				}else{
+					errorMsg = "";
+				}
 			}
 		}
 		return errorMsg;

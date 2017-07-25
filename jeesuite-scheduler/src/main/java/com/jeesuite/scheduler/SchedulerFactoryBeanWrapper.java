@@ -61,6 +61,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	
 	public void setGroupName(String groupName) {
 		this.groupName = groupName;
+		JobContext.getContext().setGroupName(groupName);
 	}
 
 	public void setSchedulers(List<AbstractJob> schedulers) {

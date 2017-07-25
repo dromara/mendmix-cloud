@@ -25,8 +25,9 @@ import org.mybatis.generator.internal.DefaultShellCallback;
 public class MyBatisGeneratorTool {
 	public static void main(String[] args) {
 		List<String> warnings = new ArrayList<String>();
+		String path = Thread.currentThread().getContextClassLoader().getResource("").getPath();
 		boolean overwrite = true;
-		File configFile = new File("/Users/ayg/projects/jeesuite-libs/jeesuite-mybatis/src/test/resources/generator/generatorConfig.xml");
+		File configFile = new File(path + "/../../src/test/resources/generator/generatorConfig.xml");
 		ConfigurationParser cp = new ConfigurationParser(warnings);
 		Configuration config = null;
 		try {

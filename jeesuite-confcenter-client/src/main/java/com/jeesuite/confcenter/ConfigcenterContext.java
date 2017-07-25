@@ -3,12 +3,13 @@ package com.jeesuite.confcenter;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ClassPathResource;
@@ -16,6 +17,7 @@ import org.springframework.core.io.Resource;
 
 import com.jeesuite.common.crypt.RSA;
 import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.SimpleCryptUtils;
 import com.jeesuite.confcenter.utils.HttpUtils;
@@ -43,7 +45,7 @@ public class ConfigcenterContext {
 	private ConfigcenterContext() {}
 
 	public void init() {
-		secret =  ResourceUtils.get("jeesuite.configcenter.encrypt-secret");
+		secret =  ResourceUtils.getProperty("jeesuite.configcenter.encrypt-secret");
 		
 		String defaultAppName = getValue("spring.application.name");
 		app = getValue("jeesuite.configcenter.appName",defaultAppName);
@@ -58,11 +60,11 @@ public class ConfigcenterContext {
 		
 		System.out.println(String.format("\n=====configcenter=====\nappName:%s\nenv:%s\nversion:%s\nremoteEnabled:%s\n=====configcenter=====", app,env,version,remoteEnabled));
 		
-		String location = StringUtils.trimToNull(ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-location"));
-		String storeType = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-type", "JCEKS");
-		String storePass = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-password");
-		String alias = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-alias");
-		String keyPass = ResourceUtils.get("jeesuite.configcenter.encrypt-keyStore-keyPassword", storePass);
+		String location = StringUtils.trimToNull(ResourceUtils.getProperty("jeesuite.configcenter.encrypt-keyStore-location"));
+		String storeType = ResourceUtils.getProperty("jeesuite.configcenter.encrypt-keyStore-type", "JCEKS");
+		String storePass = ResourceUtils.getProperty("jeesuite.configcenter.encrypt-keyStore-password");
+		String alias = ResourceUtils.getProperty("jeesuite.configcenter.encrypt-keyStore-alias");
+		String keyPass = ResourceUtils.getProperty("jeesuite.configcenter.encrypt-keyStore-keyPassword", storePass);
 		try {			
 			if(StringUtils.isNotBlank(location)){
 				if(location.toLowerCase().startsWith("classpath")){
@@ -147,26 +149,21 @@ public class ConfigcenterContext {
 			throw new RuntimeException(map.get("msg").toString());
 		}
 		Set<String> keys = map.keySet();
-		System.out.println("==================remote config list =======================");
 		for (String key : keys) {
 			Object value = decodeEncryptIfRequire(map.get(key));
 			properties.put(key, value);
-			//
-			ResourceUtils.add(key, value.toString());  
-			if(!key.contains("password")){					
-				System.out.println(String.format("%s=%s", key,hideSensitive(key,value.toString())));
-			}
 		}
-		System.out.println("==================remote config list=======================");
 	
 		remoteFirst = Boolean.parseBoolean(properties.getProperty("remote.config.first", "false"));
 		return properties;
 	}
 	
-	public void notifyFinalConfig(Properties properties){
-		if(!remoteEnabled)return;
+	public void onLoadFinish(Properties properties){
+		List<String> sortKeys = new ArrayList<>();
+
 		Map<String, String> params = new  HashMap<>();
 		
+		params.put("nodeId", NodeNameHolder.getNodeId());
 		params.put("appName", app);
 		params.put("env", env);
 		params.put("version", version);
@@ -176,10 +173,20 @@ public class ConfigcenterContext {
 			String key = entry.getKey().toString();
 			String value = entry.getValue().toString();
 			params.put(key, hideSensitive(key, value));
+			sortKeys.add(key);
 		}
 		
-		String url = apiBaseUrl + "/api/notify_final_config";
+		Collections.sort(sortKeys);
 		
+		System.out.println("==================final config list start==================");
+        for (String key : sortKeys) {
+			System.out.println(String.format("%s = %s", key,params.get(key) ));
+		}
+		System.out.println("==================final config list end====================");
+		
+		if(!remoteEnabled)return;
+		
+		String url = apiBaseUrl + "/api/notify_final_config";
 		HttpUtils.postAsJson(url, params);
 		
 	}
@@ -207,7 +214,8 @@ public class ConfigcenterContext {
 		for (String k : sensitiveKeys) {
 			if(is = key.toLowerCase().contains(k))break;
 		}
-		if(is)return orign.substring(0, orign.length()/2).concat("****");
+		int length = orign.length();
+		if(is && length > 1)return orign.substring(0, length/2).concat("****");
 		return orign;
 	}
 	
@@ -215,11 +223,11 @@ public class ConfigcenterContext {
 		return getValue(key,null);
 	}
 	private String getValue(String key,String defVal){
-		String value = StringUtils.trimToNull(ResourceUtils.get(key,defVal));
+		String value = StringUtils.trimToNull(ResourceUtils.getProperty(key,defVal));
 		if(StringUtils.isNotBlank(value)){	
 			if(value.startsWith("${")){
 				String refKey = value.substring(2, value.length() - 1).trim();
-				value = ResourceUtils.get(refKey);
+				value = ResourceUtils.getProperty(refKey);
 			}
 		}
 		return value;

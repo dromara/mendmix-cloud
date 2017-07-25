@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>4</version>
+		<version>5</version>
 	</parent>
 	<artifactId>jeesuite-rest</artifactId>
 	<version>1.1.0</version>
@@ -19,7 +19,7 @@
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.1.0</version>
+			<version>${moudule.common.version}</version>
 			<optional>true</optional>
 		</dependency>
 
@@ -137,7 +137,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
 				<configuration>
-					<skip>false</skip>
+					<skip>true</skip>
 				</configuration>
 			</plugin>
 		</plugins>

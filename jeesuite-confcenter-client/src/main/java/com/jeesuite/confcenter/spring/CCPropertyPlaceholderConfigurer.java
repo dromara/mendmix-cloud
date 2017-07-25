@@ -63,12 +63,17 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 			Set<Entry<Object, Object>> entrySet = remoteProperties.entrySet();
 			for (Entry<Object, Object> entry : entrySet) {
 				//本地配置优先
-				if(ccContext.isRemoteFirst() == false && properties.containsKey(entry.getKey()))continue;
+				if(ccContext.isRemoteFirst() == false && properties.containsKey(entry.getKey())){
+					logger.info("config[{}] exists in location,skip~",entry.getKey());
+					continue;
+				}
 				properties.put(entry.getKey(), entry.getValue());
+				//
+				ResourceUtils.add(entry.getKey().toString(), entry.getValue().toString());
 			}
 		}
 		
-		ccContext.notifyFinalConfig(properties);
+		ccContext.onLoadFinish(properties);
 		
 		return properties;
 		//

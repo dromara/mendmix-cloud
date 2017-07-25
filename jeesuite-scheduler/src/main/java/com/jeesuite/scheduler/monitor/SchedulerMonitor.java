@@ -106,6 +106,30 @@ public class SchedulerMonitor implements Closeable{
 		
 	}
 	
+	public void clearInvalidGroup(){
+
+    	List<String> groups = zkClient.getChildren(ZkJobRegistry.ROOT.substring(0, ZkJobRegistry.ROOT.length() - 1));
+    	logger.info("==============clear Invalid jobs=================");
+    	for (String group : groups) {
+    		String groupPath = ZkJobRegistry.ROOT + group;
+    		String nodeStateParentPath = groupPath + "/nodes";
+    		try {
+    			if(zkClient.exists(nodeStateParentPath) == false || zkClient.countChildren(nodeStateParentPath) == 0){
+    				List<String> jobs = zkClient.getChildren(groupPath);
+    				for (String job : jobs) {
+    					zkClient.delete(groupPath + "/" + job);
+    					logger.info("delete path:{}/{}",groupPath,job);
+    				}
+    				zkClient.delete(groupPath);
+    				logger.info("delete path:{}",groupPath);
+    			}
+			} catch (Exception e) {}
+		}
+    	logger.info("==============clear Invalid jobs end=================");
+    	
+    
+	}
+	
 	public static void main(String[] args) throws IOException {
 		SchedulerMonitor monitor = new SchedulerMonitor("zookeeper", "127.0.0.1:2181");
 		

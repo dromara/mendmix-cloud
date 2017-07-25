@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-libs</artifactId>
-	<version>4</version>
+	<version>5</version>
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
 	<name>jeesuite-libs</name>
@@ -49,6 +49,8 @@
 		<mapper.version>3.3.9</mapper.version>
 		<druid.version>1.0.16</druid.version>
 		<junit.version>4.12</junit.version>
+		<moudule.common.version>1.1.2</moudule.common.version>
+		<moudule.spring.version>1.1.2</moudule.spring.version>
 	</properties>
 
 	<modules>
@@ -64,6 +66,7 @@
 		<module>jeesuite-log</module>
 		<module>jeesuite-filesystem</module>
 		<module>jeesuite-springboot-starter</module>
+		<module>jeesuite-search</module>
 	</modules>
 
 	<dependencies>
@@ -202,10 +205,6 @@
 
 	<distributionManagement>
 		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>

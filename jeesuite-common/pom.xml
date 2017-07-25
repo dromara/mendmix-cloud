@@ -4,10 +4,10 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>4</version>
+		<version>5</version>
 	</parent>
 	<artifactId>jeesuite-common</artifactId>
-	<version>1.1.2-SNAPSHOT</version>
+	<version>${moudule.common.version}</version>
 	<description>基础工具类支持</description>
 
 	<dependencies>

@@ -29,6 +29,8 @@ public class JobContext {
 	
 	private ConsistencyHash hash = new ConsistencyHash();
 	
+	private String groupName;
+	
 	private Map<String, AbstractJob> allJobs = new HashMap<>();
 	
 	private ConfigPersistHandler configPersistHandler;
@@ -52,6 +54,14 @@ public class JobContext {
 
 	public static JobContext getContext() {
 		return context;
+	}
+
+	public String getGroupName() {
+		return groupName;
+	}
+
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
 	}
 
 	public String getNodeId() {

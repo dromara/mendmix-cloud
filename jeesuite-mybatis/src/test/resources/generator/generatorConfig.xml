@@ -33,7 +33,7 @@
 		<javaClientGenerator targetPackage="com.jeesuite.mybatis.test.mapper"
 			targetProject="src/test/java" type="XMLMAPPER" />
 
-		<table tableName="users" domainObjectName="UserEntity">
+		<table tableName="users2" domainObjectName="User2Entity">
 			<generatedKey column="id" sqlStatement="Mysql" identity="true" />
 		</table>
 	</context>
