@@ -247,6 +247,9 @@ public class MybatisMapperParser {
 	    	  
 	      }else{
 	    	  data = child.toString();
+//	    	  if(child.getStringBody().contains(">") || child.getStringBody().contains("<")){
+//	    		  data = data.replace(child.getStringBody(), "<![CDATA["+child.getStringBody()+"]]");
+//	    	  }
 	      }
 	      data = data.replaceAll("\\n+|\\t+", "");
 	      if(StringUtils.isNotBlank(data)){	    	  

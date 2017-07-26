@@ -43,6 +43,8 @@
     <if test="mobile != null">  
         AND mobile = #{mobile}  
     </if> 
+    <if test="type != null"><![CDATA[and type >=#{type}  ]]></if>
+	<if test="status != null"><![CDATA[and status <=#{status}  ]]></if>
   </select>
   
   <select id="countByExample" resultType="int" parameterType="com.jeesuite.mybatis.test.entity.UserEntity">

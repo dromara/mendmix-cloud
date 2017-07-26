@@ -26,6 +26,7 @@ public interface UserEntityMapper extends BaseMapper<UserEntity, Integer> {
 	UserEntity findByMobile(@Param("mobile") String mobile);
 	
 	@Cache
+	@Pageable
 	List<UserEntity> queryByExample(UserEntity user);
 	
 	@Cache
