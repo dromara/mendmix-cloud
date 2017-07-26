@@ -19,6 +19,7 @@ public class PageSqlUtils {
 	
 	public static enum DbType{
 		MYSQL("%s limit #{offset},#{pageSize}"),
+		ORACLE("select * from (select a1.*,rownum rn from (%s) a1 where rownum <=#{offset} + #{pageSize}) where rn>=#{offset}"),
 		H2("%s limit #{pageSize} offset #{offset}"),
 		POSTGRESQL("%s limit #{pageSize} offset #{offset}");
 		
