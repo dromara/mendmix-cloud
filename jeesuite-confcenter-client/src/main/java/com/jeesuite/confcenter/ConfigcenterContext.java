@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 
@@ -45,7 +46,6 @@ public class ConfigcenterContext {
 	private ConfigcenterContext() {}
 
 	public void init() {
-		secret =  ResourceUtils.getProperty("jeesuite.configcenter.encrypt-secret");
 		
 		String defaultAppName = getValue("spring.application.name");
 		app = getValue("jeesuite.configcenter.appName",defaultAppName);
@@ -148,13 +148,17 @@ public class ConfigcenterContext {
 		if(map.containsKey("code")){
 			throw new RuntimeException(map.get("msg").toString());
 		}
+		
+		//DES解密密匙
+		secret =  Objects.toString(map.remove("jeesuite.configcenter.encrypt-secret"),null);
+		remoteFirst = Boolean.parseBoolean(Objects.toString(map.remove("jeesuite.configcenter.remote-config-first"),"false"));
+		
 		Set<String> keys = map.keySet();
 		for (String key : keys) {
 			Object value = decodeEncryptIfRequire(map.get(key));
 			properties.put(key, value);
 		}
 	
-		remoteFirst = Boolean.parseBoolean(properties.getProperty("remote.config.first", "false"));
 		return properties;
 	}
 	
@@ -200,7 +204,7 @@ public class ConfigcenterContext {
 			return RSA.decrypt(rsaPrivateKey, data.toString());
 		} else if (data.toString().startsWith(DES_PREFIX)) {
 			if(StringUtils.isBlank(secret)){
-				throw new RuntimeException("configcenter [secret] is required");
+				throw new RuntimeException("configcenter [jeesuite.configcenter.encrypt-secret] is required");
 			}
 			data = data.toString().replace(DES_PREFIX, "");
 			return SimpleCryptUtils.decrypt(secret, data.toString());

@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
+
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
@@ -92,6 +94,10 @@ public class DataSourceContextHolder {
 	 * @return
 	 */
 	protected String getDataSourceKey() {
+		if(JeesuiteMybatisInterceptor.isRwRouteEnabled() == false && JeesuiteMybatisInterceptor.isDbShardEnabled() == false){
+			return masters.get(0);
+		}
+		
 		DataSourceContextVals vals = contextVals.get();
 		if(vals == null){
 			vals = new DataSourceContextVals();

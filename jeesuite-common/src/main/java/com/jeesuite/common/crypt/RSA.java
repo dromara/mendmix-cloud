@@ -63,15 +63,15 @@ public class RSA {
     public static void main(String[] args) throws Exception {
     	
     	String PLAIN_TEXT = "srtt46y7u";
-    	 PrivateKey privateKey = loadPrivateKeyFromKeyStore("/Users/jiangwei/secretkey/test1.jks", "test1", "JCEKS", "123456", "123456");
+    	 PrivateKey privateKey = loadPrivateKeyFromKeyStore("/Users/jiangwei/payment.jks", "payment", "JCEKS", "m5cidi9p3eds0", "v6ol0d31y8hd9c");
          // 加密
-         PublicKey publicKey = loadPublicKeyFromKeyStore("/Users/jiangwei/secretkey/test1.jks", "test1", "JCEKS", "123456", "123456");
+         PublicKey publicKey = loadPublicKeyFromKeyStore("/Users/jiangwei/configcenter.jks", "payment", "JCEKS", "a3m5v6o8yc9d", "a3m5v6o8yc9d");
          
          String encodedText = encrypt(publicKey, PLAIN_TEXT);
          System.out.println("RSA encoded: " + encodedText);
 
          // 解密
-         System.out.println("RSA decoded: "  + decrypt(privateKey, encodedText));
+         System.out.println("RSA decoded: "  + decrypt(privateKey, "Kli0lCJbkdDAPGBYCa/755kGBreS9F9FsFiWiT3eUNq+aZLoK5nL2qy/MOpjjn4NwJdC07zJ54FmhWfNkoO1/FQsGhAjWoYfQFlox1fvoAiyTjiFiYt9F40P4jTHPZplYUuzEx5WIRpBvdNuQ+YYqKjJRu01TjpYV1kW5Hu5/rI="));
     }
 
     /** 
