@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.jeesuite.common.json.deserializer.DateTimeConvertDeserializer;
 import com.jeesuite.common.json.serializer.DateTimeConvertSerializer;
-import com.jeesuite.common.util.DateUtils;
 
 /**
  * 任务配置
@@ -162,7 +161,7 @@ public class JobConfig implements Serializable {
 					nextFireTimeMils = nextFireTime.getTime();
 				}
 				if(Calendar.getInstance().getTimeInMillis() - nextFireTimeMils > (interval < allowDeviation ? interval : allowDeviation)){
-					errorMsg = String.format("expect NextFire:%s,but:%s",DateUtils.format(new Date(nextFireTimeMils)), DateUtils.format(nextFireTime));
+					errorMsg = "nextFireTime Abnormal";
 				}else{
 					errorMsg = "";
 				}
