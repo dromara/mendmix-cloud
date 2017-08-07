@@ -176,6 +176,11 @@ public class ConfigcenterContext {
 		for (Entry<Object, Object> entry : entrySet) {
 			String key = entry.getKey().toString();
 			String value = entry.getValue().toString();
+			//如果远程配置了占位符，希望引用本地变量
+			if(value.contains("${")){
+				value = setReplaceHolderRefValue(properties,key,value);
+			}
+			
 			params.put(key, hideSensitive(key, value));
 			sortKeys.add(key);
 		}
@@ -193,6 +198,36 @@ public class ConfigcenterContext {
 		String url = apiBaseUrl + "/api/notify_final_config";
 		HttpUtils.postAsJson(url, params);
 		
+	}
+	
+    private String setReplaceHolderRefValue(Properties properties, String key, String value) {
+		
+		String[] segments = value.split("\\$\\{");
+		String seg;
+		
+		StringBuilder finalValue = new StringBuilder();
+		for (int i = 0; i < segments.length; i++) {
+			seg = StringUtils.trimToNull(segments[i]);
+			if(StringUtils.isBlank(seg))continue;
+			
+			if(seg.contains("}")){				
+				String refKey = seg.substring(0, seg.indexOf("}")).trim();
+				
+				String refValue = properties.containsKey(refKey) ? properties.getProperty(refKey) : "${" + refKey + "}";
+				finalValue.append(refValue);
+				
+				String[] segments2 = seg.split("\\}");
+				if(segments2.length == 2){
+					finalValue.append(segments2[1]);
+				}
+			}else{
+				finalValue.append(seg);
+			}
+		}
+		
+		properties.put(key, finalValue.toString());
+		
+		return finalValue.toString();
 	}
 
 	private Object decodeEncryptIfRequire(Object data) {
