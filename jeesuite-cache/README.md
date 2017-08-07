@@ -3,7 +3,7 @@
 <dependency>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-cache</artifactId>
-	<version>1.1.0</version>
+	<version>1.1.3</version>
 </dependency>
 ```
 
@@ -123,6 +123,7 @@
 - RedisList
 - RedisNumber
 - RedisSet
+- RedisSortSet
 
 
 如果这些封装不满足你的需求这些你需要用其他的可以直接通过一下方式调用jedis原生API：
