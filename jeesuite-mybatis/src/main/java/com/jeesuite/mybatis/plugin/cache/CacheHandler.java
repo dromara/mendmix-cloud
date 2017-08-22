@@ -20,8 +20,11 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.executor.Executor;
+import org.apache.ibatis.executor.result.DefaultResultHandler;
+import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ResultMap;
 import org.apache.ibatis.mapping.ResultMapping;
@@ -62,6 +65,7 @@ import com.jeesuite.spring.InstanceFactory;
  */
 public class CacheHandler implements InterceptorHandler {
 
+	private static final String PARSE_SQL_ERROR_DEFAULT = "select 1";
 	public final static long IN_5MINS = 60 * 5;
     public final static long IN_1HOUR = 60 * 60;
 	public final static long DEFAULT_CACHER_SECONDS = IN_1HOUR * 24;
@@ -163,6 +167,11 @@ public class CacheHandler implements InterceptorHandler {
 				}
 			}
 			return cacheObject;
+			//非按主键删除的方法需求先行查询出来并删除主键缓存
+		}else if(mt.getSqlCommandType().equals(SqlCommandType.DELETE) && !updateCacheMethods.containsKey(mt.getId())){
+			String mapperNameSpace = mt.getId().substring(0, mt.getId().lastIndexOf(SPLIT_PONIT));
+  			Executor executor = (Executor) invocation.getTarget();
+			removeCacheByUpdateConditon(executor, mt, mapperNameSpace, args);
 		}
 		
 		return null;
@@ -218,31 +227,37 @@ public class CacheHandler implements InterceptorHandler {
 			if(!cacheEnableMappers.contains(mapperNameSpace))return;
 			//返回0，未更新成功
 			if(result != null && ((int)result) == 0)return;
+			
+			boolean insertAction = mt.getSqlCommandType().equals(SqlCommandType.INSERT);
+			boolean updateAction = mt.getSqlCommandType().equals(SqlCommandType.UPDATE);
+			boolean deleteAcrion = mt.getSqlCommandType().equals(SqlCommandType.DELETE);
+			
 			if(updateCacheMethods.containsKey(mt.getId())){
 				String cacheByPkKey = null;
 				UpdateByPkMethodCache updateMethodCache = updateCacheMethods.get(mt.getId());
-				if(updateMethodCache.sqlCommandType.equals(SqlCommandType.DELETE)){
+				if(deleteAcrion){
 					cacheByPkKey = genarateQueryCacheKey(updateMethodCache.keyPattern,args[1]);
 					getCacheProvider().remove(cacheByPkKey);
 					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] remove cacheKey:{} from cache",mt.getId(),cacheByPkKey);
 				}else{
 					cacheByPkKey = genarateQueryCacheKey(updateMethodCache.keyPattern,args[1]);
-					boolean insertCommond = mt.getSqlCommandType().equals(SqlCommandType.INSERT);
-					if(insertCommond || mt.getSqlCommandType().equals(SqlCommandType.UPDATE)){
+					if(insertAction || updateAction){
 						if(result != null){
 							QueryMethodCache queryByPkMethodCache = getQueryByPkMethodCache(mt.getId());
 							getCacheProvider().set(cacheByPkKey,args[1], queryByPkMethodCache.getExpire(),true);
 							if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] update cacheKey:{}",mt.getId(),cacheByPkKey);
 							//插入其他唯一字段引用
-							if(insertCommond)cacheUniqueSelectRef(args[1], mt, cacheByPkKey);
+							if(insertAction)cacheUniqueSelectRef(args[1], mt, cacheByPkKey);
 							//
 							addCurrentThreadCacheKey(cacheByPkKey);
 						}
 					}
 				}				
-			}else{//按条件删除和更新的情况
-				Executor executor = (Executor) invocation.getTarget();
-				removeCacheByUpdateConditon(executor, mt, mapperNameSpace, args);
+			}else{//更新的情况,需要按条件动态查询所有记录，然后更新主键缓存
+				if(updateAction){					
+					Executor executor = (Executor) invocation.getTarget();
+					removeCacheByUpdateConditon(executor, mt, mapperNameSpace, args);
+				}
                 
 			}
 			//删除同一cachegroup关联缓存
@@ -264,8 +279,21 @@ public class CacheHandler implements InterceptorHandler {
 			EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperNameSpace);
 			MappedStatement statement = getQueryIdsMappedStatementForUpdateCache(mt,entityInfo);
 			if(statement == null)return ;
-			List<?> idsResult = executor.query(statement, parameterObject, RowBounds.DEFAULT, null);
-			if(idsResult != null){
+			
+			String querySql = statement.getSqlSource().getBoundSql(parameterObject).getSql();
+			
+			List<?> idsResult = null;
+			if(PARSE_SQL_ERROR_DEFAULT.equals(querySql)){
+				BoundSql boundSql = mt.getBoundSql(parameterObject);
+				querySql = "select "+entityInfo.getIdColumn()+" from "+entityInfo.getTableName()+" WHERE " + boundSql.getSql().split(WHERE_REGEX)[1];
+				BoundSql queryBoundSql = new BoundSql(statement.getConfiguration(), querySql, boundSql.getParameterMappings(), parameterObject);
+	             
+				idsResult = executor.query(statement, parameterObject, RowBounds.DEFAULT, new DefaultResultHandler(),null,queryBoundSql);
+			}else{
+				idsResult = executor.query(statement, parameterObject, RowBounds.DEFAULT, null);
+			}
+			
+			if(idsResult != null && !idsResult.isEmpty()){
 				for (Object id : idsResult) {							
 					String cacheKey = entityInfo.getEntityClass().getSimpleName() + ID_CACHEKEY_JOIN + id.toString();
 					getCacheProvider().remove(cacheKey);
@@ -291,11 +319,17 @@ public class CacheHandler implements InterceptorHandler {
     		if(configuration.hasStatement(msId))return configuration.getMappedStatement(msId);
     		
 			String sql = entityInfo.getMapperSqls().get(mt.getId());
-			if(!sql.toLowerCase().contains(entityInfo.getTableName().toLowerCase())){
-				return null;
+			
+			if(StringUtils.isNotBlank(sql)){
+				if(!sql.toLowerCase().contains(entityInfo.getTableName().toLowerCase())){
+					return null;
+				}
+	    		sql = "select "+entityInfo.getIdColumn()+" from "+entityInfo.getTableName()+" WHERE " + sql.split(WHERE_REGEX)[1];
+	    		sql = String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
+			}else{
+				sql = PARSE_SQL_ERROR_DEFAULT;
 			}
-    		sql = "select "+entityInfo.getIdColumn()+" from "+entityInfo.getTableName()+" WHERE " + sql.split(WHERE_REGEX)[1];
-    		sql = String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
+			
     		SqlSource sqlSource = configuration.getDefaultScriptingLanguageInstance().createSqlSource(configuration, sql, Object.class);
     		
     		MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, msId, sqlSource,SqlCommandType.SELECT);

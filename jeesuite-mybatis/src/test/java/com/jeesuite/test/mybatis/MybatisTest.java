@@ -12,6 +12,8 @@ import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.BeansException;
@@ -39,6 +41,8 @@ import com.jeesuite.mybatis.test.mapper.UserEntityMapper;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 
+import tk.mybatis.mapper.entity.Example;
+
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations={"classpath:test-mybatis.xml"})
@@ -50,17 +54,50 @@ public class MybatisTest implements ApplicationContextAware{
 	@Autowired TransactionTemplate transactionTemplate;
 	
 	static String[] mobiles = new String[10];
+	
+	@BeforeClass
+	public static void init(){
+		for (int i = 0; i <3; i++) {
+			mobiles[i] = "1300000000" + i;
+		}
+	}
 
 	@Override
 	public void setApplicationContext(ApplicationContext arg0) throws BeansException {	
 		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(arg0));
 	}
 	
+	private void initCache() {
+		mapper.findByMobile(mobiles[0]);
+		mapper.findByMobile(mobiles[1]);
+		mapper.findByStatus((short) 1);
+		mapper.findByStatus((short) 2);
+		mapper.findByType((short) 1);
+
+		// 生成的缓存key为：UserEntity.findByStatus:2
+		EntityCacheHelper.queryTryCache(UserEntity.class, "findByStatus:2", new Callable<List<UserEntity>>() {
+			public List<UserEntity> call() throws Exception {
+				// 查询语句
+				List<UserEntity> entitys = mapper.findByStatus((short) 2);
+				return entitys;
+			}
+		});
+
+		mapper.countByType(1);
+	}
+	
+	private void printCacheKeys(String title){
+		Set<String> keys = JedisProviderFactory.getMultiKeyCommands(null).keys("UserEntity*");
+		System.out.println(title + ":\n" + keys.size() + "\n" + keys);
+	}
+	
 	@Test
-	public void testCRUD(){
+	public void testInsert(){
 		
 		for (int i = 0; i < mobiles.length; i++) {
-			mobiles[i] = "13800"+RandomUtils.nextLong(100000, 999999);
+			if(StringUtils.isBlank(mobiles[i])){				
+				mobiles[i] = "13800"+RandomUtils.nextLong(100000, 999999);
+			}
 			UserEntity entity = new UserEntity();
 			entity.setCreatedAt(new Date());
 			entity.setEmail(mobiles[i] + "@163.com");
@@ -74,56 +111,33 @@ public class MybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
-	public void testCache(){
-		System.out.println("------------");
-		UserEntity userEntity = mapper.getByKey(1);
-		mapper.findByMobile(mobiles[0]);
-		System.out.println("------------");
-		mapper.findByMobile(mobiles[1]);
-		System.out.println("------------");
-		mapper.findByMobile(mobiles[2]);
-		
-		mapper.findByStatus((short)1);
-		mapper.findByStatus((short)2);
-		mapper.findByStatus((short)1);
-		mapper.findByStatus((short)2);
-//		
-		mapper.findByType((short)1);
-		mapper.findByType((short)1);
-		
-		//生成的缓存key为：UserEntity.findByStatus:2
-		EntityCacheHelper.queryTryCache(UserEntity.class, "findByStatus:2", new Callable<List<UserEntity>>() {
-			public List<UserEntity> call() throws Exception {
-				//查询语句
-				List<UserEntity> entitys = mapper.findByStatus((short)2);
-				return entitys;
-			}
-		});
-		
-		mapper.countByType(1);
-	
-		Set<String> keys = JedisProviderFactory.getMultiKeyCommands(null).keys("UserEntity*");
-		System.out.println(keys);
-		mapper.deleteByKey(1);
-		mapper.deleteByKey(29);
-		userEntity.setName("demo");
-		mapper.updateByKeySelective(userEntity);
-		
-		mapper.countByType(2);
-		
-		mapper.updateType2(userEntity);
-		
-		mapper.findByStatus((short)1);
-		mapper.findByStatus((short)2);
-		
-		mapper.updateType(new int[]{20,21}, 2);
-		
-		userEntity.setId(null);
-		mapper.countByExample(userEntity);
-		
-		EntityCacheHelper.removeCache(UserEntity.class);
-		System.out.println();
+	public void testUpdate(){
+		UserEntity userEntity = mapper.findByMobile(mobiles[0]);
+		userEntity.setEmail("3333@qq.com");
+		mapper.updateByPrimaryKey(userEntity);
 	}
+	
+	@Test
+	public void testOnDeleteByIdUpdateCache(){
+		initCache();
+		printCacheKeys("before delete");
+		UserEntity userEntity = mapper.findByMobile(mobiles[0]);
+		userEntity = new UserEntity();
+		userEntity.setMobile(mobiles[0]);
+		mapper.delete(userEntity);
+		printCacheKeys("after delete");
+	}
+	
+	@Test
+	public void testOnDeleteByQueryUpdateCache(){
+		initCache();
+		printCacheKeys("before delete");
+		Example example = new Example(UserEntity.class);
+		example.createCriteria().andEqualTo("mobile", mobiles[1]);
+		mapper.deleteByExample(example);
+		printCacheKeys("after delete");
+	}
+
 	
 	@Test
 	public void testFindNotExistsThenInsert(){

@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @date 2016年12月31日
  */
 @ConfigurationProperties(prefix="jeesuite.mybatis")
-public class PluginProperties {
+public class MybatisPluginProperties {
 
 	private String dbType = "MySQL";
 	private String crudDriver = "mapper3";

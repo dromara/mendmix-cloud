@@ -58,7 +58,7 @@
 		</property>
 	</bean>
 
-	<bean class="com.jeesuite.mybatis.spring.MapperScannerConfigurer">
+	<bean class="tk.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="sqlSessionFactoryBeanName" value="routeSqlSessionFactory" />
 		<property name="basePackage" value="com.jeesuite.mybatis.test.mapper" />
 	</bean>

@@ -23,7 +23,7 @@ import tk.mybatis.mapper.entity.Config;
 import tk.mybatis.mapper.mapperhelper.MapperHelper;
 
 @Configuration
-@EnableConfigurationProperties(PluginProperties.class)
+@EnableConfigurationProperties(MybatisPluginProperties.class)
 @ConditionalOnClass(MutiRouteDataSource.class)
 @AutoConfigureAfter(MybatisAutoConfiguration.class)
 public class JeesuiteMybatisConfiguration implements InitializingBean {
@@ -31,7 +31,7 @@ public class JeesuiteMybatisConfiguration implements InitializingBean {
 	@Autowired
 	private SqlSessionFactory sqlSessionFactory;
 	@Autowired
-	private PluginProperties properties;
+	private MybatisPluginProperties properties;
 
 	@Value("${mybatis.mapper-locations}")
 	private String mapperLocations;

@@ -2,18 +2,22 @@ package com.jeesuite.mybatis.test.mapper;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.Select;
 
-import com.jeesuite.mybatis.core.BaseMapper;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.pagination.Page;
 import com.jeesuite.mybatis.plugin.pagination.PageParams;
 import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 
-public interface UserEntityMapper extends BaseMapper<UserEntity, Integer> {
+import tk.mybatis.mapper.common.BaseMapper;
+import tk.mybatis.mapper.common.ExampleMapper;
+import tk.mybatis.mapper.common.MySqlMapper;
+
+public interface UserEntityMapper extends BaseMapper<UserEntity>,ExampleMapper<UserEntity>,MySqlMapper<UserEntity> {
 	
 	@Cache
 	List<UserEntity> findByType(short type);
@@ -46,5 +50,8 @@ public interface UserEntityMapper extends BaseMapper<UserEntity, Integer> {
 	@Select("SELECT * FROM users where 1=1")
 	@ResultMap("BaseResultMap")
     Page<UserEntity> pageQuery(@Param("pageParam") PageParams pageParam);
+	
+	@Delete("delete from users where mobile = #{mobile}")
+	public void delBymobile(@Param("mobile") String mobile);
 	
 }

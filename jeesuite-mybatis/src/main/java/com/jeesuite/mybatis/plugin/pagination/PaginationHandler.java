@@ -78,7 +78,7 @@ public class PaginationHandler implements InterceptorHandler {
 					boolean withPageParams = false;
 					Class<?>[] parameterTypes = method.getParameterTypes();
 					self:for (Class<?> clazz : parameterTypes) {
-						if(withPageParams = (clazz == PageParams.class)){
+						if(withPageParams = (clazz == PageParams.class || clazz.getSuperclass() == PageParams.class)){
 							break self;
 						}
 					}
