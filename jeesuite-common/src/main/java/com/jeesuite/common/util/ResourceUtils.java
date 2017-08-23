@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -27,10 +28,16 @@ public final class ResourceUtils {
 	static boolean inited;
 	
 	final static Properties allProperties = new Properties();
+	
+	static Method envHelperGetPropertiesMethod;
 
 	private synchronized static void load() {
 		try {
             if(inited)return;
+            try {
+            	Class<?> threadClazz = Class.forName("com.jeesuite.spring.helper.EnvironmentHelper");  
+            	envHelperGetPropertiesMethod = threadClazz.getMethod("getProperty", String.class);
+			} catch (Exception e) {}
 			URL url = Thread.currentThread().getContextClassLoader().getResource("");
 			if (url.getProtocol().equals("file")) {				
 				loadPropertiesFromFile(new File(url.getPath()));
@@ -96,16 +103,10 @@ public final class ResourceUtils {
 	
 	@Deprecated
 	public static String get(String key, String...defaultValue) {
-		if(!inited){
-			load();
-		}
-		if (allProperties.containsKey(key)) {
-			return allProperties.getProperty(key);
-		}
 		if (defaultValue != null && defaultValue.length > 0 && defaultValue[0] != null) {
-			return defaultValue[0];
+			return getProperty(key,defaultValue[0]);
 		} else {
-			return System.getProperty(key);
+			return getProperty(key);
 		}
 	}
 	
@@ -119,6 +120,16 @@ public final class ResourceUtils {
 		}
 		if (allProperties.containsKey(key)) {
 			return allProperties.getProperty(key);
+		}
+		
+		if(envHelperGetPropertiesMethod != null){
+			try {
+				Object object = envHelperGetPropertiesMethod.invoke(null, key);
+				if(object != null){
+					allProperties.put(key, object);
+					return object.toString();
+				}
+			} catch (Exception e) {}
 		}
 		
 		String value = System.getProperty(key);

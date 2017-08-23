@@ -11,6 +11,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ClassPathResource;
@@ -36,17 +39,21 @@ public class ConfigcenterContext {
 	
 	private Boolean remoteEnabled;
 
+	private String nodeId = NodeNameHolder.getNodeId();
 	private String apiBaseUrl;
 	private String app;
 	private String env;
 	private String version;
 	private String secret;
 	private boolean remoteFirst = false;
+	private boolean isSpringboot;
+	private boolean serverInfoSynced;
+	private ScheduledExecutorService hbScheduledExecutor;
 	
 	private ConfigcenterContext() {}
 
-	public void init() {
-		
+	public void init(boolean isSpringboot) {
+		this.isSpringboot = isSpringboot;
 		String defaultAppName = getValue("spring.application.name");
 		app = getValue("jeesuite.configcenter.appName",defaultAppName);
 		if(remoteEnabled == null)remoteEnabled = Boolean.parseBoolean(getValue("jeesuite.configcenter.enabled","true"));
@@ -77,6 +84,29 @@ public class ConfigcenterContext {
 			System.out.println("load private key:"+location);
 			e.printStackTrace();
 		}
+		
+		hbScheduledExecutor = Executors.newScheduledThreadPool(1);
+		
+		final String url = apiBaseUrl + "/api/sync_status";
+		final Map<String, String> params = new  HashMap<>();
+		params.put("nodeId", nodeId);
+		params.put("appName", app);
+		params.put("env", env);
+		hbScheduledExecutor.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				//由于初始化的时候还拿不到spring.cloud.client.ipAddress，故在同步过程上送
+				if(isSpringboot && serverInfoSynced == false){
+					String serverip = ResourceUtils.getProperty("spring.cloud.client.ipAddress");
+					if(StringUtils.isNotBlank(serverip)){						
+						params.put("serverip", serverip);
+						serverInfoSynced = true;
+					}
+				}
+				
+				HttpUtils.postAsJson(url, params);
+			}
+		}, 30, 90, TimeUnit.SECONDS);
 	}
 
 	public static ConfigcenterContext getInstance() {
@@ -140,7 +170,7 @@ public class ConfigcenterContext {
 		try {
 			jsonString = HttpUtils.getContent(url);
 		} catch (Exception e) {
-			try {Thread.sleep(500);} catch (Exception e2) {}
+			try {Thread.sleep(1000);} catch (Exception e2) {}
 			//重试一次
 			jsonString = HttpUtils.getContent(url);
 		}
@@ -167,10 +197,14 @@ public class ConfigcenterContext {
 
 		Map<String, String> params = new  HashMap<>();
 		
-		params.put("nodeId", NodeNameHolder.getNodeId());
+		params.put("nodeId", nodeId);
 		params.put("appName", app);
 		params.put("env", env);
 		params.put("version", version);
+		params.put("springboot", String.valueOf(isSpringboot));
+		if(properties.containsKey("server.port")){
+			params.put("serverport", properties.getProperty("server.port"));
+		}
 		
 		Set<Entry<Object, Object>> entrySet = properties.entrySet();
 		for (Entry<Object, Object> entry : entrySet) {
@@ -198,6 +232,10 @@ public class ConfigcenterContext {
 		String url = apiBaseUrl + "/api/notify_final_config";
 		HttpUtils.postAsJson(url, params);
 		
+	}
+	
+	public void close(){
+		hbScheduledExecutor.shutdown();
 	}
 	
     private String setReplaceHolderRefValue(Properties properties, String key, String value) {

@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.env.PropertySourceLoader;
 import org.springframework.core.PriorityOrdered;
 import org.springframework.core.env.PropertiesPropertySource;
@@ -15,7 +16,7 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.confcenter.ConfigcenterContext;
 
-public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrdered {
+public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrdered,DisposableBean {
 
 	private ConfigcenterContext ccContext = ConfigcenterContext.getInstance();
 	@Override
@@ -30,7 +31,7 @@ public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrde
 			Properties properties = PropertiesLoaderUtils.loadProperties(resource);
 			ResourceUtils.merge(properties);
 			
-			ccContext.init();
+			ccContext.init(true);
 			
 			Properties remoteProperties = ccContext.getAllRemoteProperties();
 			if(remoteProperties != null){
@@ -57,5 +58,10 @@ public class CCPropertySourceLoader implements PropertySourceLoader,PriorityOrde
     public int getOrder() {
         return HIGHEST_PRECEDENCE;
     }
+
+	@Override
+	public void destroy() throws Exception {
+		ccContext.close();
+	}
 
 }

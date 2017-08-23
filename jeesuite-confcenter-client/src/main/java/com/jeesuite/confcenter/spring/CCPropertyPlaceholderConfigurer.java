@@ -15,6 +15,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 
@@ -26,7 +27,7 @@ import com.jeesuite.confcenter.ConfigcenterContext;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年11月2日
  */
-public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigurer{
+public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigurer implements DisposableBean{
 	
 	private final static Logger logger = LoggerFactory.getLogger(CCPropertyPlaceholderConfigurer.class);
 	
@@ -56,7 +57,7 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 		ResourceUtils.merge(properties);
 		ResourceUtils.merge(config);
 		
-		ccContext.init();
+		ccContext.init(false);
 		
 		Properties remoteProperties = ccContext.getAllRemoteProperties();
 		if(remoteProperties != null){
@@ -77,6 +78,11 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 		
 		return properties;
 		//
+	}
+
+	@Override
+	public void destroy() throws Exception {
+		ccContext.close();
 	}
 
 

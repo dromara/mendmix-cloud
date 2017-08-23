@@ -3,6 +3,8 @@
  */
 package com.jeesuite.common2.lock;
 
+import com.jeesuite.common2.lock.redis.RedisDistributeLock;
+
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
@@ -24,26 +26,16 @@ public class DistributeLockTemplate {
 	 * @return
 	 */
 	public static <T> T execute(String lockId,LockCaller<T> caller,long timeout){
-		DistributeLock dLock = new DistributeLock(lockId);
-		if(dLock.lock(timeout)){
-			try {				
+		RedisDistributeLock dLock = new RedisDistributeLock(lockId,(int)timeout/1000);
+		try {
+			if(dLock.tryLock()){
 				return caller.onHolder();
-			} finally {
-				dLock.unlock();
+			}else{
+				return caller.onWait();
 			}
-		}else{
-			long start = System.currentTimeMillis();
-			T result = null;
-			while(true){
-				try {Thread.sleep(100);} catch (Exception e) {}
-				if(!dLock.isLocked()){					
-					result = caller.onWait();
-					if(result != null)return result;
-				}
-				if(System.currentTimeMillis() - start > timeout){
-					throw new RuntimeException("DistributeLock["+lockId+"] wait timeout");
-				}
-			}
+		} finally {
+			dLock.unlock();
 		}
+		
 	}
 }

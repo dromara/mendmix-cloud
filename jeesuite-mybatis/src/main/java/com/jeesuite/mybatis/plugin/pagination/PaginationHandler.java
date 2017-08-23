@@ -104,7 +104,9 @@ public class PaginationHandler implements InterceptorHandler {
 		final MappedStatement orignMappedStatement = (MappedStatement)args[0];
 		
 		if(!orignMappedStatement.getSqlCommandType().equals(SqlCommandType.SELECT))return null;
-		if(!pageMappedStatements.keySet().contains(orignMappedStatement.getId()))return null;
+		
+		PageParams pageParams = PageExecutor.getPageParams();
+		if(pageParams == null && !pageMappedStatements.keySet().contains(orignMappedStatement.getId()))return null;
 		
 		final RowBounds rowBounds = (RowBounds) args[2];
 		final ResultHandler resultHandler = (ResultHandler) args[3];
@@ -116,8 +118,6 @@ public class PaginationHandler implements InterceptorHandler {
         } else {
             boundSql = (BoundSql) args[5];
         }
-        
-        PageParams pageParams = PageExecutor.getPageParams();
         
         if(pageParams == null && pageMappedStatements.get(orignMappedStatement.getId())){
         	if(parameter instanceof Map){
