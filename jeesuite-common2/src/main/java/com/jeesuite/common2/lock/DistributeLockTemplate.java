@@ -27,14 +27,17 @@ public class DistributeLockTemplate {
 	 */
 	public static <T> T execute(String lockId,LockCaller<T> caller,long timeout){
 		RedisDistributeLock dLock = new RedisDistributeLock(lockId,(int)timeout/1000);
+		
+		boolean getLock = false;
 		try {
 			if(dLock.tryLock()){
+				getLock = true;
 				return caller.onHolder();
 			}else{
 				return caller.onWait();
 			}
 		} finally {
-			dLock.unlock();
+			if(getLock)dLock.unlock();
 		}
 		
 	}

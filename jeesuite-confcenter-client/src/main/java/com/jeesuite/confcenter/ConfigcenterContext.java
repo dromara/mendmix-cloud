@@ -20,11 +20,12 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import com.jeesuite.common.crypt.RSA;
+import com.jeesuite.common.http.HttpResponseEntity;
+import com.jeesuite.common.http.HttpUtils;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.SimpleCryptUtils;
-import com.jeesuite.confcenter.utils.HttpUtils;
 
 
 public class ConfigcenterContext {
@@ -104,7 +105,7 @@ public class ConfigcenterContext {
 					}
 				}
 				
-				HttpUtils.postAsJson(url, params);
+				HttpUtils.postJson(url, JsonUtils.toJson(params),HttpUtils.DEFAULT_CHARSET);
 			}
 		}, 30, 90, TimeUnit.SECONDS);
 	}
@@ -167,13 +168,19 @@ public class ConfigcenterContext {
 		System.out.println("fetch configs url:" + url);
 		
 		String jsonString = null;
-		try {
-			jsonString = HttpUtils.getContent(url);
-		} catch (Exception e) {
+		HttpResponseEntity response = HttpUtils.get(url);
+		if(!response.isSuccessed()){
 			try {Thread.sleep(1000);} catch (Exception e2) {}
 			//重试一次
-			jsonString = HttpUtils.getContent(url);
+			jsonString = HttpUtils.get(url).getBody();
 		}
+		
+		if(!response.isSuccessed()){
+			throw new RuntimeException(response.getException());
+		}
+		
+		jsonString = response.getBody();
+		
 		Map<String,Object> map = JsonUtils.toObject(jsonString, Map.class);
 		if(map.containsKey("code")){
 			throw new RuntimeException(map.get("msg").toString());
@@ -230,7 +237,7 @@ public class ConfigcenterContext {
 		if(!remoteEnabled)return;
 		
 		String url = apiBaseUrl + "/api/notify_final_config";
-		HttpUtils.postAsJson(url, params);
+		HttpUtils.postJson(url, JsonUtils.toJson(params),HttpUtils.DEFAULT_CHARSET);
 		
 	}
 	

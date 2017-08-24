@@ -7,7 +7,7 @@
 		<version>5</version>
 	</parent>
 	<artifactId>jeesuite-filesystem</artifactId>
-	<version>1.1.0</version>
+	<version>1.1.4-SNAPSHOT</version>
 	<description>文件系统客户端，支持七牛、fastdfs</description>
 
 	<dependencies>
@@ -26,11 +26,18 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.aliyun.oss</groupId>
+			<artifactId>aliyun-sdk-oss</artifactId>
+			<version>2.8.1</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
 			<version>${moudule.common.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-spring</artifactId>
@@ -45,21 +52,21 @@
 		</dependency>
 
 		<dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>4.0.34.Final</version>
-            <optional>true</optional>
-        </dependency>
-		
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+			<version>4.0.34.Final</version>
+			<optional>true</optional>
+		</dependency>
+
 		<dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-pool2</artifactId>
-            <version>2.4.2</version>
-            <optional>true</optional>
-        </dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-pool2</artifactId>
+			<version>2.4.2</version>
+			<optional>true</optional>
+		</dependency>
 
 	</dependencies>
-	
+
 	<build>
 		<plugins>
 			<plugin>

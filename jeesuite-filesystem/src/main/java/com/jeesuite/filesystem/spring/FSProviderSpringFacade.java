@@ -12,6 +12,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.filesystem.FSProvider;
 import com.jeesuite.filesystem.FileType;
+import com.jeesuite.filesystem.provider.aliyun.AliyunossProvider;
 import com.jeesuite.filesystem.provider.fdfs.FdfsProvider;
 import com.jeesuite.filesystem.provider.qiniu.QiniuProvider;
 
@@ -23,6 +24,7 @@ import com.jeesuite.filesystem.provider.qiniu.QiniuProvider;
 public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 
 	private FSProvider fsProvider;
+	String endpoint;
 	String provider;
 	String groupName;
 	String accessKey;
@@ -32,8 +34,9 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 	long connectTimeout = 3000;
 	int maxThreads = 50;
 
-	public void setFsProvider(FSProvider fsProvider) {
-		this.fsProvider = fsProvider;
+
+	public void setEndpoint(String endpoint) {
+		this.endpoint = endpoint;
 	}
 
 	public void setProvider(String provider) {
@@ -67,10 +70,7 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if(!QiniuProvider.NAME.equals(provider) && !FdfsProvider.NAME.equals(provider)){
-     	   throw new RuntimeException("Provider[" + provider + "] not support");
-		}
-		
+
 		if(QiniuProvider.NAME.equals(provider)){
 			Validate.notBlank(accessKey, "[accessKey] not defined");
 			Validate.notBlank(secretKey, "[secretKey] not defined");
@@ -79,6 +79,11 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 			Validate.isTrue(servers != null && servers.matches("^.+[:]\\d{1,5}\\s*$"),"[servers] is not valid");
 			String[] serversArray = servers.split(",|;");
 			fsProvider = new FdfsProvider(urlprefix, groupName, serversArray, connectTimeout, maxThreads);
+		}else if(AliyunossProvider.NAME.equals(provider)){
+			Validate.notBlank(endpoint, "[endpoint] not defined");
+			
+		}else{
+			throw new RuntimeException("Provider[" + provider + "] not support");
 		}
 	}
 
