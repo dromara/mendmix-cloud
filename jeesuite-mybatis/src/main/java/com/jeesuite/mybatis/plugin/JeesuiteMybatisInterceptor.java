@@ -59,16 +59,16 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 		String[] handlerNames = StringUtils.tokenizeToStringArray(interceptorHandlers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 	    
 		for (String name : handlerNames) {
-			if("cache".equals(name)){
+			if(CacheHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new CacheHandler());
 				cacheEnabled = true;
-			}else if("rwRoute".equals(name)){
+			}else if(RwRouteHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new RwRouteHandler());
 				rwRouteEnabled = true;
-			}else if("dbShard".equals(name)){
+			}else if(DatabaseRouteHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new DatabaseRouteHandler());
 				dbShardEnabled = true;
-			}else if("page".equals(name)){
+			}else if(PaginationHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new PaginationHandler());
 			}
 		}

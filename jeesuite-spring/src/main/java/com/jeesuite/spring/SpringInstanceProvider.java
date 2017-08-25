@@ -71,4 +71,10 @@ public class SpringInstanceProvider {
 	public <T> Map<String, T> getInterfaces(Class<T> beanClass) {
 		return applicationContext.getBeansOfType(beanClass);
 	}
+
+	public ApplicationContext getApplicationContext() {
+		return applicationContext;
+	}
+	
+	
 }

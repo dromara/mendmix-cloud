@@ -66,6 +66,7 @@ public class JeesuiteMybatisConfiguration implements InitializingBean {
 			Properties p = new Properties();
 			p.setProperty(PluginConfig.CRUD_DRIVER, properties.getCrudDriver());
 			p.setProperty(PluginConfig.DB_TYPE, properties.getDbType());
+			p.setProperty(PluginConfig.CACHE_NULL_VALUE, String.valueOf(properties.isNullValueCache()));
 			
 			interceptor.setProperties(p);
 			interceptor.afterPropertiesSet();

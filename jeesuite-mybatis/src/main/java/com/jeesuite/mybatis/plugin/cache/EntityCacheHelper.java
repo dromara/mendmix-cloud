@@ -3,8 +3,10 @@
  */
 package com.jeesuite.mybatis.plugin.cache;
 
+import java.io.Serializable;
 import java.util.concurrent.Callable;
 
+import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.mybatis.core.BaseEntity;
 
 /**
@@ -15,6 +17,11 @@ import com.jeesuite.mybatis.core.BaseEntity;
  * @date 2016年11月19日
  */
 public class EntityCacheHelper {
+	
+	public static <T extends BaseEntity> void addCache(T bean,int expireSeconds){
+		String key = buildCacheKey(bean.getClass(), bean.getId());
+		new RedisObject(key).set(bean, expireSeconds);
+	}
 
 	/**
 	 * 查询并缓存结果(默认缓存一天)
@@ -52,7 +59,7 @@ public class EntityCacheHelper {
 			try {				
 				result = dataCaller.call();
 				if(result != null){
-					CacheHandler.cacheProvider.set(key, result, expireSeconds,false);
+					CacheHandler.cacheProvider.set(key, result, expireSeconds);
 					String cacheGroupKey = entityClassName + CacheHandler.GROUPKEY_SUFFIX;
 					CacheHandler.cacheProvider.putGroup(cacheGroupKey, key, expireSeconds);
 				}
@@ -87,5 +94,9 @@ public class EntityCacheHelper {
 		CacheHandler.cacheProvider.remove(key);
 		CacheHandler.cacheProvider.removeFromGroup(cacheGroupKey, key);
 		
+	}
+    
+    private static String buildCacheKey(Class<?> entityClass,Serializable id){
+		return entityClass.getSimpleName() + ".id:" + id;
 	}
 }

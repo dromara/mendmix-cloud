@@ -5,11 +5,16 @@ import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonUtils {
 	
 	
 	private static JsonMapper jsonMapper = JsonMapper.getDefault();
+	
+	public static ObjectMapper getMapper(){
+		return jsonMapper.getMapper();
+	}
 	
 	public static String toJson(Object object) {
 		return jsonMapper.toJson(object);

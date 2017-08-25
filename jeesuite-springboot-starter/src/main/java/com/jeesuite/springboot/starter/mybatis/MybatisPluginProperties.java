@@ -19,6 +19,7 @@ public class MybatisPluginProperties {
 	private boolean rwRouteEnabled = false;
 	private boolean dbShardEnabled = false;
 	private boolean paginationEnabled = true;
+	private boolean nullValueCache = false;
 	
 
 	public boolean isCacheEnabled() {
@@ -58,7 +59,11 @@ public class MybatisPluginProperties {
 	public void setCrudDriver(String crudDriver) {
 		this.crudDriver = crudDriver;
 	}
-
-	
+	public boolean isNullValueCache() {
+		return nullValueCache;
+	}
+	public void setNullValueCache(boolean nullValueCache) {
+		this.nullValueCache = nullValueCache;
+	}
 
 }

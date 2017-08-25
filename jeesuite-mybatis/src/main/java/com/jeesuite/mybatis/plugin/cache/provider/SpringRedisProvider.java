@@ -31,13 +31,10 @@ public class SpringRedisProvider extends AbstractCacheProvider implements Initia
 	private StringRedisTemplate stringRedisTemplate;
 	@SuppressWarnings("rawtypes")//
 	private RedisSerializer keySerializer;
-	@SuppressWarnings("rawtypes")//
-	private RedisSerializer valueSerializer;
 
 	public void setRedisTemplate(RedisTemplate<String, Object> redisTemplate) {
 		this.redisTemplate = redisTemplate;
 		this.keySerializer = redisTemplate.getKeySerializer();
-		this.valueSerializer = redisTemplate.getValueSerializer();
 	}
 
 	public void setStringRedisTemplate(StringRedisTemplate stringRedisTemplate) {
@@ -61,17 +58,19 @@ public class SpringRedisProvider extends AbstractCacheProvider implements Initia
 
 
 	@Override
-	public boolean set(String key, Object value, long expired,boolean forceStoreAsBytes) {
+	public boolean set(String key, Object value, long expireSeconds) {
 		if(value == null)return false;
-		if(forceStoreAsBytes == false && isStoreAsString(value)){
-			stringRedisTemplate.opsForValue().set(key, value.toString(), expired, TimeUnit.SECONDS);
-		}else{
-			redisTemplate.opsForValue().set(key, value, expired, TimeUnit.SECONDS);
-		}
+		redisTemplate.opsForValue().set(key, value, expireSeconds, TimeUnit.SECONDS);
 		return true;
 	}
-
-
+	
+	@Override
+	public boolean setStr(String key, Object value, long expireSeconds) {
+		if(value == null)return false;
+		stringRedisTemplate.opsForValue().set(key, value.toString(), expireSeconds, TimeUnit.SECONDS);
+		return true;
+	}
+	
 	@Override
 	public boolean remove(String key) {
 		redisTemplate.delete(key);

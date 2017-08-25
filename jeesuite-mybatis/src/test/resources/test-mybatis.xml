@@ -51,6 +51,7 @@
 						    <!--可选值:default(默认),mapper3(集成mapper框架)-->
 							<prop key="crudDriver">mapper3</prop>
 							<prop key="dbType">Mysql</prop>
+							<prop key="cache.nullValue">true</prop>
 						</props>
 					</property>
 				</bean>

@@ -208,6 +208,8 @@ public class HttpUtils {
 		conn.setDoOutput(true);
 		conn.setRequestProperty("Accept", "*/*");
 		conn.setRequestProperty("Content-Type", contextType);
+		conn.setConnectTimeout(requestEntity.getConnectTimeout());
+		conn.setReadTimeout(requestEntity.getReadTimeout());
 		if (!requestEntity.getHeaders().isEmpty()) {
 			for (Map.Entry<String, String> entry : requestEntity.getHeaders().entrySet()) {
 				conn.setRequestProperty(entry.getKey(), entry.getValue());

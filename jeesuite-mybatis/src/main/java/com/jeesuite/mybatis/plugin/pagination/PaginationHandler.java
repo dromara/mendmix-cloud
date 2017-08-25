@@ -38,6 +38,8 @@ public class PaginationHandler implements InterceptorHandler {
 
 	private static Logger logger = LoggerFactory.getLogger(PaginationHandler.class);
 	
+	public static final String NAME = "page";
+	
 	private static final String PARAMETER_SIZE = "pageSize";
 	private static final String PARAMETER_OFFSET = "offset";
 	private static final String PAGE_LIMIT_SUFFIX = "_PageLimit";

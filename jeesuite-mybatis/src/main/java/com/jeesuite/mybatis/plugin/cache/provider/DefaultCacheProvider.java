@@ -37,13 +37,15 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 	}
 
 	@Override
-	public boolean set(String key, Object value, long expired,boolean forceStoreAsBytes) {
+	public boolean set(String key, Object value, long expireSeconds) {
 		if(value == null)return false;
-		if(forceStoreAsBytes == false && isStoreAsString(value)){
-			return new RedisString(key).set(value.toString(),expired);
-		}else{
-			return new RedisObject(key).set(value, expired);
-		}
+		return new RedisObject(key).set(value, expireSeconds);
+	}
+	
+	@Override
+	public boolean setStr(String key, Object value, long expireSeconds) {
+		if(value == null)return false;
+		return new RedisString(key).set(value.toString(),expireSeconds);
 	}
 
 

@@ -23,6 +23,8 @@ public class RwRouteHandler implements InterceptorHandler {
 
 	protected static final Logger logger = LoggerFactory.getLogger(RwRouteHandler.class);
 
+	public static final String NAME = "rwRoute";
+	
 	@Override
 	public Object onInterceptor(Invocation invocation) throws Throwable {
 		

@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.jeesuite.common.crypt.RSA;
 import com.jeesuite.common.http.HttpResponseEntity;
 import com.jeesuite.common.http.HttpUtils;
@@ -50,6 +51,7 @@ public class ConfigcenterContext {
 	private boolean isSpringboot;
 	private boolean serverInfoSynced;
 	private ScheduledExecutorService hbScheduledExecutor;
+	private int syncIntervalSeconds = 90;
 	
 	private ConfigcenterContext() {}
 
@@ -65,6 +67,8 @@ public class ConfigcenterContext {
 		setApiBaseUrl(getValue("jeesuite.configcenter.base.url"));
 		
 		version = getValue("jeesuite.configcenter.version","0.0.0");
+		
+		syncIntervalSeconds = ResourceUtils.getInt("jeesuite.configcenter.sync-interval-seconds", 90);
 		
 		System.out.println(String.format("\n=====configcenter=====\nappName:%s\nenv:%s\nversion:%s\nremoteEnabled:%s\n=====configcenter=====", app,env,version,remoteEnabled));
 		
@@ -105,9 +109,21 @@ public class ConfigcenterContext {
 					}
 				}
 				
-				HttpUtils.postJson(url, JsonUtils.toJson(params),HttpUtils.DEFAULT_CHARSET);
+				HttpResponseEntity response = HttpUtils.postJson(url, JsonUtils.toJson(params),HttpUtils.DEFAULT_CHARSET);
+				//刷新服务端更新的配置
+				if(response.isSuccessed()){
+					JsonNode jsonNode = JsonUtils.getNode(response.getBody(), "data");
+					Map map = JsonUtils.toObject(jsonNode.toString(), Map.class);
+					if(!map.isEmpty()){
+						Set keySet = map.keySet();
+						for (Object key : keySet) {
+							ResourceUtils.add(key.toString(), decodeEncryptIfRequire(map.get(key)).toString());
+						}
+					}
+				}
+				
 			}
-		}, 30, 90, TimeUnit.SECONDS);
+		}, 30, syncIntervalSeconds, TimeUnit.SECONDS);
 	}
 
 	public static ConfigcenterContext getInstance() {
@@ -209,6 +225,7 @@ public class ConfigcenterContext {
 		params.put("env", env);
 		params.put("version", version);
 		params.put("springboot", String.valueOf(isSpringboot));
+		params.put("syncIntervalSeconds", String.valueOf(syncIntervalSeconds));
 		if(properties.containsKey("server.port")){
 			params.put("serverport", properties.getProperty("server.port"));
 		}

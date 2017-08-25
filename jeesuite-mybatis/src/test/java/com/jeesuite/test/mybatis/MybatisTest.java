@@ -166,12 +166,8 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testFindNotExists(){
-		EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper("com.jeesuite.mybatis.test.mapper.UserEntityMapper");
-		
-		String sql = entityInfo.getMapperSqls().get("com.jeesuite.mybatis.test.mapper.UserEntityMapper.queryByExample");
-		System.out.println(sql);
-		
-		System.out.println(sql.replaceAll("<(.*)>.*order by.*</(.*)>", ""));
+		String mobile = "13800000002";
+		mapper.findByMobile(mobile);
 	}
 	
 	@Test

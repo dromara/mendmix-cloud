@@ -35,6 +35,8 @@ public class DatabaseRouteHandler implements InterceptorHandler {
 
 	protected static final Logger logger = LoggerFactory.getLogger(DatabaseRouteHandler.class);
 	
+	public static final String NAME = "dbShard";
+	
 	private static final String SPIT_POINT = ".";
 	private static final String REGEX_BLANK = "\\n+\\s+";
 
