@@ -1,9 +1,6 @@
 package com.jeesuite.mybatis.parser;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -18,7 +15,13 @@ import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.parsing.XPathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternUtils;
 import org.w3c.dom.NodeList;
+
+import com.jeesuite.spring.InstanceFactory;
 
 /**
  * mybatismapper数据库字段与实体字段映射关系转换工具
@@ -44,15 +47,16 @@ public class MybatisMapperParser {
 	
 	private static Map<String,EntityInfo> mapperRalateEntitys = new HashMap<>();
 	
-	private static String mapperFileSuffix = "Mapper.xml";
-	private static String mapperBaseDir;
+	private static String mapperLocations;
+	//private static String mapperFileSuffix = "Mapper.xml";
+	//private static String mapperBaseDir;
 	public static void setMapperLocations(String mapperLocations){
-		if(mapperBaseDir != null)return;
+		MybatisMapperParser.mapperLocations = mapperLocations;
 		//classpath:META-INF/mapper/*Mapper.xml
-		mapperLocations = mapperLocations.split(":")[1];
-		int spitPos = mapperLocations.lastIndexOf("/");
-		mapperBaseDir = mapperLocations.substring(0, spitPos);
-		mapperFileSuffix = mapperLocations.substring(spitPos + 1).replace("*", "");
+//		mapperLocations = mapperLocations.split(":")[1];
+//		int spitPos = mapperLocations.lastIndexOf("/");
+//		mapperBaseDir = mapperLocations.substring(0, spitPos);
+//		mapperFileSuffix = mapperLocations.substring(spitPos + 1).replace("*", "");
 	}
 	
 	public static List<EntityInfo> getEntityInfos() {
@@ -94,52 +98,68 @@ public class MybatisMapperParser {
 	}
 	
 	private synchronized static void doParse(){
-		if(caches.isEmpty()){
-			try {
-				URL resource = Thread.currentThread().getContextClassLoader().getResource(mapperBaseDir);
-				if (resource != null) {			
-					if (resource.getProtocol().equals("file")) {
-						File mapperDir = new File(resource.getPath());
-						File[] files = mapperDir.listFiles();						
-						for (File f : files) {
-							if(f.getName().endsWith(mapperFileSuffix)){
-								parseMapperFile(new FileInputStream(f));
-							}
-						}
-					} else if (resource.getProtocol().equals("jar")) {
-						String jarFilePath = resource.getFile();	
-						
-						//file:/Users/vakinge/.m2/repository/com/jeesuite/demo/demo-dao/1.0-SNAPSHOT/demo-dao-1.0-SNAPSHOT.jar!/mapper;
-						jarFilePath = jarFilePath.split("jar!")[0] + "jar";
-						jarFilePath = jarFilePath.substring("file:".length());
-						log.info("mapper file in jar:{}",jarFilePath);
-						jarFilePath = java.net.URLDecoder.decode(jarFilePath, "UTF-8");
-
-						JarFile jarFile = new JarFile(jarFilePath);
-						
-						List<String> fileNames = listFiles(jarFile, mapperFileSuffix);
-						if (fileNames != null && fileNames.size() > 0) {
-							for (String fileName : fileNames) {
-								InputStream inputStream = jarFile.getInputStream(jarFile.getJarEntry(fileName));
-								parseMapperFile(inputStream);
-								try {inputStream.close();} catch (Exception e) {}
-							}
-						}
-						
-						jarFile.close();
-					} else {
-						log.error("mapper dir is in unsurport protocol");
-					}															
-				} else {
-					log.error("can not find mapper dir");
-				}				
-			} catch (Exception e) {
-				log.error("解析mapper文件异常", e);	
-				
-				throw new RuntimeException("解析mapper文件异常");
+		if(!caches.isEmpty())return;
+		try {
+			ResourceLoader resourceLoader = InstanceFactory.getInstance(ResourceLoader.class);
+			if(resourceLoader == null)resourceLoader = new DefaultResourceLoader();
+			Resource[] resources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(mapperLocations);
+			for (Resource resource : resources) {
+				log.info(">begin parse mapper file:" + resource);
+				parseMapperFile(resource.getInputStream());
 			}
+		} catch (Exception e) {
+			log.error("解析mapper文件异常", e);	
+			throw new RuntimeException("解析mapper文件异常");
 		}
 	}
+	
+//	private synchronized static void doParse(){
+//		if(caches.isEmpty()){
+//			try {
+//				URL resource = Thread.currentThread().getContextClassLoader().getResource(mapperBaseDir);
+//				if (resource != null) {			
+//					if (resource.getProtocol().equals("file")) {
+//						File mapperDir = new File(resource.getPath());
+//						File[] files = mapperDir.listFiles();						
+//						for (File f : files) {
+//							if(f.getName().endsWith(mapperFileSuffix)){
+//								parseMapperFile(new FileInputStream(f));
+//							}
+//						}
+//					} else if (resource.getProtocol().equals("jar")) {
+//						String jarFilePath = resource.getFile();	
+//						
+//						//file:/Users/vakinge/.m2/repository/com/jeesuite/demo/demo-dao/1.0-SNAPSHOT/demo-dao-1.0-SNAPSHOT.jar!/mapper;
+//						jarFilePath = jarFilePath.split("jar!")[0] + "jar";
+//						jarFilePath = jarFilePath.substring("file:".length());
+//						log.info("mapper file in jar:{}",jarFilePath);
+//						jarFilePath = java.net.URLDecoder.decode(jarFilePath, "UTF-8");
+//
+//						JarFile jarFile = new JarFile(jarFilePath);
+//						
+//						List<String> fileNames = listFiles(jarFile, mapperFileSuffix);
+//						if (fileNames != null && fileNames.size() > 0) {
+//							for (String fileName : fileNames) {
+//								InputStream inputStream = jarFile.getInputStream(jarFile.getJarEntry(fileName));
+//								parseMapperFile(inputStream);
+//								try {inputStream.close();} catch (Exception e) {}
+//							}
+//						}
+//						
+//						jarFile.close();
+//					} else {
+//						log.error("mapper dir is in unsurport protocol");
+//					}															
+//				} else {
+//					log.error("can not find mapper dir");
+//				}				
+//			} catch (Exception e) {
+//				log.error("解析mapper文件异常", e);	
+//				
+//				throw new RuntimeException("解析mapper文件异常");
+//			}
+//		}
+//	}
 	
 	private static void parseMapperFile(InputStream inputStream) throws Exception {
 		
@@ -187,6 +207,8 @@ public class MybatisMapperParser {
 				entityInfo.addSql(xNode.getStringAttribute("id"), sql);
 			}
 		}
+		
+		inputStream.close();
 	}
 	
 	private static void parseResultNode(EntityInfo entityInfo,XNode node){
