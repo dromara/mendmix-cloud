@@ -359,10 +359,22 @@ public class HttpUtils {
 	}
 	
 	public static void main(String[] args) throws IOException {
+		
+		//上传文件
 		HttpRequestEntity entity = HttpRequestEntity.create()
 				 .addFileParam("file", new FileItem("/Users/jiangwei/333.log"))
 				 .basicAuth("admin", "123456");
-		System.out.println(post("http://192.168.1.89:9082/", entity));
+		HttpResponseEntity responseEntity = HttpUtils.post("http://192.168.1.89:9082/upload", entity);
+		System.out.println(responseEntity);
+		
+		//post
+		responseEntity = HttpUtils.post("http://192.168.1.89:9082/add", 
+				      HttpRequestEntity.create().addTextParam("name", "vakinge")
+				                       .addTextParam("password", "123456"));
+		
+		if(responseEntity.isSuccessed()){
+			System.out.println(responseEntity.getBody());
+		}
 	}
 
 }

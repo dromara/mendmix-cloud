@@ -5,21 +5,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jeesuite.common.crypt.RSA;
 import com.jeesuite.common.http.HttpResponseEntity;
 import com.jeesuite.common.http.HttpUtils;
@@ -27,11 +32,18 @@ import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.SimpleCryptUtils;
+import com.jeesuite.confcenter.listener.HttpConfigChangeListener;
+import com.jeesuite.confcenter.listener.ZkConfigChangeListener;
+import com.jeesuite.spring.InstanceFactory;
 
 
 public class ConfigcenterContext {
 
+	private final static Logger logger = LoggerFactory.getLogger(ConfigcenterContext.class);
+	
 	private static ConfigcenterContext instance = new ConfigcenterContext();
+	
+	private static final String MANAGER_PROPERTY_SOURCE = "manager";
 	
 	private PrivateKey rsaPrivateKey;
 	
@@ -41,7 +53,7 @@ public class ConfigcenterContext {
 	
 	private Boolean remoteEnabled;
 
-	private String nodeId = NodeNameHolder.getNodeId();
+	private final String nodeId = NodeNameHolder.getNodeId();
 	private String apiBaseUrl;
 	private String app;
 	private String env;
@@ -49,9 +61,8 @@ public class ConfigcenterContext {
 	private String secret;
 	private boolean remoteFirst = false;
 	private boolean isSpringboot;
-	private boolean serverInfoSynced;
-	private ScheduledExecutorService hbScheduledExecutor;
 	private int syncIntervalSeconds = 90;
+	private ConfigChangeListener configChangeListener;
 	
 	private ConfigcenterContext() {}
 
@@ -90,40 +101,18 @@ public class ConfigcenterContext {
 			e.printStackTrace();
 		}
 		
-		hbScheduledExecutor = Executors.newScheduledThreadPool(1);
-		
-		final String url = apiBaseUrl + "/api/sync_status";
-		final Map<String, String> params = new  HashMap<>();
-		params.put("nodeId", nodeId);
-		params.put("appName", app);
-		params.put("env", env);
-		hbScheduledExecutor.scheduleAtFixedRate(new Runnable() {
-			@Override
-			public void run() {
-				//由于初始化的时候还拿不到spring.cloud.client.ipAddress，故在同步过程上送
-				if(isSpringboot && serverInfoSynced == false){
-					String serverip = ResourceUtils.getProperty("spring.cloud.client.ipAddress");
-					if(StringUtils.isNotBlank(serverip)){						
-						params.put("serverip", serverip);
-						serverInfoSynced = true;
-					}
-				}
-				
-				HttpResponseEntity response = HttpUtils.postJson(url, JsonUtils.toJson(params),HttpUtils.DEFAULT_CHARSET);
-				//刷新服务端更新的配置
-				if(response.isSuccessed()){
-					JsonNode jsonNode = JsonUtils.getNode(response.getBody(), "data");
-					Map map = JsonUtils.toObject(jsonNode.toString(), Map.class);
-					if(!map.isEmpty()){
-						Set keySet = map.keySet();
-						for (Object key : keySet) {
-							ResourceUtils.add(key.toString(), decodeEncryptIfRequire(map.get(key)).toString());
-						}
-					}
-				}
-				
+		//register listener
+		String syncType = ResourceUtils.getProperty("jeesuite.configcenter.sync-type");
+		if("zookeeper".equals(syncType)){
+			String zkServers = ResourceUtils.getProperty("jeesuite.configcenter.sync-zk-servers");
+			if(StringUtils.isBlank(zkServers)){
+				throw new RuntimeException("config[jeesuite.configcenter.sync-zk-servers] is required for syncType [zookeepr] ");
 			}
-		}, 30, syncIntervalSeconds, TimeUnit.SECONDS);
+			configChangeListener = new ZkConfigChangeListener(zkServers);
+		}else{
+			configChangeListener = new HttpConfigChangeListener();
+		}
+		configChangeListener.register(this);
 	}
 
 	public static ConfigcenterContext getInstance() {
@@ -146,33 +135,36 @@ public class ConfigcenterContext {
 	public String getApp() {
 		return app;
 	}
-	public void setApp(String app) {
-		this.app = app;
-	}
+
 	public String getEnv() {
 		return env;
 	}
-	public void setEnv(String env) {
-		this.env = env;
-	}
+
 	public String getVersion() {
 		return version;
-	}
-	public void setVersion(String version) {
-		this.version = version;
 	}
     
 	public String getSecret() {
 		return secret;
 	}
-
-	public void setSecret(String secret) {
-		this.secret = secret;
-	}
 	
 	public boolean isRemoteFirst() {
 		return remoteFirst;
 	}
+	
+	public int getSyncIntervalSeconds() {
+		return syncIntervalSeconds;
+	}
+	
+	public String getNodeId() {
+		return nodeId;
+	}
+	
+	public boolean isSpringboot() {
+		return isSpringboot;
+	}
+	
+	
 
 	@SuppressWarnings("unchecked")
 	public Properties getAllRemoteProperties(){
@@ -226,6 +218,7 @@ public class ConfigcenterContext {
 		params.put("version", version);
 		params.put("springboot", String.valueOf(isSpringboot));
 		params.put("syncIntervalSeconds", String.valueOf(syncIntervalSeconds));
+		params.put("syncType", configChangeListener.typeName());
 		if(properties.containsKey("server.port")){
 			params.put("serverport", properties.getProperty("server.port"));
 		}
@@ -258,8 +251,49 @@ public class ConfigcenterContext {
 		
 	}
 	
+	public void updateConfig(Map<String, Object> updateConfig){
+		if(!updateConfig.isEmpty()){
+			Set<String> keySet = updateConfig.keySet();
+			for (String key : keySet) {
+				String oldValue = ResourceUtils.getProperty(key);
+				ResourceUtils.add(key, decodeEncryptIfRequire(updateConfig.get(key)).toString());
+				
+				StandardEnvironment environment = InstanceFactory.getInstance(StandardEnvironment.class);
+				MutablePropertySources propertySources = environment.getPropertySources();
+				
+				MapPropertySource source = null;
+				synchronized (propertySources) {					
+					if(!propertySources.contains(MANAGER_PROPERTY_SOURCE)){
+						source = new MapPropertySource(MANAGER_PROPERTY_SOURCE, new LinkedHashMap<String, Object>());
+						environment.getPropertySources().addFirst(source);
+					}else{
+						source = (MapPropertySource) propertySources.get(MANAGER_PROPERTY_SOURCE);
+					}
+				}
+				
+				Map<String, Object> map = (Map<String, Object>) source.getSource();
+				Properties properties = new Properties();
+				properties.putAll(map);
+				properties.putAll(updateConfig);
+				propertySources.replace(source.getName(), new PropertiesPropertySource(source.getName(), properties));
+				//publish change event
+				if(InstanceFactory.getInstance(EnvironmentChangeListener.class) != null){
+					try {								
+						InstanceFactory.getInstanceProvider().getApplicationContext().publishEvent(new EnvironmentChangeEvent(updateConfig.keySet()));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				
+		        logger.info("Config [{}] Change,oldValue:{},newValue:{}",key,oldValue,updateConfig.get(key));
+			}
+		}
+	}
+	
+	
+	
 	public void close(){
-		hbScheduledExecutor.shutdown();
+		configChangeListener.unRegister();
 	}
 	
     private String setReplaceHolderRefValue(Properties properties, String key, String value) {
@@ -309,7 +343,7 @@ public class ConfigcenterContext {
 		return data;
 	}
 
-	List<String> sensitiveKeys = new ArrayList<>(Arrays.asList("pass","key","secret"));
+	List<String> sensitiveKeys = new ArrayList<>(Arrays.asList("pass","key","secret","token","credentials"));
 	private String hideSensitive(String key,String orign){
 		boolean is = false;
 		for (String k : sensitiveKeys) {

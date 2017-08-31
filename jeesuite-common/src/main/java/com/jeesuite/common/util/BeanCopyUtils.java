@@ -168,7 +168,6 @@ public class BeanCopyUtils {
 
             }
         } catch (Exception e) {
-            e.printStackTrace();
             throw new BeanConverterException(e);
         }
     }
