@@ -5,8 +5,7 @@ package com.jeesuite.filesystem.utils;
 
 import java.io.IOException;
 
-import com.jeesuite.filesystem.FileItem;
-import com.jeesuite.filesystem.FileType;
+import com.jeesuite.filesystem.UploadObject;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -17,27 +16,14 @@ public class HttpDownloader {
 
 	private static OkHttpClient httpClient = new OkHttpClient();
 	
-	public static FileItem read(String url) throws IOException{
+	public static UploadObject read(String url) throws IOException{
 		
-		FileItem item = new FileItem();
 		Request.Builder requestBuilder = new Request.Builder().url(url);
 		Response response = httpClient.newCall(requestBuilder.build()).execute();
 		
-		item.setFileType(parseSuffix(url));
-		item.setDatas(response.body().bytes());
-		if(item.getFileType() == null){
-			item.setFileType(FileType.getFileSuffix(item.getDatas()));
-		}
-		item.setUrl(url);
-		
+		UploadObject item = new UploadObject(FilePathHelper.parseFileName(url), response.body().bytes(), FilePathHelper.parseFileType(url));
 		return item;
 	}
 	
-	private static FileType parseSuffix(String url){
-		String sf = url.split("#|\\?")[0].substring(url.lastIndexOf("/"));
-		if(!sf.contains("."))return null;
-		sf = sf.substring(sf.lastIndexOf(".")+1);
-		return FileType.valueOf2(sf);
-	}
 	
 }

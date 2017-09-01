@@ -1,16 +1,12 @@
 package com.jeesuite.filesystem.provider.aliyun;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
-
-import org.apache.commons.lang3.StringUtils;
+import java.util.Map;
 
 import com.aliyun.oss.OSSClient;
 import com.aliyun.oss.model.PutObjectResult;
-import com.jeesuite.filesystem.FileType;
+import com.jeesuite.filesystem.UploadObject;
 import com.jeesuite.filesystem.provider.AbstractProvider;
 
 
@@ -31,31 +27,32 @@ public class AliyunossProvider extends AbstractProvider{
 		ossClient = new OSSClient(endpoint, accessKey, secretKey);
 		this.bucketName = bucketName;
 	}
-
+	
 	@Override
-	public String upload(String catalog, String fileName, File file) {
-		String fileKey = rawFileName(catalog, fileName, null);
-		PutObjectResult result = ossClient.putObject(bucketName, fileKey, file);
-		return checkPutObjectResult(result);
+	public String upload(UploadObject object) {
+		PutObjectResult result = null;
+		try {
+			if(object.getFile() != null){
+				result = ossClient.putObject(bucketName, object.getFileName(), object.getFile());
+			}else if(object.getBytes() != null){
+				result = ossClient.putObject(bucketName, object.getFileName(), new ByteArrayInputStream(object.getBytes()));
+			}else if(object.getInputStream() != null){
+				result = ossClient.putObject(bucketName, object.getFileName(), object.getInputStream());
+			}else{
+				throw new IllegalArgumentException("upload object is NULL");
+			}
+			return checkPutObjectResult(result);
+		} catch (Exception e) {
+			
+		}
+		return null;
 	}
 
-	@Override
-	public String upload(String catalog, String fileName, byte[] data, FileType fileType) {
-		String fileKey = rawFileName(catalog, fileName, fileType);
-		PutObjectResult result = ossClient.putObject(bucketName, fileKey, new ByteArrayInputStream(data));
-		return checkPutObjectResult(result);
-	}
+
 
 	@Override
-	public String upload(String catalog, String fileName, InputStream in, FileType fileType) {
-		String fileKey = rawFileName(catalog, fileName, fileType);
-		PutObjectResult result = ossClient.putObject(bucketName, fileKey, in);
-		return checkPutObjectResult(result);
-	}
-
-	@Override
-	public String upload(String catalog, String fileName, String origUrl) {
-		
+	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileNames) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -64,12 +61,13 @@ public class AliyunossProvider extends AbstractProvider{
 		ossClient.deleteObject(bucketName, fileName);
 		return true;
 	}
-
+	
 	@Override
-	public String createUploadToken(String... fileNames) {
+	public String getDownloadUrl(String file, boolean authRequire, int ttl) {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public void close() throws IOException {
@@ -79,18 +77,6 @@ public class AliyunossProvider extends AbstractProvider{
 	@Override
 	public String name() {
 		return NAME;
-	}
-	
-	private static String rawFileName(String catalog, String fileName, FileType fileType) {
-		if (StringUtils.isBlank(catalog))
-			catalog = "other";
-		if (StringUtils.isBlank(fileName)) {
-			fileName = UUID.randomUUID().toString().replaceAll("\\-", "")
-					+ (fileType == null ? "" : fileType.getSuffix());
-		} else if (fileType != null && !fileName.contains(".")) {
-			fileName = fileName + fileType.getSuffix();
-		}
-		return new StringBuilder(catalog).append(DIR_SPLITER).append(fileName).toString();
 	}
 	
 

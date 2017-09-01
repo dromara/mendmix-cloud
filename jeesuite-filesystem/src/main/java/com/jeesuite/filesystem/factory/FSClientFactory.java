@@ -36,22 +36,22 @@ public class FSClientFactory {
 			synchronized (FSClientFactory.class) {
 				if(fsProviders.isEmpty()){
 					inited.set(true);
-					String groupNames = ResourceUtils.get("fs.groupNames");
+					String groupNames = ResourceUtils.getProperty("fs.groupNames");
 					Validate.notBlank(groupNames, "[groupNames] not defined");
 					String[] groups = groupNames.split(",|;");
 					for (String g : groups) {
-						String provider = ResourceUtils.get("fs."+g+".provider");
+						String provider = ResourceUtils.getProperty("fs."+g+".provider");
 		                   if(!QiniuProvider.NAME.equals(provider) && !FdfsProvider.NAME.equals(provider)){
 		                	   throw new RuntimeException("Provider[" + provider + "] not support");
 							}
-						String accessKey = ResourceUtils.get("fs."+g+".accessKey");
-						String secretKey = ResourceUtils.get("fs."+g+".secretKey");
-						String urlprefix = ResourceUtils.get("fs."+g+".urlprefix");
+						String accessKey = ResourceUtils.getProperty("fs."+g+".accessKey");
+						String secretKey = ResourceUtils.getProperty("fs."+g+".secretKey");
+						String urlprefix = ResourceUtils.getProperty("fs."+g+".urlprefix");
 						Validate.notBlank(urlprefix, "[urlprefix] not defined");
-						String servers = ResourceUtils.get("fs."+g+".servers");
-						String charset = ResourceUtils.get("fs."+g+".charset");
-						long connectTimeout = Long.parseLong(ResourceUtils.get("fs."+g+".connectTimeout","3000"));
-						int maxThreads = Integer.parseInt(ResourceUtils.get("fs."+g+".maxThreads","50"));
+						String servers = ResourceUtils.getProperty("fs."+g+".servers");
+						String charset = ResourceUtils.getProperty("fs."+g+".charset");
+						long connectTimeout = Long.parseLong(ResourceUtils.getProperty("fs."+g+".connectTimeout","3000"));
+						int maxThreads = Integer.parseInt(ResourceUtils.getProperty("fs."+g+".maxThreads","50"));
 						
 						FSProvider fsProvider = null;
 						if(QiniuProvider.NAME.equals(provider)){

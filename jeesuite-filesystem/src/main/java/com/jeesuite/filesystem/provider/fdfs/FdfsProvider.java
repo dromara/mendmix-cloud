@@ -3,21 +3,19 @@
  */
 package com.jeesuite.filesystem.provider.fdfs;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
-import com.jeesuite.filesystem.FileItem;
-import com.jeesuite.filesystem.FileType;
+import com.jeesuite.filesystem.UploadObject;
 import com.jeesuite.filesystem.provider.AbstractProvider;
 import com.jeesuite.filesystem.provider.FSOperErrorException;
 import com.jeesuite.filesystem.sdk.fdfs.FastdfsClient;
 import com.jeesuite.filesystem.sdk.fdfs.FastdfsClient.Builder;
 import com.jeesuite.filesystem.sdk.fdfs.FileId;
-import com.jeesuite.filesystem.utils.HttpDownloader;
 
 /**
  * @description <br>
@@ -45,55 +43,35 @@ public class FdfsProvider extends AbstractProvider{
 		client = builder.build();
 	}
 
-
 	@Override
-	public String upload(String catalog, String fileName, File file) {
-		CompletableFuture<FileId> upload = client.upload(bucketName, file);
+	public String upload(UploadObject object) {
+		CompletableFuture<FileId> upload = null;
 		try {
+			if(object.getFile() != null){
+				upload = client.upload(bucketName, object.getFile());
+			}else if(object.getBytes() != null){
+				upload = client.upload(bucketName, object.getFileName(), object.getBytes());
+			}else if(object.getInputStream() != null){
+				byte[] bs = IOUtils.toByteArray(object.getInputStream());
+				upload = client.upload(bucketName, object.getFileName(), bs);
+			}else if(StringUtils.isNotBlank(object.getUrl())){
+				
+			}
 			return getFullPath(upload.get().toString());
 		} catch (Exception e) {
-			processException(e);
+			
 		}
 		
 		return null;
-		
 	}
 
-
 	@Override
-	public String upload(String catalog, String fileName, byte[] data, FileType fileType) {
-		CompletableFuture<FileId> upload = client.upload(bucketName, fileName, data);
-		try {
-			return getFullPath(upload.get().toString());
-		} catch (Exception e) {
-			processException(e);
-		}
-		
+	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileNames) {
 		return null;
-		
 	}
 
-	@Override
-	public String upload(String catalog, String fileName, InputStream in, FileType fileType) {
-		try {
-			byte[] bs = IOUtils.toByteArray(in);
-			return upload(bucketName, fileName, bs, fileType);
-		} catch (IOException e) {
-			throw new FSOperErrorException(name(), e);
-		}
-	}
 
-	@Override
-	public String upload(String catalog, String fileName, String origUrl) {
-		try {
-			FileItem fileItem = HttpDownloader.read(origUrl);
-			return upload(bucketName, fileName, fileItem.getDatas(), fileItem.getFileType());
-		} catch (IOException e) {
-			throw new FSOperErrorException(name(), e);
-		}
-	}
 
-	
 	@Override
 	public boolean delete(String fileName) {
 		try {
@@ -107,13 +85,13 @@ public class FdfsProvider extends AbstractProvider{
 		}
 		return false;
 	}
-
-
+	
 	@Override
-	public String createUploadToken(String... fileNames) {
-		return null;
+	public String getDownloadUrl(String file, boolean authRequire, int ttl) {
+		return getFullPath(file);
 	}
 
+	
 	@Override
 	public String name() {
 		return NAME;

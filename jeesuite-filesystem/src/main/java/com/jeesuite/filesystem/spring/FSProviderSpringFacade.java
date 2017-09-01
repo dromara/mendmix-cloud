@@ -5,6 +5,7 @@ package com.jeesuite.filesystem.spring;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Map;
 
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.DisposableBean;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.filesystem.FSProvider;
 import com.jeesuite.filesystem.FileType;
+import com.jeesuite.filesystem.UploadObject;
 import com.jeesuite.filesystem.provider.aliyun.AliyunossProvider;
 import com.jeesuite.filesystem.provider.fdfs.FdfsProvider;
 import com.jeesuite.filesystem.provider.qiniu.QiniuProvider;
@@ -87,29 +89,21 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 		}
 	}
 
-	public String upload(String catalog, String fileName, File file) {
-		return fsProvider.upload(catalog, fileName, file);
-	}
-
-	public String upload(String catalog, String fileName, byte[] data, FileType fileType) {
-		return fsProvider.upload(catalog, fileName, data, fileType);
+	public String upload(String fileName, File file) {
+		return fsProvider.upload(new UploadObject(fileName, file));
 	}
 
 
-	public String upload(String catalog, String fileName, InputStream in, FileType fileType) {
-		return fsProvider.upload(catalog, fileName, in, fileType);
-	}
-
-	public String upload(String catalog, String fileName, String remoteUrl) {
-		return fsProvider.upload(catalog, fileName, remoteUrl);
+	public String upload(String fileName, InputStream in, FileType fileType) {
+		return fsProvider.upload(new UploadObject(fileName, in, fileType));
 	}
 
 	public boolean delete(String fileName) {
 		return fsProvider.delete(fileName);
 	}
 
-	public String createUploadToken(String... fileNames) {
-		return fsProvider.createUploadToken(fileNames);
+	public String createUploadToken(Map<String, Object> metadata,long expires,String...fileNames) {
+		return fsProvider.createUploadToken(metadata, expires, fileNames);
 	}
 
 	public void setConnectTimeout(long connectTimeout) {

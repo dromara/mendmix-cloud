@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 
 import com.jeesuite.filesystem.FSProvider;
+import com.jeesuite.filesystem.UploadObject;
 import com.jeesuite.filesystem.factory.FSClientFactory;
 
 /**
@@ -22,17 +23,17 @@ public class FSClientFactoryTest {
 	 */
 	public static void main(String[] args) throws IOException {
 		String url;
-		FSProvider provider = FSClientFactory.build("qiniu", "jw56121830");
-		url = provider.upload("test", null, new File("/Users/ayg/Desktop/logo.gif"));
-		System.out.println(url);
-		
-		FSProvider provider2 = FSClientFactory.build("fastDFS", "group1");
-		
-        url = provider2.upload("test", null, new File("/Users/ayg/Desktop/logo.gif"));
-		
-		System.out.println(url);
-		
-		provider2.close();
+		FSProvider provider = FSClientFactory.build("qiniu", "testa1b2c3");
+		url = provider.upload(new UploadObject(new File("/Users/jiangwei/Desktop/homepage.txt")));
+		System.out.println(provider.getDownloadUrl(url, true, 3600));
+//		
+//		FSProvider provider2 = FSClientFactory.build("fastDFS", "group1");
+//		
+//        url = provider2.upload("test", null, new File("/Users/jiangwei/Desktop/logo.gif"));
+//		
+//		System.out.println(url);
+//		
+//		provider2.close();
 	}
 
 }

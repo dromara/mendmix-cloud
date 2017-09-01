@@ -1,17 +1,13 @@
 package com.jeesuite.filesystem.provider.qiniu;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
+import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import com.jeesuite.filesystem.FileType;
+import com.jeesuite.filesystem.UploadObject;
 import com.jeesuite.filesystem.provider.AbstractProvider;
 import com.jeesuite.filesystem.provider.FSOperErrorException;
-import com.jeesuite.filesystem.utils.FilePathHelper;
 import com.qiniu.common.QiniuException;
 import com.qiniu.common.Zone;
 import com.qiniu.http.Response;
@@ -19,6 +15,7 @@ import com.qiniu.storage.BucketManager;
 import com.qiniu.storage.Configuration;
 import com.qiniu.storage.UploadManager;
 import com.qiniu.util.Auth;
+import com.qiniu.util.StringMap;
 
 /**
  * 七牛文件服务
@@ -47,61 +44,35 @@ public class QiniuProvider extends AbstractProvider {
 	}
 
 	@Override
-	public String upload(String catalog, String fileName, File file) {
+	public String upload(UploadObject object) {
 		try {
-			if(fileName == null)fileName = file.getName();
-			fileName = rawFileName(catalog, fileName, null);
-			Response res = uploadManager.put(file, fileName, getUpToken());
-			return processUploadResponse(res);
-		} catch (QiniuException e) {
-			processUploadException(fileName, e);
-		}
-		return null;
-	}
-
-	@Override
-	public String upload(String catalog, String fileName, byte[] data, FileType fileType) {
-		try {
-			if (fileType == null)
-				fileType = FileType.getFileSuffix(data);
-
-			fileName = rawFileName(catalog, fileName, fileType);
-			Response res = uploadManager.put(data, fileName, getUpToken());
-			return processUploadResponse(res);
-		} catch (QiniuException e) {
-			processUploadException(fileName, e);
-		}
-		return null;
-	}
-
-	@Override
-	public String upload(String catalog, String fileName, InputStream in, FileType fileType) {
-		try {
-			byte[] bs = IOUtils.toByteArray(in);
-			return upload(catalog, fileName, bs, fileType);
-		} catch (IOException e) {
-			throw new FSOperErrorException(name(), e);
-		}
-	}
-
-	@Override
-	public String upload(String catalog, String fileName, String origUrl) {
-		try {
-			if (StringUtils.isBlank(fileName)) {
-				FileType fileType = FilePathHelper.parseFileType(origUrl);
-				fileName = rawFileName(catalog, fileName, fileType);
-			} else {
-				fileName = rawFileName(catalog, fileName, null);
+			Response res = null;
+			String upToken = getUpToken(object.getMetadata());
+			if(object.getFile() != null){
+				res = uploadManager.put(object.getFile(), object.getFileName(), upToken);
+			}else if(object.getBytes() != null){
+				res = uploadManager.put(object.getBytes(), object.getFileName(), upToken);
+			}else if(object.getInputStream() != null){
+				res = uploadManager.put(object.getInputStream(), object.getFileName(), upToken, null, object.getMimeType());
+			}else if(StringUtils.isNotBlank(object.getUrl())){
+				return bucketManager.fetch(object.getUrl(), bucketName, object.getFileName()).key;
+			}else{
+				throw new IllegalArgumentException("upload object is NULL");
 			}
-
-			fileName = bucketManager.fetch(origUrl, bucketName, fileName).key;
-
-			return getFullPath(fileName);
+			return processUploadResponse(res);
 		} catch (QiniuException e) {
-			processUploadException(fileName, e);
+			processUploadException(object.getFileName(), e);
 		}
-
 		return null;
+	}
+
+	@Override
+	public String getDownloadUrl(String file, boolean authRequire, int ttl) {
+		String path = getFullPath(file);
+		if(authRequire){
+			path = auth.privateDownloadUrl(path, ttl);
+		}
+		return path;
 	}
 
 	@Override
@@ -117,7 +88,27 @@ public class QiniuProvider extends AbstractProvider {
 		return false;
 	}
 
+	@Override
+	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileNames) {
+		StringMap policy = null;
+		if(metadata != null && !metadata.isEmpty()){
+			policy = new StringMap(metadata);
+		}
+		if (fileNames != null && fileNames.length > 0 && fileNames[0] != null) {
+			return auth.uploadToken(bucketName, fileNames[0], expires, policy, true);
+		}
+		return auth.uploadToken(bucketName, null, expires, policy, true);
+	}
 
+	@Override
+	public void close() throws IOException {}
+
+	@Override
+	public String name() {
+		return NAME;
+	}
+
+	
 	/**
 	 * 处理上传结果，返回文件url
 	 * 
@@ -131,7 +122,7 @@ public class QiniuProvider extends AbstractProvider {
 		}
 		throw new FSOperErrorException(name(), res.toString());
 	}
-
+	
 	private void processUploadException(String fileName, QiniuException e) {
 		Response r = e.response;
 		String message;
@@ -143,42 +134,10 @@ public class QiniuProvider extends AbstractProvider {
 		throw new FSOperErrorException(name(), e.code(), message);
 	}
 
-	/**
-	 * @param fileName
-	 * @param fileType
-	 * @return
-	 */
-	private static String rawFileName(String catalog, String fileName, FileType fileType) {
-		if (StringUtils.isBlank(catalog))
-			catalog = "other";
-		if (StringUtils.isBlank(fileName)) {
-			fileName = UUID.randomUUID().toString().replaceAll("\\-", "")
-					+ (fileType == null ? "" : fileType.getSuffix());
-		} else if (fileType != null && !fileName.contains(".")) {
-			fileName = fileName + fileType.getSuffix();
-		}
-		return new StringBuilder(catalog).append(DIR_SPLITER).append(fileName).toString();
-	}
 
-	// 简单上传，使用默认策略
-	private String getUpToken() {
+	private String getUpToken(Map<String, Object> metadata) {
 		return auth.uploadToken(bucketName);
 	}
 
-	@Override
-	public String createUploadToken(String... fileNames) {
-		if (fileNames != null && fileNames.length > 0 && fileNames[0] != null) {
-			return auth.uploadToken(bucketName, fileNames[0]);
-		}
-		return auth.uploadToken(bucketName);
-	}
-
-	@Override
-	public String name() {
-		return NAME;
-	}
-	
-	@Override
-	public void close() throws IOException {}
 
 }
