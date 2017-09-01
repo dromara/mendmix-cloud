@@ -12,6 +12,10 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.filesystem.utils.FilePathHelper;
+import com.jeesuite.filesystem.utils.MimeTypeFileExtensionConvert;
+
+import net.sf.jmimemagic.Magic;
+import net.sf.jmimemagic.MagicMatch;
 
 /**
  * 
@@ -22,7 +26,7 @@ import com.jeesuite.filesystem.utils.FilePathHelper;
 public class UploadObject {
 
 	private String fileName;
-	private FileType fileType;
+	private String mimeType;
 	private String url;
 	private byte[] bytes;
 	private File file;
@@ -49,37 +53,36 @@ public class UploadObject {
 		this.file = file;
 	}
 
-	public UploadObject(String fileName, InputStream inputStream, FileType fileType) {
+	public UploadObject(String fileName, InputStream inputStream, String mimeType) {
 		this.fileName = fileName;
 		this.inputStream = inputStream;
-		this.fileType = fileType;
+		this.mimeType = mimeType;
 	}
 
-	public UploadObject(String fileName, byte[] bytes, FileType fileType) {
+	public UploadObject(String fileName, byte[] bytes, String mimeType) {
 		this.fileName = fileName;
 		this.bytes = bytes;
-		this.fileType = fileType;
+		this.mimeType = mimeType;
 	}
 
 	public UploadObject(String fileName, byte[] bytes) {
 		this.fileName = fileName;
 		this.bytes = bytes;
-		this.fileType = FileType.getFileSuffix(bytes);
+		this.mimeType = perseMimeType(bytes);
 	}
 
 	public String getFileName() {
 		if (StringUtils.isBlank(fileName)) {
-			fileName = UUID.randomUUID().toString().replaceAll("\\-", "")
-					+ (fileType == null ? "" : fileType.getSuffix());
-		} else if (fileType != null && !fileName.contains(".")) {
-			fileName = fileName + fileType.getSuffix();
+			fileName = UUID.randomUUID().toString().replaceAll("\\-", "");
 		}
+		if (mimeType != null && !fileName.contains(".")) {
+			String fileExtension = MimeTypeFileExtensionConvert.getFileExtension(mimeType);
+			if(fileExtension != null)fileName = fileName + fileExtension;
+		}
+		
 		return fileName;
 	}
 
-	public FileType getFileType() {
-		return fileType;
-	}
 
 	public String getUrl() {
 		return url;
@@ -101,8 +104,8 @@ public class UploadObject {
 		return metadata;
 	}
 
-	public void setFileType(FileType fileType) {
-		this.fileType = fileType;
+	public void setString(String mimeType) {
+		this.mimeType = mimeType;
 	}
 
 	public void setMetadata(Map<String, Object> metadata) {
@@ -115,7 +118,17 @@ public class UploadObject {
 	}
 	
 	public String getMimeType(){
-		return fileType != null ? fileType.getMimeType() : FileType.STREAM.getMimeType();
+		return mimeType;
 	}
 
+	
+	private static String perseMimeType(byte[] bytes){
+		try {
+			MagicMatch match = Magic.getMagicMatch(bytes);
+			String mimeType = match.getMimeType();
+			return mimeType;
+		} catch (Exception e) {
+			return null;
+		}
+	}
 }

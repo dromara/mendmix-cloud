@@ -21,7 +21,7 @@ public class HttpDownloader {
 		Request.Builder requestBuilder = new Request.Builder().url(url);
 		Response response = httpClient.newCall(requestBuilder.build()).execute();
 		
-		UploadObject item = new UploadObject(FilePathHelper.parseFileName(url), response.body().bytes(), FilePathHelper.parseFileType(url));
+		UploadObject item = new UploadObject(FilePathHelper.parseFileName(url), response.body().bytes());
 		return item;
 	}
 	

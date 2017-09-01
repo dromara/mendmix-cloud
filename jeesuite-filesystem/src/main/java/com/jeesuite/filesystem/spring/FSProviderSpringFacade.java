@@ -12,7 +12,6 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.filesystem.FSProvider;
-import com.jeesuite.filesystem.FileType;
 import com.jeesuite.filesystem.UploadObject;
 import com.jeesuite.filesystem.provider.aliyun.AliyunossProvider;
 import com.jeesuite.filesystem.provider.fdfs.FdfsProvider;
@@ -94,8 +93,8 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 	}
 
 
-	public String upload(String fileName, InputStream in, FileType fileType) {
-		return fsProvider.upload(new UploadObject(fileName, in, fileType));
+	public String upload(String fileName, InputStream in, String mimeType) {
+		return fsProvider.upload(new UploadObject(fileName, in, mimeType));
 	}
 
 	public boolean delete(String fileName) {
