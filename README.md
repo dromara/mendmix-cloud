@@ -2,6 +2,8 @@
 ## 简介
 **jeesuite-libs**是整理的近几年封装的一些基础组件包，计划陆续整理成一个java后台服务开发套件，包括缓存、消息队列、db操作(读写分离、分库路由、自动crud)、定时任务、文件系统、api网关、配置中心、分布式锁、搜索、日志、统一监控、集成dubbo、springboot等。所有release版都经过严格测试并在生产环境稳定运行。[项目模板jeesuite-bestpl](http://git.oschina.net/vakinge/jeesuite-bestpl) 
 
+官网： [http://www.jeesuite.com/](http://www.jeesuite.com/) 
+
 ## 愿景
 服务中小企业、减低架构成本、整体方案开箱即用。
 ## 原则
