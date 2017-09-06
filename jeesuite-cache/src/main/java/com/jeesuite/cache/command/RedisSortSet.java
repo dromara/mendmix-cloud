@@ -17,7 +17,7 @@ import static com.jeesuite.cache.redis.JedisProviderFactory.*;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年12月7日
  */
-public class RedisSortSet extends RedisCollection {
+public class RedisSortSet extends RedisBinaryCollection {
 
 	public RedisSortSet(String key) {
 		super(key);
@@ -60,9 +60,9 @@ public class RedisSortSet extends RedisCollection {
         try {   
         	boolean result = false;
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).zadd(key, score, valueSerialize(value)) >= 1;
+        		result = getBinaryJedisClusterCommands(groupName).zadd(keyBytes, score, valueSerialize(value)) >= 1;
         	}else{
-        		result = getBinaryJedisCommands(groupName).zadd(key, score, valueSerialize(value)) >= 1;
+        		result = getBinaryJedisCommands(groupName).zadd(keyBytes, score, valueSerialize(value)) >= 1;
         	}
         	//设置超时时间
         	if(result)setExpireIfNot(expireTime);
@@ -81,9 +81,9 @@ public class RedisSortSet extends RedisCollection {
         try {   
         	boolean result = false;
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).zrem(key,valueSerialize(mem)) >= 1;
+        		result = getBinaryJedisClusterCommands(groupName).zrem(keyBytes,valueSerialize(mem)) >= 1;
         	}else{
-        		result = getBinaryJedisCommands(groupName).zrem(key,valueSerialize(mem)) >= 1;
+        		result = getBinaryJedisCommands(groupName).zrem(keyBytes,valueSerialize(mem)) >= 1;
         	}
 			return result;
     	} finally{
@@ -98,9 +98,9 @@ public class RedisSortSet extends RedisCollection {
         try {   
         	long count = 0;
         	if(isCluster(groupName)){
-        		count = getBinaryJedisClusterCommands(groupName).zcard(key);
+        		count = getBinaryJedisClusterCommands(groupName).zcard(keyBytes);
         	}else{
-        		count = getBinaryJedisCommands(groupName).zcard(key);
+        		count = getBinaryJedisCommands(groupName).zcard(keyBytes);
         	}
 			return count;
     	} finally{
@@ -127,9 +127,9 @@ public class RedisSortSet extends RedisCollection {
     	Set<byte[]> result = null;
         try {    		
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).zrange(key, start, end);
+        		result = getBinaryJedisClusterCommands(groupName).zrange(keyBytes, start, end);
         	}else{
-        		result = getBinaryJedisCommands(groupName).zrange(key, start, end);
+        		result = getBinaryJedisCommands(groupName).zrange(keyBytes, start, end);
         	}
         	return toObjectList(new ArrayList<>(result));
     	} finally{
@@ -143,9 +143,9 @@ public class RedisSortSet extends RedisCollection {
         	byte[] start = SafeEncoder.encode(String.valueOf(min));
         	byte[] end = SafeEncoder.encode(String.valueOf(max));
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).zremrangeByScore(key, start, end);
+        		result = getBinaryJedisClusterCommands(groupName).zremrangeByScore(keyBytes, start, end);
         	}else{
-        		result = getBinaryJedisCommands(groupName).zremrangeByScore(key, start, end);
+        		result = getBinaryJedisCommands(groupName).zremrangeByScore(keyBytes, start, end);
         	}
 			return result;
     	} finally{

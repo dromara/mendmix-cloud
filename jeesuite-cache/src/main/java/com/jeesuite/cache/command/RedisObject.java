@@ -36,7 +36,7 @@ public class RedisObject extends RedisBase {
 	 * @param groupName
 	 */
 	public RedisObject(String key,String groupName) {
-		super(key,groupName);
+		super(key,groupName,true);
 	}
 	
 	/**
@@ -46,8 +46,8 @@ public class RedisObject extends RedisBase {
 	 * @return
 	 */
 	public RedisObject resetKey(String key){
-		this.origKey = key;
-		this.key = SafeEncoder.encode(key);
+		this.key = key;
+		this.keyBytes = SafeEncoder.encode(key);
 		return this;
 	}
 	
@@ -73,14 +73,14 @@ public class RedisObject extends RedisBase {
 		try {
 			boolean result = false;
 			if(isCluster(groupName)){
-				result = getBinaryJedisClusterCommands(groupName).set(key, valueSerialize(value)).equals(RESP_OK);
+				result = getBinaryJedisClusterCommands(groupName).set(keyBytes, valueSerialize(value)).equals(RESP_OK);
 			}else{
-				result = getBinaryJedisCommands(groupName).set(key, valueSerialize(value)).equals(RESP_OK);
+				result = getBinaryJedisCommands(groupName).set(keyBytes, valueSerialize(value)).equals(RESP_OK);
 			}
 			if(result){
 				result =  setExpire(seconds);
 				//set可能是更新缓存，所以统一通知各节点清除本地缓存
-				Level1CacheSupport.getInstance().publishSyncEvent(origKey);
+				Level1CacheSupport.getInstance().publishSyncEvent(key);
 			}
 			return result;
 		} finally {
@@ -92,7 +92,7 @@ public class RedisObject extends RedisBase {
 	/**
 	 * 检查给定 key 是否存在。
 	 * 
-	 * @param key
+	 * @param keyBytes
 	 * @return
 	 */
 	public boolean set(Object value, Date expireAt) {
@@ -101,14 +101,14 @@ public class RedisObject extends RedisBase {
 		try {
 			boolean result = false;
 			if(isCluster(groupName)){
-				result = getBinaryJedisClusterCommands(groupName).set(key, valueSerialize(value)).equals(RESP_OK);;
+				result = getBinaryJedisClusterCommands(groupName).set(keyBytes, valueSerialize(value)).equals(RESP_OK);;
 			}else{
-				result = getBinaryJedisCommands(groupName).set(key, valueSerialize(value)).equals(RESP_OK);
+				result = getBinaryJedisCommands(groupName).set(keyBytes, valueSerialize(value)).equals(RESP_OK);
 			}
 			if(result){
 				result = setExpireAt(expireAt);
 				//set可能是更新缓存，所以统一通知各节点清除本地缓存
-				Level1CacheSupport.getInstance().publishSyncEvent(origKey);
+				Level1CacheSupport.getInstance().publishSyncEvent(key);
 			}
 			return result;
 		} finally {
@@ -120,18 +120,18 @@ public class RedisObject extends RedisBase {
 	public <T> T get() {
 		try {
 			//本地缓存读取
-			T value = Level1CacheSupport.getInstance().get(this.origKey);
+			T value = Level1CacheSupport.getInstance().get(this.key);
 			if(value != null)return value;
 			
 			byte[] bytes = null;
 			if(isCluster(groupName)){
-				bytes = getBinaryJedisClusterCommands(groupName).get(key);
+				bytes = getBinaryJedisClusterCommands(groupName).get(keyBytes);
 			}else{					
-				bytes = getBinaryJedisCommands(groupName).get(key);
+				bytes = getBinaryJedisCommands(groupName).get(keyBytes);
 			}
 			value = valueDerialize(bytes);
 			//local
-			Level1CacheSupport.getInstance().set(this.origKey, value);
+			Level1CacheSupport.getInstance().set(this.key, value);
 			return value;
 		} finally {
 			getJedisProvider(groupName).release();
@@ -143,7 +143,7 @@ public class RedisObject extends RedisBase {
 	public boolean remove() {
 		boolean removed = super.remove();
 		//通知清除本地缓存
-		if(removed)Level1CacheSupport.getInstance().publishSyncEvent(origKey);
+		if(removed)Level1CacheSupport.getInstance().publishSyncEvent(key);
 		return removed;
 	}
 	

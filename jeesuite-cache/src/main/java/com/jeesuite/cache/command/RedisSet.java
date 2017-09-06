@@ -18,7 +18,7 @@ import java.util.Set;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年12月7日
  */
-public class RedisSet extends RedisCollection {
+public class RedisSet extends RedisBinaryCollection {
 
 	public RedisSet(String key) {
 		super(key);
@@ -56,9 +56,9 @@ public class RedisSet extends RedisCollection {
         	long result = 0;
         	byte[][] datas = valuesSerialize(objects);
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).sadd(key,datas);
+        		result = getBinaryJedisClusterCommands(groupName).sadd(keyBytes,datas);
         	}else{
-        		result = getBinaryJedisCommands(groupName).sadd(key,datas);
+        		result = getBinaryJedisCommands(groupName).sadd(keyBytes,datas);
         	}
         	//设置超时时间
         	if(result > 0)setExpireIfNot(expireTime);
@@ -72,9 +72,9 @@ public class RedisSet extends RedisCollection {
 		Set<byte[]> datas = null;
         try {    		
         	if(isCluster(groupName)){
-        		datas = getBinaryJedisClusterCommands(groupName).smembers(key);
+        		datas = getBinaryJedisClusterCommands(groupName).smembers(keyBytes);
         	}else{
-        		datas = getBinaryJedisCommands(groupName).smembers(key);
+        		datas = getBinaryJedisCommands(groupName).smembers(keyBytes);
         	}
         	return toObjectSet(datas);
     	} finally{
@@ -87,9 +87,9 @@ public class RedisSet extends RedisCollection {
         try {
         	byte[][] datas = valuesSerialize(objects);
         	if(isCluster(groupName)){
-        		return getBinaryJedisClusterCommands(groupName).srem(key,datas) == 1;
+        		return getBinaryJedisClusterCommands(groupName).srem(keyBytes,datas) == 1;
         	}else{
-        		return getBinaryJedisCommands(groupName).srem(key,datas) == 1;
+        		return getBinaryJedisCommands(groupName).srem(keyBytes,datas) == 1;
         	}		
     	} finally{
 			getJedisProvider(groupName).release();
@@ -99,9 +99,9 @@ public class RedisSet extends RedisCollection {
 	public long length() {
         try {    		
         	if(isCluster(groupName)){
-        		return getBinaryJedisClusterCommands(groupName).scard(key);
+        		return getBinaryJedisClusterCommands(groupName).scard(keyBytes);
         	}else{
-        		return getBinaryJedisCommands(groupName).scard(key);
+        		return getBinaryJedisCommands(groupName).scard(keyBytes);
         	}
     	} finally{
 			getJedisProvider(groupName).release();
@@ -111,9 +111,9 @@ public class RedisSet extends RedisCollection {
 	public boolean contains(Object object) {
         try {    		
         	if(isCluster(groupName)){
-        		return getBinaryJedisClusterCommands(groupName).sismember(key, valueSerialize(object));
+        		return getBinaryJedisClusterCommands(groupName).sismember(keyBytes, valueSerialize(object));
         	}else{
-        		return getBinaryJedisCommands(groupName).sismember(key, valueSerialize(object));
+        		return getBinaryJedisCommands(groupName).sismember(keyBytes, valueSerialize(object));
         	}
     	} finally{
 			getJedisProvider(groupName).release();

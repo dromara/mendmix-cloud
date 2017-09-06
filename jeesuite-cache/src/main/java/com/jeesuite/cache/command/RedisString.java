@@ -17,20 +17,10 @@ import com.jeesuite.cache.local.Level1CacheSupport;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年12月7日
  */
-public class RedisString {
-	
-	protected static final String RESP_OK = "OK";
-
-	protected String key;
-	
-	protected String groupName;
-
+public class RedisString extends RedisBase{
 	
 	public RedisString(String key) {
-		this.key = key;
-		if(key.contains(RedisBase.KEY_SUFFIX_SPLIT)){
-			this.groupName = key.split(RedisBase.KEY_SUFFIX_SPLIT)[0];
-		}
+		super(key, false);
 	}
 	
 	/**
@@ -39,8 +29,7 @@ public class RedisString {
 	 * @param groupName 组名
 	 */
 	public RedisString(String key,String groupName) {
-		this.key = key;
-		this.groupName = groupName;
+		super(key, groupName, false);
 	}
 
 	/**
@@ -90,8 +79,6 @@ public class RedisString {
 
 	/**
 	 * 检查给定 key 是否存在。
-	 * 
-	 * @param key
 	 * @return
 	 */
 	public boolean set(String value, Date expireAt) {
@@ -124,114 +111,18 @@ public class RedisString {
 		
 	}
 
-
-	/**
-	 * 检查给定 key 是否存在。
-	 * 
-	 * @param key
-	 * @return
-	 */
-	public boolean exists() {
-		try {
-			return getJedisCommands(groupName).exists(key);
-		} finally {
-			getJedisProvider(groupName).release();
-		}
-
-	}
-
 	/**
 	 * 删除给定的一个 key 。
-	 * 
-	 * 不存在的 key 会被忽略。
-	 * 
-	 * @param key
 	 * @return true：存在该key删除时返回
 	 * 
 	 *         false：不存在该key
 	 */
 	public boolean remove() {
-		try {
-			return getJedisCommands(groupName).del(key) == 1;
-		} finally {
-			getJedisProvider(groupName).release();
-			//
-			Level1CacheSupport.getInstance().publishSyncEvent(key);
-		}
+		boolean removed = super.remove();
+		//通知清除本地缓存
+		if(removed)Level1CacheSupport.getInstance().publishSyncEvent(key);
+		return removed;
 	}
 
-	/**
-	 * 为给定 key 设置生存时间，当 key 过期时(生存时间为 0 )，它会被自动删除。
-	 * 
-	 * @param key
-	 * @param seconds
-	 *            超时时间，单位：秒
-	 * @return true：超时设置成功
-	 * 
-	 *         false：key不存在或超时未设置成功
-	 */
-	public boolean setExpire(long seconds) {
-		try {
-			return getJedisCommands(groupName).expire(key, (int)seconds) == 1;
-		} finally {
-			getJedisProvider(groupName).release();
-		}
 
-	}
-
-	/**
-	 * 
-	 * 设置指定时间戳时失效
-	 *
-	 * 注意：redis服务器时间问题
-	 * 
-	 * @param key
-	 * @param expireAt
-	 *            超时时间点
-	 * @return true：超时设置成功
-	 *
-	 *         false：key不存在或超时未设置成功
-	 */
-	public boolean setExpireAt(Date expireAt) {
-		try {
-			return getJedisCommands(groupName).pexpireAt(key, expireAt.getTime()) == 1;
-		} finally {
-			getJedisProvider(groupName).release();
-		}
-	}
-
-	/**
-	 * 返回给定 key 的剩余生存时间(单位：秒)
-	 * 
-	 * @param key
-	 * @return 当 key 不存在时，返回 -2 。
-	 * 
-	 *         当 key 存在但没有设置剩余生存时间时，返回 -1 。
-	 * 
-	 *         否则，以毫秒为单位，返回 key的剩余生存时间。
-	 */
-	public Long getTtl() {
-		try {
-			return getJedisCommands(groupName).ttl(key);
-		} finally {
-			getJedisProvider(groupName).release();
-		}
-
-	}
-
-	/**
-	 * 移除给定 key 的生存时间，设置为永久有效
-	 * 
-	 * @param key
-	 * @return 当生存时间移除成功时，返回 1 .
-	 * 
-	 *         如果 key 不存在或 key 没有设置生存时间，返回 0 。
-	 */
-	public boolean removeExpire() {
-		try {
-			return getJedisCommands(groupName).persist(key) == 1;
-		} finally {
-			getJedisProvider(groupName).release();
-		}
-	}
 }

@@ -17,7 +17,7 @@ import java.util.List;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年12月7日
  */
-public class RedisList extends RedisCollection {
+public class RedisList extends RedisBinaryCollection {
 
 	public RedisList(String key) {
 		super(key);
@@ -56,9 +56,9 @@ public class RedisList extends RedisCollection {
 			boolean result = false;
 			byte[][] datas = valuesSerialize(objects);
 			if (isCluster(groupName)) {
-				result = getBinaryJedisClusterCommands(groupName).lpush(key, datas) == 1;
+				result = getBinaryJedisClusterCommands(groupName).lpush(keyBytes, datas) == 1;
 			} else {
-				result = getBinaryJedisCommands(groupName).lpush(key, datas) == 1;
+				result = getBinaryJedisCommands(groupName).lpush(keyBytes, datas) == 1;
 			}
 			//设置超时时间
 			if(result)setExpireIfNot(expireTime);
@@ -73,9 +73,9 @@ public class RedisList extends RedisCollection {
 			byte[][] datas = valuesSerialize(objects);
 			boolean result = false;
 			if (isCluster(groupName)) {
-				result = getBinaryJedisClusterCommands(groupName).rpush(key, datas) == 1;
+				result = getBinaryJedisClusterCommands(groupName).rpush(keyBytes, datas) == 1;
 			} else {
-				result = getBinaryJedisCommands(groupName).rpush(key, datas) == 1;
+				result = getBinaryJedisCommands(groupName).rpush(keyBytes, datas) == 1;
 			}
 			//设置超时时间
 			if(result)setExpireIfNot(expireTime);
@@ -89,9 +89,9 @@ public class RedisList extends RedisCollection {
 		byte[] datas = null;
 		try {
 			if (isCluster(groupName)) {
-				datas = getBinaryJedisClusterCommands(groupName).lpop(key);
+				datas = getBinaryJedisClusterCommands(groupName).lpop(keyBytes);
 			} else {
-				datas = getBinaryJedisCommands(groupName).lpop(key);
+				datas = getBinaryJedisCommands(groupName).lpop(keyBytes);
 			}
 			return valueDerialize(datas);
 		} finally {
@@ -104,9 +104,9 @@ public class RedisList extends RedisCollection {
 
 			byte[] datas = null;
 			if (isCluster(groupName)) {
-				datas = getBinaryJedisClusterCommands(groupName).rpop(key);
+				datas = getBinaryJedisClusterCommands(groupName).rpop(keyBytes);
 			} else {
-				datas = getBinaryJedisCommands(groupName).rpop(key);
+				datas = getBinaryJedisCommands(groupName).rpop(keyBytes);
 			}
 			return valueDerialize(datas);
 		} finally {
@@ -127,9 +127,9 @@ public class RedisList extends RedisCollection {
 		try {
 			List<byte[]> result = null;
 			if (isCluster(groupName)) {
-				result = getBinaryJedisClusterCommands(groupName).lrange(key, start, end);
+				result = getBinaryJedisClusterCommands(groupName).lrange(keyBytes, start, end);
 			} else {
-				result = getBinaryJedisCommands(groupName).lrange(key, start, end);
+				result = getBinaryJedisCommands(groupName).lrange(keyBytes, start, end);
 			}
 			return toObjectList(result);
 		} finally {
@@ -145,9 +145,9 @@ public class RedisList extends RedisCollection {
 	public long length() {
 		try {
 			if (isCluster(groupName)) {
-				return getBinaryJedisClusterCommands(groupName).llen(key);
+				return getBinaryJedisClusterCommands(groupName).llen(keyBytes);
 			} else {
-				return getBinaryJedisCommands(groupName).llen(key);
+				return getBinaryJedisCommands(groupName).llen(keyBytes);
 			}
 		} finally {
 			getJedisProvider(groupName).release();
@@ -165,10 +165,10 @@ public class RedisList extends RedisCollection {
 		try {
 			boolean result = false;
 			if (isCluster(groupName)) {
-				result = getBinaryJedisClusterCommands(groupName).lset(key, index, valueSerialize(newValue))
+				result = getBinaryJedisClusterCommands(groupName).lset(keyBytes, index, valueSerialize(newValue))
 						.equals(RESP_OK);
 			} else {
-				result = getBinaryJedisCommands(groupName).lset(key, index, valueSerialize(newValue)).equals(RESP_OK);
+				result = getBinaryJedisCommands(groupName).lset(keyBytes, index, valueSerialize(newValue)).equals(RESP_OK);
 			}
 			return result;
 		} finally {
@@ -185,9 +185,9 @@ public class RedisList extends RedisCollection {
 		try {
 			boolean result = false;
 			if (isCluster(groupName)) {
-				result = getBinaryJedisClusterCommands(groupName).lrem(key, 0, valueSerialize(value)) >= 1;
+				result = getBinaryJedisClusterCommands(groupName).lrem(keyBytes, 0, valueSerialize(value)) >= 1;
 			} else {
-				result = getBinaryJedisCommands(groupName).lrem(key, 0, valueSerialize(value)) >= 1;
+				result = getBinaryJedisCommands(groupName).lrem(keyBytes, 0, valueSerialize(value)) >= 1;
 			}
 			return result;
 		} finally {

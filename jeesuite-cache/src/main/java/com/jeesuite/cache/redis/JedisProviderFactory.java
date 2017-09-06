@@ -43,6 +43,11 @@ public class JedisProviderFactory {
 	public static void setDefaultJedisProvider(JedisProvider<?, ?> defaultJedisProvider) {
 		JedisProviderFactory.defaultJedisProvider = defaultJedisProvider;
 	}
+	
+	public synchronized static void addProvider(JedisProvider<?, ?> provider){
+		Assert.isTrue(!jedisProviders.containsKey(provider.groupName()), String.format("group[%s]已存在", provider.groupName()));
+		jedisProviders.put(provider.groupName(), provider);
+	}
 
 	public static JedisProvider<?, ?> getJedisProvider(String groupName) {
 		if(defaultJedisProvider == null){			
@@ -64,10 +69,13 @@ public class JedisProviderFactory {
 			//阻塞，直到spring初始化完成
 			InstanceFactory.waitUtilInitialized();
 			Map<String, JedisProvider> interfaces = InstanceFactory.getInstanceProvider().getInterfaces(JedisProvider.class);
-			Iterator<JedisProvider> iterator = interfaces.values().iterator();
-			while(iterator.hasNext()){
-				JedisProvider jp = iterator.next();
-				jedisProviders.put(jp.groupName(), jp);
+			
+			if(interfaces != null && interfaces.size() >0){				
+				Iterator<JedisProvider> iterator = interfaces.values().iterator();
+				while(iterator.hasNext()){
+					JedisProvider jp = iterator.next();
+					jedisProviders.put(jp.groupName(), jp);
+				}
 			}
 			defaultJedisProvider = jedisProviders.get(JedisProviderFactoryBean.DEFAULT_GROUP_NAME);
 			if(defaultJedisProvider == null && jedisProviders.size() == 1){

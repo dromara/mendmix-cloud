@@ -16,7 +16,7 @@ import static com.jeesuite.cache.redis.JedisProviderFactory.*;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年12月7日
  */
-public class RedisHashMap extends RedisCollection {
+public class RedisHashMap extends RedisBinaryCollection {
 
 	public RedisHashMap(String key) {
 		super(key);
@@ -68,9 +68,9 @@ public class RedisHashMap extends RedisCollection {
 		boolean result = false;
 		try {
 			if (isCluster(groupName)) {
-				result = getBinaryJedisClusterCommands(groupName).hmset(key, newDatas).equals(RESP_OK);
+				result = getBinaryJedisClusterCommands(groupName).hmset(keyBytes, newDatas).equals(RESP_OK);
 			} else {
-				result = getBinaryJedisCommands(groupName).hmset(key, newDatas).equals(RESP_OK);
+				result = getBinaryJedisCommands(groupName).hmset(keyBytes, newDatas).equals(RESP_OK);
 			}
 			//设置超时时间
 			if(result)setExpireIfNot(expireTime);
@@ -91,9 +91,9 @@ public class RedisHashMap extends RedisCollection {
 			Map<byte[], byte[]> datas = null;
 			Map<String, T> result = new HashMap<>();
 			if (isCluster(groupName)) {
-				datas = getBinaryJedisClusterCommands(groupName).hgetAll(key);
+				datas = getBinaryJedisClusterCommands(groupName).hgetAll(keyBytes);
 			} else {
-				datas = getBinaryJedisCommands(groupName).hgetAll(key);
+				datas = getBinaryJedisCommands(groupName).hgetAll(keyBytes);
 			}
 
 			Iterator<Map.Entry<byte[], byte[]>> it = datas.entrySet().iterator();
@@ -117,9 +117,9 @@ public class RedisHashMap extends RedisCollection {
 	public boolean containsKey(String field) {
 		try {
 			if (isCluster(groupName)) {
-				return getBinaryJedisClusterCommands(groupName).hexists(key, SafeEncoder.encode(field));
+				return getBinaryJedisClusterCommands(groupName).hexists(keyBytes, SafeEncoder.encode(field));
 			} else {
-				return getBinaryJedisCommands(groupName).hexists(key, SafeEncoder.encode(field));
+				return getBinaryJedisCommands(groupName).hexists(keyBytes, SafeEncoder.encode(field));
 			}
 		} finally {
 			getJedisProvider(groupName).release();
@@ -140,9 +140,9 @@ public class RedisHashMap extends RedisCollection {
 		try {
 			if (isCluster(groupName)) {
 				result = getBinaryJedisClusterCommands(groupName)
-						.hset(key, SafeEncoder.encode(field), valueSerialize(value)) >= 0;
+						.hset(keyBytes, SafeEncoder.encode(field), valueSerialize(value)) >= 0;
 			} else {
-				result = getBinaryJedisCommands(groupName).hset(key, SafeEncoder.encode(field), valueSerialize(value)) >= 0;
+				result = getBinaryJedisCommands(groupName).hset(keyBytes, SafeEncoder.encode(field), valueSerialize(value)) >= 0;
 			}		
 			//设置超时时间
 			if(result)setExpireIfNot(expireTime);
@@ -161,9 +161,9 @@ public class RedisHashMap extends RedisCollection {
 	public boolean remove(String field) {
 		try {
 			if (isCluster(groupName)) {
-				return getBinaryJedisClusterCommands(groupName).hdel(key, SafeEncoder.encode(field)).equals(RESP_OK);
+				return getBinaryJedisClusterCommands(groupName).hdel(keyBytes, SafeEncoder.encode(field)).equals(RESP_OK);
 			} else {
-				return getBinaryJedisCommands(groupName).hdel(key, SafeEncoder.encode(field)).equals(RESP_OK);
+				return getBinaryJedisCommands(groupName).hdel(keyBytes, SafeEncoder.encode(field)).equals(RESP_OK);
 			}
 		} finally {
 			getJedisProvider(groupName).release();
@@ -178,9 +178,9 @@ public class RedisHashMap extends RedisCollection {
 	public long length() {
 		try {
 			if (isCluster(groupName)) {
-				return getBinaryJedisClusterCommands(groupName).hlen(key);
+				return getBinaryJedisClusterCommands(groupName).hlen(keyBytes);
 			} else {
-				return getBinaryJedisCommands(groupName).hlen(key);
+				return getBinaryJedisCommands(groupName).hlen(keyBytes);
 			}
 		} finally {
 			getJedisProvider(groupName).release();
@@ -211,9 +211,9 @@ public class RedisHashMap extends RedisCollection {
 			
 			byte[][] encodeFileds = SafeEncoder.encodeMany(fields);
 			if (isCluster(groupName)) {
-				datas = getBinaryJedisClusterCommands(groupName).hmget(key, encodeFileds);
+				datas = getBinaryJedisClusterCommands(groupName).hmget(keyBytes, encodeFileds);
 			} else {
-				datas = getBinaryJedisCommands(groupName).hmget(key, encodeFileds);
+				datas = getBinaryJedisCommands(groupName).hmget(keyBytes, encodeFileds);
 			}
 			for (int i = 0; i < fields.length; i++) {
 				result.put(fields[i], (T)valueDerialize(datas.get(i)));
