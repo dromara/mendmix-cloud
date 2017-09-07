@@ -3,6 +3,7 @@
  */
 package com.jeesuite.filesystem.provider;
 
+import com.jeesuite.common.http.HttpUtils;
 import com.jeesuite.filesystem.FSProvider;
 
 /**
@@ -28,5 +29,13 @@ public abstract class AbstractProvider implements FSProvider{
 		return urlprefix + file;
 	}
 	
+
+	@Override
+	public String downloadAndSaveAs(String file, String localSaveDir) {
+		return HttpUtils.downloadFile(getDownloadUrl(file), localSaveDir);
+	}
+
+
+
 	public abstract String name();
 }

@@ -87,7 +87,7 @@ public class FdfsProvider extends AbstractProvider{
 	}
 	
 	@Override
-	public String getDownloadUrl(String file, boolean authRequire, int ttl) {
+	public String getDownloadUrl(String file) {
 		return getFullPath(file);
 	}
 

@@ -25,7 +25,7 @@ public class FSClientFactoryTest {
 		String url;
 		FSProvider provider = FSClientFactory.build("qiniu", "testa1b2c3");
 		url = provider.upload(new UploadObject(new File("/Users/jiangwei/Desktop/homepage.txt")));
-		System.out.println(provider.getDownloadUrl(url, true, 3600));
+		System.out.println(provider.getDownloadUrl(url));
 //		
 //		FSProvider provider2 = FSClientFactory.build("fastDFS", "group1");
 //		

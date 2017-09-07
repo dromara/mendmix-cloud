@@ -57,7 +57,8 @@ public class FSClientFactory {
 						if(QiniuProvider.NAME.equals(provider)){
 							Validate.notBlank(accessKey, "[accessKey] not defined");
 							Validate.notBlank(secretKey, "[secretKey] not defined");
-							fsProvider = new QiniuProvider(urlprefix, g, accessKey, secretKey);
+							boolean isPrivate = ResourceUtils.getBoolean("fs."+g+".private");
+							fsProvider = new QiniuProvider(urlprefix, g, accessKey, secretKey,isPrivate);
 						}else if(FdfsProvider.NAME.equals(provider)){
 							Validate.isTrue(servers != null && servers.matches("^.+[:]\\d{1,5}\\s*$"),"[servers] is not valid");
 							String[] serversArray = servers.split(",|;");

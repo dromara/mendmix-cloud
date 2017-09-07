@@ -93,43 +93,54 @@ public class HttpUtils {
 		return post(requestUri, HttpRequestEntity.create().addFileParam(fieldName, new FileItem(file)));
 	}
 	
-	public static void downloadFile(String fileURL, String saveDir)
-            throws IOException {
-        URL url = new URL(fileURL);
-        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        int responseCode = httpConn.getResponseCode();
- 
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            String fileName = "";
-            String disposition = httpConn.getHeaderField("Content-Disposition");
- 
-            if (disposition != null) {
-                int index = disposition.indexOf("filename=");
-                if (index > 0) {
-                    fileName = disposition.substring(index + 10,
-                            disposition.length() - 1);
-                }
-            } else {
-                fileName = fileURL.substring(fileURL.lastIndexOf("/") + 1,
-                        fileURL.length());
-            }
-            InputStream inputStream = httpConn.getInputStream();
-            String saveFilePath = saveDir + File.separator + fileName;
-             
-            FileOutputStream outputStream = new FileOutputStream(saveFilePath);
- 
-            int bytesRead = -1;
-            byte[] buffer = new byte[2048];
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
- 
-            outputStream.close();
-            inputStream.close();
-        } else {
-        	throw new JeesuiteBaseException(responseCode, "下载失败");
-        }
-        httpConn.disconnect();
+	public static String downloadFile(String fileURL, String saveDir){
+		HttpURLConnection httpConn = null;
+		FileOutputStream outputStream = null;
+		try {
+			URL url = new URL(fileURL);
+	        httpConn = (HttpURLConnection) url.openConnection();
+	        int responseCode = httpConn.getResponseCode();
+	 
+	        if (responseCode == HttpURLConnection.HTTP_OK) {
+	            String fileName = "";
+	            String disposition = httpConn.getHeaderField("Content-Disposition");
+	 
+	            if (disposition != null) {
+	                int index = disposition.indexOf("filename=");
+	                if (index > 0) {
+	                    fileName = disposition.substring(index + 10,
+	                            disposition.length() - 1);
+	                }
+	            } else {
+	                fileName = fileURL.substring(fileURL.lastIndexOf("/") + 1,
+	                        fileURL.length());
+	            }
+	            InputStream inputStream = httpConn.getInputStream();
+	            String saveFilePath = saveDir + File.separator + fileName;
+	             
+	            outputStream = new FileOutputStream(saveFilePath);
+	 
+	            int bytesRead = -1;
+	            byte[] buffer = new byte[2048];
+	            while ((bytesRead = inputStream.read(buffer)) != -1) {
+	                outputStream.write(buffer, 0, bytesRead);
+	            }
+	 
+	            outputStream.close();
+	            inputStream.close();
+	            
+	            return saveFilePath;
+	        } else {
+	        	throw new JeesuiteBaseException(responseCode, "下载失败");
+	        }
+		} catch (IOException e) {
+			throw new JeesuiteBaseException(500, "下载失败", e);
+		}finally {
+			try {if( outputStream!= null) outputStream.close();} catch (Exception e2) {}
+			try {if( httpConn!= null) httpConn.disconnect();} catch (Exception e2) {}
+		}
+        
+       
     }
 	
 	public static HttpResponseEntity post(String requestUri,HttpRequestEntity requestEntity) {
@@ -362,19 +373,19 @@ public class HttpUtils {
 		
 		//上传文件
 		HttpRequestEntity entity = HttpRequestEntity.create()
-				 .addFileParam("file", new FileItem("/Users/jiangwei/333.log"))
+				 .addFileParam("file", new FileItem("/Users/jiangwei/Desktop/homepage.txt"))
 				 .basicAuth("admin", "123456");
 		HttpResponseEntity responseEntity = HttpUtils.post("http://192.168.1.89:9082/upload", entity);
 		System.out.println(responseEntity);
 		
-		//post
-		responseEntity = HttpUtils.post("http://192.168.1.89:9082/add", 
-				      HttpRequestEntity.create().addTextParam("name", "vakinge")
-				                       .addTextParam("password", "123456"));
-		
-		if(responseEntity.isSuccessed()){
-			System.out.println(responseEntity.getBody());
-		}
+//		//post
+//		responseEntity = HttpUtils.post("http://192.168.1.89:9082/add", 
+//				      HttpRequestEntity.create().addTextParam("name", "vakinge")
+//				                       .addTextParam("password", "123456"));
+//		
+//		if(responseEntity.isSuccessed()){
+//			System.out.println(responseEntity.getBody());
+//		}
 	}
 
 }

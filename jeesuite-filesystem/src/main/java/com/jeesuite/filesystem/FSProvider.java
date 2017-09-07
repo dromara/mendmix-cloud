@@ -23,11 +23,9 @@ public interface FSProvider extends Closeable {
 	/**
 	 * 获取文件下载地址
 	 * @param file 文件（全路径或者fileKey）
-	 * @param authRequire  是否需要授权
-	 * @param ttl 下载链接有效期（针对需要授权），单位秒
 	 * @return
 	 */
-	public String getDownloadUrl(String file,boolean authRequire,int ttl);
+	public String getDownloadUrl(String file);
 	
 	/**
 	 * 删除图片
@@ -37,4 +35,6 @@ public interface FSProvider extends Closeable {
 	
 	
 	public String createUploadToken(Map<String, Object> metadata,long expires,String...fileNames);
+	
+	public String downloadAndSaveAs(String file,String localSaveDir);
 }

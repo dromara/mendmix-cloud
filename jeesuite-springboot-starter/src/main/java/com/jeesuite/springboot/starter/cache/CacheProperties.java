@@ -13,7 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix="jeesuite.cache")
 public class CacheProperties {
 
-	
+	private String groupName;
 	private String mode;
 	private String servers;
 	private String password;
@@ -26,6 +26,12 @@ public class CacheProperties {
 	
 	private String masterName;
 	
+	public String getGroupName() {
+		return groupName;
+	}
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
+	}
 	public String getMode() {
 		return mode;
 	}

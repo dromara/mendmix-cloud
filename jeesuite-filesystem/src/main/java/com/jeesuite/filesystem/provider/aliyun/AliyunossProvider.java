@@ -63,8 +63,7 @@ public class AliyunossProvider extends AbstractProvider{
 	}
 	
 	@Override
-	public String getDownloadUrl(String file, boolean authRequire, int ttl) {
-		// TODO Auto-generated method stub
+	public String getDownloadUrl(String file) {
 		return null;
 	}
 

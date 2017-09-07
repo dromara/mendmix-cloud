@@ -18,16 +18,20 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.confcenter.ConfigcenterContext;
+import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年11月2日
  */
-public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigurer implements DisposableBean{
+public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigurer implements DisposableBean,ApplicationContextAware{
 	
 	private final static Logger logger = LoggerFactory.getLogger(CCPropertyPlaceholderConfigurer.class);
 	
@@ -83,6 +87,13 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 	@Override
 	public void destroy() throws Exception {
 		ccContext.close();
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		if(InstanceFactory.getInstanceProvider() == null){
+			InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
+		}
 	}
 
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 
 import com.jeesuite.filesystem.UploadObject;
 import com.jeesuite.filesystem.provider.AbstractProvider;
@@ -31,8 +32,15 @@ public class QiniuProvider extends AbstractProvider {
 	private static UploadManager uploadManager;
 	private static BucketManager bucketManager;
 	private Auth auth;
+	private boolean isPrivate;
 
-	public QiniuProvider(String urlprefix, String bucketName, String accessKey, String secretKey) {
+	public QiniuProvider(String urlprefix, String bucketName, String accessKey, String secretKey,boolean isPrivate) {
+		
+		Validate.notBlank(bucketName, "[bucketName] not defined");
+		Validate.notBlank(accessKey, "[accessKey] not defined");
+		Validate.notBlank(secretKey, "[secretKey] not defined");
+		Validate.notBlank(urlprefix, "[urlprefix] not defined");
+		
 		this.urlprefix = urlprefix.endsWith(DIR_SPLITER) ? urlprefix : urlprefix + DIR_SPLITER;
 		this.bucketName = bucketName;
 		auth = Auth.create(accessKey, secretKey);
@@ -41,6 +49,8 @@ public class QiniuProvider extends AbstractProvider {
 		Configuration c = new Configuration(z);
 		uploadManager = new UploadManager(c);
 		bucketManager = new BucketManager(auth,c);
+		
+		this.isPrivate = isPrivate;
 	}
 
 	@Override
@@ -67,10 +77,10 @@ public class QiniuProvider extends AbstractProvider {
 	}
 
 	@Override
-	public String getDownloadUrl(String file, boolean authRequire, int ttl) {
+	public String getDownloadUrl(String file) {
 		String path = getFullPath(file);
-		if(authRequire){
-			path = auth.privateDownloadUrl(path, ttl);
+		if(isPrivate){
+			path = auth.privateDownloadUrl(path, 3600);
 		}
 		return path;
 	}

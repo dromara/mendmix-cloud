@@ -46,6 +46,7 @@ public class DelegateCacheConfiguration {
 		bean.setServers(cacheProperties.getServers());
 		bean.setPassword(cacheProperties.getPassword());
 		bean.setMasterName(cacheProperties.getMasterName());
+		bean.setGroup(cacheProperties.getGroupName());
 		return bean;
 	}
 

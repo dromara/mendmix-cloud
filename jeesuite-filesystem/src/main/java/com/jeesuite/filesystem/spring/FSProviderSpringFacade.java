@@ -34,6 +34,7 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 	String servers;
 	long connectTimeout = 3000;
 	int maxThreads = 50;
+	boolean privated;
 
 
 	public void setEndpoint(String endpoint) {
@@ -64,6 +65,10 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 		this.servers = servers;
 	}
 	
+	public void setPrivated(boolean privated) {
+		this.privated = privated;
+	}
+
 	@Override
 	public void destroy() throws Exception {
 		fsProvider.close();
@@ -75,7 +80,7 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 		if(QiniuProvider.NAME.equals(provider)){
 			Validate.notBlank(accessKey, "[accessKey] not defined");
 			Validate.notBlank(secretKey, "[secretKey] not defined");
-			fsProvider = new QiniuProvider(urlprefix, groupName, accessKey, secretKey);
+			fsProvider = new QiniuProvider(urlprefix, groupName, accessKey, secretKey,privated);
 		}else if(FdfsProvider.NAME.equals(provider)){
 			Validate.isTrue(servers != null && servers.matches("^.+[:]\\d{1,5}\\s*$"),"[servers] is not valid");
 			String[] serversArray = servers.split(",|;");

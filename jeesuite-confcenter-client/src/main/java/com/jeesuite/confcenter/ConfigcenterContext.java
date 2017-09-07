@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertiesPropertySource;
-import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -64,6 +62,8 @@ public class ConfigcenterContext {
 	private int syncIntervalSeconds = 90;
 	private ConfigChangeListener configChangeListener;
 	
+	private List<ConfigChangeHanlder> configChangeHanlders;
+	
 	private ConfigcenterContext() {}
 
 	public void init(boolean isSpringboot) {
@@ -100,19 +100,6 @@ public class ConfigcenterContext {
 			System.out.println("load private key:"+location);
 			e.printStackTrace();
 		}
-		
-		//register listener
-		String syncType = ResourceUtils.getProperty("jeesuite.configcenter.sync-type");
-		if("zookeeper".equals(syncType)){
-			String zkServers = ResourceUtils.getProperty("jeesuite.configcenter.sync-zk-servers");
-			if(StringUtils.isBlank(zkServers)){
-				throw new RuntimeException("config[jeesuite.configcenter.sync-zk-servers] is required for syncType [zookeepr] ");
-			}
-			configChangeListener = new ZkConfigChangeListener(zkServers);
-		}else{
-			configChangeListener = new HttpConfigChangeListener();
-		}
-		configChangeListener.register(this);
 	}
 
 	public static ConfigcenterContext getInstance() {
@@ -208,6 +195,9 @@ public class ConfigcenterContext {
 	}
 	
 	public void onLoadFinish(Properties properties){
+		
+		String syncType = ResourceUtils.getProperty("jeesuite.configcenter.sync-type");
+		
 		List<String> sortKeys = new ArrayList<>();
 
 		Map<String, String> params = new  HashMap<>();
@@ -218,7 +208,7 @@ public class ConfigcenterContext {
 		params.put("version", version);
 		params.put("springboot", String.valueOf(isSpringboot));
 		params.put("syncIntervalSeconds", String.valueOf(syncIntervalSeconds));
-		params.put("syncType", configChangeListener.typeName());
+		params.put("syncType", syncType);
 		if(properties.containsKey("server.port")){
 			params.put("serverport", properties.getProperty("server.port"));
 		}
@@ -249,9 +239,24 @@ public class ConfigcenterContext {
 		String url = apiBaseUrl + "/api/notify_final_config";
 		HttpUtils.postJson(url, JsonUtils.toJson(params),HttpUtils.DEFAULT_CHARSET);
 		
+		//register listener
+	    registerListener(syncType);
+	}
+
+	private void registerListener(String syncType) {
+		if("zookeeper".equals(syncType)){
+			String zkServers = ResourceUtils.getProperty("jeesuite.configcenter.sync-zk-servers");
+			if(StringUtils.isBlank(zkServers)){
+				throw new RuntimeException("config[jeesuite.configcenter.sync-zk-servers] is required for syncType [zookeepr] ");
+			}
+			configChangeListener = new ZkConfigChangeListener(zkServers);
+		}else{
+			configChangeListener = new HttpConfigChangeListener();
+		}
+		configChangeListener.register(this);
 	}
 	
-	public void updateConfig(Map<String, Object> updateConfig){
+	public synchronized void updateConfig(Map<String, Object> updateConfig){
 		if(!updateConfig.isEmpty()){
 			Set<String> keySet = updateConfig.keySet();
 			for (String key : keySet) {
@@ -282,6 +287,23 @@ public class ConfigcenterContext {
 						InstanceFactory.getInstanceProvider().getApplicationContext().publishEvent(new EnvironmentChangeEvent(updateConfig.keySet()));
 					} catch (Exception e) {
 						e.printStackTrace();
+					}
+				}
+				
+				if(configChangeHanlders == null){
+					configChangeHanlders = new ArrayList<>();					
+					Map<String, ConfigChangeHanlder> interfaces = InstanceFactory.getInstanceProvider().getInterfaces(ConfigChangeHanlder.class);
+					if(interfaces != null){
+						configChangeHanlders.addAll(interfaces.values());
+					}
+				}
+				
+				for (ConfigChangeHanlder hander : configChangeHanlders) {
+					try {
+						hander.onConfigChanged(updateConfig);
+						logger.info("invoke {}.onConfigChanged successed!",hander.getClass().getName());
+					} catch (Exception e) {
+						logger.warn("invoke {}.onConfigChanged error,msg:{}",hander.getClass().getName(),e.getMessage());
 					}
 				}
 				
