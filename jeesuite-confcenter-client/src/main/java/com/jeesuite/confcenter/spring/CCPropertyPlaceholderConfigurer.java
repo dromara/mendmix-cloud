@@ -78,7 +78,7 @@ public class CCPropertyPlaceholderConfigurer extends PropertyPlaceholderConfigur
 			}
 		}
 		
-		ccContext.onLoadFinish(properties);
+		ccContext.syncConfigToServer(properties,true);
 		
 		return properties;
 		//

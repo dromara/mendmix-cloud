@@ -20,8 +20,6 @@ public class HttpConfigChangeListener implements ConfigChangeListener {
 
 	private ScheduledExecutorService hbScheduledExecutor;
 
-	private boolean serverInfoSynced;
-
 	@Override
 	public void register(final ConfigcenterContext context) {
 		hbScheduledExecutor = Executors.newScheduledThreadPool(1);
@@ -35,11 +33,10 @@ public class HttpConfigChangeListener implements ConfigChangeListener {
 			@Override
 			public void run() {
 				// 由于初始化的时候还拿不到spring.cloud.client.ipAddress，故在同步过程上送
-				if (context.isSpringboot() && serverInfoSynced == false) {
+				if (context.isSpringboot()) {
 					String serverip = ResourceUtils.getProperty("spring.cloud.client.ipAddress");
 					if (StringUtils.isNotBlank(serverip)) {
 						params.put("serverip", serverip);
-						serverInfoSynced = true;
 					}
 				}
 

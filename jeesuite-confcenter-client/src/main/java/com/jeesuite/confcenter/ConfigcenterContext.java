@@ -24,6 +24,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import com.jeesuite.common.crypt.RSA;
+import com.jeesuite.common.http.HttpRequestEntity;
 import com.jeesuite.common.http.HttpResponseEntity;
 import com.jeesuite.common.http.HttpUtils;
 import com.jeesuite.common.json.JsonUtils;
@@ -60,6 +61,7 @@ public class ConfigcenterContext {
 	private boolean remoteFirst = false;
 	private boolean isSpringboot;
 	private int syncIntervalSeconds = 90;
+	private String pingUrl;
 	private ConfigChangeListener configChangeListener;
 	
 	private List<ConfigChangeHanlder> configChangeHanlders;
@@ -118,6 +120,7 @@ public class ConfigcenterContext {
 	public void setApiBaseUrl(String apiBaseUrl) {
 		if(apiBaseUrl != null)if(apiBaseUrl.endsWith("/"))apiBaseUrl = apiBaseUrl.substring(0, apiBaseUrl.length() - 1);
 		this.apiBaseUrl = apiBaseUrl;
+		pingUrl = apiBaseUrl + "/api/ping";
 	}
 	public String getApp() {
 		return app;
@@ -162,6 +165,9 @@ public class ConfigcenterContext {
 		String url = String.format("%s/api/fetch_all_configs?appName=%s&env=%s&version=%s", apiBaseUrl,app,env,version);
 		System.out.println("fetch configs url:" + url);
 		
+//		if(!pingCcServer(5)){
+//			throw new RuntimeException("配置中心无法连接-" + pingUrl);
+//		}
 		String jsonString = null;
 		HttpResponseEntity response = HttpUtils.get(url);
 		if(!response.isSuccessed()){
@@ -194,7 +200,9 @@ public class ConfigcenterContext {
 		return properties;
 	}
 	
-	public void onLoadFinish(Properties properties){
+	public void syncConfigToServer(Properties properties,boolean first){
+		
+		if(!remoteEnabled)return;
 		
 		String syncType = ResourceUtils.getProperty("jeesuite.configcenter.sync-type");
 		
@@ -212,6 +220,9 @@ public class ConfigcenterContext {
 		if(properties.containsKey("server.port")){
 			params.put("serverport", properties.getProperty("server.port"));
 		}
+		if(properties.containsKey("spring.cloud.client.ipAddress")){
+			params.put("serverip", properties.getProperty("spring.cloud.client.ipAddress"));
+		}
 		
 		Set<Entry<Object, Object>> entrySet = properties.entrySet();
 		for (Entry<Object, Object> entry : entrySet) {
@@ -226,21 +237,20 @@ public class ConfigcenterContext {
 			sortKeys.add(key);
 		}
 		
-		Collections.sort(sortKeys);
-		
-		System.out.println("==================final config list start==================");
-        for (String key : sortKeys) {
-			System.out.println(String.format("%s = %s", key,params.get(key) ));
+		if(first){			
+			Collections.sort(sortKeys);
+			System.out.println("==================final config list start==================");
+			for (String key : sortKeys) {
+				System.out.println(String.format("%s = %s", key,params.get(key) ));
+			}
+			System.out.println("==================final config list end====================");
+			//register listener
+			registerListener(syncType);
 		}
-		System.out.println("==================final config list end====================");
-		
-		if(!remoteEnabled)return;
 		
 		String url = apiBaseUrl + "/api/notify_final_config";
 		HttpUtils.postJson(url, JsonUtils.toJson(params),HttpUtils.DEFAULT_CHARSET);
-		
-		//register listener
-	    registerListener(syncType);
+	
 	}
 
 	private void registerListener(String syncType) {
@@ -312,7 +322,20 @@ public class ConfigcenterContext {
 		}
 	}
 	
-	
+	public boolean pingCcServer(int retry){
+		boolean result = false;
+		try {
+			System.out.println("pingCcServer ,retry:"+retry);
+			result = HttpUtils.get(pingUrl,HttpRequestEntity.create().connectTimeout(2000).readTimeout(2000)).isSuccessed();
+		} catch (Exception e) {}
+		if(retry == 0)return false;
+		if(!result){
+			try {Thread.sleep(1500);} catch (Exception e) {}
+			return pingCcServer(--retry);
+		} 
+		
+		return result;
+	}
 	
 	public void close(){
 		configChangeListener.unRegister();
