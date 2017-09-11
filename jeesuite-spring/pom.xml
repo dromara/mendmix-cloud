@@ -6,7 +6,7 @@
     <version>6</version>
   </parent>
   <artifactId>jeesuite-spring</artifactId>
-  <version>1.1.4-SNAPSHOT</version>
+  <version>1.1.4</version>
   
   <dependencies>
 		<dependency>
@@ -83,7 +83,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
 				<configuration>
-					<skip>true</skip>
+					<skip>false</skip>
 				</configuration>
 			</plugin>
 		</plugins>
