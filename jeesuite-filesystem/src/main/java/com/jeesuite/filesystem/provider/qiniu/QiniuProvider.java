@@ -9,6 +9,7 @@ import org.apache.commons.lang3.Validate;
 import com.jeesuite.filesystem.UploadObject;
 import com.jeesuite.filesystem.provider.AbstractProvider;
 import com.jeesuite.filesystem.provider.FSOperErrorException;
+import com.jeesuite.filesystem.utils.FilePathHelper;
 import com.qiniu.common.QiniuException;
 import com.qiniu.common.Zone;
 import com.qiniu.http.Response;
@@ -55,23 +56,27 @@ public class QiniuProvider extends AbstractProvider {
 
 	@Override
 	public String upload(UploadObject object) {
+		String fileName = object.getFileName();
+		if(StringUtils.isNotBlank(object.getCatalog())){
+			fileName = object.getCatalog().concat(FilePathHelper.DIR_SPLITER).concat(fileName);
+		}
 		try {
 			Response res = null;
 			String upToken = getUpToken(object.getMetadata());
 			if(object.getFile() != null){
-				res = uploadManager.put(object.getFile(), object.getFileName(), upToken);
+				res = uploadManager.put(object.getFile(), fileName, upToken);
 			}else if(object.getBytes() != null){
-				res = uploadManager.put(object.getBytes(), object.getFileName(), upToken);
+				res = uploadManager.put(object.getBytes(), fileName, upToken);
 			}else if(object.getInputStream() != null){
-				res = uploadManager.put(object.getInputStream(), object.getFileName(), upToken, null, object.getMimeType());
+				res = uploadManager.put(object.getInputStream(), fileName, upToken, null, object.getMimeType());
 			}else if(StringUtils.isNotBlank(object.getUrl())){
-				return bucketManager.fetch(object.getUrl(), bucketName, object.getFileName()).key;
+				return bucketManager.fetch(object.getUrl(), bucketName, fileName).key;
 			}else{
 				throw new IllegalArgumentException("upload object is NULL");
 			}
 			return processUploadResponse(res);
 		} catch (QiniuException e) {
-			processUploadException(object.getFileName(), e);
+			processUploadException(fileName, e);
 		}
 		return null;
 	}

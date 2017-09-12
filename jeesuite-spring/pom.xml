@@ -3,10 +3,10 @@
   <parent>
     <groupId>com.jeesuite</groupId>
     <artifactId>jeesuite-libs</artifactId>
-    <version>6</version>
+    <version>7</version>
   </parent>
   <artifactId>jeesuite-spring</artifactId>
-  <version>1.1.4</version>
+  <version>1.1.5</version>
   
   <dependencies>
 		<dependency>

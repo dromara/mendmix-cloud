@@ -25,7 +25,7 @@
 <dependency>
     <groupId>tk.mybatis</groupId>
     <artifactId>mapper</artifactId>
-    <version>3.3.9</version>
+    <version>[<=3.4.3测试过]</version>
 </dependency>
 ```
 ---

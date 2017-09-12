@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>6</version>
+		<version>7</version>
 	</parent>
 	<artifactId>jeesuite-common</artifactId>
 	<version>${moudule.common.version}</version>

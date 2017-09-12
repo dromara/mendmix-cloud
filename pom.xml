@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-libs</artifactId>
-	<version>6</version>
+	<version>7</version>
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
 	<name>jeesuite-libs</name>
@@ -49,7 +49,7 @@
 		<mapper.version>3.3.9</mapper.version>
 		<druid.version>1.0.16</druid.version>
 		<junit.version>4.12</junit.version>
-		<moudule.common.version>1.1.4</moudule.common.version>
+		<moudule.common.version>1.1.5</moudule.common.version>
 	</properties>
 
 	<modules>
@@ -60,7 +60,6 @@
 		<module>jeesuite-scheduler</module>
 		<module>jeesuite-mybatis</module>
 		<module>jeesuite-rest</module>
-		<module>jeesuite-confcenter-client</module>
 		<module>jeesuite-common2</module>
 		<module>jeesuite-log</module>
 		<module>jeesuite-filesystem</module>

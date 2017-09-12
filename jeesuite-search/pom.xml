@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>6</version>
+		<version>7</version>
 	</parent>
 	<artifactId>jeesuite-search</artifactId>
 	<version>1.0.0-SNAPSHOT</version>

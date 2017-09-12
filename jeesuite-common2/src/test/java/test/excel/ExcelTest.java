@@ -6,14 +6,11 @@ package test.excel;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 import com.jeesuite.common2.excel.ExcelPerfModeReader;
+import com.jeesuite.common2.excel.ExcelReader;
 import com.jeesuite.common2.excel.ExcelWriter;
-import com.jeesuite.common2.excel.helper.ExcelBeanHelper;
-import com.jeesuite.common2.excel.model.ExcelMeta;
-import com.jeesuite.common2.excel.model.TitleMeta;
 
 /**
  * @description <br>
@@ -28,26 +25,18 @@ public class ExcelTest {
 	 * @throws InvalidFormatException
 	 */
 	public static void main(String[] args) throws InvalidFormatException, IOException {
+		//普通方式读取
+		String excelFilePath = "/Users/jiangwei/Desktop/工资.xlsx";
+		ExcelReader excelReader = new ExcelReader(excelFilePath);
+		excelReader.parse(PersonSalaryInfo.class);
+		excelReader.close();
+		//大文件读取防止内存溢出
+		List<PersonSalaryInfo> list = new ExcelPerfModeReader(excelFilePath).read(PersonSalaryInfo.class);
 
-		List<PersonSalaryInfo> list = new ExcelPerfModeReader("/Users/ayg/Desktop/人员导入模板.xlsx")
-				.read(PersonSalaryInfo.class);
-
-		System.out.println(list.get(0));
-
-//		String excelFilePath = "/Users/ayg/Desktop/test110.xlsx";
-//		ExcelWriter writer = new ExcelWriter(excelFilePath);
-//		writer.write(list, PersonSalaryInfo.class);
-//		writer.close();
-//		System.out.println(excelFilePath);
-
-//		ExcelMeta excelMeta = ExcelBeanHelper.getExcelMeta(PersonSalaryInfo.class);
-//		// 写标题
-//		for (int i = 1; i <= excelMeta.getTitleRowNum(); i++) {
-//			for (int j = 1; j <= excelMeta.getTitleColumnNum(); j++) {
-//				TitleMeta titleMeta = excelMeta.getTitleMeta(i, j);
-//				System.out.println(i + "-" + j + "-" + (titleMeta == null ? "" : titleMeta.getTitle()));
-//			}
-//		}
+		//write
+		ExcelWriter writer = new ExcelWriter("/Users/jiangwei/Desktop/工资bak.xlsx");
+		writer.write(list, PersonSalaryInfo.class);
+		writer.close();
 	}
 
 }

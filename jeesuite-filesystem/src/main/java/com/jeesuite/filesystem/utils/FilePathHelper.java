@@ -13,6 +13,7 @@ public class FilePathHelper {
 	
 	public static final String HTTP_PREFIX = "http://";
 	public static final String HTTPS_PREFIX = "https://";
+	public static final String DIR_SPLITER = "/";
 
 	public static String parseFileExtension(String filePath){
 		if(filePath.contains("/")){

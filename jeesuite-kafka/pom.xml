@@ -4,10 +4,10 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>6</version>
+		<version>7</version>
 	</parent>
 	<artifactId>jeesuite-kafka</artifactId>
-	<version>1.1.4-SNAPSHOT</version>
+	<version>1.1.5</version>
 	
 	<properties>
 	   <kafka.version>0.11.0.0</kafka.version>

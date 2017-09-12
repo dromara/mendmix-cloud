@@ -27,6 +27,7 @@ public class UploadObject {
 
 	private String fileName;
 	private String mimeType;
+	private String catalog;
 	private String url;
 	private byte[] bytes;
 	private File file;
@@ -121,7 +122,16 @@ public class UploadObject {
 		return mimeType;
 	}
 
-	
+
+	public String getCatalog() {
+		return catalog;
+	}
+
+	public UploadObject toCatalog(String catalog) {
+		this.catalog = catalog;
+		return this;
+	}
+
 	private static String perseMimeType(byte[] bytes){
 		try {
 			MagicMatch match = Magic.getMagicMatch(bytes);

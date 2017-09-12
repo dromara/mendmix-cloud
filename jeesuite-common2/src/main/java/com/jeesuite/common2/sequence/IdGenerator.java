@@ -11,4 +11,6 @@ package com.jeesuite.common2.sequence;
 public interface IdGenerator {
 
 	public long nextId();
+	
+	public void close();
 }
