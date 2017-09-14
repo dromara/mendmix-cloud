@@ -65,6 +65,7 @@
 		<module>jeesuite-filesystem</module>
 		<module>jeesuite-springboot-starter</module>
 		<module>jeesuite-search</module>
+		<module>jeesuite-springweb</module>
 	</modules>
 
 	<dependencies>

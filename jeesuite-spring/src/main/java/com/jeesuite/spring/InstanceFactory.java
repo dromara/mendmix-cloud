@@ -2,6 +2,8 @@ package com.jeesuite.spring;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.springframework.context.ApplicationContext;
+
 /**
  * 实例工厂类。通过它可以获得其管理的类的实例。 InstanceFactory向客户代码隐藏了IoC工厂的具体实现。在后台，它通过
  * InstanceProvider策略接口，允许选择不同的IoC工厂，例如Spring， Google Guice和TapestryIoC等等。
@@ -65,6 +67,10 @@ public class InstanceFactory {
 	 */
 	public static SpringInstanceProvider getInstanceProvider() {
 		return instanceProvider;
+	}
+	
+	public static ApplicationContext getContext(){
+		return getInstanceProvider().getApplicationContext();
 	}
 	
 	/**

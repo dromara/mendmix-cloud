@@ -1,14 +1,7 @@
 package com.jeesuite.common.util;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -20,44 +13,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 public class JDBCUtils {
 
-	public static String DRIVER;
-	public static String URL;
-	public static String USER_NAME;
-	public static String PASSWORD;
+	public static String driverClass;
+	public static String url;
+	public static String userName;
+	public static String password;
 
 	static {
-		String path;
+		driverClass = ResourceUtils.getAndValidateProperty("jdbc.driverClass");
+		url = ResourceUtils.getAndValidateProperty("jdbc.url");
+		userName = ResourceUtils.getAndValidateProperty("jdbc.userName");
+		password = ResourceUtils.getAndValidateProperty("jdbc.password");
 		try {
-			path = JDBCUtils.class.getResource("").toURI().getPath();
-			File file = new File(path + "jdbc.properties");
-			InputStream is = new BufferedInputStream(new FileInputStream(file));
-			Properties p = new Properties();
-			p.load(is);
-
-			DRIVER = p.getProperty("jdbc.driverClass");
-			URL = p.getProperty("jdbc.URL");
-			USER_NAME = p.getProperty("jdbc.userName");
-			PASSWORD = p.getProperty("jdbc.password");
-
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	static {
-		try {
-			Class.forName(DRIVER);
+			Class.forName(driverClass);
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -73,7 +45,7 @@ public class JDBCUtils {
 	public static Connection getconnnection() {
 		Connection con = null;
 		try {
-			con = DriverManager.getConnection(URL, USER_NAME, PASSWORD);
+			con = DriverManager.getConnection(url, userName, password);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

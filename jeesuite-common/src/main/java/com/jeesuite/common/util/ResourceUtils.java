@@ -113,6 +113,14 @@ public final class ResourceUtils {
 	public static String getProperty(String key) {
 		return getProperty(key, null);
 	}
+	
+	public static String getAndValidateProperty(String key) {
+		String value = getProperty(key, null);
+		if(StringUtils.isBlank(value)){
+			throw new IllegalArgumentException(String.format("Property for key:%s not exists", key));
+		}
+		return value;
+	}
 
 	public static String getProperty(String key, String defaultValue) {
 		if(!inited){
