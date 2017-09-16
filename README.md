@@ -1,8 +1,13 @@
 **黄金位置放个小广告→**欢迎加交流群：230192763 （不限于讨论该框架热爱技术就行）
 ## 简介
-**jeesuite-libs**是整理的近几年封装的一些基础组件包，计划陆续整理成一个java后台服务开发套件，包括缓存、消息队列、db操作(读写分离、分库路由、自动crud)、定时任务、文件系统、api网关、配置中心、分布式锁、搜索、日志、统一监控、集成dubbo、springboot等。所有release版都经过严格测试并在生产环境稳定运行。[项目模板jeesuite-bestpl](http://git.oschina.net/vakinge/jeesuite-bestpl) 
+**jeesuite-libs**是整理的近几年封装的一些基础组件包，计划陆续整理成一个java后台服务开发套件，包括缓存、消息队列、db操作(读写分离、分库路由、自动crud)、定时任务、文件系统、api网关、配置中心、分布式锁、搜索、日志、统一监控、集成dubbo、springboot等。所有release版都经过严格测试并在生产环境稳定运行。
 
-官网： [http://www.jeesuite.com/](http://www.jeesuite.com/) 
+
+##官网
+[http://www.jeesuite.com/](http://www.jeesuite.com/) 
+
+## 文档
+[http://www.jeesuite.com/docs](http://www.jeesuite.com/docs/index.html) 
 
 ## 愿景
 服务中小企业、减低架构成本、整体方案开箱即用。
@@ -13,25 +18,30 @@
  - 贴近业务场景、只做有用的功能。
  - 高度灵活、每个模块可以独立使用。
 
-
-**补充说明**
-- 类似于配置中心、定时任务为什么不集成成熟的同类框架如：disconf、elastic-job、xxl-job等呢？
-因为以上各种框架功能繁多、在这个功能上做的比较深入同时就带来了逻辑复杂、不便于自行定制修改、另外依赖包众多、让项目臃肿不堪。所以就自己开发
-类似功能、只做核心功能、让依赖和代码量尽量的少。
-- 版本问题
-各个模块版本升级都保证向下严格兼容，所以已经使用的可以无缝升级新的release版本。
-
 ---
-**release版已经上传maven中心仓库**
+## 版本
 * [sonatype](https://oss.sonatype.org/content/repositories/releases/com/jeesuite/) 
 * [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
 
+## 关联项目
+ - 模板项目
+  - [http://git.oschina.net/vakinge/jeesuite-bestpl](http://git.oschina.net/vakinge/jeesuite-bestpl)
+  - [https://github.com/vakinge/jeesuite-bestpl](https://github.com/vakinge/jeesuite-bestpl)
+ - 配置中心
+  - [http://git.oschina.net/vakinge/jeesuite-config](http://git.oschina.net/vakinge/jeesuite-config)
+  - [https://github.com/vakinge/jeesuite-config](https://github.com/vakinge/jeesuite-config)
+ - 统一认证中心
+  - [http://git.oschina.net/vakinge/jeesuite-passport](http://git.oschina.net/vakinge/jeesuite-passport)
+  - [https://github.com/vakinge/jeesuite-passport](https://github.com/vakinge/jeesuite-passport)
+ - api网关
+  - [http://git.oschina.net/vakinge/jeesuite-apigateway](http://git.oschina.net/vakinge/jeesuite-apigateway)
+  - [https://github.com/vakinge/jeesuite-apigateway](https://github.com/vakinge/jeesuite-apigateway)
+ - 应用监控平台
+  - [http://git.oschina.net/vakinge/jeesuite-admin](http://git.oschina.net/vakinge/jeesuite-admin)
+  - [https://github.com/vakinge/jeesuite-admin](https://github.com/vakinge/jeesuite-admin)
+
 ## 总体功能模块图&roadmap
-![image](http://7xq7jj.com1.z0.glb.clouddn.com/jeesuite.png?1)
-
-## 文档
-请查看各个子模块readme文件，详细文档还在完善中。。
-
+![image](http://ojmezn0eq.bkt.clouddn.com/jeesuite_arch.png)
 
 ---
 
@@ -99,7 +109,3 @@
 
 #### jeesuite-springboot-starter模块
 - springboot集成支持
-
----
-### 你可以下载集成了所有模块的demo[jeesuite-bestpl](http://git.oschina.net/vakinge/jeesuite-bestpl) 
-### jeesuite统一管理平台[jeesuite-admin](http://git.oschina.net/vakinge/jeesuite-admin) 
