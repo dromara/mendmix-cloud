@@ -9,11 +9,20 @@ public class EnvironmentHelper {
 	private static Environment environment;
 	
 	public static String getProperty(String key){
+		init();
+		return environment.getProperty(key);
+	}
+
+	public static void init() {
 		if(environment == null){
 			synchronized (EnvironmentHelper.class) {
 				environment = InstanceFactory.getInstance(Environment.class);
 			}
 		}
-		return environment.getProperty(key);
+	}
+	
+	public static boolean containsProperty(String key){
+		init();
+		return environment.containsProperty(key);
 	}
 }
