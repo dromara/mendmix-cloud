@@ -20,7 +20,7 @@ public class NodeNameHolder {
 	public static String getNodeId() {
 		if(nodeId != null)return nodeId;
 		try {
-			nodeId = InetAddress.getLocalHost().getHostName() + "_" + RandomStringUtils.random(6, true, true).toLowerCase();
+			nodeId = InetAddress.getLocalHost().getHostAddress() + "_" + RandomStringUtils.random(3, true, true).toLowerCase();
 		} catch (Exception e) {
 			nodeId = UUID.randomUUID().toString();
 		}

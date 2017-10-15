@@ -16,6 +16,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.jeesuite.cache.command.RedisBatchCommand;
 import com.jeesuite.cache.command.RedisHashMap;
 import com.jeesuite.cache.command.RedisNumber;
 import com.jeesuite.cache.command.RedisObject;
@@ -188,6 +189,13 @@ public class CacheCommondTest implements ApplicationContextAware{
 		Set<User> set = redisSet.get();
 		
 		System.out.println(set);
+	}
+	
+	@Test
+	public void batchTest(){
+		new RedisString("batchtest.string").set("1");
+		new RedisObject("batchtest.obj").set("2");
+		RedisBatchCommand.removeByKeyPrefix("batchtest");
 	}
 	
 }

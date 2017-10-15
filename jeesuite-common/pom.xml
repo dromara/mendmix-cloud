@@ -7,7 +7,7 @@
 		<version>7</version>
 	</parent>
 	<artifactId>jeesuite-common</artifactId>
-	<version>${moudule.common.version}</version>
+	<version>1.1.6-SNAPSHOT</version>
 	<description>基础工具类支持</description>
 
 	<dependencies>

@@ -3,6 +3,7 @@
  */
 package com.jeesuite.cache.redis;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,21 +45,30 @@ public class JedisProviderFactory {
 		JedisProviderFactory.defaultJedisProvider = defaultJedisProvider;
 	}
 	
+	public static boolean containsGroup(String groupName){
+		if(jedisProviders.isEmpty() && InstanceFactory.getInstanceProvider() != null){
+			try {initFactoryFromSpring();} catch (Exception e) {}
+		}
+		return jedisProviders.containsKey(groupName);
+	}
+	
 	public synchronized static void addProvider(JedisProvider<?, ?> provider){
 		Assert.isTrue(!jedisProviders.containsKey(provider.groupName()), String.format("group[%s]已存在", provider.groupName()));
 		jedisProviders.put(provider.groupName(), provider);
 	}
 
 	public static JedisProvider<?, ?> getJedisProvider(String groupName) {
+		
+		if(StringUtils.isNotBlank(groupName) && jedisProviders.containsKey(groupName)){
+			return jedisProviders.get(groupName);
+		}
+		
 		if(defaultJedisProvider == null){			
 			initFactoryFromSpring();
 		}
+		
 		if(StringUtils.isNotBlank(groupName)){
-			if(jedisProviders.containsKey(groupName)){				
-				return jedisProviders.get(groupName);
-			}else{
-				logger.warn("未找到group[{}]对应的redis配置，使用默认缓存配置",groupName);
-			}
+			logger.warn("未找到group[{}]对应的redis配置，使用默认缓存配置",groupName);
 		}
 		return defaultJedisProvider;
 	}
@@ -79,7 +89,7 @@ public class JedisProviderFactory {
 			}
 			defaultJedisProvider = jedisProviders.get(JedisProviderFactoryBean.DEFAULT_GROUP_NAME);
 			if(defaultJedisProvider == null && jedisProviders.size() == 1){
-				defaultJedisProvider = InstanceFactory.getInstance(JedisProvider.class);
+				defaultJedisProvider = new ArrayList<>(jedisProviders.values()).get(0);
 			}
 			
 			Assert.notNull(defaultJedisProvider,"无默认缓存配置，请指定一组缓存配置group为default");

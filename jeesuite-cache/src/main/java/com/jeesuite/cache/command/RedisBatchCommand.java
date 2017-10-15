@@ -6,6 +6,7 @@ package com.jeesuite.cache.command;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,6 +175,21 @@ public class RedisBatchCommand {
 	
 	public static <T> List<T> getObjects(String...keys){
 		return getObjectsWithGroup(null, keys);
+	}
+	
+	public static void removeByKeyPrefix(String keyPrefix){
+		removeByKeyPrefix(null, keyPrefix);
+	}
+	
+	public static void removeByKeyPrefix(String group,String keyPrefix){
+		try {			
+			Set<String> keys = JedisProviderFactory.getMultiKeyCommands(group).keys(keyPrefix +"*");
+			if(keys != null && keys.size() > 0){
+				RedisBatchCommand.removeObjectsWithGroup(group,keys.toArray(new String[0]));
+			}
+		} finally {
+			JedisProviderFactory.getJedisProvider(group).release();
+		}
 	}
 
 	private static <T> T valueDerialize(byte[] bytes) {
