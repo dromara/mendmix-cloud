@@ -1,4 +1,4 @@
-package com.jeesuite.springweb;
+package com.jeesuite.springweb.client;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,6 +10,7 @@ import org.springframework.web.client.DefaultResponseErrorHandler;
 import com.google.common.io.CharStreams;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.springweb.model.WrapperResponseEntity;
 
 public class CustomResponseErrorHandler extends DefaultResponseErrorHandler {
 	@Override

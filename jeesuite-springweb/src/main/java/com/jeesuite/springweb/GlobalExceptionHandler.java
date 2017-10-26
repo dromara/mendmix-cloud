@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.springweb.model.WrapperResponseEntity;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {

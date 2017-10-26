@@ -62,7 +62,6 @@ public class MapCacheProvider implements Closeable{
 				// 过期的移除
 				cache.remove(cacheKey.key);
 				currentCacheSize.decrementAndGet();
-				System.out.println("remove:" + cacheKey + ",currentTimeMils:" + currentTimeMils+ ",cacheSize:" + cache.size());
 				
 			}
 		}, period, period, TimeUnit.MILLISECONDS);

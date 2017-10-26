@@ -1,28 +1,41 @@
-package com.jeesuite.springweb;
+package com.jeesuite.springweb.model;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.jeesuite.common.json.JsonUtils;
 
 
-public class WrapperResponseEntity {
+public class WrapperResponse<T> {
 
 	// 状态
 	private int code = 200;
 
 	// 返回信息
+	@JsonInclude(Include.NON_NULL)
 	private String msg;
 
 	// 响应数据
 	@JsonInclude(Include.NON_NULL)
-	private Object data;
+	private T data;
 	
-	public WrapperResponseEntity(){}
+	public WrapperResponse(){}
 	
-	public WrapperResponseEntity(int code, String msg) {
+	public WrapperResponse(int code, String msg) {
 		super();
 		this.code = code;
 		this.msg = msg;
+	}
+	
+	public WrapperResponse(int code, String msg, T data) {
+		this.code = code;
+		this.msg = msg;
+		this.data = data;
+	}
+	
+
+	public WrapperResponse(T data) {
+		this.data = data;
 	}
 
 	public int getCode() {
@@ -41,16 +54,20 @@ public class WrapperResponseEntity {
 		this.msg = msg;
 	}
 
-	public Object getData() {
+	public T getData() {
 		return data;
 	}
 
-	public void setData(Object data) {
+	public void setData(T data) {
 		this.data = data;
+	}
+	
+	public boolean successed(){
+		return code == 200;
 	}
 
 	@Override
 	public String toString() {
-		return "RestResponse [getData()=" + getData() + ", getCode()=" + getCode() + ", getMsg()=" + getMsg() + "]";
+		return JsonUtils.toJson(this);
 	}
 }

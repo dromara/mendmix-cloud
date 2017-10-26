@@ -71,16 +71,6 @@ public class EntityCacheHelper {
 	}
 	
 	/**
-	 * 移除指定实体组所有缓存
-	 * @param entityClass
-	 */
-	public static void removeCache(Class<? extends BaseEntity> entityClass){
-		if(CacheHandler.cacheProvider == null)return;
-		String entityClassName = entityClass.getSimpleName();
-		CacheHandler.cacheProvider.clearGroup(entityClassName,true);
-	}
-	
-	/**
 	 * 移除指定实体组指定key的缓存
 	 * @param entityClass
 	 * @param key
@@ -95,8 +85,29 @@ public class EntityCacheHelper {
 		CacheHandler.cacheProvider.removeFromGroup(cacheGroupKey, key);
 		
 	}
+	
+	/**
+	 * 移除指定对象缓存
+	 * @param bean
+	 */
+	public static <T extends BaseEntity> void removeCache(T bean){
+		if(CacheHandler.cacheProvider == null)return;
+		String key = buildCacheKey(bean.getClass(), bean.getId());
+		CacheHandler.cacheProvider.remove(key);
+	}
+	
+	/**
+	 * 移除指定实体组所有缓存
+	 * @param entityClass
+	 */
+	public static void removeCache(Class<? extends BaseEntity> entityClass){
+		if(CacheHandler.cacheProvider == null)return;
+		String entityClassName = entityClass.getSimpleName();
+		CacheHandler.cacheProvider.clearGroup(entityClassName,true);
+	}
+	
     
-    private static String buildCacheKey(Class<?> entityClass,Serializable id){
+    public static String buildCacheKey(Class<?> entityClass,Serializable id){
 		return entityClass.getSimpleName() + ".id:" + id;
 	}
 }

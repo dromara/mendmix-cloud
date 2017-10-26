@@ -1,4 +1,4 @@
-package com.jeesuite.springweb;
+package com.jeesuite.springweb.client;
 
 import java.util.List;
 
@@ -15,6 +15,7 @@ public class SimpleRestTemplateBuilder {
         factory.setConnectTimeout(10000);//ms 
         
         RestTemplate restTemplate = new RestTemplate(factory);
+        interceptors.add(new RestTemplateAutoHeaderInterceptor());
         restTemplate.setInterceptors(interceptors);
         //
         restTemplate.setErrorHandler(new CustomResponseErrorHandler());

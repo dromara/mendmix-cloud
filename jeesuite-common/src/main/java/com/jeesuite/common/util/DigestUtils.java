@@ -56,7 +56,7 @@ public class DigestUtils {
 	
 
 	/**
-	 * 生成MD5短码（8位）
+	 * 生成MD5短码（6位）
 	 * @param orig
 	 * @return
 	 */
@@ -114,6 +114,10 @@ public class DigestUtils {
 			sb.append(sTemp.toUpperCase());
 		}
 		return sb.toString();
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(md5Short("3rg56yyyyyyyy"));
 	}
 
 }

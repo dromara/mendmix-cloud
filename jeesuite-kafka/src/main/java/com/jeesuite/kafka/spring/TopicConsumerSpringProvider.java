@@ -28,6 +28,7 @@ import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
 
 import com.jeesuite.common.util.NodeNameHolder;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.kafka.annotation.ConsumerHandler;
 import com.jeesuite.kafka.consumer.ConsumerContext;
 import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
@@ -37,7 +38,6 @@ import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.handler.OffsetLogHanlder;
 import com.jeesuite.kafka.serializer.KyroMessageDeserializer;
 import com.jeesuite.kafka.utils.KafkaConst;
-import com.jeesuite.spring.helper.EnvironmentHelper;
 
 
 /**
@@ -94,7 +94,7 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		//当前状态
 		if(status.get() > 0)return;
 		
-		routeEnv = StringUtils.trimToNull(EnvironmentHelper.getProperty(KafkaConst.PROP_ENV_ROUTE));
+		routeEnv = StringUtils.trimToNull(ResourceUtils.getProperty(KafkaConst.PROP_ENV_ROUTE));
 		
 		if(routeEnv != null){
 			logger.info("current route Env value is:",routeEnv);

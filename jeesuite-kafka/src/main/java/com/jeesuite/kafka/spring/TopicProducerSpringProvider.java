@@ -15,6 +15,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.common.util.NodeNameHolder;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.partiton.DefaultPartitioner;
 import com.jeesuite.kafka.producer.DefaultTopicProducer;
@@ -23,7 +24,6 @@ import com.jeesuite.kafka.producer.handler.SendCounterHandler;
 import com.jeesuite.kafka.producer.handler.SendErrorDelayRetryHandler;
 import com.jeesuite.kafka.serializer.KyroMessageSerializer;
 import com.jeesuite.kafka.utils.KafkaConst;
-import com.jeesuite.spring.helper.EnvironmentHelper;
 
 /**
  * 消息发布者集成spring封装对象
@@ -60,7 +60,7 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 
         Validate.notEmpty(this.configs, "configs is required");
         
-        routeEnv = StringUtils.trimToNull(EnvironmentHelper.getProperty(KafkaConst.PROP_ENV_ROUTE));
+        routeEnv = StringUtils.trimToNull(ResourceUtils.getProperty(KafkaConst.PROP_ENV_ROUTE));
         
         if(routeEnv != null)log.info("current route Env value is:",routeEnv);
       //移除错误的或者未定义变量的配置

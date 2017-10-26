@@ -105,7 +105,7 @@ public class MybatisMapperParser {
 			Resource[] resources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(mapperLocations);
 			for (Resource resource : resources) {
 				log.info(">begin parse mapper file:" + resource);
-				parseMapperFile(resource.getInputStream());
+				parseMapperFile(resource.getFilename(),resource.getInputStream());
 			}
 		} catch (Exception e) {
 			log.error("解析mapper文件异常", e);	
@@ -161,7 +161,7 @@ public class MybatisMapperParser {
 //		}
 //	}
 	
-	private static void parseMapperFile(InputStream inputStream) throws Exception {
+	private static void parseMapperFile(String fileName,InputStream inputStream) throws Exception {
 		
 		XPathParser parser = new XPathParser(inputStream,true, null, new XMLMapperEntityResolver());
 
@@ -203,7 +203,7 @@ public class MybatisMapperParser {
 		}
 		for (XNode xNode : children) {
 			if ("select|insert|update|delete".contains(xNode.getName().toLowerCase())) {
-				String sql = parseSql(xNode,includes);
+				String sql = parseSql(fileName,xNode,includes);
 				entityInfo.addSql(xNode.getStringAttribute("id"), sql);
 			}
 		}
@@ -254,19 +254,22 @@ public class MybatisMapperParser {
 		
 	}
 	
-	private static String parseSql(XNode node,Map<String, String> includeContents) {
+	private static String parseSql(String fileName,XNode node,Map<String, String> includeContents) {
 	    StringBuilder sql = new StringBuilder();
 	    NodeList children = node.getNode().getChildNodes();
 	    for (int i = 0; i < children.getLength(); i++) {
 	      XNode child = node.newXNode(children.item(i));
-	      String data;
+	      String data = null;
 	      if("#text".equals(child.getName())){
 	    	  data = child.getStringBody("");
 	      }else if("include".equals(child.getName())){
 	    	  String refId = child.getStringAttribute("refid");
 	    	  data = child.toString();
-	    	  data = data.replaceAll("<\\s?include.*("+refId+").*>", includeContents.get(refId));
-	    	  
+	    	  if(includeContents.containsKey(refId)){	    		  
+	    		  data = data.replaceAll("<\\s?include.*("+refId+").*>", includeContents.get(refId));
+	    	  }else{
+	    		  log.error(String.format(">>>>>Parse SQL from mapper[%s-%s] error,not found include key:%s", fileName,node.getStringAttribute("id"),refId));
+	    	  }
 	      }else{
 	    	  data = child.toString();
 //	    	  if(child.getStringBody().contains(">") || child.getStringBody().contains("<")){
