@@ -24,6 +24,7 @@ import com.jeesuite.kafka.monitor.model.BrokerInfo;
 import com.jeesuite.kafka.monitor.model.ConsumerGroupInfo;
 import com.jeesuite.kafka.monitor.model.TopicInfo;
 import com.jeesuite.kafka.monitor.model.TopicPartitionInfo;
+import com.jeesuite.kafka.serializer.ZKStringSerializer;
 
 import kafka.admin.AdminUtils;
 import kafka.api.PartitionOffsetRequestInfo;
@@ -34,7 +35,6 @@ import kafka.javaapi.OffsetResponse;
 import kafka.javaapi.PartitionMetadata;
 import kafka.javaapi.TopicMetadataRequest;
 import kafka.javaapi.consumer.SimpleConsumer;
-import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
 import scala.collection.Iterator;
 import scala.collection.Seq;
@@ -61,9 +61,9 @@ public class ZkConsumerCommand {
 		kafkaServerList.addAll(Arrays.asList(kafkaServers.split(",")));
 		
 		if(zkClient == null){			
-			zkClient = new ZkClient(zkServers, 10000, 10000, ZKStringSerializer$.MODULE$);
+			zkClient = new ZkClient(zkServers, 10000, 10000, new ZKStringSerializer());
 		}
-		zkClient = new ZkClient(zkServers, 10000, 10000, ZKStringSerializer$.MODULE$);
+		zkClient = new ZkClient(zkServers, 10000, 10000, new ZKStringSerializer());
 		
 		boolean isSecureKafkaCluster = false;
 		zkUtils = new ZkUtils(zkClient, new ZkConnection(zkServers), isSecureKafkaCluster);
@@ -74,7 +74,7 @@ public class ZkConsumerCommand {
 		kafkaServerList.addAll(Arrays.asList(kafkaServers.split(",")));
 		
 		if(zkClient == null){			
-			zkClient = new ZkClient(zkServers, 10000, 10000, ZKStringSerializer$.MODULE$);
+			zkClient = new ZkClient(zkServers, 10000, 10000, new ZKStringSerializer());
 		}
 		this.zkClient = zkClient;
 		

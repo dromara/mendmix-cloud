@@ -22,8 +22,7 @@ import com.jeesuite.kafka.monitor.model.BrokerInfo;
 import com.jeesuite.kafka.monitor.model.ConsumerGroupInfo;
 import com.jeesuite.kafka.monitor.model.ProducerStat;
 import com.jeesuite.kafka.producer.handler.SendCounterHandler;
-
-import kafka.utils.ZKStringSerializer$;
+import com.jeesuite.kafka.serializer.ZKStringSerializer;
 
 /**
  * 
@@ -55,7 +54,7 @@ public class KafkaMonitor implements Closeable{
 		Validate.notBlank(kafkaServers);
 		this.latThreshold = latThreshold;
 		
-		zkClient = new ZkClient(zkServers, 10000, 10000, ZKStringSerializer$.MODULE$);
+		zkClient = new ZkClient(zkServers, 10000, 10000, new ZKStringSerializer());
 		
 		try {			
 			zkConsumerCommand = new ZkConsumerCommand(zkClient,zkServers, kafkaServers);

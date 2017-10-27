@@ -23,8 +23,7 @@ import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.monitor.model.ProducerStat;
-
-import kafka.utils.ZKStringSerializer$;
+import com.jeesuite.kafka.serializer.ZKStringSerializer;
 
 /**
  * @description <br>
@@ -54,7 +53,7 @@ public class SendCounterHandler implements ProducerEventHandler {
 		this.producerGroup =producerGroup;
 		int sessionTimeoutMs = 10000;
 		int connectionTimeoutMs = 10000;
-		zkClient = new ZkClient(zkServers, sessionTimeoutMs, connectionTimeoutMs, ZKStringSerializer$.MODULE$);
+		zkClient = new ZkClient(zkServers, sessionTimeoutMs, connectionTimeoutMs, new ZKStringSerializer());
 		//
 		groupPath = ROOT + "/" + producerGroup;
 		if(!zkClient.exists(groupPath)){

@@ -7,10 +7,10 @@
 		<version>7</version>
 	</parent>
 	<artifactId>jeesuite-kafka</artifactId>
-	<version>1.1.5</version>
-	
+	<version>1.1.6-SNAPSHOT</version>
+
 	<properties>
-	   <kafka.version>0.11.0.0</kafka.version>
+		<kafka.version>0.11.0.0</kafka.version>
 	</properties>
 
 	<dependencies>
@@ -45,7 +45,7 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.kafka</groupId>
 			<artifactId>kafka_2.11</artifactId>
@@ -64,6 +64,12 @@
 					<artifactId>log4j</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka-clients</artifactId>
+			<version>${kafka.version}</version>
 		</dependency>
 
 		<dependency>
