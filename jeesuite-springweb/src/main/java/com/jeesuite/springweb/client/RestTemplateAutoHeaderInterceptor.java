@@ -36,7 +36,7 @@ public class RestTemplateAutoHeaderInterceptor implements ClientHttpRequestInter
 		 HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 		Enumeration<String> headerNames = request.getHeaderNames();
 		 while(headerNames.hasMoreElements()){
-			 String headerName = headerNames.nextElement();
+			 String headerName = headerNames.nextElement().toLowerCase();
 			 if(headerName.startsWith(WebConstants.HEADER_PREFIX)){				 
 				 String headerValue = request.getHeader(headerName);
 				 if(headerValue != null)headers.put(headerName, headerValue);

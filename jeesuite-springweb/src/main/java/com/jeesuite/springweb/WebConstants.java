@@ -14,6 +14,6 @@ public class WebConstants {
 	public static final String HEADER_SESSION_ID = "x-session-id";
 	public static final String HEADER_SESSION_EXPIRE_IN = "x-session-expire-in";
 	public static final String HEADER_INVOKER_IP = "x-invoker-ip";
-	public static final String HEADER_REQUESTED_WITH = "X-Requested-With";
+	public static final String HEADER_REQUESTED_WITH = "x-requested-with";
 	public static final String HEADER_RESP_POLICY = "x-response-policy";
 }

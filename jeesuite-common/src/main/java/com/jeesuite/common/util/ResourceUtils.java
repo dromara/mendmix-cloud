@@ -27,6 +27,9 @@ import org.apache.commons.lang3.StringUtils;
  * @date 2013年2月25日
  */
 public final class ResourceUtils {
+	
+	private static final String PLACEHOLDER_PREFIX = "${";
+	private static final String PLACEHOLDER_SUFFIX = "}";
 
 	private static boolean inited;
 	private static boolean merged;
@@ -127,13 +130,28 @@ public final class ResourceUtils {
 	 * @return
 	 */
 	public static Properties getAllProperties() {
+		return getAllProperties(null);
+	}
+	
+	/**
+	 * 获取指定前缀的配置
+	 */
+	public static Properties getAllProperties(String prefix) {
 		if(!inited){
 			load();
 		}
 		if(!merged){
 			mergeWithEnvironment();
 		}
-		return new Properties(allProperties);
+		
+		Properties properties = new Properties();
+		Set<Entry<Object, Object>> entrySet = allProperties.entrySet();
+		for (Entry<Object, Object> entry : entrySet) {
+			if(StringUtils.isBlank(prefix) || entry.getKey().toString().startsWith(prefix)){				
+				properties.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return properties;
 	}
 	
 	@Deprecated
@@ -229,11 +247,75 @@ public final class ResourceUtils {
 	
 	public synchronized static void add(String key,String value){
 		if(StringUtils.isAnyBlank(key,value))return;
-		allProperties.put(key, value);
+		addToProperties(key, value);
 	}
 	
 	public static boolean  containsProperty(String key){
 		return allProperties.containsKey(key);
+	}
+	
+	/**
+	 * 如果替换包含占位符则替换占位符，无法替换则不放入
+	 * @param key
+	 * @return
+	 */
+    private static String addToProperties(String key,String value ) {
+		
+    	if(!value.contains(PLACEHOLDER_PREFIX)){
+    		allProperties.put(key, value);
+    		return value;
+    	}
+    	
+    	String[] segments = value.split("\\$\\{");
+		String seg;
+		
+		StringBuilder finalValue = new StringBuilder();
+		for (int i = 0; i < segments.length; i++) {
+			seg = StringUtils.trimToNull(segments[i]);
+			if(StringUtils.isBlank(seg))continue;
+			
+			if(seg.contains(PLACEHOLDER_SUFFIX)){	
+				String refKey = seg.substring(0, seg.indexOf(PLACEHOLDER_SUFFIX)).trim();
+				//其他非${}的占位符如：{{host}}
+				String withBraceString = null;
+				if(seg.contains("{")){
+					withBraceString = seg.substring(seg.indexOf(PLACEHOLDER_SUFFIX)+1);
+				}
+				
+				//如果包含默认值，如：${host:127.0.0.1}
+				String defaultValue = null;
+				if(refKey.contains(":")){
+					String[] tmpArray = refKey.split(":");
+					refKey = tmpArray[0];
+					defaultValue = tmpArray[1];
+				}
+				
+				String refValue = getProperty(refKey);
+				if(StringUtils.isBlank(refValue)){
+					refValue = defaultValue;
+				}
+				//为空不处理
+				if(StringUtils.isBlank(refValue)){
+					return null;
+				}
+				finalValue.append(refValue);
+				
+				if(withBraceString != null){
+					finalValue.append(withBraceString);
+				}else{
+					String[] segments2 = seg.split("\\}");
+					if(segments2.length == 2){
+						finalValue.append(segments2[1]);
+					}
+				}
+			}else{
+				finalValue.append(seg);
+			}
+		}
+		
+		allProperties.put(key, finalValue.toString());
+		
+		return finalValue.toString();
 	}
 	
 }

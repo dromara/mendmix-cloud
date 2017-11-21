@@ -4,10 +4,9 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>7</version>
+		<version>1.1.7-SNAPSHOT</version>
 	</parent>
 	<artifactId>jeesuite-filesystem</artifactId>
-	<version>1.1.5</version>
 	<description>文件系统客户端，支持七牛、fastdfs，阿里云oss</description>
 
 	<dependencies>
@@ -35,13 +34,13 @@
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>1.1.5</version>
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-spring</artifactId>
-			<version>1.1.5</version>
+			<version>${project.parent.version}</version>
 			<optional>true</optional>
 		</dependency>
 

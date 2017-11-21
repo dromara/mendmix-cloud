@@ -4,10 +4,9 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>7</version>
+		<version>1.1.7-SNAPSHOT</version>
 	</parent>
 	<artifactId>jeesuite-kafka</artifactId>
-	<version>1.1.6-SNAPSHOT</version>
 
 	<properties>
 		<kafka.version>0.11.0.0</kafka.version>
@@ -18,14 +17,14 @@
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>${moudule.common.version}</version>
+			<version>${project.parent.version}</version>
 			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-spring</artifactId>
-			<version>1.1.5</version>
+			<version>${project.parent.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.springframework</groupId>

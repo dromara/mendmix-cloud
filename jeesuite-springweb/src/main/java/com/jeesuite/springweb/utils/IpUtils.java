@@ -6,6 +6,7 @@ import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -21,10 +22,20 @@ public class IpUtils {
 	public static final String LOCAL_HOST = "localhost";
 	private static final String UNKNOWN = "unknown";
 	private static String localIp = getLocalIpAddr();
+	private static Pattern ipPattern = Pattern.compile("(\\d{1,3}\\.)+\\d{1,3}");
+	private static final String[] lanIpPrefixs = new String[]{"127.","192.168","10.","100."};
+	
+	public static boolean isIp(String ipAddr){
+		if(StringUtils.isBlank(ipAddr))return false;
+		return ipPattern.matcher(ipAddr).matches();
+	}
 
 	public static boolean isInnerIp(String ipAddr){
-		if(StringUtils.isBlank(ipAddr))return false;
-		return ipAddr.startsWith("127")  || ipAddr.startsWith("192.168") || ipAddr.startsWith("10.");
+		if(StringUtils.isBlank(ipAddr) || !isIp(ipAddr))return false;
+		for (String prefix : lanIpPrefixs) {
+			if(ipAddr.startsWith(prefix))return true;
+		}
+		return false;
 	}
 	 /**
      * <p>
@@ -56,14 +67,17 @@ public class IpUtils {
             }
         }
         /**
-         * 对于通过多个代理的情况， 第一个IP为客户端真实IP,多个IP按照','分割 "***.***.***.***".length() =
-         * 15
+         * 对于通过多个代理的情况， 第一个IP为客户端真实IP,多个IP按照','分割
+         * x-forwarded-for=192.168.2.22, 192.168.1.92
          */
         if (ip != null && ip.length() > 15) {
-            int splitIndex = ip.indexOf(",");
-			if (splitIndex > 0) {
-                ip = ip.substring(0, splitIndex);
-            }
+        	String[] ips = StringUtils.split(ip, ",");
+            for (String _ip : ips) {
+            	ip = StringUtils.trimToNull(_ip);
+				if(!UNKNOWN.equalsIgnoreCase(ip)){
+					return ip;
+				}
+			}
         }
         return ip;
     }
@@ -99,6 +113,9 @@ public class IpUtils {
     
     public static String getinvokerIpAddr(HttpServletRequest request)  { 
     	String ip = request.getHeader(WebConstants.HEADER_INVOKER_IP);
+    	if(StringUtils.isBlank(ip)){
+    		ip = getIpAddr(request);
+    	}
     	return ip;
     }
     
@@ -120,8 +137,5 @@ public class IpUtils {
 		return null;
 	}
     
-    public static void main(String[] args) {
-    	String location = ipToLocation("121.33.175.250");
-		System.out.println(location);
-	}
+    public static void main(String[] args) {}
 }

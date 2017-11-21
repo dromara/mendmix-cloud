@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +48,10 @@ public class SchedulerMonitor implements Closeable{
 	
 	public JobGroupInfo getJobGroupInfo(String groupName){
 
+		if(StringUtils.isBlank(groupName)){
+			logger.warn("getJobGroupInfo groupName is blank");
+			return null;
+		}
 		JobGroupInfo groupInfo = new JobGroupInfo();
 		groupInfo.setName(groupName);
 		//

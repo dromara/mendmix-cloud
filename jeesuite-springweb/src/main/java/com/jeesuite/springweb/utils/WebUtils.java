@@ -2,7 +2,6 @@ package com.jeesuite.springweb.utils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,11 +14,10 @@ import com.jeesuite.springweb.WebConstants;
 public class WebUtils {
 
 	private static final String XML_HTTP_REQUEST = "XMLHttpRequest";
-	private static Pattern ipPattern = Pattern.compile("(\\d{1,3}\\.)+\\d{1,3}");
 	
 	public static boolean isAjax(HttpServletRequest request){
 	    return  (request.getHeader(WebConstants.HEADER_REQUESTED_WITH) != null  
-	    && XML_HTTP_REQUEST.equals(request.getHeader(WebConstants.HEADER_REQUESTED_WITH).toString())) ;
+	    && XML_HTTP_REQUEST.equalsIgnoreCase(request.getHeader(WebConstants.HEADER_REQUESTED_WITH).toString())) ;
 	}
 	
 	public static  void responseOutJson(HttpServletResponse response,String json) {  
@@ -96,7 +94,7 @@ public class WebUtils {
 		String host = request.getHeader(WebConstants.HEADER_FORWARDED_HOST);
 		if(StringUtils.isBlank(host))host = request.getServerName();
 		
-		if(ipPattern.matcher(host).matches() || IpUtils.LOCAL_HOST.equals(host)){
+		if(IpUtils.isIp(host) || IpUtils.LOCAL_HOST.equals(host)){
 			return host;
 		}
 		
@@ -107,7 +105,7 @@ public class WebUtils {
 	
 	public static  String getRootDomain(String url) {
 		String host = getDomain(url);
-		if(ipPattern.matcher(host).matches() || IpUtils.LOCAL_HOST.equals(host))return host;
+		if(IpUtils.isIp(host) || IpUtils.LOCAL_HOST.equals(host))return host;
 		
 		String[] segs = StringUtils.split(host, ".");
 		int len = segs.length;
@@ -124,6 +122,12 @@ public class WebUtils {
 		return segs[0] + "//" + segs[1];
 	}
 	
+	/**
+	 * 获取baseurl<br>
+	 * nginx转发需设置 proxy_set_header   X-Forwarded-Proto $scheme;
+	 * @param request
+	 * @return
+	 */
 	public static String getBaseUrl(HttpServletRequest request){
         String baseUrl = null;			
 		String proto = request.getHeader(WebConstants.HEADER_FORWARDED_ORIGN_PROTO);
@@ -135,12 +139,6 @@ public class WebUtils {
 			baseUrl = segs[0] + "//" + segs[1];
 		}else{
 			baseUrl = proto + "://" + host + prefix;
-		}
-		
-		//由于nginx 没有设置  proxy_set_header   X-Forwarded-Proto $scheme;
-		//导致https通过nginx转发后，在api网关获取到的scheme为：http
-		if(baseUrl.startsWith("http:")){
-			baseUrl = baseUrl.replace("http", "https");
 		}
 		
 		return baseUrl;

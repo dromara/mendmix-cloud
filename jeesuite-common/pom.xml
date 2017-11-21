@@ -4,10 +4,9 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>7</version>
+		<version>1.1.7-SNAPSHOT</version>
 	</parent>
 	<artifactId>jeesuite-common</artifactId>
-	<version>1.1.6-SNAPSHOT</version>
 	<description>基础工具类支持</description>
 
 	<dependencies>
