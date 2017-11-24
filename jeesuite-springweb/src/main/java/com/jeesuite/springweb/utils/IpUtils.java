@@ -21,7 +21,7 @@ public class IpUtils {
 	public static final String LOCAL_BACK_IP = "127.0.0.1";
 	public static final String LOCAL_HOST = "localhost";
 	private static final String UNKNOWN = "unknown";
-	private static String localIp = getLocalIpAddr();
+	private static volatile String localIp;
 	private static Pattern ipPattern = Pattern.compile("(\\d{1,3}\\.)+\\d{1,3}");
 	private static final String[] lanIpPrefixs = new String[]{"127.","192.168","10.","100."};
 	
@@ -86,18 +86,25 @@ public class IpUtils {
 		if(localIp != null)return localIp;
 		try {			
 			Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();  
+			String currentIp = null;
 			outter:while (en.hasMoreElements()) {  
-				NetworkInterface i = en.nextElement();  
+				NetworkInterface i = en.nextElement(); 
+				
 				for (Enumeration<InetAddress> en2 = i.getInetAddresses(); en2.hasMoreElements();) {  
 					InetAddress addr = en2.nextElement();  
 					if (!addr.isLoopbackAddress()) {  
 						if (addr instanceof Inet4Address) {    
-							localIp = addr.getHostAddress();  
-							break outter;
+							currentIp = addr.getHostAddress();  
+							if(isInnerIp(currentIp)){
+								localIp = currentIp;							
+								break outter;
+							}
 						}  
 					}  
-				}  
+				} 
+				
 			}  
+			if(localIp == null)localIp = currentIp;
 		} catch (Exception e) {}
 		
 		if(localIp == null){
@@ -107,7 +114,6 @@ public class IpUtils {
                 localIp = inet.getHostAddress();
             } catch (UnknownHostException e) {}
 		}
-		
 	    return localIp;  
 	} 
     
@@ -119,7 +125,8 @@ public class IpUtils {
     	return ip;
     }
     
-    public static String ipToLocation(String ip) {
+    @SuppressWarnings("rawtypes")
+	public static String ipToLocation(String ip) {
     	if(isInnerIp(ip))return null;
 		try {			
 			String url = "http://ip.taobao.com/service/getIpInfo.php?ip="+ip;

@@ -65,11 +65,13 @@ import com.jeesuite.spring.InstanceFactory;
  */
 public class CacheHandler implements InterceptorHandler {
 	
+	private static final String TK_MAPPER_EXAMPLE_CLASS_NAME = "tk.mybatis.mapper.entity.Example";
+
 	protected static final Logger logger = LoggerFactory.getLogger(CacheHandler.class);
 
 	public static final String NAME = "cache";
 	
-	private static final String PARSE_SQL_ERROR_DEFAULT = "select 1";
+	private static final String PARSE_SQL_ERROR_DEFAULT = "select 'error'";
 	public final static long IN_1MINS = 60;
     public final static long IN_1HOUR = 60 * 60;
 	public final static long DEFAULT_CACHER_SECONDS = IN_1HOUR * 24;
@@ -276,7 +278,7 @@ public class CacheHandler implements InterceptorHandler {
                 
 			}
 			//删除同一cachegroup关联缓存
-			removeCacheByGroup(mt.getId(), mapperNameSpace);
+			removeCacheByGroup(mt.getId(), mapperNameSpace,false);
 		}
 	}
 
@@ -291,6 +293,12 @@ public class CacheHandler implements InterceptorHandler {
 			Object[] args) {
 		try {					
 			Object parameterObject = args[1];
+			if(parameterObject != null && parameterObject.getClass().getName().equals(TK_MAPPER_EXAMPLE_CLASS_NAME)){
+				//清除group下所有缓存
+				removeCacheByGroup(mt.getId(), mapperNameSpace,true);
+				logger.warn("\n===============\n使用了[tk.mybatis.mapper.entity.Example]更新或删除,全部清除[{}]下缓存，\n缓存数据多的情况下会出现性能问题，因此不建议Example与自动缓存一起使用!!!!!!!!\n=================",mapperNameSpace);
+				return;
+			}
 			EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperNameSpace);
 			MappedStatement statement = getQueryIdsMappedStatementForUpdateCache(mt,entityInfo);
 			if(statement == null)return ;
@@ -316,7 +324,9 @@ public class CacheHandler implements InterceptorHandler {
 				if(logger.isDebugEnabled())logger.debug("_autocache_ update Method[{}] executed,remove ralate cache {}.id:[{}]",mt.getId(),entityInfo.getEntityClass().getSimpleName(),idsResult);
 			}
 		} catch (Exception e) {
-			logger.error("_autocache_ update Method[{}] remove ralate cache error",e);
+			//清除group下所有缓存
+			removeCacheByGroup(mt.getId(), mapperNameSpace,true);
+			logger.error("_autocache_ removecache_by_update [{}] error,force clean all group cache",mt.getId());
 		}
 	}
 	
@@ -373,11 +383,12 @@ public class CacheHandler implements InterceptorHandler {
 	 * 删除缓存组
 	 * @param mt
 	 * @param mapperNameSpace
+	 * @param removePkCache  是否同时删除按主键的缓存
 	 */
-	private void removeCacheByGroup(String msId, String mapperNameSpace) {
+	private void removeCacheByGroup(String msId, String mapperNameSpace,boolean removePkCache) {
 		//删除cachegroup关联缓存
 		String entityName = mapperNameRalateEntityNames.get(mapperNameSpace);
-		getCacheProvider().clearGroup(entityName,false);
+		getCacheProvider().clearGroup(entityName,removePkCache);
 		logger.debug("_autocache_ method[{}] remove cache Group:{}",msId,entityName);
 		//关联缓存
 		if(cacheEvictCascades.containsKey(msId)){
