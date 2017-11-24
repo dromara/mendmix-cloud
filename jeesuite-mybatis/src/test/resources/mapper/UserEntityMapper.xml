@@ -74,4 +74,19 @@
     </if> 
   </update>
   
+   <select id="findByLoginName" resultMap="BaseResultMap">
+    select * from users 
+    where (name = #{name} or email = #{name} or mobile = #{name})
+  </select>
+  
+  <select id="findByWxUnionId" resultMap="BaseResultMap">
+    select * from users 
+    where id = (select user_id from sns_account_binding where union_id = #{unionId}  and enabled = 1 limit 1)
+  </select>
+  
+  
+  <select id="findWxUnionIdByUserId" resultType="String">
+    select union_id from sns_account_binding where user_id = #{userId} and enabled = 1 limit 1
+  </select>
+  
 </mapper>

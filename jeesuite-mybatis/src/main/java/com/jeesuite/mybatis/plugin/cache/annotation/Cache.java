@@ -25,5 +25,5 @@ public @interface Cache {
 	 * 过期时间(单位：秒)
 	 * @return
 	 */
-	long expire() default 60 * 60 * 24;
+	long expire() default 0;
 }

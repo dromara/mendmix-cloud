@@ -31,7 +31,7 @@ public class EntityCacheHelper {
 	 * @return
 	 */
 	public static <T> T queryTryCache(Class<? extends BaseEntity> entityClass,String key,Callable<T> dataCaller){
-		return queryTryCache(entityClass, key, CacheHandler.DEFAULT_CACHER_SECONDS, dataCaller);
+		return queryTryCache(entityClass, key, CacheHandler.defaultCacheExpire, dataCaller);
 	}
 	
 	/**

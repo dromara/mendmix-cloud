@@ -13,7 +13,8 @@ import java.util.concurrent.Callable;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.BeansException;
@@ -29,14 +30,15 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.jeesuite.cache.redis.JedisProviderFactory;
-import com.jeesuite.mybatis.parser.EntityInfo;
-import com.jeesuite.mybatis.parser.MybatisMapperParser;
+import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.mybatis.plugin.cache.EntityCacheHelper;
 import com.jeesuite.mybatis.plugin.pagination.Page;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor.PageDataLoader;
 import com.jeesuite.mybatis.plugin.pagination.PageParams;
+import com.jeesuite.mybatis.test.entity.SnsAccounyBindingEntity;
 import com.jeesuite.mybatis.test.entity.UserEntity;
+import com.jeesuite.mybatis.test.mapper.SnsAccounyBindingEntityMapper;
 import com.jeesuite.mybatis.test.mapper.UserEntityMapper;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
@@ -49,17 +51,37 @@ import tk.mybatis.mapper.entity.Example;
 @Rollback(false)
 public class MybatisTest implements ApplicationContextAware{
 	
-	@Autowired UserEntityMapper mapper;
+	@Autowired UserEntityMapper userMapper;
+	
+	@Autowired SnsAccounyBindingEntityMapper snsAccounyBindingMapper;
 	
 	@Autowired TransactionTemplate transactionTemplate;
 	
-	static String[] mobiles = new String[10];
+    String[] mobiles = new String[5];
 	
-	@BeforeClass
-	public static void init(){
-		for (int i = 0; i <3; i++) {
-			mobiles[i] = "1300000000" + i;
+	@Before
+	public void init(){
+		for (int i = 0; i <mobiles.length; i++) {
+			mobiles[i] = "1380013800"+i;
 		}
+	}
+	
+	//@After
+	public void after(){
+		List<UserEntity> list = userMapper.selectAll();
+		for (UserEntity userEntity : list) {
+			userMapper.deleteByPrimaryKey(userEntity.getId());
+		}
+		
+		List<SnsAccounyBindingEntity> list2 = snsAccounyBindingMapper.selectAll();
+		for (SnsAccounyBindingEntity snsAccounyBindingEntity : list2) {
+			snsAccounyBindingMapper.deleteByPrimaryKey(snsAccounyBindingEntity.getId());
+		}
+	}
+	
+	private void printCacheKeys(String title){
+		Set<String> keys = JedisProviderFactory.getMultiKeyCommands(null).keys("UserEntity*");
+		System.out.println(title + ":\n" + keys.size() + "\n" + keys);
 	}
 
 	@Override
@@ -67,74 +89,107 @@ public class MybatisTest implements ApplicationContextAware{
 		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(arg0));
 	}
 	
+	private void insertTestData(){
+		
+//		for (int i = 0; i < mobiles.length; i++) {
+//			UserEntity entity = new UserEntity();
+//			entity.setCreatedAt(new Date());
+//			entity.setEmail(mobiles[i] + "@163.com");
+//			entity.setMobile(mobiles[i]);
+//			entity.setType((short)(i % 2 == 0 ? 1 : 2));
+//			entity.setStatus((short)(i % 3 == 0 ? 1 : 2));
+//			userMapper.insert(entity);
+//			
+//			SnsAccounyBindingEntity bindingEntity = new SnsAccounyBindingEntity();
+//			bindingEntity.setUserId(entity.getId());
+//			bindingEntity.setUnionId(DigestUtils.md5(mobiles[i] ));
+//			bindingEntity.setSnsType("weixin");
+//			bindingEntity.setEnabled(true);
+//			snsAccounyBindingMapper.insertSelective(bindingEntity);
+//		}
+	}
+	
 	private void initCache() {
-		mapper.findByMobile(mobiles[0]);
-		mapper.findByMobile(mobiles[1]);
-		mapper.findByStatus((short) 1);
-		mapper.findByStatus((short) 2);
-		mapper.findByType((short) 1);
+		UserEntity entity = userMapper.findByMobile(mobiles[0]);
+		userMapper.findByMobile(mobiles[1]);
+		userMapper.findByLoginName(mobiles[0]+"@163.com");
+		userMapper.findByLoginName(mobiles[1]+"@163.com");
+		userMapper.findByWxUnionId(DigestUtils.md5(mobiles[3] ));
+		userMapper.findByStatus((short) 1);
+		userMapper.findByStatus((short) 2);
+		userMapper.findByType((short) 1);
+		userMapper.findWxUnionIdByUserId(entity.getId());
 
 		// 生成的缓存key为：UserEntity.findByStatus:2
 		EntityCacheHelper.queryTryCache(UserEntity.class, "findByStatus:2", new Callable<List<UserEntity>>() {
 			public List<UserEntity> call() throws Exception {
 				// 查询语句
-				List<UserEntity> entitys = mapper.findByStatus((short) 2);
+				List<UserEntity> entitys = userMapper.findByStatus((short) 2);
+				return entitys;
+			}
+		});
+		userMapper.countByType(1);
+	}
+	
+	@Test 
+	public void testBaseQuery() {
+		insertTestData();
+		userMapper.findByMobile(mobiles[0]);
+		userMapper.findByMobile(mobiles[1]);
+		userMapper.findByStatus((short) 1);
+		userMapper.findByStatus((short) 2);
+		userMapper.findByType((short) 1);
+
+		// 生成的缓存key为：UserEntity.findByStatus:2
+		EntityCacheHelper.queryTryCache(UserEntity.class, "findByStatus:2", new Callable<List<UserEntity>>() {
+			public List<UserEntity> call() throws Exception {
+				// 查询语句
+				List<UserEntity> entitys = userMapper.findByStatus((short) 2);
 				return entitys;
 			}
 		});
 
-		mapper.countByType(1);
+		userMapper.countByType(1);
 	}
 	
-	private void printCacheKeys(String title){
-		Set<String> keys = JedisProviderFactory.getMultiKeyCommands(null).keys("UserEntity*");
-		System.out.println(title + ":\n" + keys.size() + "\n" + keys);
-	}
-	
-	@Test
-	public void testInsert(){
-		
-		for (int i = 0; i < mobiles.length; i++) {
-			if(StringUtils.isBlank(mobiles[i])){				
-				mobiles[i] = "13800"+RandomUtils.nextLong(100000, 999999);
-			}
-			UserEntity entity = new UserEntity();
-			entity.setCreatedAt(new Date());
-			entity.setEmail(mobiles[i] + "@163.com");
-			entity.setMobile(mobiles[i]);
-			entity.setType((short)(i % 2 == 0 ? 1 : 2));
-			entity.setStatus((short)(i % 3 == 0 ? 1 : 2));
-			mapper.insert(entity);
-		}
-		
-		
+	@Test 
+	public void testPropNotEntityFielddQuery() {
+		insertTestData();
+		initCache();
+		System.out.println();
 	}
 	
 	@Test
 	public void testUpdate(){
-		UserEntity userEntity = mapper.findByMobile(mobiles[0]);
-		userEntity.setEmail("3333@qq.com");
-		mapper.updateByPrimaryKey(userEntity);
+		initCache();
+		UserEntity entity = userMapper.findByMobile(mobiles[0]);
+		entity.setEmail(entity.getMobile() + "@qq.com");
+		userMapper.updateByPrimaryKey(entity);
+	}
+	
+	@Test
+	public void testDeleteByExample(){
+		Example example = new Example(UserEntity.class);
+		example.createCriteria().andGreaterThan("id", 100).andEqualTo("status", 1);
+		userMapper.deleteByExample(example);
 	}
 	
 	@Test
 	public void testOnDeleteByIdUpdateCache(){
-		initCache();
 		printCacheKeys("before delete");
-		UserEntity userEntity = mapper.findByMobile(mobiles[0]);
+		UserEntity userEntity = userMapper.findByMobile(mobiles[0]);
 		userEntity = new UserEntity();
 		userEntity.setMobile(mobiles[0]);
-		mapper.delete(userEntity);
+		userMapper.delete(userEntity);
 		printCacheKeys("after delete");
 	}
 	
 	@Test
 	public void testOnDeleteByQueryUpdateCache(){
-		initCache();
 		printCacheKeys("before delete");
 		Example example = new Example(UserEntity.class);
 		example.createCriteria().andEqualTo("mobile", mobiles[1]);
-		mapper.deleteByExample(example);
+		userMapper.deleteByExample(example);
 		printCacheKeys("after delete");
 	}
 
@@ -142,7 +197,7 @@ public class MybatisTest implements ApplicationContextAware{
 	@Test
 	public void testFindNotExistsThenInsert(){
 		String mobile = "13800000002";
-		UserEntity entity = mapper.findByMobile(mobile);
+		UserEntity entity = userMapper.findByMobile(mobile);
 		if(entity != null){
 			System.out.println(entity.getMobile());
 			return;
@@ -153,12 +208,12 @@ public class MybatisTest implements ApplicationContextAware{
 		entity.setMobile(mobile);
 		entity.setType((short)1);
 		entity.setStatus((short)1);
-		mapper.insert(entity);
+		userMapper.insert(entity);
 	}
 	
 	@Test
 	public void testFindBystatus(){
-		List<UserEntity> list = mapper.findByStatus((short)1);
+		List<UserEntity> list = userMapper.findByStatus((short)1);
 		for (UserEntity userEntity : list) {
 			System.out.println(userEntity.getMobile());
 		}
@@ -167,7 +222,7 @@ public class MybatisTest implements ApplicationContextAware{
 	@Test
 	public void testFindNotExists(){
 		String mobile = "13800000002";
-		mapper.findByMobile(mobile);
+		userMapper.findByMobile(mobile);
 	}
 	
 	@Test
@@ -177,7 +232,7 @@ public class MybatisTest implements ApplicationContextAware{
 			public List<UserEntity> load() {
 				UserEntity example = new UserEntity();
 				example.setType((short)1);
-				return mapper.queryByExample(example);
+				return userMapper.queryByExample(example);
 			}
 		});
 		
@@ -186,14 +241,14 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testPage2(){
-		Page<UserEntity> pageInfo = mapper.pageQuery(new PageParams(1,5));
+		Page<UserEntity> pageInfo = userMapper.pageQuery(new PageParams(1,5));
 		
 		System.out.println(pageInfo);
 	}
 	
 	@Test
 	public void testFindMobileByIds(){
-		List<String> mobiles = mapper.findMobileByIds(new ArrayList<>(Arrays.asList(21,23)));
+		List<String> mobiles = userMapper.findMobileByIds(new ArrayList<>(Arrays.asList(21,23)));
 		for (String mobile : mobiles) {
 			System.out.println("------>>>>" + mobile);
 		}
@@ -202,7 +257,7 @@ public class MybatisTest implements ApplicationContextAware{
 	@Test
 	@Transactional
 	public void testRwRouteWithTransaction(){
-		mapper.findByStatus((short)2);
+		userMapper.findByStatus((short)2);
 		
 		UserEntity entity = new UserEntity();
 		entity.setCreatedAt(new Date());
@@ -210,19 +265,19 @@ public class MybatisTest implements ApplicationContextAware{
 		entity.setMobile("13800"+RandomUtils.nextLong(100000, 999999));
 		entity.setType((short)1);
 		entity.setStatus((short)1);
-		mapper.insert(entity);
+		userMapper.insert(entity);
 	}
 	
 	@Test
 	public void testRwRouteWithTransaction2(){
 		
-		mapper.findByStatus((short)1);
+		userMapper.findByStatus((short)1);
 		
 		transactionTemplate.execute(new TransactionCallback<Void>() {
 			@Override
 			public Void doInTransaction(TransactionStatus status) {
 
-				mapper.findByStatus((short)2);
+				userMapper.findByStatus((short)2);
 				
 				UserEntity entity = new UserEntity();
 				entity.setCreatedAt(new Date());
@@ -230,9 +285,9 @@ public class MybatisTest implements ApplicationContextAware{
 				entity.setMobile("13800"+RandomUtils.nextLong(100000, 999999));
 				entity.setType((short)1);
 				entity.setStatus((short)1);
-				mapper.insert(entity);
+				userMapper.insert(entity);
 				
-				mapper.findByStatus((short)2);
+				userMapper.findByStatus((short)2);
 				
 				return null;
 			}

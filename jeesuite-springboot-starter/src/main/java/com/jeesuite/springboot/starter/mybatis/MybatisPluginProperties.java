@@ -5,6 +5,8 @@ package com.jeesuite.springboot.starter.mybatis;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import com.jeesuite.cache.CacheExpires;
+
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
@@ -20,8 +22,9 @@ public class MybatisPluginProperties {
 	private boolean dbShardEnabled = false;
 	private boolean paginationEnabled = true;
 	private boolean nullValueCache = false;
+	private long cacheExpireSeconds = CacheExpires.IN_1DAY;
+	private boolean dynamicExpire = false;
 	
-
 	public boolean isCacheEnabled() {
 		return cacheEnabled;
 	}
@@ -65,5 +68,19 @@ public class MybatisPluginProperties {
 	public void setNullValueCache(boolean nullValueCache) {
 		this.nullValueCache = nullValueCache;
 	}
-
+	public long getCacheExpireSeconds() {
+		return cacheExpireSeconds;
+	}
+	public void setCacheExpireSeconds(long cacheExpireSeconds) {
+		this.cacheExpireSeconds = cacheExpireSeconds;
+	}
+	public boolean isDynamicExpire() {
+		return dynamicExpire;
+	}
+	public void setDynamicExpire(boolean dynamicExpire) {
+		this.dynamicExpire = dynamicExpire;
+	}
+	
+	
+	
 }

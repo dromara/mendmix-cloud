@@ -52,6 +52,7 @@
 							<prop key="crudDriver">mapper3</prop>
 							<prop key="dbType">Mysql</prop>
 							<prop key="cache.nullValue">true</prop>
+							<prop key="cache.expire.seconds">1800</prop>
 						</props>
 					</property>
 				</bean>

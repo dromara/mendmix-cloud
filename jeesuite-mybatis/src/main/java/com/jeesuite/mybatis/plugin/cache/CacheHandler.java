@@ -74,7 +74,7 @@ public class CacheHandler implements InterceptorHandler {
 	private static final String PARSE_SQL_ERROR_DEFAULT = "select 'error'";
 	public final static long IN_1MINS = 60;
     public final static long IN_1HOUR = 60 * 60;
-	public final static long DEFAULT_CACHER_SECONDS = IN_1HOUR * 24;
+	public static long defaultCacheExpire = IN_1HOUR;
 	
 	private static final String STR_PARAM = "param";
 	private static final String STR_LIST = "list";
@@ -87,6 +87,7 @@ public class CacheHandler implements InterceptorHandler {
 	protected static final String SPLIT_PONIT = ".";
 	public static final String GROUPKEY_SUFFIX = "~keys";
 	
+	private boolean dynamicCacheTime = false;
 	private boolean nullValueCache = false;
 	//null缓存占位符（避免频繁查询不存在对象造成缓存穿透导致频繁查询db）
 	public static final String NULL_PLACEHOLDER = "~null";
@@ -415,7 +416,7 @@ public class CacheHandler implements InterceptorHandler {
 			try {	
 				Object[] cacheFieldValues = new Object[methodCache.fieldNames.length];
 				for (int i = 0; i < cacheFieldValues.length; i++) {
-					if(methodCache.fieldNames[i] == null)continue outter;
+					if(methodCache.fieldNames[i] == null)break outter;
 					cacheFieldValues[i] = ReflectUtils.getObjectValue(object, methodCache.fieldNames[i]);
 					if(cacheFieldValues[i] == null)continue outter;
 				}
@@ -499,6 +500,8 @@ public class CacheHandler implements InterceptorHandler {
 	public void start(JeesuiteMybatisInterceptor context) {
 		
 		nullValueCache = Boolean.parseBoolean(context.getProperty(PluginConfig.CACHE_NULL_VALUE, "false"));
+		dynamicCacheTime = Boolean.parseBoolean(context.getProperty(PluginConfig.CACHE_DYNAMIC_EXPIRE, "false"));
+		defaultCacheExpire = Long.parseLong(context.getProperty(PluginConfig.CACHE_EXPIRE_SECONDS, String.valueOf(IN_1HOUR)));
 		
 		String crudDriver = context.getProperty(PluginConfig.CRUD_DRIVER,"default");
 		if("mapper3".equalsIgnoreCase(crudDriver)){
@@ -507,7 +510,7 @@ public class CacheHandler implements InterceptorHandler {
 			methodDefine = new DefaultCacheMethodDefine();
 		}
 		
-		logger.info("crudDriver use:{},nullValueCache:{}",crudDriver,nullValueCache);
+		logger.info("crudDriver use:{},nullValueCache:{},defaultCacheExpireSeconds:{},dynamicCacheTime:{}",crudDriver,nullValueCache,defaultCacheExpire,dynamicCacheTime);
 
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		
@@ -536,7 +539,7 @@ public class CacheHandler implements InterceptorHandler {
 					annotationCache = method.getAnnotation(Cache.class);
 					if(tmpMap.containsKey(fullMethodName))continue;
 					methodCache = generateQueryMethodCacheByMethod(ei, method);
-					methodCache.expire = annotationCache.expire();
+					methodCache.setExpire(annotationCache.expire());
 					tmpMap.put(fullMethodName, methodCache);
 					logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",methodCache.methodName,methodCache.keyPattern);
 				}else if(method.isAnnotationPresent(CacheEvictCascade.class)){
@@ -562,8 +565,8 @@ public class CacheHandler implements InterceptorHandler {
 			tmpMap.put(selectAllMethod.methodName, selectAllMethod);
 			//
 			if(entityWithAnnotation){
-				queryByPKMethod.expire = ei.getEntityClass().getAnnotation(Cache.class).expire();
-				selectAllMethod.expire = ei.getEntityClass().getAnnotation(Cache.class).expire();
+				queryByPKMethod.setExpire(ei.getEntityClass().getAnnotation(Cache.class).expire());
+				selectAllMethod.setExpire(ei.getEntityClass().getAnnotation(Cache.class).expire());
 			}
 			
 			//缓存需要自动缓存的mapper
@@ -696,14 +699,12 @@ public class CacheHandler implements InterceptorHandler {
 						break inner;
 					}
 				}
-				if(!methodCache.groupRalated && !MybatisMapperParser.entityHasProperty(entityClass, fieldName)){
-					throw new MybatisHanlerInitException(String.format("@Cache 查询方法[%s] @Param 绑定实体字段[%s]在实体[%s]不存在", methodName,fieldName,entityClass.getName()));
+				if(!methodCache.groupRalated && MybatisMapperParser.entityHasProperty(entityClass, fieldName)){					
+					methodCache.fieldNames[i] = fieldName;
 				}
-				methodCache.fieldNames[i] = fieldName;
-				
 			}else{
 				if(!methodCache.groupRalated){
-					throw new MybatisHanlerInitException(String.format("unique查询方法[%s] 使用了自动缓存Annotation @Cache,参数必须使用 @Param 绑定实体字段", methodName));
+					throw new MybatisHanlerInitException(String.format("unique查询方法[%s] 使用了自动缓存Annotation @Cache,参数必须使用 @Param 绑定属性名称", methodName));
 				}
 			}
 			//
@@ -725,16 +726,22 @@ public class CacheHandler implements InterceptorHandler {
 		public String cacheGroupKey;//缓存组key
 		public String methodName;
 		public String keyPattern;
-		public long expire = DEFAULT_CACHER_SECONDS;//过期时间（秒）
+		public long expire;//过期时间（秒）
 		public boolean isPk = false;//主键查询
 		public boolean collectionResult = false;//查询结果是集合
 		public boolean groupRalated = false; //是否需要关联group
 		public String[] fieldNames;//作为查询条件的字段名称
 		public QueryMethodCache() {}
-		//缓存时间加上随机，防止造成缓存同时失效雪崩
+		
+		public void setExpire(long expire) {
+			this.expire = expire > 0 ? expire : defaultCacheExpire;
+		}
+
 		public long getExpire() {
-			long rnd = RandomUtils.nextLong(0, expire/3);
-			return expire + (rnd > IN_1HOUR ? IN_1HOUR : rnd);
+			if(!dynamicCacheTime)return expire;
+			//缓存时间加上随机，防止造成缓存同时失效雪崩
+			long rnd = RandomUtils.nextLong(0, IN_1HOUR);
+			return expire + (rnd > expire ? RandomUtils.nextLong(0, expire) : rnd);
 		}
 
 
@@ -753,11 +760,9 @@ public class CacheHandler implements InterceptorHandler {
 	 */
 	private class UpdateByPkMethodCache{
 		public String keyPattern;
-		public SqlCommandType sqlCommandType;
 		
 		public UpdateByPkMethodCache(Class<?> entityClass,String methodName, String keyPattern, SqlCommandType sqlCommandType) {
 			this.keyPattern = keyPattern;
-			this.sqlCommandType = sqlCommandType;
 		}
 	}
 	
