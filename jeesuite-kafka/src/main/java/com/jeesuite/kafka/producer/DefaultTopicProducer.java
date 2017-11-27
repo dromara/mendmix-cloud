@@ -64,13 +64,7 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
         boolean requireAck = consumerAckEnabled && message.isConsumerAck();
         //异步 ，如果需要回执强制同步发送
         if(asynSend && requireAck == false){
-        	try {				
-        		doAsynSend(topicName, message.getMsgId(),message);
-			} catch (Exception e) {
-	        	log.error("kafka_send_fail,topic="+topicName+",messageId="+message.getMsgId(),e);
-	        	//同步发送直接抛异常
-	        	throw new RuntimeException(e);
-			}
+        	doAsynSend(topicName, message.getMsgId(),message);
         }else{        	
         	doSyncSend(topicName, message.getMsgId(), message);
         }

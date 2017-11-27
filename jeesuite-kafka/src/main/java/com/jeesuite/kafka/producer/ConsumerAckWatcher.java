@@ -34,7 +34,7 @@ public class ConsumerAckWatcher {
 			@Override
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				latch.countDown();
-				log.debug("receive message[{}] consumer ack from group:{}",messageId,data);
+				log.debug("recv_consumer_ack message[{}]，from group:{}",messageId,data);
 				try {zkClient.delete(dataPath);} catch (Exception e) {}
 			}
 		});

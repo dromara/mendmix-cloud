@@ -59,7 +59,7 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
     
     private ZkClient zkClient;
     
-    private boolean consumerAckEnabled = false;
+    private boolean consumerAckEnabled = true;
     
     @Override
     public void afterPropertiesSet() throws Exception {

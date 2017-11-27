@@ -23,6 +23,7 @@ public class KafkaProducerProperties implements EnvironmentAware{
 	private boolean  defaultAsynSend;
 	private String producerGroup;
 	private boolean monitorEnabled;
+	private boolean consumerAckEnabled;
 	private int delayRetries = 0;
 	private Properties configs = new Properties();
 	
@@ -57,6 +58,13 @@ public class KafkaProducerProperties implements EnvironmentAware{
 	}
 	public void setConfigs(Properties configs) {
 		this.configs = configs;
+	}
+	
+	public boolean isConsumerAckEnabled() {
+		return consumerAckEnabled;
+	}
+	public void setConsumerAckEnabled(boolean consumerAckEnabled) {
+		this.consumerAckEnabled = consumerAckEnabled;
 	}
 	
 	@Override
