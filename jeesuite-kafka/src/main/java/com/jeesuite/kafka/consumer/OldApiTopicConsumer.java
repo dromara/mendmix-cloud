@@ -61,8 +61,6 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 	
 	private AtomicBoolean runing = new AtomicBoolean(false);
 	
-	private ErrorMessageDefaultProcessor errorMessageProcessor = new ErrorMessageDefaultProcessor(1);
-
 	/**
 	 * 
 	 * @param connector
@@ -226,13 +224,15 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 							long useTime = System.currentTimeMillis() - start;
 							if(useTime > 1000)logger.debug("received_topic_useTime [{}]process topic:{} use time {} ms",processorName,topicName,useTime);
 						}
-						
+						//回执
+                        if(message.isConsumerAck()){
+                        	consumerContext.sendConsumerAck(message.getMsgId());
+						}
 						consumerContext.saveOffsetsAfterProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());
-						
 					} catch (Exception e) {
 						boolean processed = messageHandler.onProcessError(message);
 						if(processed == false){
-							errorMessageProcessor.submit(message, messageHandler);
+							consumerContext.processErrorMessage(topicName, message);
 						}
 						logger.error("received_topic_process_error ["+processorName+"]processMessage error,topic:"+topicName,e);
 					}
@@ -251,7 +251,7 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 		this.connector.commitOffsets();
 		this.connector.shutdown();
 		runing.set(false);
-		this.errorMessageProcessor.close();
+		this.consumerContext.close();
 		logger.info("KafkaTopicSubscriber shutdown ok...");
 	}
 	

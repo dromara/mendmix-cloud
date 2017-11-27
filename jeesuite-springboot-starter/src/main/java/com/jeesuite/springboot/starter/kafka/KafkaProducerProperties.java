@@ -22,7 +22,7 @@ public class KafkaProducerProperties implements EnvironmentAware{
 	
 	private boolean  defaultAsynSend;
 	private String producerGroup;
-	private String monitorZkServers;
+	private boolean monitorEnabled;
 	private int delayRetries = 0;
 	private Properties configs = new Properties();
 	
@@ -40,11 +40,11 @@ public class KafkaProducerProperties implements EnvironmentAware{
 		this.producerGroup = producerGroup;
 	}
 	
-	public String getMonitorZkServers() {
-		return monitorZkServers;
+	public boolean isMonitorEnabled() {
+		return monitorEnabled;
 	}
-	public void setMonitorZkServers(String monitorZkServers) {
-		this.monitorZkServers = monitorZkServers;
+	public void setMonitorEnabled(boolean monitorEnabled) {
+		this.monitorEnabled = monitorEnabled;
 	}
 	public int getDelayRetries() {
 		return delayRetries;

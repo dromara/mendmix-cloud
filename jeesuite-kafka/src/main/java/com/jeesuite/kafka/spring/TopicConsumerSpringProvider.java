@@ -29,15 +29,17 @@ import org.springframework.util.ClassUtils;
 
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.kafka.KafkaConst;
 import com.jeesuite.kafka.annotation.ConsumerHandler;
 import com.jeesuite.kafka.consumer.ConsumerContext;
+import com.jeesuite.kafka.consumer.ErrorMessageProcessor;
 import com.jeesuite.kafka.consumer.NewApiTopicConsumer;
 import com.jeesuite.kafka.consumer.OldApiTopicConsumer;
 import com.jeesuite.kafka.consumer.TopicConsumer;
+import com.jeesuite.kafka.consumer.hanlder.OffsetLogHanlder;
+import com.jeesuite.kafka.consumer.hanlder.RetryErrorMessageHandler;
 import com.jeesuite.kafka.handler.MessageHandler;
-import com.jeesuite.kafka.handler.OffsetLogHanlder;
 import com.jeesuite.kafka.serializer.KyroMessageDeserializer;
-import com.jeesuite.kafka.utils.KafkaConst;
 
 
 /**
@@ -81,6 +83,8 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
     private String routeEnv;
     
     private OffsetLogHanlder offsetLogHanlder;
+    
+    private RetryErrorMessageHandler retryErrorMessageHandler;
     
 	@Override
     public void afterPropertiesSet() throws Exception {
@@ -190,13 +194,15 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		logger.info("\n============kafka.Consumer.Config============\n" + sb.toString() + "\n");
 
 		ConsumerContext consumerContext = new ConsumerContext(configs, groupId, consumerId, topicHandlers, processThreads);
+		consumerContext.setOffsetLogHanlder(offsetLogHanlder);
+		consumerContext.setErrorMessageProcessor(new ErrorMessageProcessor(1, 10, 3, retryErrorMessageHandler));
+		
 		if(useNewAPI){			
 			consumer = new NewApiTopicConsumer(consumerContext);
 		}else{
 			consumer = new OldApiTopicConsumer(consumerContext);
 		}
 		
-		consumerContext.setOffsetLogHanlder(offsetLogHanlder);
 
         consumer.start();
         //状态：运行中

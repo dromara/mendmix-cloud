@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -52,8 +51,6 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	private ExecutorService fetcheExecutor;
 	private StandardThreadExecutor processExecutor;
 	private List<ConsumerWorker> consumerWorks = new ArrayList<>();
-	private ErrorMessageDefaultProcessor errorMessageProcessor = new ErrorMessageDefaultProcessor(1);
-	
 	private final Map<String, OffsetCommitMeta> uncommittedOffsetMap = new ConcurrentHashMap<>();
 	
 	private boolean offsetAutoCommit;
@@ -252,7 +249,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 		}
 		fetcheExecutor.shutdown();
 		if(processExecutor != null)processExecutor.shutdown();
-		errorMessageProcessor.close();
+		consumerContext.close();
 	}
 	
 	private class ConsumerWorker implements Runnable {
@@ -358,12 +355,16 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 							}
 							lock.unlock();
 						}
+						//回执
+                        if(message.isConsumerAck()){
+                        	consumerContext.sendConsumerAck(message.getMsgId());
+						}
 						//
 						consumerContext.saveOffsetsAfterProcessed(record.topic(), record.partition(), record.offset());
 					} catch (Exception e) {
 						boolean processed = messageHandler.onProcessError(message);
 						if(processed == false){
-							errorMessageProcessor.submit(message, messageHandler);
+							consumerContext.processErrorMessage(record.topic(), message);
 						}
 						logger.error("["+messageHandler.getClass().getSimpleName()+"] process Topic["+record.topic()+"] error",e);
 					}

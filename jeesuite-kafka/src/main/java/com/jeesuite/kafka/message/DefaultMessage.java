@@ -21,10 +21,12 @@ public class DefaultMessage implements Serializable {
 	private Map<String, Object> headers;
 	
 	private transient long partitionHash;
+	
+	private transient String topic;
 
 	private Serializable body;
 	
-	private boolean ackRequired = false;//是否需要消费回执
+	private boolean consumerAck = false;//是否需要消费回执
 	
 	//兼容一些历史的consumer
 	private transient boolean sendBodyOnly = false;
@@ -32,7 +34,6 @@ public class DefaultMessage implements Serializable {
 	public DefaultMessage() {}
 
 	public DefaultMessage(Serializable body) {
-		super();
 		this.body = body;
 	}
 	
@@ -40,24 +41,21 @@ public class DefaultMessage implements Serializable {
 	 * @param body 消息体
 	 * @param ackRequired 是否需要消费回执
 	 */
-	public DefaultMessage(Serializable body, boolean ackRequired) {
-		super();
+	public DefaultMessage(Serializable body, boolean consumerAck) {
 		this.body = body;
-		this.ackRequired = ackRequired;
+		this.consumerAck = consumerAck;
 	}
 	
 	public DefaultMessage(Serializable body, Serializable partitionFactor) {
-		super();
 		this.body = body;
 		this.partitionFactor = partitionFactor;
 	}
 
-	public DefaultMessage(Serializable body, long partitionHash, Serializable partitionFactor, boolean ackRequired) {
-		super();
+	public DefaultMessage(Serializable body, long partitionHash, Serializable partitionFactor, boolean consumerAck) {
 		this.body = body;
 		this.partitionHash = partitionHash;
 		this.partitionFactor = partitionFactor;
-		this.ackRequired = ackRequired;
+		this.consumerAck = consumerAck;
 	}
 
 	public String getMsgId() {
@@ -97,12 +95,12 @@ public class DefaultMessage implements Serializable {
 		this.msgId = msgId;
 	}
 
-	public boolean isAckRequired() {
-		return ackRequired;
+	public boolean isConsumerAck() {
+		return consumerAck;
 	}
 	
-	public DefaultMessage ackRequired(boolean ackRequired) {
-		this.ackRequired = ackRequired;
+	public DefaultMessage consumerAck(boolean consumerAck) {
+		this.consumerAck = consumerAck;
 		return this;
 	}
 
@@ -131,7 +129,7 @@ public class DefaultMessage implements Serializable {
 	}
 
 	public void setAckRequired(boolean ackRequired) {
-		this.ackRequired = ackRequired;
+		this.consumerAck = ackRequired;
 	}
 
 	public boolean isSendBodyOnly() {
@@ -142,6 +140,13 @@ public class DefaultMessage implements Serializable {
 		this.sendBodyOnly = sendBodyOnly;
 		return this;
 	}
+
+	public String getTopic() {
+		return topic;
+	}
+
+	public void setTopic(String topic) {
+		this.topic = topic;
+	}
 	
-    
 }

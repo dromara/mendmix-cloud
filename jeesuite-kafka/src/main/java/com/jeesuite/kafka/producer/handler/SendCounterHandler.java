@@ -23,7 +23,6 @@ import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.monitor.model.ProducerStat;
-import com.jeesuite.kafka.serializer.ZKStringSerializer;
 
 /**
  * @description <br>
@@ -38,8 +37,6 @@ public class SendCounterHandler implements ProducerEventHandler {
 
 	private int currentStatHourOfDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY); // 当前统计的小时
 
-	private ZkClient zkClient;
-	//
 	private ScheduledExecutorService statScheduler;
 	
 	private String groupPath;
@@ -47,13 +44,13 @@ public class SendCounterHandler implements ProducerEventHandler {
 	
 	private String producerGroup;
 	
+	private ZkClient zkClient;
+	
 	private AtomicBoolean commited = new AtomicBoolean(false);
 
-	public SendCounterHandler(String producerGroup, String zkServers) {
+	public SendCounterHandler(String producerGroup, ZkClient zkClient) {
+		this.zkClient = zkClient;
 		this.producerGroup =producerGroup;
-		int sessionTimeoutMs = 10000;
-		int connectionTimeoutMs = 10000;
-		zkClient = new ZkClient(zkServers, sessionTimeoutMs, connectionTimeoutMs, new ZKStringSerializer());
 		//
 		groupPath = ROOT + "/" + producerGroup;
 		if(!zkClient.exists(groupPath)){
@@ -79,7 +76,6 @@ public class SendCounterHandler implements ProducerEventHandler {
 	@Override
 	public void close() throws IOException {
 		statScheduler.shutdown();
-		zkClient.close();
 	}
 
 	private void initCollectionTimer() {

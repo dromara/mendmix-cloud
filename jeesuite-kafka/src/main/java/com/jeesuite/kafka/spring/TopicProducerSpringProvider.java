@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Properties;
 import java.util.Set;
 
+import org.I0Itec.zkclient.ZkClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.kafka.KafkaConst;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.partiton.DefaultPartitioner;
 import com.jeesuite.kafka.producer.DefaultTopicProducer;
@@ -23,7 +25,7 @@ import com.jeesuite.kafka.producer.TopicProducer;
 import com.jeesuite.kafka.producer.handler.SendCounterHandler;
 import com.jeesuite.kafka.producer.handler.SendErrorDelayRetryHandler;
 import com.jeesuite.kafka.serializer.KyroMessageSerializer;
-import com.jeesuite.kafka.utils.KafkaConst;
+import com.jeesuite.kafka.serializer.ZKStringSerializer;
 
 /**
  * 消息发布者集成spring封装对象
@@ -47,13 +49,17 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
     
     private String producerGroup;
     
-    private String monitorZkServers;
+    private boolean monitorEnabled = false;
     
     //延迟重试次数
     private int delayRetries = 3;
     
     //环境路由
     private String routeEnv;
+    
+    private ZkClient zkClient;
+    
+    private boolean consumerAckEnabled = false;
     
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -100,13 +106,19 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 
         KafkaProducer<String, Object> kafkaProducer = new KafkaProducer<String, Object>(configs);
 
-        this.producer = new DefaultTopicProducer(kafkaProducer,defaultAsynSend);
+        String monitorZkServers = ResourceUtils.getProperty("kafka.zkServers");
+        if(StringUtils.isNotBlank(monitorZkServers)){
+        	zkClient = new ZkClient(monitorZkServers, 10000, 5000, new ZKStringSerializer());
+        }
+        this.producer = new DefaultTopicProducer(kafkaProducer,zkClient,consumerAckEnabled);
 
         //hanlder
-        if(StringUtils.isNotBlank(monitorZkServers)){
-        	Validate.notBlank(producerGroup,"enable producer monitor property[producerGroup] is required");
-        	this.producer.addEventHandler(new SendCounterHandler(producerGroup,monitorZkServers));
-        }
+        if(monitorEnabled){    
+			Validate.notBlank(producerGroup,"enable producer monitor property[producerGroup] is required");
+			Validate.notNull(zkClient, "enable producer monitor property[kafka.zkServers] is required");
+			
+			this.producer.addEventHandler(new SendCounterHandler(producerGroup,zkClient));
+		}
         if(delayRetries > 0){
         	this.producer.addEventHandler(new SendErrorDelayRetryHandler(producerGroup,kafkaProducer, delayRetries));
         }
@@ -134,12 +146,17 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 		this.producerGroup = producerGroup;
 	}
 	
-	public void setMonitorZkServers(String monitorZkServers) {
-		this.monitorZkServers = monitorZkServers;
+
+	public void setMonitorEnabled(boolean monitorEnabled) {
+		this.monitorEnabled = monitorEnabled;
 	}
 
 	public void setDelayRetries(int delayRetries) {
 		this.delayRetries = delayRetries;
+	}
+	
+	public void setConsumerAckEnabled(boolean consumerAckEnabled) {
+		this.consumerAckEnabled = consumerAckEnabled;
 	}
 
 	/**

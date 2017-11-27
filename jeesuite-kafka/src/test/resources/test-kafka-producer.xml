@@ -13,8 +13,8 @@
         <property name="defaultAsynSend" value="true" />
         <!-- 标识同一集群，监控需要 -->
         <property name="producerGroup" value="demo" />
-        <!-- 配置zkServers用于监控信息同步，不配置则不开启producer监控 -->
-        <property name="monitorZkServers" value="${kafka.zkServers}" />
+        <!-- 开启producer监控 -->
+        <property name="monitorEnabled" value="true" />
         <!-- 
           延迟重试次数，默认为3。 
           延迟重试与kafka自身重试不同。如果开启了延时重试、kafka重试retries建议设置为1或者0
@@ -23,6 +23,7 @@
           延迟重试只针对异步发送模式。
         -->
         <property name="delayRetries" value="3" />
+        <property name="consumerAckEnabled" value="true" />
         <property name="configs">
             <!-- 以下参数参考:http://kafka.apache.org/documentation.html#producerconfigs -->
             <props>

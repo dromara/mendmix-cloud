@@ -1,6 +1,6 @@
 package com.jeesuite.test;
 
-import com.jeesuite.kafka.handler.OffsetLogHanlder;
+import com.jeesuite.kafka.consumer.hanlder.OffsetLogHanlder;
 
 public class MysqlOffsetLogHanlder implements OffsetLogHanlder {
 

@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.kafka.consumer.hanlder.RetryErrorMessageHandler;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
@@ -23,24 +24,27 @@ import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年10月25日
  */
-public class ErrorMessageDefaultProcessor implements Closeable{
+public class ErrorMessageProcessor implements Closeable{
 	
-	private static final Logger logger = LoggerFactory.getLogger(ErrorMessageDefaultProcessor.class);
+	private static final Logger logger = LoggerFactory.getLogger(ErrorMessageProcessor.class);
 	
 	//重试时间间隔单元（毫秒）
-	private static final long RETRY_PERIOD_UNIT = 15 * 1000;
+	private long retryPeriodUnit;
+	private int maxReties;
+	private RetryErrorMessageHandler persistHandler;
 
 	private final PriorityBlockingQueue<PriorityTask> taskQueue = new PriorityBlockingQueue<PriorityTask>(1000);  
 	
 	private ExecutorService executor;
 	
 	private AtomicBoolean closed = new AtomicBoolean(false);
-	
-	public ErrorMessageDefaultProcessor() {
-		this(1);
-	}
 
-	public ErrorMessageDefaultProcessor(int poolSize) {
+
+	public ErrorMessageProcessor(int poolSize,int retryPeriodSeconds,int maxReties,RetryErrorMessageHandler persistHandler) {
+		
+		this.retryPeriodUnit = retryPeriodSeconds * 1000;
+		this.maxReties = maxReties;
+		this.persistHandler = persistHandler;
 		executor = Executors.newFixedThreadPool(poolSize, new StandardThreadFactory("ErrorMessageProcessor"));
 		executor.submit(new Runnable() {
 			@Override
@@ -90,7 +94,7 @@ public class ErrorMessageDefaultProcessor implements Closeable{
 	    long nextFireTime;
 		
 	    public PriorityTask(DefaultMessage message, MessageHandler messageHandler) {
-	    	this(message, messageHandler, System.currentTimeMillis() + RETRY_PERIOD_UNIT);
+	    	this(message, messageHandler, System.currentTimeMillis() + retryPeriodUnit);
 	    }
 	    
 		public PriorityTask(DefaultMessage message, MessageHandler messageHandler,long nextFireTime) {
@@ -117,11 +121,19 @@ public class ErrorMessageDefaultProcessor implements Closeable{
 		}
 		
 		private void retry(){
-			if(retryCount == 3){
-				logger.warn("retry_skip mssageId[{}] retry over {} time error ,skip!!!");
+			if(retryCount == maxReties){
+				if(persistHandler != null){
+					try {
+						persistHandler.process(message.getTopic(), message);
+					} catch (Exception e) {
+						logger.warn("persistHandler error,topic["+message.getTopic()+"]",e);
+					}
+				}else{					
+					logger.warn("retry_skip topic[{}] maxReties over {} time error ,skip!!!",message.getTopic(),maxReties);
+				}
 				return;
 			}
-			nextFireTime = nextFireTime + retryCount * RETRY_PERIOD_UNIT;
+			nextFireTime = nextFireTime + retryCount * retryPeriodUnit;
 			//重新放入任务队列
 			taskQueue.add(this);
 			logger.debug("re-submit mssageId[{}] task to queue,next fireTime:{}",this.message.getMsgId(),nextFireTime);

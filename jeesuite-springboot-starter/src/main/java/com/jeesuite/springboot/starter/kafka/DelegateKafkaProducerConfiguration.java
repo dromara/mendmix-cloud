@@ -31,7 +31,7 @@ public class DelegateKafkaProducerConfiguration {
 		bean.setConfigs(producerProperties.getConfigs());
 		bean.setDefaultAsynSend(producerProperties.isDefaultAsynSend());
 		bean.setDelayRetries(producerProperties.getDelayRetries());
-		bean.setMonitorZkServers(producerProperties.getMonitorZkServers());
+		bean.setMonitorEnabled(producerProperties.isMonitorEnabled());
 		bean.setProducerGroup(producerProperties.getProducerGroup());
 
 		return bean;

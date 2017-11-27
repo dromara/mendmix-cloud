@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.kafka.handler;
+package com.jeesuite.kafka.consumer.hanlder;
 
 /**
  * 消息消费偏移量记录器
