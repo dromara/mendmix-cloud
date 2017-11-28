@@ -5,6 +5,7 @@ public class WebConstants {
 	public static final String HEADER_PREFIX = "x-";
 	public static final String HEADER_REAL_IP = "x-real-ip";
 	public static final String HEADER_FROWARDED_FOR = "x-forwarded-for";
+	public static final String HEADER_AUTH_TOKEN = "x-auth-token";
 	public static final String HEADER_AUTH_USER = "x-auth-user";
 	public static final String HEADER_FORWARDED_BASE_URL = "x-forwarded-base-url";
 	public static final String HEADER_FORWARDED_PROTO = "x-forwarded-proto";

@@ -14,6 +14,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.springweb.WebConstants;
 import com.jeesuite.springweb.utils.IpUtils;
 
@@ -44,6 +45,10 @@ public class RestTemplateAutoHeaderInterceptor implements ClientHttpRequestInter
 		 }
 		 //
 		 headers.put(WebConstants.HEADER_INVOKER_IP, IpUtils.getLocalIpAddr());
+		 
+		 if(!headers.containsKey(WebConstants.HEADER_AUTH_TOKEN)){			 
+			 headers.put(WebConstants.HEADER_AUTH_TOKEN, TokenGenerator.generateWithSign());
+		 }
 		 
 		 return headers;
 	}

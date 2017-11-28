@@ -3,17 +3,10 @@
  */
 package com.jeesuite.kafka.consumer;
 
-import java.io.Closeable;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -25,8 +18,6 @@ import com.jeesuite.kafka.message.DefaultMessage;
 import com.jeesuite.kafka.monitor.ZkConsumerCommand;
 import com.jeesuite.kafka.monitor.model.TopicPartitionInfo;
 import com.jeesuite.kafka.serializer.MessageDecoder;
-import com.jeesuite.kafka.thread.StandardThreadExecutor;
-import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
 
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
@@ -41,48 +32,22 @@ import kafka.utils.VerifiableProperties;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年7月1日
  */
-public class OldApiTopicConsumer implements TopicConsumer,Closeable {
-
+@SuppressWarnings("deprecation")
+public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicConsumer {
 
 	private final static Logger logger = LoggerFactory.getLogger(OldApiTopicConsumer.class);
 	
 	private ConsumerConnector connector;
-	
 	private Deserializer<Object> deserializer;
-	//
-	private ConsumerContext consumerContext;
-	//接收线程
-	private StandardThreadExecutor fetchExecutor;
-	//默认处理线程
-	private StandardThreadExecutor defaultProcessExecutor;
-	
-	//执行线程池满了被拒绝任务处理线程池
-	private ExecutorService poolRejectedExecutor = Executors.newSingleThreadExecutor();
-	
-	private AtomicBoolean runing = new AtomicBoolean(false);
-	
-	/**
-	 * 
-	 * @param connector
-	 * @param topics
-	 * @param processThreads 
-	 */
+
 	@SuppressWarnings("unchecked")
 	public OldApiTopicConsumer(ConsumerContext context) {
-		
-		this.consumerContext = context;
+		super(context);
 		try {
 			Class<?> deserializerClass = Class.forName(context.getProperties().getProperty("value.deserializer"));
 			deserializer = (Deserializer<Object>) deserializerClass.newInstance();
 		} catch (Exception e) {}
 		this.connector = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(context.getProperties()));
-		
-		int poolSize = consumerContext.getMessageHandlers().size();
-		this.fetchExecutor = new StandardThreadExecutor(poolSize, poolSize,0, TimeUnit.SECONDS, poolSize,new StandardThreadFactory("KafkaFetcher"));
-		
-		this.defaultProcessExecutor = new StandardThreadExecutor(1, context.getMaxProcessThreads(),30, TimeUnit.SECONDS, context.getMaxProcessThreads(),new StandardThreadFactory("KafkaProcessor"),new PoolFullRunsPolicy());
-		
-		logger.info("Kafka Conumer ThreadPool initialized,fetchPool Size:{},defalutProcessPool Size:{} ",poolSize,context.getMaxProcessThreads());
 	}
 
 
@@ -214,7 +179,8 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 		 * @param message
 		 */
 		private void submitMessageToProcess(final String topicName,final MessageAndMetadata<String, Object> messageAndMeta,final DefaultMessage message) {
-			defaultProcessExecutor.submit(new Runnable() {
+			
+			(message.isConsumerAck() ? highProcessExecutor : defaultProcessExecutor).submit(new Runnable() {
 				@Override
 				public void run() {
 					try {	
@@ -236,6 +202,7 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 						}
 						logger.error("received_topic_process_error ["+processorName+"]processMessage error,topic:"+topicName,e);
 					}
+				
 				}
 			});
 		}
@@ -244,29 +211,12 @@ public class OldApiTopicConsumer implements TopicConsumer,Closeable {
 
 	@Override
 	public void close() {
+		super.close();
 		if(!runing.get())return;
-		this.fetchExecutor.shutdown();
-		this.defaultProcessExecutor.shutdown();
-		this.poolRejectedExecutor.shutdown();
 		this.connector.commitOffsets();
 		this.connector.shutdown();
 		runing.set(false);
-		this.consumerContext.close();
 		logger.info("KafkaTopicSubscriber shutdown ok...");
 	}
 	
-	/**
-	 * 处理线程满后策略
-	 * @description <br>
-	 * @author <a href="mailto:vakinge@gmail.com">vakin</a>
-	 * @date 2016年7月25日
-	 */
-	private class PoolFullRunsPolicy implements RejectedExecutionHandler {
-		
-        public PoolFullRunsPolicy() {}
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-        	poolRejectedExecutor.execute(r);
-        }
-    }
-		
 }

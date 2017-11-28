@@ -1,6 +1,5 @@
 package com.jeesuite.kafka.consumer;
 
-import java.io.Closeable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,8 +32,6 @@ import org.slf4j.LoggerFactory;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
-import com.jeesuite.kafka.thread.StandardThreadExecutor;
-import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
 
 /**
  * 默认消费者实现（new consumer api）
@@ -42,19 +39,16 @@ import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年6月12日
  */
-public class NewApiTopicConsumer implements TopicConsumer,Closeable {
+public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicConsumer {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConsumerWorker.class);
 
 	private Map<String, MessageHandler> topicHandlers;
 	
-	private ExecutorService fetcheExecutor;
-	private StandardThreadExecutor processExecutor;
 	private List<ConsumerWorker> consumerWorks = new ArrayList<>();
 	private final Map<String, OffsetCommitMeta> uncommittedOffsetMap = new ConcurrentHashMap<>();
 	
 	private boolean offsetAutoCommit;
-	private ConsumerContext consumerContext;
 	
 	private Properties properties;
     private String clientIdPrefix;
@@ -66,17 +60,12 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
     
     
 	public NewApiTopicConsumer(ConsumerContext context) {
-		this.consumerContext = context;
+		super(context);
 		properties = context.getProperties();
 		clientIdPrefix = properties.getProperty(ConsumerConfig.CLIENT_ID_CONFIG);
 		this.topicHandlers = context.getMessageHandlers();
 		//enable.auto.commit 默认为true
 		offsetAutoCommit = context.getProperties().containsKey("enable.auto.commit") == false || Boolean.parseBoolean(context.getProperties().getProperty("enable.auto.commit"));
-		//
-	    fetcheExecutor = Executors.newFixedThreadPool(topicHandlers.size(),new StandardThreadFactory("KafkaFetcher"));
-	    //
-	    processExecutor = new StandardThreadExecutor(1, context.getMaxProcessThreads(), 1000,new StandardThreadFactory("KafkaProcessor"));
-	    
 	    if(properties.containsKey("poll.timeout.ms")){	    	
 	    	pollTimeout = Long.parseLong(properties.remove("poll.timeout.ms").toString());
 	    }else{
@@ -98,7 +87,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 			   resetCorrectOffsets(worker);
 			}
 			consumerWorks.add(worker);
-			fetcheExecutor.submit(worker);
+			fetchExecutor.submit(worker);
 		}
 	}
 	
@@ -242,14 +231,14 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 	
 	@Override
 	public void close() {
+		super.close();
+		if(!runing.get())return;
 		for (int i = 0; i < consumerWorks.size(); i++) {
 			consumerWorks.get(i).close();
 			consumerWorks.remove(i);
 			i--;
 		}
-		fetcheExecutor.shutdown();
-		if(processExecutor != null)processExecutor.shutdown();
-		consumerContext.close();
+		runing.set(false);
 	}
 	
 	private class ConsumerWorker implements Runnable {
@@ -276,6 +265,14 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 				// no record found
 				if (records.isEmpty()) {
 					continue;
+				}
+				
+				//当处理线程满后，阻塞处理线程
+				while(true){
+					if(defaultProcessExecutor.getMaximumPoolSize() > defaultProcessExecutor.getSubmittedTasksCount()){
+						break;
+					}
+					try {Thread.sleep(100);} catch (Exception e) {}
 				}
 				
 				for (final ConsumerRecord<String,Serializable> record : records) {	
@@ -338,7 +335,7 @@ public class NewApiTopicConsumer implements TopicConsumer,Closeable {
 			//第一阶段处理
 			messageHandler.p1Process(message);
 			//第二阶段处理
-			processExecutor.submit(new Runnable() {
+			(message.isConsumerAck() ? highProcessExecutor : defaultProcessExecutor).submit(new Runnable() {
 				@Override
 				public void run() {
 					try {									

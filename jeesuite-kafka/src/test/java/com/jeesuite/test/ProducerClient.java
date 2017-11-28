@@ -46,19 +46,19 @@ public class ProducerClient implements ApplicationContextAware{
 					timer.cancel();
 					return;
 				}
-				for (int i = 0; i < 1; i++) {
+				for (int i = 0; i < 2; i++) {
 					
 					pool.submit(new Runnable() {			
 						@Override
 						public void run() {
 							String topic = new Random().nextBoolean() ? "demo-topic1" : "demo-topic2";
-                            topicProducer.publish(topic, new DefaultMessage(RandomStringUtils.random(5, true, true)));
+                            topicProducer.publish(topic, new DefaultMessage(RandomStringUtils.random(5, true, true)).consumerAck(new Random().nextBoolean()));
 							count.incrementAndGet();
 						}
 					});
 				}
 			}
-		}, 1000, 2000);
+		}, 1000, 1000);
 		
 		while(true){
 			if(count.get() >= nums){

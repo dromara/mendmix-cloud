@@ -114,7 +114,7 @@ public class ConsumerContext {
     
     public void sendConsumerAck(String messageId){
     	if(zkClient == null){
-    		log.warn("Message set consumerAck = true,but not zookeeper client config[kafka.zkServers] found!!!");
+    		log.warn("Message set consumerAck = true,but not zookeeper config[kafka.zkServers] found!!!");
     		return;
     	}
     	String path = KafkaConst.ZK_PRODUCER_ACK_PATH + messageId;

@@ -72,7 +72,7 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
       //等待回执
 		if(requireAck){
 			if(zkClient == null){
-				log.warn("Message set consumerAck = true,but not zookeeper client config[kafka.zkServers] found!!!");
+				log.warn("Message set consumerAck = true,but not zookeeper config[kafka.zkServers] found!!!");
 			}else{
 				log.debug("wait_consumer_ack,messageId:{}",message.getMsgId());
 				new ConsumerAckWatcher(message.getMsgId(), zkClient).waitAck();

@@ -37,16 +37,20 @@ public class ConsumerAckWatcher {
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				latch.countDown();
 				consumerGroup = Objects.toString(data);
-				log.debug("recv_consumer_ack message[{}]，from group:{}",messageId,consumerGroup);
+				log.debug("recv_consumer_ack messageId:{}，from group:{}",messageId,consumerGroup);
 				try {zkClient.delete(dataPath);} catch (Exception e) {}
 			}
 		});
 	}
 	
 	
+	/**
+	 * 等待应答
+	 * @return 返回消费者groupName
+	 */
 	public String waitAck(){
 		try {
-			this.latch.await(10000, TimeUnit.MILLISECONDS);
+			this.latch.await(5000, TimeUnit.MILLISECONDS);
 			return consumerGroup;
 		} catch (Exception e) {} 
 		return null;
