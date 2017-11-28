@@ -69,10 +69,7 @@ public class SendErrorDelayRetryHandler implements ProducerEventHandler{
 	public void onSuccessed(String topicName, RecordMetadata metadata) {}
 
 	@Override
-	public void onError(String topicName, DefaultMessage message, boolean isAsynSend) {
-		if(isAsynSend == false){
-			return;
-		}
+	public void onError(String topicName, DefaultMessage message) {
 		//在重试队列不处理
 		if(messageIdsInQueue.contains(message.getMsgId()))return;
 		//

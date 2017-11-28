@@ -118,8 +118,13 @@ public class ConsumerContext {
     		return;
     	}
     	String path = KafkaConst.ZK_PRODUCER_ACK_PATH + messageId;
-    	if(!zkClient.exists(path))return;
-    	zkClient.writeData(path, groupId);
+    	try {			
+			zkClient.writeData(path, groupId);
+		} catch (org.I0Itec.zkclient.exception.ZkNoNodeException e) {
+			// do nothing
+		}catch (Exception e) {
+			log.warn("sendConsumerAck error",e);
+		}
     }
     
     public void close(){

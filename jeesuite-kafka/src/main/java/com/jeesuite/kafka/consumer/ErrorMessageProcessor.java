@@ -31,7 +31,7 @@ public class ErrorMessageProcessor implements Closeable{
 	//重试时间间隔单元（毫秒）
 	private long retryPeriodUnit;
 	private int maxReties;
-	private RetryErrorMessageHandler persistHandler;
+	private RetryErrorMessageHandler retryErrorHandler;
 
 	private final PriorityBlockingQueue<PriorityTask> taskQueue = new PriorityBlockingQueue<PriorityTask>(1000);  
 	
@@ -44,7 +44,7 @@ public class ErrorMessageProcessor implements Closeable{
 		
 		this.retryPeriodUnit = retryPeriodSeconds * 1000;
 		this.maxReties = maxReties;
-		this.persistHandler = persistHandler;
+		this.retryErrorHandler = persistHandler;
 		executor = Executors.newFixedThreadPool(poolSize, new StandardThreadFactory("ErrorMessageProcessor"));
 		executor.submit(new Runnable() {
 			@Override
@@ -122,9 +122,9 @@ public class ErrorMessageProcessor implements Closeable{
 		
 		private void retry(){
 			if(retryCount == maxReties){
-				if(persistHandler != null){
+				if(retryErrorHandler != null){
 					try {
-						persistHandler.process(message.getTopic(), message);
+						retryErrorHandler.process(message.getTopic(), message);
 					} catch (Exception e) {
 						logger.warn("persistHandler error,topic["+message.getTopic()+"]",e);
 					}

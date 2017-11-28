@@ -18,6 +18,6 @@ public interface ProducerEventHandler extends Closeable{
 
 	public void onSuccessed(String topicName, RecordMetadata metadata);
 
-	public void onError(String topicName, DefaultMessage message,boolean isAsynSend);
+	public void onError(String topicName, DefaultMessage message);
 
 }

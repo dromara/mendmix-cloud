@@ -67,7 +67,7 @@ public class SendCounterHandler implements ProducerEventHandler {
 	}
 
 	@Override
-	public void onError(String topicName, DefaultMessage message, boolean isAsynSend) {
+	public void onError(String topicName, DefaultMessage message) {
         try {			
         	updateProducerStat(topicName, true);
 		} catch (Exception e) {}

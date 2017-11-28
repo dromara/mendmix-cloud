@@ -1,5 +1,6 @@
 package com.jeesuite.kafka.producer;
 
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +22,7 @@ public class ConsumerAckWatcher {
 	private static final Logger log = LoggerFactory.getLogger(ConsumerAckWatcher.class);
 
 	private CountDownLatch latch;
+	private String consumerGroup;
 	
 	public ConsumerAckWatcher(String messageId, ZkClient zkClient) {
 		this.latch = new CountDownLatch(1);
@@ -34,19 +36,20 @@ public class ConsumerAckWatcher {
 			@Override
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				latch.countDown();
-				log.debug("recv_consumer_ack message[{}]，from group:{}",messageId,data);
+				consumerGroup = Objects.toString(data);
+				log.debug("recv_consumer_ack message[{}]，from group:{}",messageId,consumerGroup);
 				try {zkClient.delete(dataPath);} catch (Exception e) {}
 			}
 		});
 	}
 	
 	
-	public void waitAck(){
+	public String waitAck(){
 		try {
 			this.latch.await(10000, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			
-		} 
+			return consumerGroup;
+		} catch (Exception e) {} 
+		return null;
 	}
 	
 }

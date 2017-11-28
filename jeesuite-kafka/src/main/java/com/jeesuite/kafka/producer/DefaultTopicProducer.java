@@ -116,7 +116,7 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
             public void onCompletion(RecordMetadata metadata, Exception ex) {
                 if (ex != null) {
                 	for (ProducerEventHandler handler : eventHanlders) {
-                		try {handler.onError(topicName, message, true);} catch (Exception e) {}
+                		try {handler.onError(topicName, message);} catch (Exception e) {}
     				}
                 	log.error("kafka_send_fail,topic="+topicName+",messageId="+messageKey,ex);
                 } else {
