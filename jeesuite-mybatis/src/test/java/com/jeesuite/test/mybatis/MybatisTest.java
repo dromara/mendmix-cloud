@@ -66,7 +66,7 @@ public class MybatisTest implements ApplicationContextAware{
 		}
 	}
 	
-	//@After
+	@After
 	public void after(){
 		List<UserEntity> list = userMapper.selectAll();
 		for (UserEntity userEntity : list) {
@@ -91,22 +91,22 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	private void insertTestData(){
 		
-//		for (int i = 0; i < mobiles.length; i++) {
-//			UserEntity entity = new UserEntity();
-//			entity.setCreatedAt(new Date());
-//			entity.setEmail(mobiles[i] + "@163.com");
-//			entity.setMobile(mobiles[i]);
-//			entity.setType((short)(i % 2 == 0 ? 1 : 2));
-//			entity.setStatus((short)(i % 3 == 0 ? 1 : 2));
-//			userMapper.insert(entity);
-//			
-//			SnsAccounyBindingEntity bindingEntity = new SnsAccounyBindingEntity();
-//			bindingEntity.setUserId(entity.getId());
-//			bindingEntity.setUnionId(DigestUtils.md5(mobiles[i] ));
-//			bindingEntity.setSnsType("weixin");
-//			bindingEntity.setEnabled(true);
-//			snsAccounyBindingMapper.insertSelective(bindingEntity);
-//		}
+		for (int i = 0; i < mobiles.length; i++) {
+			UserEntity entity = new UserEntity();
+			entity.setCreatedAt(new Date());
+			entity.setEmail(mobiles[i] + "@163.com");
+			entity.setMobile(mobiles[i]);
+			entity.setType((short)(i % 2 == 0 ? 1 : 2));
+			entity.setStatus((short)(i % 3 == 0 ? 1 : 2));
+			userMapper.insert(entity);
+			
+			SnsAccounyBindingEntity bindingEntity = new SnsAccounyBindingEntity();
+			bindingEntity.setUserId(entity.getId());
+			bindingEntity.setUnionId(DigestUtils.md5(mobiles[i] ));
+			bindingEntity.setSnsType("weixin");
+			bindingEntity.setEnabled(true);
+			snsAccounyBindingMapper.insertSelective(bindingEntity);
+		}
 	}
 	
 	private void initCache() {

@@ -243,6 +243,10 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		this.scanPackages = scanPackages;
 	}
 
+	public void setRetryErrorMessageHandler(RetryErrorMessageHandler retryErrorMessageHandler) {
+		this.retryErrorMessageHandler = retryErrorMessageHandler;
+	}
+
 	@Override
     public void destroy() throws Exception {
 		consumer.close();

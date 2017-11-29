@@ -3,9 +3,10 @@ package com.jeesuite.kafka.message;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.kafka.common.utils.Utils;
+
+import com.jeesuite.common.util.TokenGenerator;
 
 /**
  *  默认消息实体
@@ -16,7 +17,7 @@ import org.apache.kafka.common.utils.Utils;
 public class DefaultMessage implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	private String msgId = UUID.randomUUID().toString();
+	private String msgId = TokenGenerator.generate();
 	private Serializable partitionFactor;//分区因子
 	private Map<String, Object> headers;
 	

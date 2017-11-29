@@ -13,6 +13,7 @@ import com.jeesuite.springweb.WebConstants;
 
 public class WebUtils {
 
+	private static final String POINT = ".";
 	private static final String XML_HTTP_REQUEST = "XMLHttpRequest";
 	
 	public static boolean isAjax(HttpServletRequest request){
@@ -98,18 +99,18 @@ public class WebUtils {
 			return host;
 		}
 		
-		String[] segs = StringUtils.split(host, ".");
+		String[] segs = StringUtils.split(host, POINT);
 		int len = segs.length;
-		return segs[len - 2] + "."+ segs[len - 1];
+		return segs[len - 2] + POINT+ segs[len - 1];
 	}
 	
 	public static  String getRootDomain(String url) {
 		String host = getDomain(url);
 		if(IpUtils.isIp(host) || IpUtils.LOCAL_HOST.equals(host))return host;
 		
-		String[] segs = StringUtils.split(host, ".");
+		String[] segs = StringUtils.split(host, POINT);
 		int len = segs.length;
-		return segs[len - 2] + "."+ segs[len - 1];
+		return segs[len - 2] + POINT+ segs[len - 1];
 	}
 	
 	public static  String getDomain(String url) {

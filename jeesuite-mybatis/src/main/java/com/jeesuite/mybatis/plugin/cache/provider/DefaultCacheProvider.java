@@ -118,9 +118,16 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 		}
 		logger.debug("clearExpiredGroupKeys runing:cacheName:{} , score range:0~{}", cacheGroup, maxScore);
 	}
+	
+	@Override
+	public boolean exists(String key) {
+		return new RedisObject(key).exists();
+	}
 
 	
 	@Override
 	public void close() throws IOException {}
+
+	
 
 }

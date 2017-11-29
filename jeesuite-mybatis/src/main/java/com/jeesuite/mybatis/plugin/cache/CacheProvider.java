@@ -30,5 +30,7 @@ public interface CacheProvider extends Closeable{
 	void clearExpiredGroupKeys(String cacheGroup);
 	
 	void clearGroup(String groupName,boolean containPkCache);
+	
+	boolean exists(String key);
 
 }

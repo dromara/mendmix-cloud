@@ -234,8 +234,10 @@ public class CacheHandler implements InterceptorHandler {
 				String idCacheKey = genarateQueryCacheKey(getQueryByPkMethodCache(mt.getId()).keyPattern,result);
 				
 				if(idCacheKey != null && cacheKey != null){
-					//缓存idkey->实体
-					getCacheProvider().set(idCacheKey,result, cacheInfo.getExpire());
+					if(!getCacheProvider().exists(idCacheKey)){						
+						//缓存idkey->实体
+						getCacheProvider().set(idCacheKey,result, cacheInfo.getExpire());
+					}
 					//缓存fieldkey->idkey
 					cacheFieldRefKey(cacheKey,idCacheKey, cacheInfo.getExpire());
 					if(logger.isDebugEnabled())logger.debug("_autocache_ method[{}] put result to cache，cacheKey:{},and add ref cacheKey:{}",mt.getId(),idCacheKey,cacheKey);
@@ -297,7 +299,7 @@ public class CacheHandler implements InterceptorHandler {
 			if(parameterObject != null && parameterObject.getClass().getName().equals(TK_MAPPER_EXAMPLE_CLASS_NAME)){
 				//清除group下所有缓存
 				removeCacheByGroup(mt.getId(), mapperNameSpace,true);
-				logger.warn("\n===============\n使用了[tk.mybatis.mapper.entity.Example]更新或删除,全部清除[{}]下缓存，\n缓存数据多的情况下会出现性能问题，因此不建议Example与自动缓存一起使用!!!!!!!!\n=================",mapperNameSpace);
+				logger.warn("[tk.mybatis.mapper.entity.Example] Not recommended for use with [@Cache],may be caching cleanup failure",TK_MAPPER_EXAMPLE_CLASS_NAME,mapperNameSpace);
 				return;
 			}
 			EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperNameSpace);
@@ -514,8 +516,13 @@ public class CacheHandler implements InterceptorHandler {
 
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
 		
+		Class<BaseEntity> baseEntityClass = BaseEntity.class;
 		QueryMethodCache methodCache = null;
 		for (EntityInfo ei : entityInfos) {
+			if(!baseEntityClass.isAssignableFrom(ei.getEntityClass())){
+				logger.warn("[{}] not extends from [{}],ignore register auto cache!!!!",ei.getEntityClass().getName(),baseEntityClass.getName());
+				continue;
+			}
 			Class<?> mapperClass = ei.getMapperClass();
 			
 			//按主键查询方法定义
@@ -584,6 +591,8 @@ public class CacheHandler implements InterceptorHandler {
 		}
 		
 		//
+		if(queryCacheMethods.isEmpty())return;
+		
 		registerClearExpiredGroupKeyTask();
 	}
 	

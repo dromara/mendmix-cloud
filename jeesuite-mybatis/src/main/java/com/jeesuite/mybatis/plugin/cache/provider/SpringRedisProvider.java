@@ -136,11 +136,18 @@ public class SpringRedisProvider extends AbstractCacheProvider implements Initia
 		logger.debug("ClearExpiredRegionKeysTimer runing:cacheName:{} , score range:0~{}",cacheGroup,maxScore);
 	}
 
+	
+	@Override
+	public boolean exists(String key) {
+		return redisTemplate.hasKey(key);
+	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		Validate.notNull(stringRedisTemplate," [stringRedisTemplate] is required");
 		Validate.notNull(redisTemplate," [redisTemplate] is required");
 	}
+	
+	
 
 }

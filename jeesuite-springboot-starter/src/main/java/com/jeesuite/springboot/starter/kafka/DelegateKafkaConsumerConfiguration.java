@@ -9,6 +9,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.jeesuite.kafka.consumer.hanlder.OffsetLogHanlder;
+import com.jeesuite.kafka.consumer.hanlder.RetryErrorMessageHandler;
 import com.jeesuite.kafka.spring.TopicConsumerSpringProvider;
 
 /**
@@ -23,6 +25,10 @@ public class DelegateKafkaConsumerConfiguration {
 
 	@Autowired
 	private KafkaConsumerProperties properties;
+	@Autowired(required=false)
+    private OffsetLogHanlder offsetLogHanlder;
+	@Autowired(required=false)
+    private RetryErrorMessageHandler retryErrorMessageHandler;
 
 	@Bean
 	public TopicConsumerSpringProvider comsumerProvider() {
@@ -33,6 +39,8 @@ public class DelegateKafkaConsumerConfiguration {
 		bean.setProcessThreads(properties.getProcessThreads());
 		bean.setUseNewAPI(properties.isUseNewAPI());
 		bean.setScanPackages(properties.getScanPackages());
+		bean.setOffsetLogHanlder(offsetLogHanlder);
+		bean.setRetryErrorMessageHandler(retryErrorMessageHandler);
 
 		return bean;
 	}

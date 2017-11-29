@@ -22,7 +22,7 @@ public class MybatisPluginProperties {
 	private boolean dbShardEnabled = false;
 	private boolean paginationEnabled = true;
 	private boolean nullValueCache = false;
-	private long cacheExpireSeconds = CacheExpires.IN_1DAY;
+	private long cacheExpireSeconds = CacheExpires.IN_1HOUR;
 	private boolean dynamicExpire = false;
 	
 	public boolean isCacheEnabled() {
