@@ -12,6 +12,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -37,13 +38,17 @@ public final class ResourceUtils {
 	private final static Properties allProperties = new Properties();
 	
 	private static Method envHelperGetPropertiesMethod;
+	private static Method envHelperGetAllPropertiesMethod;
 	
 	private synchronized static void load() {
 		if(inited)return;
 		try {
         	Class<?> threadClazz = Class.forName("com.jeesuite.spring.helper.EnvironmentHelper");  
         	envHelperGetPropertiesMethod = threadClazz.getMethod("getProperty", String.class);
+        	envHelperGetAllPropertiesMethod = threadClazz.getMethod("getAllProperties", String.class);
 		} catch (Exception e) {}
+		
+		merged = envHelperGetAllPropertiesMethod == null && envHelperGetPropertiesMethod == null;
 		try {
             String classpath = System.getProperty("java.class.path");
             System.out.println("CLASSPATH: " + classpath);
@@ -105,20 +110,32 @@ public final class ResourceUtils {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	private synchronized static void mergeWithEnvironment(){
 		if(merged)return;
+		Map<String, Object> envProperties = null;
+		if(envHelperGetAllPropertiesMethod != null){
+			try {
+				envProperties = (Map<String, Object>) envHelperGetAllPropertiesMethod.invoke(null,"");
+				if(envProperties == null || envProperties.isEmpty())return;
+				for (String key : envProperties.keySet()) {
+					allProperties.setProperty(key, envProperties.get(key).toString());
+				}
+				merged = true;
+			} catch (Exception e) {}
+			return;
+		}
 		Set<Entry<Object, Object>> entrySet = allProperties.entrySet();
 		
 		for (Entry<Object, Object> entry : entrySet) {
 			Object value = null;
 			try {
 				value = envHelperGetPropertiesMethod.invoke(null, entry.getKey());
+				if(value != null){
+					allProperties.setProperty(entry.getKey().toString(), value.toString());
+				}
 			} catch (Exception e) {
 				return;
-			}
-			if(value == null)value = entry.getValue();
-			if(value != null){
-				allProperties.setProperty(entry.getKey().toString(), value.toString());
 			}
 		}
 		
@@ -182,27 +199,17 @@ public final class ResourceUtils {
 		if(!merged){
 			mergeWithEnvironment();
 		}
-		if (allProperties.containsKey(key)) {
-			return allProperties.getProperty(key);
-		}
 		
-		try {
-			if(envHelperGetPropertiesMethod != null){				
-				Object _value = envHelperGetPropertiesMethod.invoke(null, key);
-				if(_value != null){
-					synchronized (allProperties) {						
-						allProperties.setProperty(key, _value.toString());
-					}
-					return _value.toString();
-				}
-			}
-		} catch (Exception e) {}
-		
+		//优先环境变量
 		String value = System.getProperty(key);
 		if(StringUtils.isNotBlank(value))return value;
 		
 		value = System.getenv(key);
 		if(StringUtils.isNotBlank(value))return value;
+		
+		if (allProperties.containsKey(key)) {
+			return allProperties.getProperty(key);
+		}
 		
 		return defaultValue;
 	}
@@ -255,7 +262,7 @@ public final class ResourceUtils {
 	}
 	
 	/**
-	 * 如果替换包含占位符则替换占位符，无法替换则不放入
+	 * 如果替换包含占位符则替换占位符
 	 * @param key
 	 * @return
 	 */
@@ -293,10 +300,6 @@ public final class ResourceUtils {
 				String refValue = getProperty(refKey);
 				if(StringUtils.isBlank(refValue)){
 					refValue = defaultValue;
-				}
-				//为空不处理
-				if(StringUtils.isBlank(refValue)){
-					return null;
 				}
 				finalValue.append(refValue);
 				

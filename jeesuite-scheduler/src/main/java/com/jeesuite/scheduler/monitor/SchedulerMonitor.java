@@ -49,7 +49,7 @@ public class SchedulerMonitor implements Closeable{
 	public JobGroupInfo getJobGroupInfo(String groupName){
 
 		if(StringUtils.isBlank(groupName)){
-			logger.warn("getJobGroupInfo groupName is blank");
+			logger.warn("getJobGroupInfo groupName is required");
 			return null;
 		}
 		JobGroupInfo groupInfo = new JobGroupInfo();

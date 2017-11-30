@@ -10,6 +10,12 @@ import org.apache.commons.lang3.StringUtils;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.crypt.DES;
 
+/**
+ * 生成token
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2017年11月30日
+ */
 public class TokenGenerator {
 
 	private static final String LINE_THROUGH = "-";
@@ -24,6 +30,10 @@ public class TokenGenerator {
 		return str;
 	}
 	
+	/**
+	 * 生成带签名信息的token
+	 * @return
+	 */
 	public static String generateWithSign(){
 		Date date = new Date();
 		String cryptKey = getCryptKey(date);
@@ -32,6 +42,9 @@ public class TokenGenerator {
 	}
 	
 	
+	/**
+	 * 验证带签名信息的token
+	 */
 	public static void validate(String token,boolean validateExpire){
 		long timestamp = 0;
 		Date date = new Date();

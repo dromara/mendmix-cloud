@@ -87,4 +87,10 @@ public class InstanceFactory {
 		}
 	}
 
+	public static boolean isInitialized() {
+		return initialized.get();
+	}
+	
+	
+
 }

@@ -46,7 +46,7 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
     	if(this.zkClient != null && this.consumerAckEnabled){
     		String rootPath = KafkaConst.ZK_PRODUCER_ACK_PATH.substring(0, KafkaConst.ZK_PRODUCER_ACK_PATH.length() - 1);
     		if(!this.zkClient.exists(rootPath)){
-    			this.zkClient.createPersistent(rootPath);
+    			this.zkClient.createPersistent(rootPath,true);
     		}
     		log.info("consumer watcher rootPath:{}",rootPath);
     	}

@@ -4,18 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -46,7 +41,6 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 	private Map<String, MessageHandler> topicHandlers;
 	
 	private List<ConsumerWorker> consumerWorks = new ArrayList<>();
-	private final Map<String, OffsetCommitMeta> uncommittedOffsetMap = new ConcurrentHashMap<>();
 	
 	private boolean offsetAutoCommit;
 	
@@ -54,9 +48,7 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
     private String clientIdPrefix;
     private long pollTimeout = 1000;
     
-    AtomicBoolean commiting = new AtomicBoolean(false);
-    
-    private ReentrantLock lock = new ReentrantLock();
+    //private ReentrantLock lock = new ReentrantLock();
     
     
 	public NewApiTopicConsumer(ConsumerContext context) {
@@ -167,65 +159,55 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 								logger.warn("offsetLogHanlder.getLatestProcessedOffsets error:{}",e.getMessage());
 							}
 						}
-	                    if(startOffset == 0){
-	                    	OffsetAndMetadata offsetAndMetaData = worker.consumer.committed(tp);
-	                    	startOffset = offsetAndMetaData != null ? offsetAndMetaData.offset() : -1L;
-	                    }
+//	                    if(startOffset == 0){
+//	                    	OffsetAndMetadata offsetAndMetaData = worker.consumer.committed(tp);
+//	                    	startOffset = offsetAndMetaData != null ? offsetAndMetaData.offset() : -1L;
+//	                    }
 						
-						if (startOffset >= 0){
+						if (startOffset > 0){
 							worker.consumer.seek(tp, startOffset);
+							logger.info("topicPartion : {} seek offset : {}", tp, startOffset);
 						}
 						//
-						
-						worker.assigndPartitions.add(tp);
-						OffsetCommitMeta meta = new OffsetCommitMeta(worker.consumer,tp, startOffset);
-						uncommittedOffsetMap.put(meta.getKey(), meta);
-						
-						logger.debug("Assigned topicPartion : {} offset : {}", tp, startOffset);
+						//worker.addPartitions(tp, startOffset);
 					}
+					
+					//提交分区
+					//commitOffsets(worker);
 				}
 			};
 			//
 			worker.consumer.subscribe(topics, listener);
-			//提交分区
-			commitOffsets(worker.consumer);
 		}
 	}
 	
 	
 	
-	private Map<TopicPartition, OffsetAndMetadata> partitionToMetadataMap = new HashMap<>();
-	
-	private void commitOffsets(KafkaConsumer<String, Serializable> consumer) {
-		if(commiting.get())return;
-		commiting.set(true);
-		lock.lock();
+	private void commitOffsets(ConsumerWorker worker) {
+		
+		KafkaConsumer<String, Serializable> consumer = worker.consumer;
+		if(worker.isCommiting())return;
+		worker.setCommiting(true);
 		try {
-			for (OffsetCommitMeta m : uncommittedOffsetMap.values()) {
-				if (m.isCommitd())continue;
-				if (!m.getConsumer().equals(consumer))continue;
-				partitionToMetadataMap.put(m.getPartition(), new OffsetAndMetadata(m.getOffset()));
-			}
-			if(partitionToMetadataMap.isEmpty())return ;
+
+			if(worker.uncommittedOffsetMap.isEmpty())return ;
 			
-			logger.debug("committing the offsets : {}", partitionToMetadataMap);
-			consumer.commitAsync(partitionToMetadataMap, new OffsetCommitCallback() {
+			logger.debug("committing the offsets : {}", worker.uncommittedOffsetMap);
+			consumer.commitAsync(worker.uncommittedOffsetMap, new OffsetCommitCallback() {
 				@Override
 				public void onComplete(Map<TopicPartition, OffsetAndMetadata> offsets, Exception exception) {
+					//
+					worker.setCommiting(false);
 					if(exception == null){
+						worker.resetUncommittedOffsetMap();
 						logger.debug("committed the offsets : {}",offsets);
-						for (OffsetCommitMeta m : uncommittedOffsetMap.values()) {
-							m.setCommitd(true);
-						}
 					}else{
 						logger.error("committ the offsets error",exception);
 					}
 				}
 			});
 		} finally {
-			lock.unlock();
-			partitionToMetadataMap.clear();
-			commiting.set(false);
+			
 		}
 	}
 	
@@ -244,8 +226,11 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 	private class ConsumerWorker implements Runnable {
 
 		private AtomicBoolean closed = new AtomicBoolean();
+		private AtomicBoolean commiting = new AtomicBoolean(false);//是否正在提交分区
+		private AtomicInteger uncommittedNums = new AtomicInteger(0); //当前未提交记录
 		KafkaConsumer<String, Serializable> consumer;
 		private List<TopicPartition> assigndPartitions = new ArrayList<>();
+		private Map<TopicPartition, OffsetAndMetadata> uncommittedOffsetMap = new ConcurrentHashMap<>();
 		
 		
 		public ConsumerWorker(String topic,int index) {
@@ -253,18 +238,31 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 			consumer = new KafkaConsumer<String, Serializable>(properties);
 		}
 		
+		public boolean isCommiting() {
+			return commiting.get();
+		}
+		
+		public void setCommiting(boolean commiting) {
+			this.commiting.set(commiting);
+		}
+
+        public void addPartitions(TopicPartition partition,long offset){
+        	assigndPartitions.add(partition);
+        	uncommittedOffsetMap.put(partition, new OffsetAndMetadata(offset));
+        	uncommittedNums.incrementAndGet();
+        }
+        
+        public void resetUncommittedOffsetMap(){
+        	uncommittedOffsetMap.clear();
+        	uncommittedNums.set(0);
+        }
 
 		@Override
 		public void run() {
-
-			ExecutorService executor = Executors.newFixedThreadPool(1);
-
 			while (!closed.get()) {
-				ConsumerRecords<String,Serializable> records = null;
-				records = consumer.poll(pollTimeout);
-				// no record found
-				if (records.isEmpty()) {
-					continue;
+				//提交分区
+				if(uncommittedNums.get() > 0){					
+					commitOffsets(this);
 				}
 				
 				//当处理线程满后，阻塞处理线程
@@ -273,6 +271,13 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 						break;
 					}
 					try {Thread.sleep(100);} catch (Exception e) {}
+				}
+				
+				ConsumerRecords<String,Serializable> records = null;
+				records = consumer.poll(pollTimeout);
+				// no record found
+				if (records.isEmpty()) {
+					continue;
 				}
 				
 				for (final ConsumerRecord<String,Serializable> record : records) {	
@@ -305,18 +310,7 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 //					}
 //					committedOffsetFutures.remove(future);
 //					consumer.resume(consumer.assignment());
-				   
-				 //提交分区
-				  commitOffsets(consumer);
 			   }
-			}
-
-			try {
-				executor.shutdownNow();
-				while (!executor.awaitTermination(5, TimeUnit.SECONDS))
-					;
-			} catch (InterruptedException e) {
-				logger.error("Error while exiting the consumer");
 			}
 			consumer.close();
 			logger.info("consumer exited");
@@ -342,16 +336,11 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 						messageHandler.p2Process(message);
 						//
 						if(!offsetAutoCommit){
-							lock.lock();
-							String key = record.topic() + "_" + record.partition();
-							OffsetCommitMeta meta;
-							if(uncommittedOffsetMap.containsKey(key)){
-								meta = uncommittedOffsetMap.get(key);
-								meta.addOffset();
-								System.out.println("-->key:" + key + ",offset:"+meta.getOffset());
-							}
-							lock.unlock();
+							uncommittedOffsetMap.put(new TopicPartition(record.topic(), record.partition()), new OffsetAndMetadata(record.offset() + 1));
+							//
+							uncommittedNums.incrementAndGet();
 						}
+						
 						//回执
                         if(message.isConsumerAck()){
                         	consumerContext.sendConsumerAck(message.getMsgId());
@@ -376,48 +365,6 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 			consumer.close();
 		}
 
-	}
-	
-	private class OffsetCommitMeta{
-		KafkaConsumer<String, Serializable> consumer;
-		private final TopicPartition partition;
-		private final AtomicLong offset;
-		private final String key;
-		private AtomicBoolean commitd = new AtomicBoolean(false);
-		public OffsetCommitMeta(KafkaConsumer<String, Serializable> consumer,TopicPartition partition, long offset) {
-			this.consumer = consumer;
-			this.partition = partition;
-			this.offset = new AtomicLong(offset);
-			this.offset.incrementAndGet();
-			this.key = partition.topic() + "_" + partition.partition();
-		}
-		
-		public KafkaConsumer<String, Serializable> getConsumer() {
-			return consumer;
-		}
-
-		public TopicPartition getPartition() {
-			return partition;
-		}
-
-		public long getOffset() {
-			return offset.get();
-		}
-
-		public long addOffset() {
-			commitd.set(false);
-			return offset.incrementAndGet();
-		}
-		public String getKey() {
-			return key;
-		}
-		public boolean isCommitd() {
-			return commitd.get();
-		}
-		public void setCommitd(boolean commitd) {
-			this.commitd.set(commitd);
-		}
-		
 	}
 
 }
