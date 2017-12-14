@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.1.7</version>
+		<version>1.1.8-SNAPSHOT</version>
 	</parent>
 	<artifactId>jeesuite-filesystem</artifactId>
 	<description>文件系统客户端，支持七牛、fastdfs，阿里云oss</description>

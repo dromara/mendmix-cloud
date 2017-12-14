@@ -68,10 +68,17 @@ public final class ResourceUtils {
 	}
 
 	private static void loadPropertiesFromJarFile(URL url) throws UnsupportedEncodingException, IOException {
+		
+		System.out.println("loadPropertiesFromJarFile,origin:" + url.toString());
 		String jarFilePath = url.getFile();	
-		jarFilePath = jarFilePath.split("jar!")[0] + "jar";
+		if(jarFilePath.contains("war!")){
+			jarFilePath = StringUtils.splitByWholeSeparator(jarFilePath, "war!")[0] + "war";
+		}else if(jarFilePath.contains("jar!")){
+			jarFilePath = StringUtils.splitByWholeSeparator(jarFilePath, "jar!")[0] + "jar";
+		}
 		jarFilePath = jarFilePath.substring("file:".length());
 		jarFilePath = java.net.URLDecoder.decode(jarFilePath, "UTF-8");
+		System.out.println("loadPropertiesFromJarFile,real:" + jarFilePath);
 		JarFile jarFile = new JarFile(jarFilePath);
 		
 		Enumeration<JarEntry> entries = jarFile.entries(); 

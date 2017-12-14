@@ -38,6 +38,8 @@ public class JedisProviderFactory {
 
 	private static JedisProvider<?, ?> defaultJedisProvider;
 	
+	private static  boolean inited = false;
+	
 	@SuppressWarnings("rawtypes")
 	private static Map<String, JedisProvider> jedisProviders = new ConcurrentHashMap<>();
 	
@@ -68,6 +70,9 @@ public class JedisProviderFactory {
 		}
 		
 		if(StringUtils.isNotBlank(groupName)){
+			if(jedisProviders.containsKey(groupName)){
+				return jedisProviders.get(groupName);
+			}
 			logger.warn("未找到group[{}]对应的redis配置，使用默认缓存配置",groupName);
 		}
 		return defaultJedisProvider;
@@ -75,6 +80,7 @@ public class JedisProviderFactory {
 
 	@SuppressWarnings("rawtypes")
 	private synchronized static void initFactoryFromSpring() {
+		if(inited)return;
 		if(defaultJedisProvider == null){
 			//阻塞，直到spring初始化完成
 			InstanceFactory.waitUtilInitialized();
@@ -94,6 +100,8 @@ public class JedisProviderFactory {
 			
 			Assert.notNull(defaultJedisProvider,"无默认缓存配置，请指定一组缓存配置group为default");
 		}
+		
+		inited = true;
 	}
 
 	public static JedisCommands getJedisCommands(String groupName) {
