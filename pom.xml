@@ -65,6 +65,7 @@
 		<module>jeesuite-springboot-starter</module>
 		<module>jeesuite-search</module>
 		<module>jeesuite-springweb</module>
+		<module>jeesuite-tx</module>
 	</modules>
 
 	<dependencies>

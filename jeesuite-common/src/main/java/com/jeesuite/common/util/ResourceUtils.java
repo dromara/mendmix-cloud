@@ -55,8 +55,14 @@ public final class ResourceUtils {
 			URL url = Thread.currentThread().getContextClassLoader().getResource("");
 			if(url == null)url = ResourceUtils.class.getResource("");
 			if(url == null)return;
-			if (url.getProtocol().equals("file")) {				
-				loadPropertiesFromFile(new File(url.getPath()));
+			if (url.getProtocol().equals("file")) {	
+				System.out.println("loadPropertiesFromFile,origin:"+url.getPath());
+				File parent = new File(url.getPath());
+				if(!parent.exists()){
+					System.err.println("loadPropertiesFromFile_error,dir not found");
+				}else{					
+					loadPropertiesFromFile(parent);
+				}
 			}else if (url.getProtocol().equals("jar")) {					
 				loadPropertiesFromJarFile(url);
 			}
@@ -99,6 +105,7 @@ public final class ResourceUtils {
 	
 	private static void loadPropertiesFromFile(File parent) throws FileNotFoundException, IOException{
 		File[] files = parent.listFiles();
+		if(files == null)return;
 		for (File file : files) {
 			if(file.isDirectory()){
 				loadPropertiesFromFile(file);

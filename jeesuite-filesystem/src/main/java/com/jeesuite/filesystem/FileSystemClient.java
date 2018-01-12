@@ -26,22 +26,21 @@ public class FileSystemClient {
 		
 		String provider = ResourceUtils.getProperty(id + ".filesystem.provider");
 		Validate.notBlank(provider, "["+id+".filesystem.provider] not defined");
+		boolean isPrivate = ResourceUtils.getBoolean(id + ".filesystem.private");
+		String urlprefix = ResourceUtils.getProperty(id + ".filesystem.urlprefix");
 		if(QiniuProvider.NAME.equals(provider)){
 			String bucketName = ResourceUtils.getProperty(id + ".filesystem.bucketName");
-			String urlprefix = ResourceUtils.getProperty(id + ".filesystem.urlprefix");
 			String accessKey = ResourceUtils.getProperty(id + ".filesystem.accessKey");
 			String secretKey = ResourceUtils.getProperty(id + ".filesystem.secretKey");
-			boolean isPrivate = ResourceUtils.getBoolean(id + ".filesystem.private");
 			fsProvider = new QiniuProvider(urlprefix, bucketName, accessKey, secretKey,isPrivate);
 		}else if(AliyunossProvider.NAME.equals(provider)){
 			String endpoint = ResourceUtils.getProperty(id + ".filesystem.endpoint");
 			String bucketName = ResourceUtils.getProperty(id + ".filesystem.bucketName");
 			String accessKey = ResourceUtils.getProperty(id + ".filesystem.accessKey");
 			String secretKey = ResourceUtils.getProperty(id + ".filesystem.secretKey");
-			fsProvider = new AliyunossProvider(endpoint, bucketName, accessKey, secretKey);
+			fsProvider = new AliyunossProvider(urlprefix,endpoint, bucketName, accessKey, secretKey,isPrivate);
 		}else if(FdfsProvider.NAME.equals(provider)){
 			String groupName = ResourceUtils.getProperty(id + ".filesystem.groupName");
-			String urlprefix = ResourceUtils.getProperty(id + ".filesystem.urlprefix");
 			String servers = ResourceUtils.getProperty(id + ".filesystem.servers");
 			Validate.isTrue(servers != null && servers.matches("^.+[:]\\d{1,5}\\s*$"),"[servers] is not valid");
 			long connectTimeout = Long.parseLong(ResourceUtils.getProperty(id + ".filesystem.connectTimeout","3000"));

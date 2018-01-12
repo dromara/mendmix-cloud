@@ -11,6 +11,7 @@ public class WebConstants {
 	public static final String HEADER_FORWARDED_PROTO = "x-forwarded-proto";
 	public static final String HEADER_FORWARDED_ORIGN_PROTO = "x-forwarded-orign-proto";
 	public static final String HEADER_FORWARDED_HOST = "x-forwarded-host";
+	public static final String HEADER_FORWARDED_PORT = "x-forwarded-port";
 	public static final String HEADER_FORWARDED_PRIFIX = "x-forwarded-prefix";
 	public static final String HEADER_SESSION_ID = "x-session-id";
 	public static final String HEADER_SESSION_EXPIRE_IN = "x-session-expire-in";

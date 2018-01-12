@@ -63,15 +63,14 @@ public class RSA {
     public static void main(String[] args) throws Exception {
     	
     	String PLAIN_TEXT = "srtt46y7u";
-    	 PrivateKey privateKey = loadPrivateKeyFromKeyStore("/Users/jiangwei/payment.jks", "payment", "JCEKS", "m5cidi9p3eds0", "v6ol0d31y8hd9c");
          // 加密
-         PublicKey publicKey = loadPublicKeyFromKeyStore("/Users/jiangwei/configcenter.jks", "payment", "JCEKS", "a3m5v6o8yc9d", "a3m5v6o8yc9d");
-         
+         PublicKey publicKey = loadPublicKey(new File("/Users/jiangwei/logs/rsa_public_key.pem"));
          String encodedText = encrypt(publicKey, PLAIN_TEXT);
          System.out.println("RSA encoded: " + encodedText);
 
+         PrivateKey privateKey = loadPrivateKey(new File("/Users/jiangwei/logs/rsa_private_pkcs8.pem"));
          // 解密
-         System.out.println("RSA decoded: "  + decrypt(privateKey, "Kli0lCJbkdDAPGBYCa/755kGBreS9F9FsFiWiT3eUNq+aZLoK5nL2qy/MOpjjn4NwJdC07zJ54FmhWfNkoO1/FQsGhAjWoYfQFlox1fvoAiyTjiFiYt9F40P4jTHPZplYUuzEx5WIRpBvdNuQ+YYqKjJRu01TjpYV1kW5Hu5/rI="));
+         System.out.println("RSA decoded: "  + decrypt(privateKey, encodedText));
     }
 
     /** 
@@ -123,7 +122,7 @@ public class RSA {
      * 从文件加载公钥 
      * @param file 公钥文件
      */  
-    public PublicKey loadPublicKey(File file) { 
+    public static PublicKey loadPublicKey(File file) { 
     	FileInputStream inputStream = null;
     	try {
     		inputStream = new FileInputStream(file);			
@@ -139,7 +138,7 @@ public class RSA {
      * 从文件中输入流中加载公钥 
      * @param in 公钥输入流 
      */  
-    public PublicKey loadPublicKey(InputStream in) {  
+    public static PublicKey loadPublicKey(InputStream in) {  
         try {  
             BufferedReader br= new BufferedReader(new InputStreamReader(in));  
             String readLine= null;  
@@ -162,11 +161,16 @@ public class RSA {
     }  
     
     
+    public static PublicKey loadPublicKey(String  pubKeyString) {
+    	byte[] bytes = Base64.decode(pubKeyString);
+        return loadPublicKey(bytes); 
+    }
+    
     /** 
      * 从文件中加载私钥 
      * @param file 私钥文件
      */  
-    public PrivateKey loadPrivateKey(File file) { 
+    public static  PrivateKey loadPrivateKey(File file) { 
     	FileInputStream inputStream = null;
     	try {
     		inputStream = new FileInputStream(file);			
@@ -183,7 +187,7 @@ public class RSA {
      * @param keyFileName 私钥文件名 
      * @return 是否成功 
      */  
-    public PrivateKey loadPrivateKey(InputStream in) {  
+    public static PrivateKey loadPrivateKey(InputStream in) {  
         try {  
             BufferedReader br= new BufferedReader(new InputStreamReader(in));  
             String readLine= null;  
@@ -207,6 +211,11 @@ public class RSA {
         } 
         
     } 
+    
+    public static PrivateKey loadPrivateKey(String priKeyString) {  
+    	byte[] bytes = Base64.decode(priKeyString);
+        return loadPrivateKey(bytes);  
+    }
 
     /**
      * 还原公钥，X509EncodedKeySpec 用于构建公钥的规范
@@ -234,7 +243,7 @@ public class RSA {
      * @param keyBytes
      * @return
      */
-    public static PrivateKey loadPrivateKey(byte[] keyBytes) {
+    private static PrivateKey loadPrivateKey(byte[] keyBytes) {
         PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(
                 keyBytes);
         try {

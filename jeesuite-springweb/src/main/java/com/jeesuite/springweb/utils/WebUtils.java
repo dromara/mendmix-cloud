@@ -130,16 +130,20 @@ public class WebUtils {
 	 * @return
 	 */
 	public static String getBaseUrl(HttpServletRequest request){
-        String baseUrl = null;			
-		String proto = request.getHeader(WebConstants.HEADER_FORWARDED_ORIGN_PROTO);
-		if(proto == null)proto = request.getHeader(WebConstants.HEADER_FORWARDED_PROTO);
+        String baseUrl = null;					
 		String host = request.getHeader(WebConstants.HEADER_FORWARDED_HOST);
 		String prefix = request.getHeader(WebConstants.HEADER_FORWARDED_PRIFIX);
-		if(StringUtils.isAnyBlank(proto,host,prefix)){
+		if(StringUtils.isAnyBlank(host,prefix)){
 			String[] segs = StringUtils.split(request.getRequestURL().toString(),"/");
 			baseUrl = segs[0] + "//" + segs[1];
 		}else{
-			baseUrl = proto + "://" + host + prefix;
+			//由于nginx 没有设置  proxy_set_header   X-Forwarded-Proto $scheme;
+		    //导致https通过nginx转发后，在api网关获取到的scheme为：http,
+			//String proto = request.getHeader(BaseConstants.HEADER_FORWARDED_ORIGN_PROTO);
+			//if(proto == null)proto = request.getHeader(BaseConstants.HEADER_FORWARDED_PROTO);
+			 String port = request.getHeader(WebConstants.HEADER_FORWARDED_PORT);
+			String schame = "443".equals(port) ? "https://" : "http://";
+			baseUrl = schame + host + prefix;
 		}
 		
 		return baseUrl;
