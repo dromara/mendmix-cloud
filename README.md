@@ -33,13 +33,13 @@
  - 配置中心
   - [http://git.oschina.net/vakinge/jeesuite-config](http://git.oschina.net/vakinge/jeesuite-config)
   - [https://github.com/vakinge/jeesuite-config](https://github.com/vakinge/jeesuite-config)
- - 统一认证中心
+ - 统一认证中心(文档编写中...)
   - [http://git.oschina.net/vakinge/jeesuite-passport](http://git.oschina.net/vakinge/jeesuite-passport)
   - [https://github.com/vakinge/jeesuite-passport](https://github.com/vakinge/jeesuite-passport)
- - api网关
+ - api网关(完善中...)
   - [http://git.oschina.net/vakinge/jeesuite-apigateway](http://git.oschina.net/vakinge/jeesuite-apigateway)
   - [https://github.com/vakinge/jeesuite-apigateway](https://github.com/vakinge/jeesuite-apigateway)
- - 应用监控平台
+ - 应用监控平台(规划中...)
   - [http://git.oschina.net/vakinge/jeesuite-admin](http://git.oschina.net/vakinge/jeesuite-admin)
   - [https://github.com/vakinge/jeesuite-admin](https://github.com/vakinge/jeesuite-admin)
 
@@ -92,9 +92,6 @@
 - request、response日志记录
 - 自动友好错误
 - 校验框架
-
-#### jeesuite-confcenter-client模块
-- 应用基础配置客户端
 
 #### filesystem模块
 - 七牛文件服务支持
