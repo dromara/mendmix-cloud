@@ -1,4 +1,4 @@
-**黄金位置放个小广告→**欢迎加交流群：230192763 （不限于讨论该框架热爱技术就行）
+**黄金位置放个小广告→**欢迎加交流群：230192763 （详细部署文档，疑问解答，新需求优先实现）
 
 **欢迎star不迷路，免费视频教程即将发布（年后）**
 ### 视频教程预告
@@ -13,9 +13,6 @@
  9. 结合项目springcloud体系深度解析：服务注册发现、api网关、熔断器等 （60分钟）
  10. jeesuite-libs各个模块底层源码解析（待定）
  
-
-#### 教程未发布前，可以参考一下本地部署 
-bestpl社区本地部署: https://pan.baidu.com/s/1bP8VgE 密码: 8gn9
 
 ## 简介
 **jeesuite-libs**分布式架构开发套件。包括缓存(一二级缓存、自动缓存管理)、队列、分布式定时任务、文件服务(七牛、阿里云OSS、fastDFS)、日志、搜索、代码生成、API网关、配置中心、统一认证平台、分布式锁、分布式事务、集成dubbo、spring boot支持、统一监控等。所有release版都经过严格测试并在生产环境稳定运行2年+。
@@ -124,3 +121,13 @@ bestpl社区本地部署: https://pan.baidu.com/s/1bP8VgE 密码: 8gn9
 
 #### jeesuite-springboot-starter模块
 - springboot集成支持
+
+## 部分运行截图
+### 配置中心
+![image](http://ojmezn0eq.bkt.clouddn.com/config.png)
+### 统一认证中心-登录页
+![image](http://ojmezn0eq.bkt.clouddn.com/passport.png)
+### 统一认证中心-用户中心
+![image](http://ojmezn0eq.bkt.clouddn.com/passport2.png)
+### 演示项目-社区门户首页
+![image](http://ojmezn0eq.bkt.clouddn.com/demo.png)
