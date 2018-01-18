@@ -1,18 +1,7 @@
-**黄金位置放个小广告→**欢迎加交流群：230192763 （详细部署文档，疑问解答，新需求优先实现）
+**交流群**：230192763
+[![jeesuite开发交流群](//pub.idqqimg.com/wpa/images/group.png "jeesuite开发交流群")](//shang.qq.com/wpa/qunwpa?idkey=7ed49bff9250e8574b3692f199d9c7fae7326c1f76279b6e0b2effeee0b22d9d)
 
-**欢迎star不迷路，免费视频教程即将发布（年后）**
-### 视频教程预告
- 1. jeesuite框架介绍、适用场景（10分钟）
- 2. 基础设施安装：mysql、redis、kafka、zookeeper等（30分钟）
- 3. 搭建配置中心、统一认证中心、api网关、注册中心等基础组件 （30分钟）
- 4. 运行[bestpl社区](http://git.oschina.net/vakinge/jeesuite-bestpl)项目。包含：门户系统、发帖服务、奖励服务、通知服务 （30分钟）
- 5. 配置中心原理和核心逻辑解析（60分钟）
- 6. 知识点拓展：SSO实现逻辑、JWT原理、auth2.0协议（60分钟）
- 7. 统一认证中心核心逻辑解析（60分钟）
- 8. 结合项目讲解jeesuite各个模块使用流程(缓存、定时任务、消息队列...) （100分钟）
- 9. 结合项目springcloud体系深度解析：服务注册发现、api网关、熔断器等 （60分钟）
- 10. jeesuite-libs各个模块底层源码解析（待定）
- 
+![image](http://ojmezn0eq.bkt.clouddn.com/qqun-qrcode.png)
 
 ## 简介
 **jeesuite-libs**分布式架构开发套件。包括缓存(一二级缓存、自动缓存管理)、队列、分布式定时任务、文件服务(七牛、阿里云OSS、fastDFS)、日志、搜索、代码生成、API网关、配置中心、统一认证平台、分布式锁、分布式事务、集成dubbo、spring boot支持、统一监控等。所有release版都经过严格测试并在生产环境稳定运行2年+。
@@ -131,3 +120,16 @@
 ![image](http://ojmezn0eq.bkt.clouddn.com/passport2.png)
 ### 演示项目-社区门户首页
 ![image](http://ojmezn0eq.bkt.clouddn.com/demo.png)
+
+
+### 视频教程目录（年后发布）
+ 1. jeesuite框架介绍、适用场景（10分钟）
+ 2. 基础设施安装：mysql、redis、kafka、zookeeper等（30分钟）
+ 3. 搭建配置中心、统一认证中心、api网关、注册中心等基础组件 （30分钟）
+ 4. 运行[bestpl社区](http://git.oschina.net/vakinge/jeesuite-bestpl)项目。包含：门户系统、发帖服务、奖励服务、通知服务 （30分钟）
+ 5. 配置中心原理和核心逻辑解析（60分钟）
+ 6. 知识点拓展：SSO实现逻辑、JWT原理、auth2.0协议（60分钟）
+ 7. 统一认证中心核心逻辑解析（60分钟）
+ 8. 结合项目讲解jeesuite各个模块使用流程(缓存、定时任务、消息队列...) （100分钟）
+ 9. 结合项目springcloud体系深度解析：服务注册发现、api网关、熔断器等 （60分钟）
+ 10. jeesuite-libs各个模块底层源码解析（待定）
