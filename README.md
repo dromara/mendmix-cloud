@@ -1,7 +1,7 @@
 **交流群**：230192763
-[![jeesuite开发交流群](//pub.idqqimg.com/wpa/images/group.png "jeesuite开发交流群")](//shang.qq.com/wpa/qunwpa?idkey=7ed49bff9250e8574b3692f199d9c7fae7326c1f76279b6e0b2effeee0b22d9d)
+[![jeesuite开发交流群](//pub.idqqimg.com/wpa/images/group.png "jeesuite开发交流群")](//shang.qq.com/wpa/qunwpa?idkey=d5e7f6178d75e960f2cb58b6c38ff133fd32d219f8a60471a94b83a14021beed)
 
-![image](http://ojmezn0eq.bkt.clouddn.com/qqun-qrcode.png)
+![image](http://ojmezn0eq.bkt.clouddn.com/qun230192763.png)
 
 ## 简介
 **jeesuite-libs**分布式架构开发套件。包括缓存(一二级缓存、自动缓存管理)、队列、分布式定时任务、文件服务(七牛、阿里云OSS、fastDFS)、日志、搜索、代码生成、API网关、配置中心、统一认证平台、分布式锁、分布式事务、集成dubbo、spring boot支持、统一监控等。所有release版都经过严格测试并在生产环境稳定运行2年+。
