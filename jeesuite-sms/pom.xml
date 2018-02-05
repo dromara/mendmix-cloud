@@ -5,18 +5,5 @@
     <artifactId>jeesuite-libs</artifactId>
     <version>1.1.8-SNAPSHOT</version>
   </parent>
-  <artifactId>jeesuite-tx</artifactId>
-  <description>Distributed transaction</description>
-  
-  <build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<configuration>
-					<skip>true</skip>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+  <artifactId>jeesuite-sms</artifactId>
 </project>

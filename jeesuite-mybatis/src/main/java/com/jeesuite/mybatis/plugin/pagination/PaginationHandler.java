@@ -100,71 +100,73 @@ public class PaginationHandler implements InterceptorHandler {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public Object onInterceptor(Invocation invocation) throws Throwable {
-		
-		final Executor executor = (Executor) invocation.getTarget();
-		final Object[] args = invocation.getArgs();
-		final MappedStatement orignMappedStatement = (MappedStatement)args[0];
-		
-		if(!orignMappedStatement.getSqlCommandType().equals(SqlCommandType.SELECT))return null;
-		
-		PageParams pageParams = PageExecutor.getPageParams();
-		if(pageParams == null && !pageMappedStatements.keySet().contains(orignMappedStatement.getId()))return null;
-		
-		final RowBounds rowBounds = (RowBounds) args[2];
-		final ResultHandler resultHandler = (ResultHandler) args[3];
-        final Object parameter = args[1];
-        
-        BoundSql boundSql;
-        if(args.length == 4){
-            boundSql = orignMappedStatement.getBoundSql(parameter);
-        } else {
-            boundSql = (BoundSql) args[5];
-        }
-        
-        if(pageParams == null && pageMappedStatements.get(orignMappedStatement.getId())){
-        	if(parameter instanceof Map){
-        		Collection parameterValues = ((Map)parameter).values();
-        		for (Object val : parameterValues) {
-					if(val instanceof PageParams){
-						pageParams = (PageParams) val;
-						break;
+		try {
+			final Executor executor = (Executor) invocation.getTarget();
+			final Object[] args = invocation.getArgs();
+			final MappedStatement orignMappedStatement = (MappedStatement)args[0];
+			
+			if(!orignMappedStatement.getSqlCommandType().equals(SqlCommandType.SELECT))return null;
+			
+			PageParams pageParams = PageExecutor.getPageParams();
+			if(pageParams == null && !pageMappedStatements.keySet().contains(orignMappedStatement.getId()))return null;
+			
+			final RowBounds rowBounds = (RowBounds) args[2];
+			final ResultHandler resultHandler = (ResultHandler) args[3];
+	        final Object parameter = args[1];
+	        
+	        BoundSql boundSql;
+	        if(args.length == 4){
+	            boundSql = orignMappedStatement.getBoundSql(parameter);
+	        } else {
+	            boundSql = (BoundSql) args[5];
+	        }
+	        
+	        if(pageParams == null && pageMappedStatements.get(orignMappedStatement.getId())){
+	        	if(parameter instanceof Map){
+	        		Collection parameterValues = ((Map)parameter).values();
+	        		for (Object val : parameterValues) {
+						if(val instanceof PageParams){
+							pageParams = (PageParams) val;
+							break;
+						}
 					}
-				}
-        	}else{
-        		pageParams = (PageParams) parameter;
-        	}
-        }
-        
-        if(pageParams == null)return null;
-        
-        //查询总数
-        MappedStatement countMappedStatement = getCountMappedStatement(orignMappedStatement);
-        Long total = executeQueryCount(executor, countMappedStatement, parameter, boundSql, rowBounds, resultHandler);
-        
-      //按分页查询
-    	MappedStatement limitMappedStatement = getLimitMappedStatementIfNotCreate(orignMappedStatement);
-    	
-    	List<?> datas;
-    	BoundSql pageBoundSql;
-    	if(limitMappedStatement == null){
-    		 String pageSql = PageSqlUtils.getLimitSQL(dbType, boundSql.getSql(),pageParams);
-             pageBoundSql = new BoundSql(orignMappedStatement.getConfiguration(), pageSql, boundSql.getParameterMappings(), parameter);
-             
-             datas = executor.query(orignMappedStatement, parameter, RowBounds.DEFAULT, resultHandler,null,pageBoundSql);
-    	}else{    		
-    		pageBoundSql = limitMappedStatement.getBoundSql(parameter);
-    		pageBoundSql.setAdditionalParameter(PARAMETER_OFFSET, pageParams.getOffset());
-    		pageBoundSql.setAdditionalParameter(PARAMETER_SIZE, pageParams.getPageSize());
-    		//
-    		datas = executor.query(limitMappedStatement, parameter, RowBounds.DEFAULT, resultHandler,null,pageBoundSql);
-    	}
-    	
-        Page<Object> page = new Page<Object>(pageParams,total,(List<Object>) datas);	
-		
-		List<Page<?>> list = new ArrayList<Page<?>>(1);
-		list.add(page);
-		return list;
-	
+	        	}else{
+	        		pageParams = (PageParams) parameter;
+	        	}
+	        }
+	        
+	        if(pageParams == null)return null;
+	        
+	        //查询总数
+	        MappedStatement countMappedStatement = getCountMappedStatement(orignMappedStatement);
+	        Long total = executeQueryCount(executor, countMappedStatement, parameter, boundSql, rowBounds, resultHandler);
+	        
+	      //按分页查询
+	    	MappedStatement limitMappedStatement = getLimitMappedStatementIfNotCreate(orignMappedStatement);
+	    	
+	    	List<?> datas;
+	    	BoundSql pageBoundSql;
+	    	if(limitMappedStatement == null){
+	    		 String pageSql = PageSqlUtils.getLimitSQL(dbType, boundSql.getSql(),pageParams);
+	             pageBoundSql = new BoundSql(orignMappedStatement.getConfiguration(), pageSql, boundSql.getParameterMappings(), parameter);
+	             
+	             datas = executor.query(orignMappedStatement, parameter, RowBounds.DEFAULT, resultHandler,null,pageBoundSql);
+	    	}else{    		
+	    		pageBoundSql = limitMappedStatement.getBoundSql(parameter);
+	    		pageBoundSql.setAdditionalParameter(PARAMETER_OFFSET, pageParams.getOffset());
+	    		pageBoundSql.setAdditionalParameter(PARAMETER_SIZE, pageParams.getPageSize());
+	    		//
+	    		datas = executor.query(limitMappedStatement, parameter, RowBounds.DEFAULT, resultHandler,null,pageBoundSql);
+	    	}
+	    	
+	        Page<Object> page = new Page<Object>(pageParams,total,(List<Object>) datas);	
+			
+			List<Page<?>> list = new ArrayList<Page<?>>(1);
+			list.add(page);
+			return list;
+		} finally {
+			PageExecutor.clearPageParams();
+		}
 	}
 	
 	
@@ -296,7 +298,7 @@ public class PaginationHandler implements InterceptorHandler {
 
 	@Override
 	public void onFinished(Invocation invocation, Object result) {
-		PageExecutor.clearPageParams();
+		
 	}
 	
 	@Override

@@ -10,7 +10,7 @@ public class PageSqlUtils {
 
 	private static final String OFFSET_PLACEHOLDER = "#{offset}";
 
-	private static final String SQL_SELECT_PATTERN = "(select|SELECT).*?(?=f|F)";
+	private static final String SQL_SELECT_PATTERN = "(select|SELECT).*?(?=from|FROM)";
 	
 	private static final String SQL_ORDER_PATTERN = "(order|ORDER)\\s+(by|BY)";
 
@@ -63,5 +63,9 @@ public class PageSqlUtils {
 	
 		System.out.println(">>>>" +getCountSql(sql));
 		System.out.println(">>>>" +getLimitSQL(DbType.MYSQL, sql, new PageParams()));
+		
+		sql = "SELECT  u.id as userId,u.name,u.cert_no as idcard,u.mobile,u.verified as userVerified,u.cert_front_url certFrontUrl,u.cert_back_url certBackUrl,  o.salary,o.notax as afterTaxSalary,o.vattax as vatax,o.extratax as surtax,o.incometax,o.tax,o.invfphm as invoiceNo  FROM cbd_invorderdet";
+	    
+		System.out.println(sql.replaceAll("(select|SELECT).*?(?=from|FROM)", SQL_COUNT_PREFIX));
 	}
 }
