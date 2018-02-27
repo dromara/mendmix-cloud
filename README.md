@@ -122,14 +122,4 @@
 ![image](http://ojmezn0eq.bkt.clouddn.com/demo.png)
 
 
-### 视频教程目录（年后发布）
- 1. jeesuite框架介绍、适用场景（10分钟）
- 2. 基础设施安装：mysql、redis、kafka、zookeeper等（30分钟）
- 3. 搭建配置中心、统一认证中心、api网关、注册中心等基础组件 （30分钟）
- 4. 运行[bestpl社区](http://git.oschina.net/vakinge/jeesuite-bestpl)项目。包含：门户系统、发帖服务、奖励服务、通知服务 （30分钟）
- 5. 配置中心原理和核心逻辑解析（60分钟）
- 6. 知识点拓展：SSO实现逻辑、JWT原理、auth2.0协议（60分钟）
- 7. 统一认证中心核心逻辑解析（60分钟）
- 8. 结合项目讲解jeesuite各个模块使用流程(缓存、定时任务、消息队列...) （100分钟）
- 9. 结合项目springcloud体系深度解析：服务注册发现、api网关、熔断器等 （60分钟）
- 10. jeesuite-libs各个模块底层源码解析（待定）
+
