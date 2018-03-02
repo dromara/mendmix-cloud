@@ -588,6 +588,8 @@ public class CacheHandler implements InterceptorHandler {
 			
 			//更新缓存方法
 			generateUpdateByPkCacheMethod(mapperClass, ei.getEntityClass(), keyPatternForPK);
+			
+			groupKeys.add(queryByPKMethod.cacheGroupKey);
 		}
 		
 		//
@@ -630,8 +632,6 @@ public class CacheHandler implements InterceptorHandler {
 				methodCache.keyPattern = entityClass.getSimpleName() + ".id:%s";
 				methodCache.methodName = mapperClass.getName() + "." + methodDefine.selectName();
 				methodCache.cacheGroupKey = entityClass.getSimpleName() + GROUPKEY_SUFFIX;
-				//
-				groupKeys.add(methodCache.cacheGroupKey);
 			}
 		}
 		return methodCache;
