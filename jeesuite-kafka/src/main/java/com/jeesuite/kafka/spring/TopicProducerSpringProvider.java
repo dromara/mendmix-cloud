@@ -199,7 +199,19 @@ public class TopicProducerSpringProvider implements InitializingBean, Disposable
 	 * @return
 	 */
 	public boolean publishNoWrapperMessage(String topicName, Serializable message, boolean asynSend) {
-		DefaultMessage defaultMessage = new DefaultMessage(message).sendBodyOnly(true);
+		return publishNoWrapperMessage(topicName, null, message, asynSend);
+	}
+	
+	/**
+	 * 
+	 * @param topicName
+	 * @param msgId
+	 * @param message
+	 * @param asynSend
+	 * @return
+	 */
+	public boolean publishNoWrapperMessage(String topicName,String msgId, Serializable message, boolean asynSend) {
+		DefaultMessage defaultMessage = new DefaultMessage(msgId,message).sendBodyOnly(true);
 		if(routeEnv != null)topicName = routeEnv + "." + topicName;
 		return producer.publish(topicName, defaultMessage,asynSend);
 	}

@@ -22,7 +22,7 @@ public class ContextLoaderListener extends org.springframework.web.context.Conte
 		super.contextInitialized(event);
 		WebApplicationContext applicationContext = WebApplicationContextUtils.getRequiredWebApplicationContext(event.getServletContext());
 		SpringInstanceProvider provider = new SpringInstanceProvider(applicationContext);
-		InstanceFactory.setInstanceProvider(provider);
+		InstanceFactory.loadFinished(provider);
 		
 		Map<String, ContextIinitializedListener> interfaces = applicationContext.getBeansOfType(ContextIinitializedListener.class);
 		if(interfaces != null){

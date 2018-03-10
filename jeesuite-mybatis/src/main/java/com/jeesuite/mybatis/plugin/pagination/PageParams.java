@@ -32,4 +32,11 @@ public class PageParams {
 	public int getOffset() {
 		return (pageNo - 1) * pageSize;
 	}
+
+	@Override
+	public String toString() {
+		return "PageParams [pageNo=" + pageNo + ", pageSize=" + pageSize + "]";
+	}
+	
+	
 }

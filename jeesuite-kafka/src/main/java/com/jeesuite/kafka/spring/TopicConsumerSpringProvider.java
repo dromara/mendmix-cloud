@@ -193,17 +193,16 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		}
 		logger.info("\n============kafka.Consumer.Config============\n" + sb.toString() + "\n");
 
-		ConsumerContext consumerContext = new ConsumerContext(configs, groupId, consumerId, topicHandlers, processThreads);
-		consumerContext.setOffsetLogHanlder(offsetLogHanlder);
-		consumerContext.setErrorMessageProcessor(new ErrorMessageProcessor(1, 10, 3, retryErrorMessageHandler));
-		
+		ConsumerContext consumerContext = ConsumerContext.getInstance();
+		consumerContext.propertiesSetIfAbsent(configs, groupId, consumerId, topicHandlers, processThreads,offsetLogHanlder ,new ErrorMessageProcessor(1, 10, 3, retryErrorMessageHandler));
+
 		if(useNewAPI){			
 			consumer = new NewApiTopicConsumer(consumerContext);
 		}else{
 			consumer = new OldApiTopicConsumer(consumerContext);
 		}
 		
-
+        //TODO 确保spring全部加载完成再start
         consumer.start();
         //状态：运行中
         status.set(2);
@@ -289,18 +288,14 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
     	
 	}
 
-
-
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.context = applicationContext;
 	}
 
-
-
 	@Override
 	public int getOrder() {
-		return Ordered.LOWEST_PRECEDENCE;
+		return Ordered.LOWEST_PRECEDENCE + 1;
 	}
 
 }

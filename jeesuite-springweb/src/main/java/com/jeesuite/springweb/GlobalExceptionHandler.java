@@ -1,5 +1,7 @@
 package com.jeesuite.springweb;
 
+import java.lang.reflect.Method;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
@@ -17,46 +19,62 @@ public class GlobalExceptionHandler {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
+	private static Method rollbackCacheMethod;
+
+	static {
+		try {
+			Class<?> cacheHandlerClass = Class.forName("com.jeesuite.mybatis.plugin.cache.CacheHandler");
+			rollbackCacheMethod = cacheHandlerClass.getMethod("rollbackCache");
+		} catch (Exception e) {
+		}
+	}
+
 	@ExceptionHandler(Exception.class)
 	@ResponseBody
 	public WrapperResponseEntity exceptionHandler(Exception e, HttpServletResponse response) {
+
+		// 缓存回滚
+		if (rollbackCacheMethod != null) {
+			try {
+				rollbackCacheMethod.invoke(null);
+			} catch (Exception e2) {
+			}
+		}
 
 		WrapperResponseEntity resp = new WrapperResponseEntity();
 		if (e.getCause() != null && e.getCause() instanceof JeesuiteBaseException) {
 			JeesuiteBaseException e1 = (JeesuiteBaseException) e.getCause();
 			resp.setCode(e1.getCode());
 			resp.setMsg(e1.getMessage());
-		}else if (e instanceof JeesuiteBaseException) {
+		} else if (e instanceof JeesuiteBaseException) {
 			JeesuiteBaseException e1 = (JeesuiteBaseException) e;
 			resp.setCode(e1.getCode());
 			resp.setMsg(e1.getMessage());
-		} else if(e instanceof org.springframework.web.HttpRequestMethodNotSupportedException){
+		} else if (e instanceof org.springframework.web.HttpRequestMethodNotSupportedException) {
 			resp.setCode(HttpStatus.METHOD_NOT_ALLOWED.value());
-			resp.setMsg(e.getMessage()); 
-		}else if(e instanceof org.springframework.web.HttpMediaTypeException){
+			resp.setMsg(e.getMessage());
+		} else if (e instanceof org.springframework.web.HttpMediaTypeException) {
 			resp.setCode(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value());
-			resp.setMsg(e.getMessage()); 
-		}else if(e instanceof org.springframework.web.bind.MissingServletRequestParameterException){
+			resp.setMsg(e.getMessage());
+		} else if (e instanceof org.springframework.web.bind.MissingServletRequestParameterException) {
 			resp.setCode(1001);
-			resp.setMsg(e.getMessage()); 
-		}else {
+			resp.setMsg(e.getMessage());
+		} else {
 			Throwable parent = e.getCause();
-			if(parent instanceof IllegalStateException){
+			if (parent instanceof IllegalStateException) {
 				resp.setCode(501);
 				resp.setMsg(e.getMessage());
-			}else{
+			} else {
 				resp.setCode(500);
 				resp.setMsg("系统繁忙");
 			}
-			logger.error("",e);
+			logger.error("", e);
 		}
-		
-		if(resp.getCode() >= 400 && resp.getCode()<=500){
+
+		if (resp.getCode() >= 400 && resp.getCode() <= 500) {
 			response.setStatus(resp.getCode());
-		}else{
-			response.setStatus(500);
-		}
-		
+		} 
+
 		return resp;
 	}
 }

@@ -47,7 +47,7 @@ public class RequestUtils {
 			return parameters;
 		}else if (RestConst.POST_METHOD.equals(request.getMethod())) {
 			
-			byte[] byteArray = IOUtils.toByteArray(request.getInputStream());
+			byte[] byteArray = IOUtils.toByteArray(requestContext.getEntityStream());
 			//reset InputStream
 			requestContext.setEntityStream(new ByteArrayInputStream(byteArray));
 			

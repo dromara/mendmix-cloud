@@ -42,16 +42,14 @@ public abstract class AbstractTopicConsumer implements Closeable{
 	}
 	
 	
-	
-	
 	@Override
 	public void close() {
-		if(!runing.get())return;
 		this.fetchExecutor.shutdown();
 		this.defaultProcessExecutor.shutdown();
 		this.highProcessExecutor.shutdown();
 		this.poolRejectedExecutor.shutdown();
 		this.consumerContext.close();
+		runing.set(false);
 	}
 	
 	

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.utils.Utils;
 
 import com.jeesuite.common.util.TokenGenerator;
@@ -17,7 +18,7 @@ import com.jeesuite.common.util.TokenGenerator;
 public class DefaultMessage implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	private String msgId = TokenGenerator.generate();
+	private String msgId;
 	private Serializable partitionFactor;//分区因子
 	private Map<String, Object> headers;
 	
@@ -34,8 +35,17 @@ public class DefaultMessage implements Serializable {
 	
 	public DefaultMessage() {}
 
-	public DefaultMessage(Serializable body) {
+
+
+	public DefaultMessage(String msgId, Serializable body) {
+		this.msgId = StringUtils.isBlank(msgId) ? TokenGenerator.generate() : msgId;
 		this.body = body;
+	}
+
+
+
+	public DefaultMessage(Serializable body) {
+		this(TokenGenerator.generate(), body);
 	}
 	
 	/**
@@ -43,23 +53,26 @@ public class DefaultMessage implements Serializable {
 	 * @param ackRequired 是否需要消费回执
 	 */
 	public DefaultMessage(Serializable body, boolean consumerAck) {
-		this.body = body;
+		this(TokenGenerator.generate(), body);
 		this.consumerAck = consumerAck;
 	}
 	
 	public DefaultMessage(Serializable body, Serializable partitionFactor) {
-		this.body = body;
+		this(TokenGenerator.generate(), body);
 		this.partitionFactor = partitionFactor;
 	}
 
 	public DefaultMessage(Serializable body, long partitionHash, Serializable partitionFactor, boolean consumerAck) {
-		this.body = body;
+		this(TokenGenerator.generate(), body);
 		this.partitionHash = partitionHash;
 		this.partitionFactor = partitionFactor;
 		this.consumerAck = consumerAck;
 	}
 
 	public String getMsgId() {
+		if(StringUtils.isBlank(msgId)){
+			msgId =  TokenGenerator.generate();
+		}
 		return msgId;
 	}
 
@@ -149,5 +162,5 @@ public class DefaultMessage implements Serializable {
 	public void setTopic(String topic) {
 		this.topic = topic;
 	}
-	
+
 }

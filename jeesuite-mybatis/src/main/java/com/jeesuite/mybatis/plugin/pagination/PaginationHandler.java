@@ -147,6 +147,10 @@ public class PaginationHandler implements InterceptorHandler {
 	    	List<?> datas;
 	    	BoundSql pageBoundSql;
 	    	if(limitMappedStatement == null){
+	    		if(StringUtils.isBlank(boundSql.getSql())){
+	    			logger.error("create_limit_mappedStatement_error。MappedStatementId:{},pageParamsHolder:{}", orignMappedStatement.getId(),PageExecutor.getPageParams());
+	    			throw new RuntimeException("生成Limit查询语句错误");
+	    		}
 	    		 String pageSql = PageSqlUtils.getLimitSQL(dbType, boundSql.getSql(),pageParams);
 	             pageBoundSql = new BoundSql(orignMappedStatement.getConfiguration(), pageSql, boundSql.getParameterMappings(), parameter);
 	             
@@ -176,7 +180,7 @@ public class PaginationHandler implements InterceptorHandler {
 			RowBounds rowBounds, ResultHandler resultHandler) throws IllegalAccessException, SQLException {
 		CacheKey countKey = executor.createCacheKey(countMs, parameter, RowBounds.DEFAULT, boundSql);
 		
-		String orignSql = boundSql.getSql().replaceAll(";$", "");
+		String orignSql = StringUtils.replace(boundSql.getSql(), ";$", StringUtils.EMPTY);
 		// count sql
 		String countSql = PageSqlUtils.getCountSql(orignSql);
 		
@@ -268,6 +272,10 @@ public class PaginationHandler implements InterceptorHandler {
     		EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(orignMappedStmt.getId().substring(0, orignMappedStmt.getId().lastIndexOf(".")));
     		
     		String orignSql = entityInfo.getMapperSqls().get(orignMappedStmt.getId());
+    		if(StringUtils.isBlank(orignSql)){
+    			logger.error("create_limit_mappedStatement_error。MappedStatementId:{},entityClass:{},pageParamsHolder:{}", orignMappedStmt.getId(),entityInfo.getEntityClass().getName(),PageExecutor.getPageParams());
+    			throw new RuntimeException("生成Limit查询语句错误");
+    		}
     		synchronized (configuration) {
     			//
     			createdPageMappedStatements.add(orignMappedStmt.getId());

@@ -10,6 +10,6 @@ import com.jeesuite.kafka.message.DefaultMessage;
  */
 public interface RetryErrorMessageHandler {
 
-	public void process(String topic,DefaultMessage message);
+	public void process(String group,String topic,DefaultMessage message);
 	
 }

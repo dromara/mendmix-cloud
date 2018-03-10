@@ -213,14 +213,15 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 	
 	@Override
 	public void close() {
-		super.close();
 		if(!runing.get())return;
+		//防止外部暂停了fetch发生阻塞
+		consumerContext.switchFetch(true);
 		for (int i = 0; i < consumerWorks.size(); i++) {
 			consumerWorks.get(i).close();
 			consumerWorks.remove(i);
 			i--;
 		}
-		runing.set(false);
+		super.close();
 	}
 	
 	private class ConsumerWorker implements Runnable {
@@ -264,7 +265,10 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 				if(uncommittedNums.get() > 0){					
 					commitOffsets(this);
 				}
-				
+				//如果拉取消息暂停
+				while(!consumerContext.fetchEnabled()){
+					try {Thread.sleep(1000);} catch (Exception e) {}
+				}
 				//当处理线程满后，阻塞处理线程
 				while(true){
 					if(defaultProcessExecutor.getMaximumPoolSize() > defaultProcessExecutor.getSubmittedTasksCount()){

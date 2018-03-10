@@ -174,9 +174,11 @@ public class KafkaMonitor implements Closeable{
 
 	
 	public static void main(String[] args) {
-		KafkaMonitor monitor = new KafkaMonitor("127.0.0.1:2181", "127.0.0.1:9092", 1000);
+		KafkaMonitor monitor = new KafkaMonitor("192.168.1.94:2181", "192.168.1.94:9092", 1000);
 		
 		List<ConsumerGroupInfo> groupInfos = monitor.getAllConsumerGroupInfos();
+		
+		System.out.println(groupInfos);
 
 		monitor.close();
 	}

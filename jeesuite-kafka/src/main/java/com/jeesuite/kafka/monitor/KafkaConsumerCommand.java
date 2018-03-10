@@ -17,6 +17,8 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.kafka.monitor.model.ConsumerGroupInfo;
@@ -35,6 +37,9 @@ import scala.collection.Iterator;
  * @date 2016年12月8日
  */
 public class KafkaConsumerCommand {
+	
+	private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerCommand.class);
+
 
 	private Map<String, KafkaConsumer<String, Serializable>> kafkaConsumers = new HashMap<>();
 	private AdminClient adminClient;
@@ -97,20 +102,24 @@ public class KafkaConsumerCommand {
 			
 			Map<String, TopicInfo> topicInfos = new HashMap<>();
 			while (iterator2.hasNext()) {
+				
 				TopicPartition partition = iterator2.next();
-				
-				TopicInfo topicInfo = topicInfos.get(partition.topic());
-				if(topicInfo == null){					
-					topicInfos.put(partition.topic(), topicInfo = new TopicInfo(partition.topic()));
-					consumerGroup.getTopics().add(topicInfo);
+                try {
+                	TopicInfo topicInfo = topicInfos.get(partition.topic());
+    				if(topicInfo == null){					
+    					topicInfos.put(partition.topic(), topicInfo = new TopicInfo(partition.topic()));
+    					consumerGroup.getTopics().add(topicInfo);
+    				}
+    				OffsetAndMetadata metadata = kafkaConsumer.committed(new TopicPartition(partition.topic(), partition.partition()));
+    				if(metadata == null)continue;
+    				TopicPartitionInfo partitionInfo = new TopicPartitionInfo(partition.topic(), partition.partition(),metadata.offset(),owner);
+    				//
+    				long logSize = getLogSize(kafkaConsumer,partition.topic(), partition.partition());
+    				partitionInfo.setLogSize(logSize);
+    				topicInfo.getPartitions().add(partitionInfo);
+				} catch (Exception e) {
+					logger.warn("fetch_topic_info_error topic:"+partition.topic(), e);
 				}
-				OffsetAndMetadata metadata = kafkaConsumer.committed(new TopicPartition(partition.topic(), partition.partition()));
-				
-				TopicPartitionInfo partitionInfo = new TopicPartitionInfo(partition.topic(), partition.partition(),metadata.offset(),owner);
-				//
-				long logSize = getLogSize(kafkaConsumer,partition.topic(), partition.partition());
-				partitionInfo.setLogSize(logSize);
-				topicInfo.getPartitions().add(partitionInfo);
 			}
 		}
 		

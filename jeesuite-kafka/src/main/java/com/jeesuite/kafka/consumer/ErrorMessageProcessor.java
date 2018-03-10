@@ -124,7 +124,7 @@ public class ErrorMessageProcessor implements Closeable{
 			if(retryCount == maxReties){
 				if(retryErrorHandler != null){
 					try {
-						retryErrorHandler.process(message.getTopic(), message);
+						retryErrorHandler.process(ConsumerContext.getInstance().getGroupId(),message.getTopic(), message);
 					} catch (Exception e) {
 						logger.warn("persistHandler error,topic["+message.getTopic()+"]",e);
 					}

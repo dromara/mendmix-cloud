@@ -5,6 +5,7 @@ package com.jeesuite.kafka.consumer;
 
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +28,7 @@ public class ConsumerContext {
 	
 	private static final Logger log = LoggerFactory.getLogger(ConsumerContext.class);
 
+	private static ConsumerContext instance = new ConsumerContext();
 
 	private String groupId;
 	
@@ -44,14 +46,25 @@ public class ConsumerContext {
 	
 	private ZkClient zkClient;
 	
-	public ConsumerContext(Properties configs, String groupId, String consumerId,
-			Map<String, MessageHandler> messageHandlers, int maxProcessThreads) {
-		super();
+	private AtomicBoolean fetchEnabled = new AtomicBoolean(true);
+	
+	public static ConsumerContext getInstance() {
+		return instance;
+	}
+
+	private ConsumerContext(){}
+	
+	public void propertiesSetIfAbsent(Properties configs, String groupId, String consumerId,
+			Map<String, MessageHandler> messageHandlers, int maxProcessThreads,
+			OffsetLogHanlder offsetLogHanlder,ErrorMessageProcessor errorMessageProcessor) {
+		if(this.configs != null)return;
 		this.configs = configs;
 		this.groupId = groupId;
 		this.consumerId = consumerId;
 		this.messageHandlers = messageHandlers;
 		this.maxProcessThreads = maxProcessThreads;
+		this.offsetLogHanlder = offsetLogHanlder;
+		this.errorMessageProcessor = errorMessageProcessor;
 		
 		String zkServers = ResourceUtils.getProperty("kafka.zkServers");
 		if(StringUtils.isNotBlank(zkServers)){
@@ -77,14 +90,6 @@ public class ConsumerContext {
 
 	public int getMaxProcessThreads() {
 		return maxProcessThreads;
-	}
-
-	public void setOffsetLogHanlder(OffsetLogHanlder offsetLogHanlder) {
-		this.offsetLogHanlder = offsetLogHanlder;
-	}
-	
-    public void setErrorMessageProcessor(ErrorMessageProcessor errorMessageProcessor) {
-		this.errorMessageProcessor = errorMessageProcessor;
 	}
 
 	public OffsetLogHanlder getOffsetLogHanlder() {
@@ -126,6 +131,16 @@ public class ConsumerContext {
 			log.warn("sendConsumerAck error",e);
 		}
     }
+    
+    
+    public boolean fetchEnabled() {
+		return fetchEnabled.get();
+	}
+
+	public void switchFetch(boolean enable){
+		log.info(">set_kafka_cosumer_fetch:{}",enable);
+		fetchEnabled.set(enable);
+	}
     
     public void close(){
     	errorMessageProcessor.close();

@@ -136,21 +136,11 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 		@Override
 		public void run() {
  
-			if (logger.isInfoEnabled()) {
-				logger.info("MessageProcessor [{}] start, topic:{}",Thread.currentThread().getName(),topicName);
-			}
+			logger.info("MessageProcessor [{}] start, topic:{}",Thread.currentThread().getName(),topicName);
 
 			ConsumerIterator<String, Object> it = stream.iterator();
 			// 没有消息的话，这里会阻塞
 			while (it.hasNext()) {
-				
-				//当处理线程满后，阻塞处理线程
-				while(true){
-					if(defaultProcessExecutor.getMaximumPoolSize() > defaultProcessExecutor.getSubmittedTasksCount()){
-						break;
-					}
-					try {Thread.sleep(100);} catch (Exception e) {}
-				}
 				try {					
 					MessageAndMetadata<String, Object> messageAndMeta = it.next();
 					Object _message = messageAndMeta.message();
@@ -168,6 +158,19 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 					submitMessageToProcess(topicName,messageAndMeta,message);
 				} catch (Exception e) {
 					logger.error("received_topic_error,topic:"+topicName,e);
+				}
+				
+				//如果拉取消息暂停
+				while(!consumerContext.fetchEnabled()){
+					try {Thread.sleep(1000);} catch (Exception e) {}
+				}
+				
+				//当处理线程满后，阻塞处理线程
+				while(true){
+					if(defaultProcessExecutor.getMaximumPoolSize() > defaultProcessExecutor.getSubmittedTasksCount()){
+						break;
+					}
+					try {Thread.sleep(100);} catch (Exception e) {}
 				}
 				
 			}
@@ -211,11 +214,12 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 
 	@Override
 	public void close() {
-		super.close();
 		if(!runing.get())return;
+		//防止外部暂停了fetch发生阻塞
+		consumerContext.switchFetch(true);
 		this.connector.commitOffsets();
 		this.connector.shutdown();
-		runing.set(false);
+		super.close();
 		logger.info("KafkaTopicSubscriber shutdown ok...");
 	}
 	

@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import com.jeesuite.kafka.consumer.ConsumerContext;
+
 
 public class ConsumerServer {
 	
@@ -30,6 +32,8 @@ public class ConsumerServer {
 		if("q".equalsIgnoreCase(cmd)){
 			context.close();
 			scan.close();
+		}else if("stopfetch".equalsIgnoreCase(cmd)){
+			ConsumerContext.getInstance().switchFetch(true);
 		}
 
     }

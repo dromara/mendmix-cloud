@@ -17,6 +17,7 @@ public class InstanceFactory {
 	private static SpringInstanceProvider instanceProvider;
 	private static Long timeStarting = System.currentTimeMillis();
 	private static AtomicBoolean initialized = new AtomicBoolean(false);
+	private static AtomicBoolean loadFinished = new AtomicBoolean(false);
 
 	/**
 	 * 设置实例提供者。
@@ -27,7 +28,16 @@ public class InstanceFactory {
 		instanceProvider = provider;
 		initialized.set(true);
 	}
+	
+	public static void loadFinished(SpringInstanceProvider provider){
+		setInstanceProvider(provider);
+		loadFinished.set(true);
+	}
 
+	public static boolean isLoadfinished(){
+		return loadFinished.get();
+	}
+	
 	/**
 	 * 获取指定类型的对象实例。如果IoC容器没配置好或者IoC容器中找不到该类型的实例则抛出异常。
 	 * 
