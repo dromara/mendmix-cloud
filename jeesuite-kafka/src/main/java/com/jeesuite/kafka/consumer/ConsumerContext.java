@@ -3,9 +3,12 @@
  */
 package com.jeesuite.kafka.consumer;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +50,8 @@ public class ConsumerContext {
 	private ZkClient zkClient;
 	
 	private AtomicBoolean fetchEnabled = new AtomicBoolean(true);
+	//<topic,[fetchNums,processNums]>
+	private Map<String, AtomicInteger[]> consumerStats = new ConcurrentHashMap<>();
 	
 	public static ConsumerContext getInstance() {
 		return instance;
@@ -80,19 +85,19 @@ public class ConsumerContext {
 		return consumerId;
 	}
 
-	public Properties getProperties() {
+	protected Properties getProperties() {
 		return configs;
 	}
 
-	public Map<String, MessageHandler> getMessageHandlers() {
+	protected Map<String, MessageHandler> getMessageHandlers() {
 		return messageHandlers;
 	}
 
-	public int getMaxProcessThreads() {
+	protected int getMaxProcessThreads() {
 		return maxProcessThreads;
 	}
 
-	public OffsetLogHanlder getOffsetLogHanlder() {
+	protected OffsetLogHanlder getOffsetLogHanlder() {
 		return offsetLogHanlder;
 	}
 
@@ -100,13 +105,13 @@ public class ConsumerContext {
     	return offsetLogHanlder != null ? offsetLogHanlder.getLatestProcessedOffsets(groupId, topic, partition) : -1;
     }
 
-    public void saveOffsetsBeforeProcessed(String topic,int partition,long offset){
+	protected void saveOffsetsBeforeProcessed(String topic,int partition,long offset){
     	if(offsetLogHanlder != null){
     		offsetLogHanlder.saveOffsetsBeforeProcessed(groupId, topic, partition, offset);
     	}
     }
 	
-    public void saveOffsetsAfterProcessed(String topic,int partition,long offset){
+    protected void saveOffsetsAfterProcessed(String topic,int partition,long offset){
         if(offsetLogHanlder != null){
         	offsetLogHanlder.saveOffsetsAfterProcessed(groupId, topic, partition, offset);
     	}
@@ -117,7 +122,7 @@ public class ConsumerContext {
     	errorMessageProcessor.submit(message, messageHandlers.get(topic));
     }
     
-    public void sendConsumerAck(String messageId){
+    protected void sendConsumerAck(String messageId){
     	if(zkClient == null){
     		log.warn("Message set consumerAck = true,but not zookeeper config[kafka.zkServers] found!!!");
     		return;
@@ -132,6 +137,15 @@ public class ConsumerContext {
 		}
     }
     
+    protected void updateConsumerStats(String topic,int nums){
+    	if(nums == 0){
+    		consumerStats.put(topic, new AtomicInteger[]{new AtomicInteger(0),new AtomicInteger(0) });
+    	}else if(nums > 0){
+    		consumerStats.get(topic)[0].addAndGet(nums);
+    	}else{
+    		consumerStats.get(topic)[1].addAndGet(Math.abs(nums));
+    	}
+    }
     
     public boolean fetchEnabled() {
 		return fetchEnabled.get();
@@ -141,8 +155,16 @@ public class ConsumerContext {
 		log.info(">set_kafka_cosumer_fetch:{}",enable);
 		fetchEnabled.set(enable);
 	}
+	
+	public Map<String, int[]> getConsumerStats(){
+		Map<String, int[]> result =  new HashMap<>();
+		consumerStats.forEach((k,v) -> {
+			result.put(k, new int[]{v[0].get(),v[1].get()});
+		});
+		return result;
+	}
     
-    public void close(){
+	protected void close(){
     	errorMessageProcessor.close();
     	if(zkClient != null)zkClient.close();
     }

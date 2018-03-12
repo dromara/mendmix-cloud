@@ -2,6 +2,9 @@ package com.jeesuite.springweb.utils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -9,6 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.TokenGenerator;
+import com.jeesuite.springweb.RequestContextHelper;
 import com.jeesuite.springweb.WebConstants;
 
 public class WebUtils {
@@ -147,5 +152,26 @@ public class WebUtils {
 		}
 		
 		return baseUrl;
+	}
+	
+	public static Map<String, String> getCustomHeaders(){
+		Map<String, String> headers = new HashMap<>();
+		 HttpServletRequest request = RequestContextHelper.getRequest();
+		Enumeration<String> headerNames = request.getHeaderNames();
+		 while(headerNames.hasMoreElements()){
+			 String headerName = headerNames.nextElement().toLowerCase();
+			 if(headerName.startsWith(WebConstants.HEADER_PREFIX)){				 
+				 String headerValue = request.getHeader(headerName);
+				 if(headerValue != null)headers.put(headerName, headerValue);
+			 }
+		 }
+		 //
+		 headers.put(WebConstants.HEADER_INVOKER_IP, IpUtils.getLocalIpAddr());
+		 
+		 if(!headers.containsKey(WebConstants.HEADER_AUTH_TOKEN)){			 
+			 headers.put(WebConstants.HEADER_AUTH_TOKEN, TokenGenerator.generateWithSign());
+		 }
+		 
+		 return headers;
 	}
 }

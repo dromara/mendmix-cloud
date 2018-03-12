@@ -29,10 +29,13 @@ public abstract class AbstractTopicConsumer implements Closeable{
 	protected ExecutorService poolRejectedExecutor = Executors.newSingleThreadExecutor();
 	
 	protected AtomicBoolean runing = new AtomicBoolean(false);
-
+	
 	public AbstractTopicConsumer(ConsumerContext context) {
 		this.consumerContext = context;
 		int poolSize = consumerContext.getMessageHandlers().size();
+		for (String topicName : consumerContext.getMessageHandlers().keySet()) {
+			context.updateConsumerStats(topicName, 0);
+		}
 		this.fetchExecutor = new StandardThreadExecutor(poolSize, poolSize,0, TimeUnit.SECONDS, poolSize,new StandardThreadFactory("KafkaFetcher"));
 		
 		this.defaultProcessExecutor = new StandardThreadExecutor(1, context.getMaxProcessThreads(),30, TimeUnit.SECONDS, context.getMaxProcessThreads(),new StandardThreadFactory("defaultProcessExecutor"),new PoolFullRunsPolicy());

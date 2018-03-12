@@ -327,6 +327,8 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 		private void processConsumerRecords(final ConsumerRecord<String, Serializable> record) {
 			final MessageHandler messageHandler = topicHandlers.get(record.topic());
 			
+			consumerContext.updateConsumerStats(record.topic(),1);
+			//
 			consumerContext.saveOffsetsBeforeProcessed(record.topic(), record.partition(), record.offset());
 			//兼容没有包装的情况
 			final DefaultMessage message = record.value() instanceof DefaultMessage ? (DefaultMessage) record.value() : new DefaultMessage((Serializable) record.value());
@@ -358,6 +360,8 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 						}
 						logger.error("["+messageHandler.getClass().getSimpleName()+"] process Topic["+record.topic()+"] error",e);
 					}
+					
+					consumerContext.updateConsumerStats(record.topic(),-1);
 				}
 			});
 		}

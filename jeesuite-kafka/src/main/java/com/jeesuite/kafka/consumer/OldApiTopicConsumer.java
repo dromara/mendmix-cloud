@@ -150,6 +150,8 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 					} catch (ClassCastException e) {
 						message = new DefaultMessage((Serializable) _message);
 					}
+					
+					consumerContext.updateConsumerStats(messageAndMeta.topic(),1);
 					//
 					consumerContext.saveOffsetsBeforeProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());
 					//第一阶段处理
@@ -205,6 +207,8 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 						}
 						logger.error("received_topic_process_error ["+processorName+"]processMessage error,topic:"+topicName,e);
 					}
+					
+					consumerContext.updateConsumerStats(messageAndMeta.topic(),-1);
 				
 				}
 			});

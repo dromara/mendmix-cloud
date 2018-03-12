@@ -157,7 +157,7 @@ public class PaginationHandler implements InterceptorHandler {
 	             datas = executor.query(orignMappedStatement, parameter, RowBounds.DEFAULT, resultHandler,null,pageBoundSql);
 	    	}else{    		
 	    		pageBoundSql = limitMappedStatement.getBoundSql(parameter);
-	    		pageBoundSql.setAdditionalParameter(PARAMETER_OFFSET, pageParams.getOffset());
+	    		pageBoundSql.setAdditionalParameter(PARAMETER_OFFSET, pageParams.offset());
 	    		pageBoundSql.setAdditionalParameter(PARAMETER_SIZE, pageParams.getPageSize());
 	    		//
 	    		datas = executor.query(limitMappedStatement, parameter, RowBounds.DEFAULT, resultHandler,null,pageBoundSql);

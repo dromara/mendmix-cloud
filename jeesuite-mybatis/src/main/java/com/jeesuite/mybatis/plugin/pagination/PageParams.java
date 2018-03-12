@@ -29,7 +29,7 @@ public class PageParams {
 		this.pageSize = pageSize;
 	}
     
-	public int getOffset() {
+	public int offset() {
 		return (pageNo - 1) * pageSize;
 	}
 

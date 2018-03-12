@@ -42,7 +42,7 @@ public class PageSqlUtils {
 	
 	public static String getLimitSQL(DbType dbType,String sql,PageParams pageParams){
 		return getLimitSQL(dbType, sql)//
-				.replace(OFFSET_PLACEHOLDER, String.valueOf(pageParams.getOffset()))//
+				.replace(OFFSET_PLACEHOLDER, String.valueOf(pageParams.offset()))//
 				.replace(PAGE_SIZE_PLACEHOLDER, String.valueOf(pageParams.getPageSize()))//
 				.replaceAll(REGEX_N_T_S, StringUtils.SPACE);
 	}
