@@ -148,9 +148,9 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 					try {
 						message = (DefaultMessage) _message;
 					} catch (ClassCastException e) {
-						message = new DefaultMessage((Serializable) _message);
+						message = new DefaultMessage(messageAndMeta.key(),(Serializable) _message);
 					}
-					
+					message.setTopicMetadata(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());
 					consumerContext.updateConsumerStats(messageAndMeta.topic(),1);
 					//
 					consumerContext.saveOffsetsBeforeProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());
@@ -185,7 +185,7 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 		 */
 		private void submitMessageToProcess(final String topicName,final MessageAndMetadata<String, Object> messageAndMeta,final DefaultMessage message) {
 			
-			(message.isConsumerAck() ? highProcessExecutor : defaultProcessExecutor).submit(new Runnable() {
+			(message.isConsumerAckRequired() ? highProcessExecutor : defaultProcessExecutor).submit(new Runnable() {
 				@Override
 				public void run() {
 					try {	
@@ -196,7 +196,7 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 							if(useTime > 1000)logger.debug("received_topic_useTime [{}]process topic:{} use time {} ms",processorName,topicName,useTime);
 						}
 						//回执
-                        if(message.isConsumerAck()){
+                        if(message.isConsumerAckRequired()){
                         	consumerContext.sendConsumerAck(message.getMsgId());
 						}
 						consumerContext.saveOffsetsAfterProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());

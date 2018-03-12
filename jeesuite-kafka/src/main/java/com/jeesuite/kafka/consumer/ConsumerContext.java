@@ -118,7 +118,6 @@ public class ConsumerContext {
     }
     
     public void processErrorMessage(String topic,DefaultMessage message){
-    	message.setTopic(topic);
     	errorMessageProcessor.submit(message, messageHandlers.get(topic));
     }
     

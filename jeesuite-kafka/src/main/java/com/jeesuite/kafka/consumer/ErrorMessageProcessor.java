@@ -124,12 +124,12 @@ public class ErrorMessageProcessor implements Closeable{
 			if(retryCount == maxReties){
 				if(retryErrorHandler != null){
 					try {
-						retryErrorHandler.process(ConsumerContext.getInstance().getGroupId(),message.getTopic(), message);
+						retryErrorHandler.process(ConsumerContext.getInstance().getGroupId(),message.topic(), message);
 					} catch (Exception e) {
-						logger.warn("persistHandler error,topic["+message.getTopic()+"]",e);
+						logger.warn("persistHandler error,topic["+message.topic()+"]",e);
 					}
 				}else{					
-					logger.warn("retry_skip topic[{}] maxReties over {} time error ,skip!!!",message.getTopic(),maxReties);
+					logger.warn("retry_skip topic[{}] maxReties over {} time error ,skip!!!",message.topic(),maxReties);
 				}
 				return;
 			}

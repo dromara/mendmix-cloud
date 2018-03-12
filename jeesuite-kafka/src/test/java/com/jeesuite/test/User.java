@@ -6,6 +6,9 @@ package com.jeesuite.test;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.kafka.message.DefaultMessage;
+
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
@@ -103,6 +106,18 @@ public class User implements Serializable {
 		this.updatedAt = updatedAt;
 	}
 	
-	
+	public static void main(String[] args) {
+		
+		User user = new User();
+		user.setId(100);
+		user.setName("jack");
+		
+		DefaultMessage message = new DefaultMessage(user).consumerAckRequired(true).header("key1", "value1");
+		String json = JsonUtils.toJson(message);
+		System.out.println(json);
+		
+		message = JsonUtils.toObject(json,DefaultMessage.class);
+		System.out.println(message);
+	}
 	
 }

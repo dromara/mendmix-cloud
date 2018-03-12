@@ -5,6 +5,8 @@ package com.jeesuite.test;
 
 import java.io.Serializable;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
 
@@ -24,7 +26,7 @@ public class DemoMessageHandler implements MessageHandler {
 	@Override
 	public void p2Process(DefaultMessage message) {
 		Serializable body = message.getBody();
-		System.out.println("DemoMessageHandler process message:" + body);
+		System.out.println(String.format("DemoMessageHandler process messageId:%s,body:%s", message.getMsgId(),body));
 		try {Thread.sleep(100);} catch (Exception e) {}
 	}
 

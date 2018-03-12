@@ -52,7 +52,7 @@ public class ProducerClient implements ApplicationContextAware{
 						@Override
 						public void run() {
 							String topic = new Random().nextBoolean() ? "demo-topic1" : "demo-topic2";
-                            topicProducer.publish(topic, new DefaultMessage(RandomStringUtils.random(5, true, true)).consumerAck(new Random().nextBoolean()));
+                            topicProducer.publish(topic, new DefaultMessage(RandomStringUtils.random(5, true, true)).consumerAckRequired(new Random().nextBoolean()));
 							count.incrementAndGet();
 						}
 					});

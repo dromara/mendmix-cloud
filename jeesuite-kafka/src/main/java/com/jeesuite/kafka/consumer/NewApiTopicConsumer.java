@@ -325,17 +325,19 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 		 * @param record
 		 */
 		private void processConsumerRecords(final ConsumerRecord<String, Serializable> record) {
+			//兼容没有包装的情况
+			final DefaultMessage message = record.value() instanceof DefaultMessage ? (DefaultMessage) record.value() : new DefaultMessage(record.key(),(Serializable) record.value());
 			final MessageHandler messageHandler = topicHandlers.get(record.topic());
+			
+			message.setTopicMetadata(record.topic(), record.partition(), record.offset());
 			
 			consumerContext.updateConsumerStats(record.topic(),1);
 			//
 			consumerContext.saveOffsetsBeforeProcessed(record.topic(), record.partition(), record.offset());
-			//兼容没有包装的情况
-			final DefaultMessage message = record.value() instanceof DefaultMessage ? (DefaultMessage) record.value() : new DefaultMessage((Serializable) record.value());
 			//第一阶段处理
 			messageHandler.p1Process(message);
 			//第二阶段处理
-			(message.isConsumerAck() ? highProcessExecutor : defaultProcessExecutor).submit(new Runnable() {
+			(message.isConsumerAckRequired() ? highProcessExecutor : defaultProcessExecutor).submit(new Runnable() {
 				@Override
 				public void run() {
 					try {									
@@ -348,7 +350,7 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 						}
 						
 						//回执
-                        if(message.isConsumerAck()){
+                        if(message.isConsumerAckRequired()){
                         	consumerContext.sendConsumerAck(message.getMsgId());
 						}
 						//

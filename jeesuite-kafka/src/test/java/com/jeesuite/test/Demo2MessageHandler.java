@@ -25,7 +25,7 @@ public class Demo2MessageHandler implements MessageHandler {
 	public void p2Process(DefaultMessage message) {
 		//第二阶段处理一些耗时操作，如：最终入库
 		Serializable body = message.getBody();
-		System.out.println("Demo2MessageHandler process message:" + body);
+		System.out.println(String.format("Demo2MessageHandler process messageId:%s,body:%s", message.getMsgId(),body));
 		try {Thread.sleep(500);} catch (Exception e) {}
 	}
 

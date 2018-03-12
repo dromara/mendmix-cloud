@@ -61,7 +61,7 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
 
         Validate.notNull(message, "Message is required");
         //
-        boolean requireAck = consumerAckEnabled && message.isConsumerAck();
+        boolean requireAck = consumerAckEnabled && message.isConsumerAckRequired();
         //异步 ，如果需要回执强制同步发送
         if(asynSend && requireAck == false){
         	doAsynSend(topicName, message.getMsgId(),message);
@@ -85,7 +85,7 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
 
 	private boolean doSyncSend(String topicName, String messageKey,DefaultMessage message){
 		try {			
-			Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message.isSendBodyOnly() ? message.getBody() : message));
+			Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message.sendBodyOnly() ? message.getBody() : message));
 			RecordMetadata metadata = future.get();
 			for (ProducerEventHandler handler : eventHanlders) {
 				try {handler.onSuccessed(topicName, metadata);} catch (Exception e) {}
@@ -110,7 +110,7 @@ public class DefaultTopicProducer implements TopicProducer,Closeable{
 	 */
 	private void doAsynSend(final String topicName, final String messageKey,final DefaultMessage message) {
 		// 异步发送
-        this.kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message.isSendBodyOnly() ? message.getBody() : message), new Callback() {
+        this.kafkaProducer.send(new ProducerRecord<String, Object>(topicName, messageKey,message.sendBodyOnly() ? message.getBody() : message), new Callback() {
 
             @Override
             public void onCompletion(RecordMetadata metadata, Exception ex) {

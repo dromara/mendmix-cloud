@@ -37,7 +37,7 @@ public class DefaultPartitioner implements Partitioner {
         int numPartitions = partitions.size();
 
         try {			
-        	long partitionHash = ((DefaultMessage)value).getPartitionHash();
+        	long partitionHash = ((DefaultMessage)value).partitionHash();
         	//按hash分区
         	if(partitionHash > 0){
         		long index = partitionHash % numPartitions;
