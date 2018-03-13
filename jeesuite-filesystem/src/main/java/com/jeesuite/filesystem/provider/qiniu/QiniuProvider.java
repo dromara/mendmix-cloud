@@ -82,8 +82,8 @@ public class QiniuProvider extends AbstractProvider {
 	}
 
 	@Override
-	public String getDownloadUrl(String file) {
-		String path = getFullPath(file);
+	public String getDownloadUrl(String fileKey) {
+		String path = getFullPath(fileKey);
 		if(isPrivate){
 			path = auth.privateDownloadUrl(path, 3600);
 		}
@@ -91,26 +91,26 @@ public class QiniuProvider extends AbstractProvider {
 	}
 
 	@Override
-	public boolean delete(String fileName) {
+	public boolean delete(String fileKey) {
 		try {
-			if (fileName.contains(DIR_SPLITER))
-				fileName = fileName.replace(urlprefix, "");
-			bucketManager.delete(bucketName, fileName);
+			if (fileKey.contains(DIR_SPLITER))
+				fileKey = fileKey.replace(urlprefix, "");
+			bucketManager.delete(bucketName, fileKey);
 			return true;
 		} catch (QiniuException e) {
-			processUploadException(fileName, e);
+			processUploadException(fileKey, e);
 		}
 		return false;
 	}
 
 	@Override
-	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileNames) {
+	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileKeys) {
 		StringMap policy = null;
 		if(metadata != null && !metadata.isEmpty()){
 			policy = new StringMap(metadata);
 		}
-		if (fileNames != null && fileNames.length > 0 && fileNames[0] != null) {
-			return auth.uploadToken(bucketName, fileNames[0], expires, policy, true);
+		if (fileKeys != null && fileKeys.length > 0 && fileKeys[0] != null) {
+			return auth.uploadToken(bucketName, fileKeys[0], expires, policy, true);
 		}
 		return auth.uploadToken(bucketName, null, expires, policy, true);
 	}
@@ -138,7 +138,7 @@ public class QiniuProvider extends AbstractProvider {
 		throw new FSOperErrorException(name(), res.toString());
 	}
 	
-	private void processUploadException(String fileName, QiniuException e) {
+	private void processUploadException(String fileKey, QiniuException e) {
 		Response r = e.response;
 		String message;
 		try {

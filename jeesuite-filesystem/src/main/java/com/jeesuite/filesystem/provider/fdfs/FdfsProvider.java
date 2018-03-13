@@ -66,18 +66,18 @@ public class FdfsProvider extends AbstractProvider{
 	}
 
 	@Override
-	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileNames) {
+	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileKeys) {
 		return null;
 	}
 
 
 
 	@Override
-	public boolean delete(String fileName) {
+	public boolean delete(String fileKey) {
 		try {
-			if (fileName.contains(DIR_SPLITER))
-				fileName = fileName.replace(urlprefix, "");
-			 FileId path = FileId.fromString(fileName);
+			if (fileKey.contains(DIR_SPLITER))
+				fileKey = fileKey.replace(urlprefix, "");
+			 FileId path = FileId.fromString(fileKey);
 		     client.delete(path).get();
 			return true;
 		} catch (Exception e) {
@@ -87,8 +87,8 @@ public class FdfsProvider extends AbstractProvider{
 	}
 	
 	@Override
-	public String getDownloadUrl(String file) {
-		return getFullPath(file);
+	public String getDownloadUrl(String fileKey) {
+		return getFullPath(fileKey);
 	}
 
 	

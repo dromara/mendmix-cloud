@@ -86,24 +86,24 @@ public class AliyunossProvider extends AbstractProvider{
 
 
 	@Override
-	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileNames) {
+	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileKeys) {
 		return null;
 	}
 
 	@Override
-	public boolean delete(String fileName) {
-		ossClient.deleteObject(bucketName, fileName);
+	public boolean delete(String fileKey) {
+		ossClient.deleteObject(bucketName, fileKey);
 		return true;
 	}
 	
 	@Override
-	public String getDownloadUrl(String file) {
+	public String getDownloadUrl(String fileKey) {
 		//ObjectAcl objectAcl = ossClient.getObjectAcl(bucketName, key);
 		if(isPrivate){
-			URL url = ossClient.generatePresignedUrl(bucketName, file, DateUtils.addHours(new Date(), 1));
+			URL url = ossClient.generatePresignedUrl(bucketName, fileKey, DateUtils.addHours(new Date(), 1));
 			return url.toString();
 		}
-		return urlprefix + file;
+		return urlprefix + fileKey;
 	}
 
 

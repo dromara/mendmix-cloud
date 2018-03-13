@@ -25,16 +25,16 @@ public interface FSProvider extends Closeable {
 	 * @param file 文件（全路径或者fileKey）
 	 * @return
 	 */
-	public String getDownloadUrl(String file);
+	public String getDownloadUrl(String fileKey);
 	
 	/**
 	 * 删除图片
 	 * @return
 	 */
-	public boolean delete(String fileName);
+	public boolean delete(String fileKey);
 	
 	
-	public String createUploadToken(Map<String, Object> metadata,long expires,String...fileNames);
+	public String createUploadToken(Map<String, Object> metadata,long expires,String...fileKeys);
 	
-	public String downloadAndSaveAs(String file,String localSaveDir);
+	public String downloadAndSaveAs(String fileKey,String localSaveDir);
 }

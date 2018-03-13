@@ -83,36 +83,36 @@ public class FileSystemClient {
 		return fsProvider.upload(new UploadObject(file));
 	}
 	
-	public String upload(String fileName, File file) {
-		return fsProvider.upload(new UploadObject(fileName, file));
+	public String upload(String fileKey, File file) {
+		return fsProvider.upload(new UploadObject(fileKey, file));
 	}
 	
-	public String upload(String fileName, File file,String catalog) {
-		return fsProvider.upload(new UploadObject(fileName, file).toCatalog(catalog));
+	public String upload(String fileKey, File file,String catalog) {
+		return fsProvider.upload(new UploadObject(fileKey, file).toCatalog(catalog));
 	}
 
-	public String upload(String fileName,byte[] contents){
-		return fsProvider.upload(new UploadObject(fileName, contents));
+	public String upload(String fileKey,byte[] contents){
+		return fsProvider.upload(new UploadObject(fileKey, contents));
 	}
 	
-	public String upload(String fileName,byte[] contents,String catalog){
-		return fsProvider.upload(new UploadObject(fileName, contents).toCatalog(catalog));
+	public String upload(String fileKey,byte[] contents,String catalog){
+		return fsProvider.upload(new UploadObject(fileKey, contents).toCatalog(catalog));
 	}
 
-	public String upload(String fileName, InputStream in, String mimeType) {
-		return fsProvider.upload(new UploadObject(fileName, in, mimeType));
+	public String upload(String fileKey, InputStream in, String mimeType) {
+		return fsProvider.upload(new UploadObject(fileKey, in, mimeType));
 	}
 	
-	public String upload(String fileName, InputStream in, String mimeType,String catalog) {
-		return fsProvider.upload(new UploadObject(fileName, in, mimeType).toCatalog(catalog));
+	public String upload(String fileKey, InputStream in, String mimeType,String catalog) {
+		return fsProvider.upload(new UploadObject(fileKey, in, mimeType).toCatalog(catalog));
 	}
 
-	public boolean delete(String fileName) {
-		return fsProvider.delete(fileName);
+	public boolean delete(String fileKey) {
+		return fsProvider.delete(fileKey);
 	}
 	
-	public String getDownloadUrl(String file) {
-		return fsProvider.getDownloadUrl(file);
+	public String getDownloadUrl(String fileKey) {
+		return fsProvider.getDownloadUrl(fileKey);
 	}
 	
 	public String createUploadToken() {
