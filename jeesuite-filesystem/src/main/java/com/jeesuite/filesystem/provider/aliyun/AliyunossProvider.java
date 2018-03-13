@@ -29,6 +29,8 @@ public class AliyunossProvider extends AbstractProvider{
 
 	public static final String NAME = "aliyun";
 	
+	private static final String URL_PREFIX_PATTERN = "(http).*\\.(com|cn)\\/";
+	
 	private OSSClient ossClient;
 	private String bucketName;
 	private String urlprefix = "/";
@@ -101,7 +103,7 @@ public class AliyunossProvider extends AbstractProvider{
 		//ObjectAcl objectAcl = ossClient.getObjectAcl(bucketName, key);
 		if(isPrivate){
 			URL url = ossClient.generatePresignedUrl(bucketName, fileKey, DateUtils.addHours(new Date(), 1));
-			return url.toString();
+			return url.toString().replaceFirst(URL_PREFIX_PATTERN, urlprefix);
 		}
 		return urlprefix + fileKey;
 	}
