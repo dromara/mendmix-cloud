@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.kafka.consumer.hanlder.RetryErrorMessageHandler;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
@@ -39,6 +40,9 @@ public class ErrorMessageProcessor implements Closeable{
 	
 	private AtomicBoolean closed = new AtomicBoolean(false);
 
+	public int getRetryTaskNums(){
+		return taskQueue.size();
+	}
 
 	public ErrorMessageProcessor(int poolSize,int retryPeriodSeconds,int maxReties,RetryErrorMessageHandler persistHandler) {
 		
@@ -129,14 +133,14 @@ public class ErrorMessageProcessor implements Closeable{
 						logger.warn("persistHandler error,topic["+message.topic()+"]",e);
 					}
 				}else{					
-					logger.warn("retry_skip topic[{}] maxReties over {} time error ,skip!!!",message.topic(),maxReties);
+					logger.warn("retry_skip process message[{}] maxReties over {} time error!!!",JsonUtils.toJson(message),maxReties);
 				}
 				return;
 			}
 			nextFireTime = nextFireTime + retryCount * retryPeriodUnit;
 			//重新放入任务队列
 			taskQueue.add(this);
-			logger.debug("re-submit mssageId[{}] task to queue,next fireTime:{}",this.message.getMsgId(),nextFireTime);
+			logger.debug("retry_resubmit mssageId[{}] task to queue,next fireTime:{}",this.message.getMsgId(),nextFireTime);
 		}
 
 		@Override

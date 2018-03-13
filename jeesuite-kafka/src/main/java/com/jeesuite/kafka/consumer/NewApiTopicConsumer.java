@@ -214,13 +214,13 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 	@Override
 	public void close() {
 		if(!runing.get())return;
-		//防止外部暂停了fetch发生阻塞
-		consumerContext.switchFetch(true);
 		for (int i = 0; i < consumerWorks.size(); i++) {
 			consumerWorks.get(i).close();
 			consumerWorks.remove(i);
 			i--;
 		}
+		//防止外部暂停了fetch发生阻塞
+		consumerContext.switchFetch(true);
 		super.close();
 	}
 	

@@ -219,10 +219,10 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 	@Override
 	public void close() {
 		if(!runing.get())return;
-		//防止外部暂停了fetch发生阻塞
-		consumerContext.switchFetch(true);
 		this.connector.commitOffsets();
 		this.connector.shutdown();
+		//防止外部暂停了fetch发生阻塞
+		consumerContext.switchFetch(true);
 		super.close();
 		logger.info("KafkaTopicSubscriber shutdown ok...");
 	}

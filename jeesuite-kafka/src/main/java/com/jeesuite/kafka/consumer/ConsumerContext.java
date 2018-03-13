@@ -162,6 +162,10 @@ public class ConsumerContext {
 		});
 		return result;
 	}
+	
+	public int getRetryTaskNums(){
+		return errorMessageProcessor.getRetryTaskNums();
+	}
     
 	protected void close(){
     	errorMessageProcessor.close();
