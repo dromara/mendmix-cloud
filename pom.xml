@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-libs</artifactId>
-	<version>1.1.8-SNAPSHOT</version>
+	<version>1.1.9-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
 	<name>jeesuite-libs</name>
@@ -63,11 +63,13 @@
 		<module>jeesuite-log</module>
 		<module>jeesuite-filesystem</module>
 		<module>jeesuite-springboot-starter</module>
-		<module>jeesuite-search</module>
 		<module>jeesuite-springweb</module>
+		<!-- 
+		<module>jeesuite-search</module>
 		<module>jeesuite-tx</module>
 		<module>jeesuite-sms</module>
 		<module>jeesuite-pay</module>
+		 -->
 	</modules>
 
 	<dependencies>

@@ -3,6 +3,7 @@ package test.lock;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
 
 import org.apache.commons.lang3.RandomUtils;
 
@@ -45,10 +46,10 @@ public class RedisDistributeLockTest {
 
 		@Override
 		public void run() {
-			RedisDistributeLock lock = new RedisDistributeLock("test");
+			Lock lock = new RedisDistributeLock("test",99999);
 			lock.lock();
 			System.out.println("LockWorker[" + id + "] get lock,doing");
-			try {Thread.sleep(RandomUtils.nextLong(1000, 10000));} catch (Exception e) {}
+			try {Thread.sleep(RandomUtils.nextLong(1000, 3000));} catch (Exception e) {}
 			lock.unlock();
 			latch.countDown();
 			System.out.println("LockWorker[" + id + "] release lock,done");
@@ -60,11 +61,11 @@ public class RedisDistributeLockTest {
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
 		poolConfig.setMaxIdle(1);
 		poolConfig.setMinEvictableIdleTimeMillis(60 * 1000);
-		poolConfig.setMaxTotal(5);
+		poolConfig.setMaxTotal(20);
 		poolConfig.setMaxWaitMillis(30 * 1000);
 		String[] servers = "127.0.0.1:6379".split(",");
 		int timeout = 3000;
-		String password = null;
+		String password = "123456";
 		int database = 0;
 		JedisProvider<Jedis,BinaryJedis> provider = new JedisStandaloneProvider("default", poolConfig, servers, timeout, password, database,null);
 		JedisProviderFactory.setDefaultJedisProvider(provider);
