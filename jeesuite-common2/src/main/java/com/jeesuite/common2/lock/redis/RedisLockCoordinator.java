@@ -15,6 +15,8 @@ import com.jeesuite.cache.redis.JedisProviderFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
 
+import static com.jeesuite.cache.redis.JedisProviderFactory.getJedisCommands;
+
 /**
  * 
  * @description <br>
@@ -43,7 +45,7 @@ public class RedisLockCoordinator {
 		thread.setDaemon(true);
 		thread.start();
 	}
-
+	
 	public String buildEvenId(){
 		return new StringBuilder().append(EVENT_ID_PREFIX).append(System.currentTimeMillis()).append(eventIdSeq.incrementAndGet()).toString();
 	}
@@ -57,7 +59,9 @@ public class RedisLockCoordinator {
 			String nextEventId;
 			while(true){
 				nextEventId = jedis.rpop(lockName);
-				if(StringUtils.isBlank(nextEventId))return;
+				if(StringUtils.isBlank(nextEventId)){
+					return;
+				}
 				if(currentTimeMillis - Long.parseLong(nextEventId.substring(8,21)) < CLEAN_TIME){
 					break;
 				}
@@ -76,14 +80,29 @@ public class RedisLockCoordinator {
 
 		long start = System.currentTimeMillis();
 		
+		int deadLockCheckPoint = 0;
 		while (true) {
 			try {TimeUnit.MILLISECONDS.sleep(1);} catch (InterruptedException e) {}
 			if (eventIds.contains(eventId)){
 				eventIds.remove(eventId);
 				return true;
 			}
-			if (System.currentTimeMillis() - start > timeoutMills) {
+			
+			long useTime = System.currentTimeMillis() - start;
+			if (useTime > timeoutMills) {
 				return false;
+			}
+			//防止redis的锁数据丢失或者redis挂掉造成死锁
+			int useTimeSeconds = (int) (useTime / 1000);
+			if(useTimeSeconds > deadLockCheckPoint){
+				deadLockCheckPoint = useTimeSeconds;
+				try {
+					if(getJedisCommands(null).llen(lockName) == 0){
+						return false;
+					}
+				} catch (Exception e) {
+					return false;
+				}
 			}
 		}
 	}
@@ -122,6 +141,11 @@ public class RedisLockCoordinator {
 			}
 			getGetLockEventIds(lockName).add(nextEventId);
 		}
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(1500 % 1000);
+		System.out.println(1500 / 1000);
 	}
 	
 }

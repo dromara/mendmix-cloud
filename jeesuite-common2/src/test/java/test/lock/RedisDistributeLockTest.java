@@ -5,8 +5,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 
-import org.apache.commons.lang3.RandomUtils;
-
 import com.jeesuite.cache.redis.JedisProvider;
 import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.cache.redis.standalone.JedisStandaloneProvider;
@@ -22,7 +20,7 @@ public class RedisDistributeLockTest {
 	
 	public static void main(String[] args) throws Exception {
 		
-		int taskcount = 5;
+		int taskcount = 10;
 		latch = new CountDownLatch(taskcount);
 		initRedisProvider();
 		ExecutorService threadPool = Executors.newFixedThreadPool(taskcount);
@@ -46,10 +44,16 @@ public class RedisDistributeLockTest {
 
 		@Override
 		public void run() {
-			Lock lock = new RedisDistributeLock("test",99999);
-			lock.lock();
-			System.out.println("LockWorker[" + id + "] get lock,doing");
-			try {Thread.sleep(RandomUtils.nextLong(1000, 3000));} catch (Exception e) {}
+			Lock lock = new RedisDistributeLock("test",120);
+			try {				
+				lock.lock();
+			} catch (Exception e) {
+				latch.countDown();
+				System.out.println("LockWorker[" + id + "] get lock error->"+e.getMessage());
+				return;
+			}
+			System.out.println("LockWorker[" + id + "] get lock,doing-----" + ShareResource.add());
+			try {Thread.sleep(1000);} catch (Exception e) {}
 			lock.unlock();
 			latch.countDown();
 			System.out.println("LockWorker[" + id + "] release lock,done");

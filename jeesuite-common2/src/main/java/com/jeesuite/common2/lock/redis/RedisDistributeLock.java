@@ -6,7 +6,6 @@ import static com.jeesuite.cache.redis.JedisProviderFactory.getJedisProvider;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.jeesuite.common2.lock.LockException;
 
@@ -31,8 +30,6 @@ public class RedisDistributeLock implements Lock {
 	private int maxWaitLimt = 10;
 	private int timeoutSeconds;
 	private int maxLiveSeconds;
-	
-	private ReentrantLock localLock =  new ReentrantLock();
 	
 	/**
 	 * 默认最大存活时间60秒
@@ -78,20 +75,18 @@ public class RedisDistributeLock implements Lock {
 	@Override
 	public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
 		
-		boolean getLock = false;
+		boolean getLock = true;//FrontCheckLock.lock(lockName, timeout, unit);
+		if(!getLock){
+			if(timeout == 0)return getLock;
+			throw new LockException(String.format("Lock[%s] Timeout", lockName));
+		}
+		
 		try {
-			try {getLock = localLock.tryLock(timeout, unit);} catch (Exception e) {}
-			
-			if(!getLock){
-				if(timeout == 0)return getLock;
-				throw new LockException(String.format("Lock[%s] Timeout", lockName));
-			}
 			
 			Long waitCount = getJedisCommands(null).lpush(lockName, eventId);
 			getJedisCommands(null).expire(lockName, maxLiveSeconds);
 			
 			if(waitCount == 1){
-				getLock = true;
 				return getLock;
 			}
 			if(waitCount >= maxWaitLimt){
@@ -102,7 +97,7 @@ public class RedisDistributeLock implements Lock {
 				getLock = false;
 				return getLock;
 			}
-			//await future
+			//await
 			getLock = coordinator.await(lockName,eventId, unit.toMillis(timeout));
 			
 			if(!getLock){
@@ -118,8 +113,9 @@ public class RedisDistributeLock implements Lock {
 
 	@Override
 	public void unlock() {  
+		
+		//FrontCheckLock.unlock(lockName);
     	try {	
-    		localLock.unlock();
     		JedisCommands command = getJedisCommands(null);
 			command.lrem(lockName, 0, eventId);
     		coordinator.notifyNext(lockName);
