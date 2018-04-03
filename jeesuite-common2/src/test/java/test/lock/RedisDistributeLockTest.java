@@ -53,7 +53,7 @@ public class RedisDistributeLockTest {
 				return;
 			}
 			System.out.println("LockWorker[" + id + "] get lock,doing-----" + ShareResource.add());
-			try {Thread.sleep(1000);} catch (Exception e) {}
+			try {Thread.sleep(10000);} catch (Exception e) {}
 			lock.unlock();
 			latch.countDown();
 			System.out.println("LockWorker[" + id + "] release lock,done");

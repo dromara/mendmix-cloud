@@ -1,12 +1,14 @@
 package com.jeesuite.filesystem.provider.qiniu;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.jeesuite.filesystem.UploadObject;
+import com.jeesuite.filesystem.UploadTokenParam;
 import com.jeesuite.filesystem.provider.AbstractProvider;
 import com.jeesuite.filesystem.provider.FSOperErrorException;
 import com.jeesuite.filesystem.utils.FilePathHelper;
@@ -29,11 +31,26 @@ import com.qiniu.util.StringMap;
 public class QiniuProvider extends AbstractProvider {
 
 	public static final String NAME = "qiniu";
+	private static final String DEFAULT_CALLBACK_BODY = "filename=${fname}&size=${fsize}&mimeType=${mimeType}&height=${imageInfo.height}&width=${imageInfo.width}";
+	
+	private static final String[] policyFields = new String[]{
+            "callbackUrl",
+            "callbackBody",
+            "callbackHost",
+            "callbackBodyType",
+            "fileType",
+            "saveKey",
+            "mimeLimit",
+            "fsizeLimit",
+            "fsizeMin",
+            "deleteAfterDays",
+    };
 
 	private static UploadManager uploadManager;
 	private static BucketManager bucketManager;
 	private Auth auth;
 	private boolean isPrivate;
+	private String host;
 
 	public QiniuProvider(String urlprefix, String bucketName, String accessKey, String secretKey,boolean isPrivate) {
 		
@@ -52,6 +69,7 @@ public class QiniuProvider extends AbstractProvider {
 		bucketManager = new BucketManager(auth,c);
 		
 		this.isPrivate = isPrivate;
+		this.host = StringUtils.remove(urlprefix,"/").split(":")[1];
 	}
 
 	@Override
@@ -102,17 +120,38 @@ public class QiniuProvider extends AbstractProvider {
 		}
 		return false;
 	}
-
+	
 	@Override
-	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileKeys) {
-		StringMap policy = null;
-		if(metadata != null && !metadata.isEmpty()){
-			policy = new StringMap(metadata);
+	public Map<String, Object> createUploadToken(UploadTokenParam param) {
+		
+		if(StringUtils.isNotBlank(param.getCallbackUrl())){
+			if(StringUtils.isBlank(param.getCallbackBody())){
+				param.setCallbackBody(DEFAULT_CALLBACK_BODY);
+			}
+			if(StringUtils.isBlank(param.getCallbackHost())){
+				param.setCallbackHost(host);
+			}
 		}
-		if (fileKeys != null && fileKeys.length > 0 && fileKeys[0] != null) {
-			return auth.uploadToken(bucketName, fileKeys[0], expires, policy, true);
-		}
-		return auth.uploadToken(bucketName, null, expires, policy, true);
+		
+		Map<String, Object> result = new HashMap<>();
+		StringMap policy = new StringMap();
+		policy.putNotNull(policyFields[0], param.getCallbackUrl());
+		policy.putNotNull(policyFields[1], param.getCallbackBody());
+		policy.putNotNull(policyFields[2], param.getCallbackHost());
+		policy.putNotNull(policyFields[3], param.getCallbackBodyType());
+		policy.putNotNull(policyFields[4], param.getFileType());
+		policy.putNotNull(policyFields[5], param.getFileKey());
+		policy.putNotNull(policyFields[6], param.getMimeLimit());
+		policy.putNotNull(policyFields[7], param.getFsizeMin());
+		policy.putNotNull(policyFields[8], param.getFsizeMax());
+		policy.putNotNull(policyFields[9], param.getDeleteAfterDays());
+
+		String token = auth.uploadToken(bucketName, param.getFileKey(), param.getExpires(), policy, true);
+		result.put("uptoken", token);
+		result.put("host", this.urlprefix);
+		result.put("dir", param.getUploadDir());
+		
+		return result;
 	}
 
 	@Override

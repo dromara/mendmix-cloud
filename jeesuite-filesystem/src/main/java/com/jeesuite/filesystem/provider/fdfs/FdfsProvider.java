@@ -11,6 +11,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.filesystem.UploadObject;
+import com.jeesuite.filesystem.UploadTokenParam;
 import com.jeesuite.filesystem.provider.AbstractProvider;
 import com.jeesuite.filesystem.provider.FSOperErrorException;
 import com.jeesuite.filesystem.sdk.fdfs.FastdfsClient;
@@ -64,12 +65,11 @@ public class FdfsProvider extends AbstractProvider{
 		
 		return null;
 	}
-
+	
 	@Override
-	public String createUploadToken(Map<String, Object> metadata, long expires, String... fileKeys) {
+	public Map<String, Object> createUploadToken(UploadTokenParam param) {
 		return null;
 	}
-
 
 
 	@Override

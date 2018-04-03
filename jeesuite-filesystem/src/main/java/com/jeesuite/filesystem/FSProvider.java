@@ -14,6 +14,7 @@ import java.util.Map;
  */
 public interface FSProvider extends Closeable {
 
+	String name();
 	/**
 	 * 文件上传
 	 * @param object
@@ -33,8 +34,7 @@ public interface FSProvider extends Closeable {
 	 */
 	public boolean delete(String fileKey);
 	
-	
-	public String createUploadToken(Map<String, Object> metadata,long expires,String...fileKeys);
-	
 	public String downloadAndSaveAs(String fileKey,String localSaveDir);
+	
+	public Map<String, Object> createUploadToken(UploadTokenParam param);
 }

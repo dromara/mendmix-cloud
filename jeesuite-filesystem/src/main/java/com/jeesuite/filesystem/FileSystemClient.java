@@ -1,11 +1,9 @@
 package com.jeesuite.filesystem;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.commons.lang3.Validate;
 
@@ -115,32 +113,7 @@ public class FileSystemClient {
 		return fsProvider.getDownloadUrl(fileKey);
 	}
 	
-	public String createUploadToken() {
-		return fsProvider.createUploadToken(null, 300);
-	}
-	
-	/**
-	 * 
-	 * @param metadata 自定义信息
-	 * @param expires token过期时间 （秒）
-	 * @return
-	 */
-	public String createUploadToken(Map<String, Object> metadata, long expires) {
-		return fsProvider.createUploadToken(metadata, expires);
-	}
-	
-	public String createUploadToken(Map<String, Object> metadata, long expires,String fileKey) {
-		return fsProvider.createUploadToken(metadata, expires,fileKey);
-	}
-	
-	public static void main(String[] args) throws Exception {
-		FileInputStream inputStream = new FileInputStream("/Users/jiangwei/qiniu.properties");
-		Properties properties = new Properties();
-		properties.load(inputStream);
-		ResourceUtils.merge(properties);
-		String url = getPrivateClient().upload("test1.txt", new File("/Users/jiangwei/Desktop/homepage.txt"),"testdir");
-		String downloadUrl = getPrivateClient().getDownloadUrl(url);
-		System.out.println(downloadUrl);
-		
+	public Map<String, Object> createUploadToken(UploadTokenParam param) {
+		return fsProvider.createUploadToken(param);
 	}
 }

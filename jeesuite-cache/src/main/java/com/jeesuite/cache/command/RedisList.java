@@ -51,34 +51,34 @@ public class RedisList extends RedisBinaryCollection {
 		super(key,groupName,expireTime);
 	}
 
-	public boolean lpush(Object...objects) {
+	public long lpush(Object...objects) {
 		try {
-			boolean result = false;
+			long result = 0;
 			byte[][] datas = valuesSerialize(objects);
 			if (isCluster(groupName)) {
-				result = getBinaryJedisClusterCommands(groupName).lpush(keyBytes, datas) == 1;
+				result = getBinaryJedisClusterCommands(groupName).lpush(keyBytes, datas);
 			} else {
-				result = getBinaryJedisCommands(groupName).lpush(keyBytes, datas) == 1;
+				result = getBinaryJedisCommands(groupName).lpush(keyBytes, datas);
 			}
 			//设置超时时间
-			if(result)setExpireIfNot(expireTime);
+			if(result>0)setExpireIfNot(expireTime);
 			return result;
 		} finally {
 			getJedisProvider(groupName).release();
 		}
 	}
 
-	public boolean rpush(Object...objects) {
+	public long rpush(Object...objects) {
 		try {
 			byte[][] datas = valuesSerialize(objects);
-			boolean result = false;
+			long result = 0;
 			if (isCluster(groupName)) {
-				result = getBinaryJedisClusterCommands(groupName).rpush(keyBytes, datas) == 1;
+				result = getBinaryJedisClusterCommands(groupName).rpush(keyBytes, datas);
 			} else {
-				result = getBinaryJedisCommands(groupName).rpush(keyBytes, datas) == 1;
+				result = getBinaryJedisCommands(groupName).rpush(keyBytes, datas);
 			}
 			//设置超时时间
-			if(result)setExpireIfNot(expireTime);
+			if(result > 0)setExpireIfNot(expireTime);
 			return result;
 		} finally {
 			getJedisProvider(groupName).release();

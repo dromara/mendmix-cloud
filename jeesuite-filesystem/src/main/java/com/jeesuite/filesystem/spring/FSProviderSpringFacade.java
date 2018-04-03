@@ -13,6 +13,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.filesystem.FSProvider;
 import com.jeesuite.filesystem.UploadObject;
+import com.jeesuite.filesystem.UploadTokenParam;
 import com.jeesuite.filesystem.provider.aliyun.AliyunossProvider;
 import com.jeesuite.filesystem.provider.fdfs.FdfsProvider;
 import com.jeesuite.filesystem.provider.qiniu.QiniuProvider;
@@ -106,8 +107,8 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 		return fsProvider.delete(fileName);
 	}
 
-	public String createUploadToken(Map<String, Object> metadata,long expires,String...fileNames) {
-		return fsProvider.createUploadToken(metadata, expires, fileNames);
+	public Map<String, Object> createUploadToken(UploadTokenParam param) {
+		return fsProvider.createUploadToken(param);
 	}
 
 	public void setConnectTimeout(long connectTimeout) {

@@ -35,7 +35,4 @@ public abstract class AbstractProvider implements FSProvider{
 		return HttpUtils.downloadFile(getDownloadUrl(file), localSaveDir);
 	}
 
-
-
-	public abstract String name();
 }

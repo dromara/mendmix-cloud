@@ -56,16 +56,16 @@ public class RedisSortSet extends RedisBinaryCollection {
 	 * @param value  元素
 	 * @return
 	 */
-	public boolean add(double score, Object value){
+	public long add(double score, Object value){
         try {   
-        	boolean result = false;
+        	long result = 0;
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).zadd(keyBytes, score, valueSerialize(value)) >= 1;
+        		result = getBinaryJedisClusterCommands(groupName).zadd(keyBytes, score, valueSerialize(value));
         	}else{
-        		result = getBinaryJedisCommands(groupName).zadd(keyBytes, score, valueSerialize(value)) >= 1;
+        		result = getBinaryJedisCommands(groupName).zadd(keyBytes, score, valueSerialize(value));
         	}
         	//设置超时时间
-        	if(result)setExpireIfNot(expireTime);
+        	if(result > 0)setExpireIfNot(expireTime);
 			return result;
     	} finally{
 			getJedisProvider(groupName).release();

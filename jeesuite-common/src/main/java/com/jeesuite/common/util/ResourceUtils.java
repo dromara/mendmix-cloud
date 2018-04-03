@@ -252,6 +252,10 @@ public final class ResourceUtils {
 		return Boolean.parseBoolean(getProperty(key));
 	}
 	
+	public static boolean getBoolean(String key,boolean defalutValue){
+		return containsProperty(key) ? Boolean.parseBoolean(getProperty(key)) : defalutValue;
+	}
+	
 	public synchronized static void merge(Properties properties){
 		if(properties == null || properties.isEmpty())return;
 		
