@@ -28,18 +28,12 @@
 * [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
 
 ## 关联项目
- - 模板项目
-  - [http://git.oschina.net/vakinge/jeesuite-bestpl](http://git.oschina.net/vakinge/jeesuite-bestpl)
-  - [https://github.com/vakinge/jeesuite-bestpl](https://github.com/vakinge/jeesuite-bestpl)
  - 配置中心
   - [http://git.oschina.net/vakinge/jeesuite-config](http://git.oschina.net/vakinge/jeesuite-config)
   - [https://github.com/vakinge/jeesuite-config](https://github.com/vakinge/jeesuite-config)
- - 统一认证中心(文档编写中...)
-  - [http://git.oschina.net/vakinge/jeesuite-passport](http://git.oschina.net/vakinge/jeesuite-passport)
-  - [https://github.com/vakinge/jeesuite-passport](https://github.com/vakinge/jeesuite-passport)
- - 应用监控平台(规划中...)
-  - [http://git.oschina.net/vakinge/jeesuite-admin](http://git.oschina.net/vakinge/jeesuite-admin)
-  - [https://github.com/vakinge/jeesuite-admin](https://github.com/vakinge/jeesuite-admin)
+ - 应用开发平台(开发中...)
+  - [https://gitee.com/vakinge/superms](https://gitee.com/vakinge/superms)
+  - [https://gitee.com/vakinge/superms](https://gitee.com/vakinge/superms)
 
 ## 总体功能模块图&roadmap
 ![image](http://ojmezn0eq.bkt.clouddn.com/jeesuite_arch.png)
