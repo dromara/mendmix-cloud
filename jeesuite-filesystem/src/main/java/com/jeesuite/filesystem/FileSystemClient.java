@@ -116,4 +116,10 @@ public class FileSystemClient {
 	public Map<String, Object> createUploadToken(UploadTokenParam param) {
 		return fsProvider.createUploadToken(param);
 	}
+
+	public FSProvider getProvider() {
+		return fsProvider;
+	}
+	
+	
 }
