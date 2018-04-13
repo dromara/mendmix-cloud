@@ -1,3 +1,4 @@
+#### 集成项目：[https://gitee.com/vakinge/superms](https://gitee.com/vakinge/superms)
 **交流群**：230192763
 [![jeesuite开发交流群](//pub.idqqimg.com/wpa/images/group.png "jeesuite开发交流群")](//shang.qq.com/wpa/qunwpa?idkey=d5e7f6178d75e960f2cb58b6c38ff133fd32d219f8a60471a94b83a14021beed)
 
