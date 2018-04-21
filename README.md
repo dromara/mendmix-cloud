@@ -33,8 +33,8 @@
   - [http://git.oschina.net/vakinge/jeesuite-config](http://git.oschina.net/vakinge/jeesuite-config)
   - [https://github.com/vakinge/jeesuite-config](https://github.com/vakinge/jeesuite-config)
  - 应用开发平台(开发中...)
-  - [https://gitee.com/vakinge/superms](https://gitee.com/vakinge/superms)
-  - [https://gitee.com/vakinge/superms](https://gitee.com/vakinge/superms)
+  - [https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
+  - [https://github.com/vakinge/oneplatform](https://github.com/vakinge/oneplatform)
 
 ## 总体功能模块图&roadmap
 ![image](http://ojmezn0eq.bkt.clouddn.com/jeesuite_arch.png)
