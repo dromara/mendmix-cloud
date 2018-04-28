@@ -1,6 +1,5 @@
 #### 集成实践项目：[https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
-**交流群**：230192763
-[![jeesuite开发交流群](//pub.idqqimg.com/wpa/images/group.png "jeesuite开发交流群")](//shang.qq.com/wpa/qunwpa?idkey=d5e7f6178d75e960f2cb58b6c38ff133fd32d219f8a60471a94b83a14021beed)
+**交流群**：230192763🈵 ，61859839
 
 ![image](http://ojmezn0eq.bkt.clouddn.com/qun230192763.png)
 

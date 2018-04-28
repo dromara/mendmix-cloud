@@ -16,8 +16,7 @@ import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.network.ListenerName;
-import org.apache.kafka.common.protocol.SecurityProtocol;
-import org.apache.kafka.common.requests.MetadataResponse.TopicMetadata;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.zookeeper.data.Stat;
 
 import com.jeesuite.kafka.monitor.model.BrokerInfo;
@@ -26,7 +25,6 @@ import com.jeesuite.kafka.monitor.model.TopicInfo;
 import com.jeesuite.kafka.monitor.model.TopicPartitionInfo;
 import com.jeesuite.kafka.serializer.ZKStringSerializer;
 
-import kafka.admin.AdminUtils;
 import kafka.api.PartitionOffsetRequestInfo;
 import kafka.cluster.Broker;
 import kafka.cluster.BrokerEndPoint;
@@ -124,7 +122,7 @@ public class ZkConsumerCommand {
 		Iterator<Broker> iterator = brokers.toList().iterator();
 		while(iterator.hasNext()){
 			Broker broker = iterator.next();
-			Node node = broker.getNode(ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT));
+			Node node = broker.getNode(ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT)).get();
 			result.add(new BrokerInfo(node.idString(), node.host(), node.port()));
 		}
 		return result;
@@ -148,14 +146,14 @@ public class ZkConsumerCommand {
 		return result;
 	}
 	
-	public TopicMetadata getTopicMetadata(String topic) {
-		TopicMetadata topicMetadata = AdminUtils.fetchTopicMetadataFromZk(topic, zkUtils);
-		return topicMetadata;
-	}
-	
-	public int getPartitionCounts(String topic){
-		return getTopicMetadata(topic).partitionMetadata().size();
-	}
+//	public TopicMetadata getTopicMetadata(String topic) {
+//		TopicMetadata topicMetadata = AdminUtils.fetchTopicMetadataFromZk(topic, zkUtils);
+//		return topicMetadata;
+//	}
+//	
+//	public int getPartitionCounts(String topic){
+//		return getTopicMetadata(topic).partitionMetadata().size();
+//	}
 	
 	public List<String> getConsumerClusterNodes(String groupId){
 		String path = "/consumers/" + groupId + "/ids";

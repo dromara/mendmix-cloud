@@ -71,10 +71,13 @@ public class GlobalExceptionHandler {
 			logger.error("", e);
 		}
 
-		if (resp.getCode() >= 400 && resp.getCode() <= 500) {
-			response.setStatus(resp.getCode());
-		} 
-
+		int errorCode = resp.getCode();
+		if(errorCode >= 400 && errorCode<=500){
+			response.setStatus(errorCode);
+		}else{
+			response.setStatus(500);
+		}
+		
 		return resp;
 	}
 }

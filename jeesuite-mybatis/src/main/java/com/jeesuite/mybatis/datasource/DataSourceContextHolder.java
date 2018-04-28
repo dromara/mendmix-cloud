@@ -69,7 +69,6 @@ public class DataSourceContextHolder {
 		if (vals == null)
 			vals = new DataSourceContextVals();
 		vals.dbIndex = dbIndex;
-		vals.routedBeforeGetConn = true;
 		contextVals.set(vals);
 	}
 	
@@ -83,7 +82,6 @@ public class DataSourceContextHolder {
 		if (vals == null)
 			vals = new DataSourceContextVals();
 		vals.userSlave = useSlave;
-		vals.routedBeforeGetConn = true;
 		contextVals.set(vals);
 		return this;
 	}
@@ -101,16 +99,14 @@ public class DataSourceContextHolder {
 		DataSourceContextVals vals = contextVals.get();
 		if(vals == null){
 			vals = new DataSourceContextVals();
-			vals.forceMaster = true;
 			contextVals.set(vals);
-			
 			return masters.get(0);
 		}
 		
 		int dbGoupId = vals.dbIndex;
 		String dsKey = null;
 		
-        if (vals.forceMaster || !vals.userSlave || !vals.routedBeforeGetConn){
+        if (vals.forceMaster || !vals.userSlave){
 			if (dbGoupId > 0 && masters.size() <= dbGoupId + 1) {
 				throw new RuntimeException("expect db group number is :" + dbGoupId + ",actaul:" + (dbGoupId + 1));
 			}
@@ -123,12 +119,21 @@ public class DataSourceContextHolder {
 		}
 		
 		vals.dsKey = dsKey;
-		logger.debug("current route rule is:userSlave[{}]|forceMaster[{}]|routedBeforeGetConn[{}], use dataSource key is [{}]!",vals.userSlave,vals.forceMaster,vals.routedBeforeGetConn,vals.dsKey);
-
-		//重置路由状态
-		vals.routedBeforeGetConn = false;
+		logger.debug("current route rule is:userSlave[{}]|forceMaster[{}], use dataSource key is [{}]!",vals.userSlave,vals.forceMaster,vals.dsKey);
 		
 		return dsKey;
+	}
+	
+	/**
+	 * 设置强制使用master库
+	 */
+	public void forceMaster(){
+		DataSourceContextVals vals = contextVals.get();
+		if(vals == null){
+			vals = new DataSourceContextVals();
+			vals.forceMaster = true;
+			contextVals.set(vals);
+		}
 	}
 
 	/**
@@ -175,8 +180,6 @@ public class DataSourceContextHolder {
 		public boolean userSlave; //
 		public boolean forceMaster;
 		public String dsKey;
-		//标记在获取连接前是否执行了路由，在事务的情况获取连接在路由之前
-		public boolean routedBeforeGetConn;
 	}
 }
 

@@ -28,7 +28,7 @@ public class ProducerSimpleClient implements ApplicationContextAware{
 			user.setId(100+i);
 			user.setName("jack");
 			topicProducer.publish("demo-topic1", new DefaultMessage(user).sendBodyOnly(true));
-			//topicProducer.publish("demo-topic2", new DefaultMessage(user));
+			topicProducer.publish("demo-topic2", new DefaultMessage(user));
 		}
 //		
 //		DefaultMessage msg = new DefaultMessage("hello,man")

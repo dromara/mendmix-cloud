@@ -4,12 +4,12 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.1.9-SNAPSHOT</version>
+		<version>1.2.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>jeesuite-kafka</artifactId>
 
 	<properties>
-		<kafka.version>0.11.0.0</kafka.version>
+		<kafka.version>1.1.0</kafka.version>
 	</properties>
 
 	<dependencies>
@@ -49,6 +49,7 @@
 			<groupId>org.apache.kafka</groupId>
 			<artifactId>kafka_2.11</artifactId>
 			<version>${kafka.version}</version>
+			<optional>true</optional>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -68,6 +69,12 @@
 		<dependency>
 			<groupId>org.apache.kafka</groupId>
 			<artifactId>kafka-clients</artifactId>
+			<version>${kafka.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka-streams</artifactId>
 			<version>${kafka.version}</version>
 		</dependency>
 

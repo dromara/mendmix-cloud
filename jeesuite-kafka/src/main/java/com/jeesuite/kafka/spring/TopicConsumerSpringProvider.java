@@ -64,7 +64,7 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
     //是否独立进程
     private boolean independent;
     
-    private boolean useNewAPI = false;
+    private boolean useNewAPI = true;
     
     private String scanPackages;
     

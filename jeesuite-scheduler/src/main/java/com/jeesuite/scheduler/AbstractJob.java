@@ -5,6 +5,7 @@ package com.jeesuite.scheduler;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
@@ -55,6 +56,7 @@ public abstract class AbstractJob implements DisposableBean{
     
     private int retries = 0;//失败重试次数
     
+    private AtomicBoolean runing = new AtomicBoolean(false);
     private AtomicInteger runCount = new AtomicInteger(0);
 
 	public void setGroup(String group) {
@@ -100,6 +102,7 @@ public abstract class AbstractJob implements DisposableBean{
     }
 
 	public void execute() {
+		if(runing.get())return;
 		// 避免InstanceFactory还未初始化，就执行
 		InstanceFactory.waitUtilInitialized();
 
@@ -107,6 +110,7 @@ public abstract class AbstractJob implements DisposableBean{
 		if (currentNodeIgnore(schConf))
 			return;
 
+		runing.set(true);
 		Date beginTime = null;
 		Exception exception = null;
 		try {
@@ -122,15 +126,17 @@ public abstract class AbstractJob implements DisposableBean{
 			if(retries > 0)JobContext.getContext().getRetryProcessor().submit(this, retries);
 			logger.error("Job_" + jobName + " execute error", e);
 			exception = e;
+		}finally {			
+			runing.set(false);
+			//执行次数累加1
+			runCount.incrementAndGet();
+			Date nextFireTime = getTrigger().getNextFireTime();
+			JobContext.getContext().getRegistry().setStoping(jobName, nextFireTime,exception);
+			//运行日志持久化
+			doJobLogPersist(schConf, exception, nextFireTime);
+			// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
+			cronTrigger = null;
 		}
-		//执行次数累加1
-		runCount.incrementAndGet();
-		Date nextFireTime = getTrigger().getNextFireTime();
-		JobContext.getContext().getRegistry().setStoping(jobName, nextFireTime,exception);
-		//运行日志持久化
-		doJobLogPersist(schConf, exception, nextFireTime);
-		// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
-		cronTrigger = null;
 	}
 
 	/**
