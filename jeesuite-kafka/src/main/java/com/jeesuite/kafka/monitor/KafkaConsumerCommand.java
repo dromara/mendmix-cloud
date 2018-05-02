@@ -56,7 +56,9 @@ public class KafkaConsumerCommand {
 		List<ConsumerGroupInfo> consumerGroups = new ArrayList<>();
 		List<String> groupIds = group();
 		for (String groupId : groupIds) {
-			consumerGroups.add(consumerGroup(groupId));
+			ConsumerGroupInfo consumerGroup = consumerGroup(groupId);
+			if(consumerGroup == null)continue;
+			consumerGroups.add(consumerGroup);
 		}
 		return consumerGroups;
 	}

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.test.mybatis;
+package com.jeesuite.mybatis.test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +12,6 @@ import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

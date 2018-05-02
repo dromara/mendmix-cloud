@@ -7,9 +7,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
+import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common2.lock.LockException;
 
-import redis.clients.jedis.JedisCommands;
+import redis.clients.jedis.Jedis;
 
 
 /**
@@ -25,30 +26,43 @@ public class RedisDistributeLock implements Lock {
 	
 	private static final String LOCK_KEY_PREFIX = "dlock:";
 	private static final int _DEFAULT_MAX_WAIT = 30;
+	private static final int _DEFAULT_MAX_WAIT_LIMIT = 20;
 	private String lockName;
 	private String eventId;
-	private int maxWaitLimt = 10;
+	private int maxWaitLimt;
 	private int timeoutSeconds;
 	private int maxLiveSeconds;
+	private long lockTreadId;
 	
 	/**
-	 * 默认最大存活时间60秒
+	 * 默认最大存活时间30秒,最大排队等待数：20
 	 * @param lockName
 	 */
 	public RedisDistributeLock(String lockName) {
-		this(lockName, _DEFAULT_MAX_WAIT);
+		this(lockName, _DEFAULT_MAX_WAIT,_DEFAULT_MAX_WAIT_LIMIT);
+	}
+	
+	/**
+	 * 默认最大排队等待数：20
+	 * @param lockName
+	 * @param timeoutSeconds
+	 */
+	public RedisDistributeLock(String lockName,int timeoutSeconds) {
+		this(lockName,timeoutSeconds,_DEFAULT_MAX_WAIT_LIMIT);
 	}
 
 	/**
 	 * 
 	 * @param lockName
 	 * @param timeoutSeconds 锁超时时间（秒）
+	 * @param maxWaitLimt 最大排队等待数限制
 	 */
-	public RedisDistributeLock(String lockName,int timeoutSeconds) {
+	public RedisDistributeLock(String lockName,int timeoutSeconds,int maxWaitLimt) {
 		this.lockName = LOCK_KEY_PREFIX + lockName;
 		this.timeoutSeconds = timeoutSeconds;
 		this.maxLiveSeconds = timeoutSeconds + 1;
 		this.eventId = coordinator.buildEvenId();
+		this.maxWaitLimt = maxWaitLimt;
 	}
 
 	@Override
@@ -75,21 +89,17 @@ public class RedisDistributeLock implements Lock {
 	@Override
 	public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
 		
-		boolean getLock = true;//FrontCheckLock.lock(lockName, timeout, unit);
-		if(!getLock){
-			if(timeout == 0)return getLock;
-			throw new LockException(String.format("Lock[%s] Timeout", lockName));
-		}
+		this.lockTreadId = Thread.currentThread().getId();
 		
+		boolean getLock = true;
 		try {
-			
 			Long waitCount = getJedisCommands(null).lpush(lockName, eventId);
 			getJedisCommands(null).expire(lockName, maxLiveSeconds);
 			
 			if(waitCount == 1){
 				return getLock;
 			}
-			if(waitCount >= maxWaitLimt){
+			if(waitCount > maxWaitLimt){
 				getLock = false;
 				throw new LockException(String.format("Lock[%s] Too many wait", lockName));
 			}
@@ -106,19 +116,21 @@ public class RedisDistributeLock implements Lock {
 			return getLock;
 		} finally {
 			if(!getLock)getJedisCommands(null).lrem(lockName, 1, eventId);
-			getJedisProvider(null).release();
+			//unlock 释放
+			//getJedisProvider(null).release();
 		}
 		
 	}
 
 	@Override
-	public void unlock() {  
-		
-		//FrontCheckLock.unlock(lockName);
+	public void unlock() { 
     	try {	
-    		JedisCommands command = getJedisCommands(null);
-			command.lrem(lockName, 0, eventId);
-    		coordinator.notifyNext(lockName);
+    		if(lockTreadId == 0 || Thread.currentThread().getId() != lockTreadId){
+    			throw new LockException(String.format("unlock[%s] and Lock must in same Thread.", lockName)); 
+    		}
+    		Jedis client = (Jedis) JedisProviderFactory.getJedisProvider(null).get();
+    		client.lrem(lockName, 1, eventId);
+    		coordinator.notifyNext(client,lockName);
 		} finally {
 			getJedisProvider(null).release();
 		}

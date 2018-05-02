@@ -3,13 +3,14 @@
  */
 package com.jeesuite.cache.command;
 
+import static com.jeesuite.cache.redis.JedisProviderFactory.getBinaryJedisClusterCommands;
+import static com.jeesuite.cache.redis.JedisProviderFactory.getBinaryJedisCommands;
+import static com.jeesuite.cache.redis.JedisProviderFactory.getJedisProvider;
+import static com.jeesuite.cache.redis.JedisProviderFactory.isCluster;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import redis.clients.util.SafeEncoder;
-
-import static com.jeesuite.cache.redis.JedisProviderFactory.*;
 
 /**
  * redis操作可排序set
@@ -123,7 +124,7 @@ public class RedisSortSet extends RedisBinaryCollection {
      * @param end
      * @return
      */
-    public <T> List<T> range(int start,int end){
+    public <T> List<T> range(long start,long end){
     	Set<byte[]> result = null;
         try {    		
         	if(isCluster(groupName)){
@@ -137,15 +138,39 @@ public class RedisSortSet extends RedisBinaryCollection {
 		}
 	}
     
-    public long removeByScore(long min,long max){
+    /**
+     * 按指定权重取出元素列表
+     * @param start
+     * @param end
+     * @return
+     */
+    public <T> List<T> getByScore(double min,double max){
+    	Set<byte[]> result = null;
+        try {    		
+        	if(isCluster(groupName)){
+        		result = getBinaryJedisClusterCommands(groupName).zrangeByScore(keyBytes, min, max);
+        	}else{
+        		result = getBinaryJedisCommands(groupName).zrangeByScore(keyBytes, min, max);
+        	}
+        	return toObjectList(new ArrayList<>(result));
+    	} finally{
+			getJedisProvider(groupName).release();
+		}
+	}
+    
+    /**
+     * 按权重删除
+     * @param min
+     * @param max
+     * @return
+     */
+    public long removeByScore(double min,double max){
         try {   
         	long result = 0;
-        	byte[] start = SafeEncoder.encode(String.valueOf(min));
-        	byte[] end = SafeEncoder.encode(String.valueOf(max));
         	if(isCluster(groupName)){
-        		result = getBinaryJedisClusterCommands(groupName).zremrangeByScore(keyBytes, start, end);
+        		result = getBinaryJedisClusterCommands(groupName).zremrangeByScore(keyBytes, min, max);
         	}else{
-        		result = getBinaryJedisCommands(groupName).zremrangeByScore(keyBytes, start, end);
+        		result = getBinaryJedisCommands(groupName).zremrangeByScore(keyBytes, min, max);
         	}
 			return result;
     	} finally{

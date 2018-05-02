@@ -3,25 +3,25 @@
  */
 package com.jeesuite.filesystem.provider;
 
+import com.jeesuite.common.JeesuiteBaseException;
+
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2017年1月7日
  */
-public class FSOperErrorException extends RuntimeException {
+public class FSOperErrorException extends JeesuiteBaseException {
 
 
 	private static final long serialVersionUID = 1L;
 	
-	private String privoderName;
 	private int code;
 	
 	public FSOperErrorException() {
 	}
 
 	public FSOperErrorException(String privoderName,Throwable cause) {
-		super(cause);
-		this.privoderName = privoderName;
+		super(9999, privoderName, cause);
 	}
 	
 	public FSOperErrorException(String privoderName,String message) {
@@ -29,9 +29,8 @@ public class FSOperErrorException extends RuntimeException {
 	}
 
 	public FSOperErrorException(String privoderName,int code,String message) {
-		super(message);
+		super(9999,privoderName + "[" + message + "]");
 		this.code = code;
-		this.privoderName = privoderName;
 	}
 
 	public int getCode() {

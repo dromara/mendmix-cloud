@@ -5,6 +5,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 
+import org.apache.commons.lang3.RandomUtils;
+
 import com.jeesuite.cache.redis.JedisProvider;
 import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.cache.redis.standalone.JedisStandaloneProvider;
@@ -20,9 +22,10 @@ public class RedisDistributeLockTest {
 	
 	public static void main(String[] args) throws Exception {
 		
-		int taskcount = 10;
-		latch = new CountDownLatch(taskcount);
 		initRedisProvider();
+
+		int taskcount = 21;
+		latch = new CountDownLatch(taskcount);
 		ExecutorService threadPool = Executors.newFixedThreadPool(taskcount);
 		
 		for (int i = 0; i < taskcount; i++) {
@@ -44,7 +47,7 @@ public class RedisDistributeLockTest {
 
 		@Override
 		public void run() {
-			Lock lock = new RedisDistributeLock("test",120);
+			Lock lock = new RedisDistributeLock("test",60,20);
 			try {				
 				lock.lock();
 			} catch (Exception e) {
@@ -53,7 +56,7 @@ public class RedisDistributeLockTest {
 				return;
 			}
 			System.out.println("LockWorker[" + id + "] get lock,doing-----" + ShareResource.add());
-			try {Thread.sleep(10000);} catch (Exception e) {}
+			try {Thread.sleep(RandomUtils.nextLong(100, 1000));} catch (Exception e) {}
 			lock.unlock();
 			latch.countDown();
 			System.out.println("LockWorker[" + id + "] release lock,done");
@@ -64,9 +67,9 @@ public class RedisDistributeLockTest {
 	public static void initRedisProvider() {
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
 		poolConfig.setMaxIdle(1);
-		poolConfig.setMinEvictableIdleTimeMillis(60 * 1000);
-		poolConfig.setMaxTotal(20);
-		poolConfig.setMaxWaitMillis(30 * 1000);
+		poolConfig.setMinEvictableIdleTimeMillis(5 * 1000);
+		poolConfig.setMaxTotal(100);
+		poolConfig.setMaxWaitMillis(2 * 1000);
 		String[] servers = "127.0.0.1:6379".split(",");
 		int timeout = 3000;
 		String password = "123456";

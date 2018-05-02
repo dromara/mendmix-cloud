@@ -15,6 +15,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class FrontCheckLock extends ReentrantLock{
 	
+	private static final long serialVersionUID = 1L;
+
 	private static FrontCheckLock context = new FrontCheckLock();
 	
 	private Map<String,FrontCheckLock> localLocks = new ConcurrentHashMap<>();
