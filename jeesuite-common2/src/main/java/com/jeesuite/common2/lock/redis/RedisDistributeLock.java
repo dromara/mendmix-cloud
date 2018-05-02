@@ -1,13 +1,9 @@
 package com.jeesuite.common2.lock.redis;
 
-import static com.jeesuite.cache.redis.JedisProviderFactory.getJedisCommands;
-import static com.jeesuite.cache.redis.JedisProviderFactory.getJedisProvider;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
-import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common2.lock.LockException;
 
 import redis.clients.jedis.Jedis;
@@ -32,7 +28,7 @@ public class RedisDistributeLock implements Lock {
 	private int maxWaitLimt;
 	private int timeoutSeconds;
 	private int maxLiveSeconds;
-	private long lockTreadId;
+	private Jedis client;
 	
 	/**
 	 * 默认最大存活时间30秒,最大排队等待数：20
@@ -89,12 +85,11 @@ public class RedisDistributeLock implements Lock {
 	@Override
 	public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
 		
-		this.lockTreadId = Thread.currentThread().getId();
-		
 		boolean getLock = true;
+		client = coordinator.getRedisClient();
 		try {
-			Long waitCount = getJedisCommands(null).lpush(lockName, eventId);
-			getJedisCommands(null).expire(lockName, maxLiveSeconds);
+			Long waitCount = client.lpush(lockName, eventId);
+			client.expire(lockName, maxLiveSeconds);
 			
 			if(waitCount == 1){
 				return getLock;
@@ -115,24 +110,19 @@ public class RedisDistributeLock implements Lock {
 			}
 			return getLock;
 		} finally {
-			if(!getLock)getJedisCommands(null).lrem(lockName, 1, eventId);
-			//unlock 释放
-			//getJedisProvider(null).release();
+			if(!getLock)client.lrem(lockName, 1, eventId);
 		}
 		
 	}
 
 	@Override
 	public void unlock() { 
+		if(client == null)throw new LockException("cant't unlock,because Lock not found");
     	try {	
-    		if(lockTreadId == 0 || Thread.currentThread().getId() != lockTreadId){
-    			throw new LockException(String.format("unlock[%s] and Lock must in same Thread.", lockName)); 
-    		}
-    		Jedis client = (Jedis) JedisProviderFactory.getJedisProvider(null).get();
     		client.lrem(lockName, 1, eventId);
     		coordinator.notifyNext(client,lockName);
 		} finally {
-			getJedisProvider(null).release();
+			if(client != null)coordinator.release(client);
 		}
 	}
 

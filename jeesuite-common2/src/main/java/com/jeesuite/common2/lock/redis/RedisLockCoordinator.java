@@ -3,12 +3,18 @@ package com.jeesuite.common2.lock.redis;
 import static com.jeesuite.cache.redis.JedisProviderFactory.getJedisCommands;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -26,31 +32,86 @@ import redis.clients.jedis.JedisPubSub;
  */
 public class RedisLockCoordinator {
 
+
+	private static final int HEALTH_CHECK_PERIOD = 30000;
+	private static final String REDIS_LOCK_ACTIVE_NODES_KEY = "RedisLockActiveNodes";
 	private static final long CLEAN_TIME = TimeUnit.SECONDS.toMillis(90);
 	private static final String SPLIT_STR = "$$";
 	private static final String EVENT_NODE_ID = RandomStringUtils.random(8, true, true);
+	private static String channelName = "redisLockCoordinator";
+	
 	private AtomicLong eventIdSeq = new AtomicLong(0);
 	private List<String> activeNodeIds = new ArrayList<>();
 	
-	//private ScheduledExecutorService checkerSchedule = Executors.newScheduledThreadPool(1);
+	private ScheduledExecutorService checkerSchedule;
 	
 	private Jedis subClient;
 
-	private static String channelName = "redisLockCoordinator";
 	private Map<String,List<String>> getLockEventIds = new ConcurrentHashMap<>();
 	
-	public RedisLockCoordinator() {		
+	public RedisLockCoordinator() {	
+		
+		Jedis redisClient = getRedisClient();
+		redisClient.hset(REDIS_LOCK_ACTIVE_NODES_KEY, EVENT_NODE_ID, String.valueOf(System.currentTimeMillis()));
+		release(redisClient);
+		activeNodeIds.add(EVENT_NODE_ID);
+		
+//		checkerSchedule = Executors.newScheduledThreadPool(1);
+//		checkerSchedule.scheduleAtFixedRate(new Runnable() {
+//			@Override
+//			public void run() {
+//				if(!subClient.isConnected()){
+//					subClient.connect();
+//				}
+//				//
+//				checkActiveNode();
+//			}
+//		}, 0, HEALTH_CHECK_PERIOD - 1000, TimeUnit.MILLISECONDS);
+		
+		
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				subClient = (Jedis) JedisProviderFactory.getJedisProvider(null).get();
+				subClient = getRedisClient();
 				subClient.subscribe(new LockStateListener(), new String[]{channelName});
 			}
 		}, channelName);
 		thread.setDaemon(true);
 		thread.start();
-		
-		//TODO subClient 重连机制
+	}
+	
+	private void checkActiveNode(){
+		Jedis redisClient = getRedisClient();
+		try {
+			long currentTime = System.currentTimeMillis();
+			Map<String, String> map = redisClient.hgetAll(REDIS_LOCK_ACTIVE_NODES_KEY);
+			Iterator<Entry<String, String>> iterator = map.entrySet().iterator();
+			while(iterator.hasNext()){
+				Entry<String, String> entry = iterator.next();
+				if(currentTime - Long.parseLong(entry.getValue()) > HEALTH_CHECK_PERIOD){
+					redisClient.hdel(REDIS_LOCK_ACTIVE_NODES_KEY, entry.getKey());
+				}else{
+					redisClient.hset(REDIS_LOCK_ACTIVE_NODES_KEY, entry.getKey(), String.valueOf(currentTime));
+				}
+			}
+			if(!map.containsKey(EVENT_NODE_ID)){
+				redisClient.hset(REDIS_LOCK_ACTIVE_NODES_KEY, EVENT_NODE_ID, String.valueOf(currentTime));
+			}
+		} finally {
+			release(redisClient);
+		}
+	}
+	
+	public Jedis getRedisClient(){
+		Jedis jedis = (Jedis) JedisProviderFactory.getJedisProvider(null).get();
+		if(!jedis.isConnected()){
+			jedis.connect();
+		}
+		return jedis;
+	}
+	
+	public void release(Jedis jedis) {
+		JedisProviderFactory.getJedisProvider(null).release();
 	}
 	
 	public String buildEvenId(){
@@ -66,10 +127,10 @@ public class RedisLockCoordinator {
 			if(StringUtils.isBlank(nextEventId)){
 				return;
 			}
-			if(currentTimeMillis - Long.parseLong(nextEventId.substring(8,21)) < CLEAN_TIME){
+			if(activeNodeIds.contains(nextEventId.substring(0,8)) 
+					&& currentTimeMillis - Long.parseLong(nextEventId.substring(8,21)) < CLEAN_TIME){
 				break;
 			}
-			//TODO 判断通知的下一个节点是否存在
 		}
 		pubClient.publish(channelName, lockName + SPLIT_STR + nextEventId);
 	}
@@ -124,9 +185,10 @@ public class RedisLockCoordinator {
 		return eventIds;
 	}
 	
+	@PreDestroy
 	public void close(){
 		try {subClient.close();} catch (Exception e) {}
-		//checkerSchedule.shutdown();
+		if(checkerSchedule != null)checkerSchedule.shutdown();
 	}
 	
 	private class LockStateListener extends JedisPubSub {
