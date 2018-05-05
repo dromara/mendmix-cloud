@@ -4,8 +4,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.commons.lang3.RandomUtils;
-
 import com.jeesuite.common2.lock.zk.ZkDistributeLock;
 
 public class ZkDistributeLockTest {
@@ -37,7 +35,7 @@ public class ZkDistributeLockTest {
 
 		@Override
 		public void run() {
-			ZkDistributeLock lock = new ZkDistributeLock("127.0.0.1:2181","test");
+			ZkDistributeLock lock = new ZkDistributeLock("test");
 			lock.lock();
 			System.out.println("LockWorker[" + id + "] get lock,doing");
 			try {

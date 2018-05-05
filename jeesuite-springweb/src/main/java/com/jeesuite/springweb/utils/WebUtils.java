@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.TokenGenerator;
@@ -20,6 +23,7 @@ public class WebUtils {
 
 	private static final String POINT = ".";
 	private static final String XML_HTTP_REQUEST = "XMLHttpRequest";
+	private static final String MULTIPART = "multipart/";
 	
 	public static boolean isAjax(HttpServletRequest request){
 	    return  (request.getHeader(WebConstants.HEADER_REQUESTED_WITH) != null  
@@ -80,16 +84,6 @@ public class WebUtils {
 	    }  
 	} 
 
-	
-	/**
-	 * 是否通过api网关转发
-	 * @param request
-	 * @return
-	 */
-	public static  boolean isForwardRequest(HttpServletRequest request) {
-		return StringUtils.isNotBlank(request.getHeader(WebConstants.HEADER_FORWARDED_HOST)) 
-				&& StringUtils.isNotBlank(request.getHeader(WebConstants.HEADER_FORWARDED_PRIFIX));
-	}
 	
 	/**
 	 * 获取根域名
@@ -173,5 +167,46 @@ public class WebUtils {
 		 }
 		 
 		 return headers;
+	}
+	
+	
+	public static final boolean isMultipartContent(HttpServletRequest request) {
+		if (!HttpMethod.POST.name().equalsIgnoreCase(request.getMethod())) {
+			return false;
+		}
+		String contentType = request.getContentType();
+		if (contentType == null) {
+			return false;
+		}
+		contentType = contentType.toLowerCase(Locale.ENGLISH);
+		if (contentType.startsWith(MULTIPART) 
+				|| MediaType.APPLICATION_OCTET_STREAM.equals(contentType)) {
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * 是否内网调用
+	 * @param request
+	 * @return
+	 */
+	public static boolean isInternalRequest(HttpServletRequest request){
+		//
+		if(Boolean.parseBoolean(request.getHeader(WebConstants.HEADER_INTERNAL_REQUEST))){
+			return true;
+		}
+
+		boolean isInner = IpUtils.isInnerIp(request.getServerName());
+		String forwardHost = request.getHeader(WebConstants.HEADER_FORWARDED_HOST);
+		//来源于网关
+		if(StringUtils.isNotBlank(forwardHost)){
+			isInner = IpUtils.isInnerIp(StringUtils.split(forwardHost, ":")[0]);
+		}else{			
+			if(!isInner){
+				isInner = IpUtils.isInnerIp(IpUtils.getinvokerIpAddr(request));
+			}
+		}
+		return isInner;
 	}
 }

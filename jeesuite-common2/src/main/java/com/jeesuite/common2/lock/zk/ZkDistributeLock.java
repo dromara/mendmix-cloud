@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
+import org.apache.commons.lang3.Validate;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -17,12 +18,18 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common2.lock.LockException;
 
 public class ZkDistributeLock implements Lock,Watcher {
 	private static final String LOCK_KEY_SUFFIX = "_lk_";
 	private static final String ROOT_PATH = "/dlocks";// 根
 	private static final int DEFAULT_SESSION_TIMEOUT = 30000;
+	private static String zkServers;
+	
+	static{
+		zkServers = ResourceUtils.getProperty("jeesuite.lock.zkServers");
+	}
 	
 	private ZooKeeper zk;
 	private String lockName;// 竞争资源的标志
@@ -32,8 +39,8 @@ public class ZkDistributeLock implements Lock,Watcher {
 	private int sessionTimeout;
 
 	
-	public ZkDistributeLock(String zkServers, String lockName){
-		this(zkServers, lockName, DEFAULT_SESSION_TIMEOUT);
+	public ZkDistributeLock(String lockName){
+		this(lockName, DEFAULT_SESSION_TIMEOUT);
 	}
 	
 	/**
@@ -41,7 +48,9 @@ public class ZkDistributeLock implements Lock,Watcher {
 	 * @param lockName
 	 * @param sessionTimeout
 	 */
-	public ZkDistributeLock(String zkServers, String lockName,int sessionTimeout) {
+	public ZkDistributeLock(String lockName,int sessionTimeout) {
+		
+		Validate.notBlank(zkServers, "config[jeesuite.lock.zkServers] not found");
 		if(lockName.contains(LOCK_KEY_SUFFIX)){
 			throw new LockException("lockName 不能包含[" + LOCK_KEY_SUFFIX + "]");
 		}

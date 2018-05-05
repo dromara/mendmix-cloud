@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -18,10 +17,17 @@ import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 
+import com.jeesuite.cache.redis.JedisProvider;
 import com.jeesuite.cache.redis.JedisProviderFactory;
+import com.jeesuite.cache.redis.sentinel.JedisSentinelProvider;
+import com.jeesuite.cache.redis.standalone.JedisStandaloneProvider;
+import com.jeesuite.common.util.ResourceUtils;
 
+import redis.clients.jedis.BinaryJedis;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisPubSub;
 
 /**
@@ -32,13 +38,14 @@ import redis.clients.jedis.JedisPubSub;
  */
 public class RedisLockCoordinator {
 
-
+	private static final String DLOCK_GROUP_NAME = "_redisLock";
 	private static final int HEALTH_CHECK_PERIOD = 30000;
 	private static final String REDIS_LOCK_ACTIVE_NODES_KEY = "RedisLockActiveNodes";
 	private static final long CLEAN_TIME = TimeUnit.SECONDS.toMillis(90);
 	private static final String SPLIT_STR = "$$";
 	private static final String EVENT_NODE_ID = RandomStringUtils.random(8, true, true);
 	private static String channelName = "redisLockCoordinator";
+	
 	
 	private AtomicLong eventIdSeq = new AtomicLong(0);
 	private List<String> activeNodeIds = new ArrayList<>();
@@ -50,6 +57,32 @@ public class RedisLockCoordinator {
 	private Map<String,List<String>> getLockEventIds = new ConcurrentHashMap<>();
 	
 	public RedisLockCoordinator() {	
+
+		String mode = ResourceUtils.getProperty("jeesuite.lock.redis.mode", ResourceUtils.getProperty("jeesuite.cache.mode","standalone"));
+		String server = ResourceUtils.getProperty("jeesuite.lock.redis.servers", ResourceUtils.getProperty("jeesuite.cache.servers"));
+		String datebase = ResourceUtils.getProperty("jeesuite.lock.redis.datebase", ResourceUtils.getProperty("jeesuite.cache.datebase","0"));
+		String password = ResourceUtils.getProperty("jeesuite.lock.redis.password", ResourceUtils.getProperty("jeesuite.cache.password"));
+		String maxPoolSize = ResourceUtils.getProperty("jeesuite.lock.redis.maxPoolSize", ResourceUtils.getProperty("jeesuite.cache.maxPoolSize","100"));
+		
+		Validate.notBlank(server, "config[jeesuite.lock.redis.servers] not found");
+		
+		JedisPoolConfig poolConfig = new JedisPoolConfig();
+		poolConfig.setMaxIdle(1);
+		poolConfig.setMinEvictableIdleTimeMillis(30000);
+		poolConfig.setMaxTotal(Integer.parseInt(maxPoolSize));
+		poolConfig.setMaxWaitMillis(5 * 1000);
+		
+		String[] servers = server.split(";|,");
+		int timeout = 3000;
+		if("standalone".equals(mode)){
+			JedisProvider<Jedis,BinaryJedis> provider = new JedisStandaloneProvider(DLOCK_GROUP_NAME, poolConfig, servers, timeout, password, Integer.parseInt(datebase),null);
+			JedisProviderFactory.addProvider(provider);
+		}else if("sentinel".equals(mode)){
+			String masterName = ResourceUtils.getProperty("jeesuite.lock.redis.masterName", ResourceUtils.getProperty("jeesuite.cache.masterName"));
+			Validate.notBlank(masterName, "config[jeesuite.lock.redis.masterName] not found");
+			JedisSentinelProvider provider = new JedisSentinelProvider(DLOCK_GROUP_NAME, poolConfig, servers, timeout, password, Integer.parseInt(datebase), null, masterName);
+			JedisProviderFactory.addProvider(provider);
+		}
 		
 		Jedis redisClient = getRedisClient();
 		redisClient.hset(REDIS_LOCK_ACTIVE_NODES_KEY, EVENT_NODE_ID, String.valueOf(System.currentTimeMillis()));
@@ -103,7 +136,7 @@ public class RedisLockCoordinator {
 	}
 	
 	public Jedis getRedisClient(){
-		Jedis jedis = (Jedis) JedisProviderFactory.getJedisProvider(null).get();
+		Jedis jedis = (Jedis) JedisProviderFactory.getJedisProvider(DLOCK_GROUP_NAME).get();
 		if(!jedis.isConnected()){
 			jedis.connect();
 		}
@@ -111,7 +144,7 @@ public class RedisLockCoordinator {
 	}
 	
 	public void release(Jedis jedis) {
-		JedisProviderFactory.getJedisProvider(null).release();
+		JedisProviderFactory.getJedisProvider(DLOCK_GROUP_NAME).release();
 	}
 	
 	public String buildEvenId(){
@@ -160,7 +193,7 @@ public class RedisLockCoordinator {
 			if(useTimeSeconds > 0 && useTimeSeconds > deadLockCheckPoint){
 				deadLockCheckPoint = useTimeSeconds;
 				try {
-					if(getJedisCommands(null).llen(lockName) == 0){
+					if(getJedisCommands(DLOCK_GROUP_NAME).llen(lockName) == 0){
 						return false;
 					}
 				} catch (Exception e) {

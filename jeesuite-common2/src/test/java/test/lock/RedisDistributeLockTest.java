@@ -7,14 +7,7 @@ import java.util.concurrent.locks.Lock;
 
 import org.apache.commons.lang3.RandomUtils;
 
-import com.jeesuite.cache.redis.JedisProvider;
-import com.jeesuite.cache.redis.JedisProviderFactory;
-import com.jeesuite.cache.redis.standalone.JedisStandaloneProvider;
 import com.jeesuite.common2.lock.redis.RedisDistributeLock;
-
-import redis.clients.jedis.BinaryJedis;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPoolConfig;
 
 public class RedisDistributeLockTest {
 
@@ -22,7 +15,6 @@ public class RedisDistributeLockTest {
 	
 	public static void main(String[] args) throws Exception {
 		
-		initRedisProvider();
 
 		int taskcount = 21;
 		latch = new CountDownLatch(taskcount);
@@ -64,17 +56,4 @@ public class RedisDistributeLockTest {
 		
 	}
 
-	public static void initRedisProvider() {
-		JedisPoolConfig poolConfig = new JedisPoolConfig();
-		poolConfig.setMaxIdle(1);
-		poolConfig.setMinEvictableIdleTimeMillis(5 * 1000);
-		poolConfig.setMaxTotal(100);
-		poolConfig.setMaxWaitMillis(2 * 1000);
-		String[] servers = "127.0.0.1:6379".split(",");
-		int timeout = 3000;
-		String password = "123456";
-		int database = 0;
-		JedisProvider<Jedis,BinaryJedis> provider = new JedisStandaloneProvider("default", poolConfig, servers, timeout, password, database,null);
-		JedisProviderFactory.setDefaultJedisProvider(provider);
-	}
 }
