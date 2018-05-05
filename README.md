@@ -33,9 +33,6 @@
   - [https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
   - [https://github.com/vakinge/oneplatform](https://github.com/vakinge/oneplatform)
 
-## 总体功能模块图&roadmap
-![image](http://ojmezn0eq.bkt.clouddn.com/jeesuite_arch.png)
-
 ---
 
 ## 功能列表
@@ -85,8 +82,10 @@
 
 #### filesystem模块
 - 七牛文件服务支持
+- 阿里云OSS文件服务支持
 - fastDFS文件系统支持
 - 支持spring集成
+- 配置式切换服务提供商
 
 
 #### common模块
@@ -99,16 +98,6 @@
 
 #### jeesuite-springboot-starter模块
 - springboot集成支持
-
-## 部分运行截图
-### 配置中心
-![image](http://ojmezn0eq.bkt.clouddn.com/config.png)
-### 统一认证中心-登录页
-![image](http://ojmezn0eq.bkt.clouddn.com/passport.png)
-### 统一认证中心-用户中心
-![image](http://ojmezn0eq.bkt.clouddn.com/passport2.png)
-### 演示项目-社区门户首页
-![image](http://ojmezn0eq.bkt.clouddn.com/demo.png)
 
 
 
