@@ -68,7 +68,7 @@ public class RedisLockCoordinator {
 		
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
 		poolConfig.setMaxIdle(1);
-		poolConfig.setMinEvictableIdleTimeMillis(30000);
+		poolConfig.setMinEvictableIdleTimeMillis(30*60*1000);
 		poolConfig.setMaxTotal(Integer.parseInt(maxPoolSize));
 		poolConfig.setMaxWaitMillis(5 * 1000);
 		
