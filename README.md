@@ -1,5 +1,5 @@
 #### 集成实践项目：[https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
-**交流群**：230192763🈵 ，61859839
+**交流群(提供开发视频教程)**：230192763🈵 ，61859839
 
 ## 简介
 **jeesuite-libs**分布式架构开发套件。包括缓存(一二级缓存、自动缓存管理)、队列、分布式定时任务、文件服务(七牛、阿里云OSS、fastDFS)、日志、搜索、代码生成、API网关、配置中心、统一认证平台、分布式锁、分布式事务、集成dubbo、spring boot支持、统一监控等。所有release版都经过严格测试并在生产环境稳定运行2年+。
