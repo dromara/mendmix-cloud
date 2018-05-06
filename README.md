@@ -29,7 +29,7 @@
  - 配置中心
   - [http://git.oschina.net/vakinge/jeesuite-config](http://git.oschina.net/vakinge/jeesuite-config)
   - [https://github.com/vakinge/jeesuite-config](https://github.com/vakinge/jeesuite-config)
- - 应用开发平台(开发中...)
+ - 应用开发平台
   - [https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
   - [https://github.com/vakinge/oneplatform](https://github.com/vakinge/oneplatform)
 
