@@ -229,7 +229,9 @@ public class BeanCopyUtils {
         	result = Integer.parseInt(value);
         } else if (propertyType == double.class || propertyType == Double.class) {
         	result = Double.valueOf(value.toString());
-        } else if (propertyType == Date.class) {
+        } else if (propertyType == long.class || propertyType == Long.class) {
+        	result = Long.valueOf(value.toString());
+        }  else if (propertyType == Date.class) {
         	if(value != null){
         		result = DateUtils.parseDate(value);
         	}

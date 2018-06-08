@@ -18,9 +18,9 @@ import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
 
 /**
  * @description <br>
- * @author <a href="mailto:wei.jiang@lifesense.com">vakin</a>
- * @date 2016年3月24日
- * @Copyright (c) 2015, lifesense.com
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2016年2月2日
+ * @Copyright (c) 2015, jwww
  */
 public class GeneralSqlGenerator {
 

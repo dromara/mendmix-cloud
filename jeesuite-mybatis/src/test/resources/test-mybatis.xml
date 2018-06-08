@@ -45,7 +45,7 @@
 					<!--
 				      可选值：cache(自动缓存),rwRoute(读写分离),dbShard(分库路由)
 				    -->
-					<property name="interceptorHandlers" value="cache,rwRoute,page" />
+					<property name="interceptorHandlers" value="rwRoute,page" />
 					<property name="properties">
 						<props>
 						    <!--可选值:default(默认),mapper3(集成mapper框架)-->

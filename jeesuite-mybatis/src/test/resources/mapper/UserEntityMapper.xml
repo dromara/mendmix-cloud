@@ -57,6 +57,19 @@
     </if> 
   </select>
   
+  <select id="pageQuery" parameterType="map" resultMap="BaseResultMap">
+    select * from users
+    <where>
+      <if test="example.status != null">
+        and status = #{example.status}
+      </if>
+      <if test="example.name != null">
+        and UPPER(name) like CONCAT('%', UPPER(#{example.name}), '%')  
+      </if>
+    </where>
+    order by id desc
+  </select>
+  
   <update id="updateType" parameterType="map">
      update users set type = #{type} where id in
      <foreach item="id" index="index" collection="ids" open="(" separator="," close=")">

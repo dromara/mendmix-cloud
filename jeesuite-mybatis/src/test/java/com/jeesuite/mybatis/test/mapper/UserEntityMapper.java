@@ -1,10 +1,10 @@
 package com.jeesuite.mybatis.test.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.Select;
 
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
@@ -50,9 +50,7 @@ public interface UserEntityMapper extends BaseMapper<UserEntity>, ExampleMapper<
 	@Cache(expire = 300)
 	public List<String> findMobileByIds(List<Integer> ids);
 
-	@Select("SELECT * FROM users where 1=1")
-	@ResultMap("BaseResultMap")
-	Page<UserEntity> pageQuery(@Param("pageParam") PageParams pageParam);
+	Page<UserEntity> pageQuery(@Param("pageParam") PageParams pageParam,@Param("example") Map<String, Object> example);
 
 	@Delete("delete from users where mobile = #{mobile}")
 	public void delBymobile(@Param("mobile") String mobile);

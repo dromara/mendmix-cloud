@@ -4,6 +4,8 @@
 package com.jeesuite.common2.sequence;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -12,6 +14,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
 import com.jeesuite.common.util.NodeNameHolder;
+import com.jeesuite.common.util.ResourceUtils;
 
 /**
  * 全局ID生成器 （根据: https://github.com/twitter/snowflake）
@@ -22,7 +25,7 @@ import com.jeesuite.common.util.NodeNameHolder;
  */
 public class SnowflakeGenerator implements IdGenerator, Watcher {
 
-	private static final String ROOT_PATH = "/global_apps/nodes";
+	private static final String ROOT_PATH = "/applications/%s/nodes";
 
 	private long workerId;
 	private long datacenterId;
@@ -45,16 +48,31 @@ public class SnowflakeGenerator implements IdGenerator, Watcher {
 
 	private ZooKeeper zk;
 
-	public SnowflakeGenerator(String zkServer) {
+	/**
+	 * 需要zookeeper保存节点信息
+	 */
+	public SnowflakeGenerator() {
 		try {
+			String appName = ResourceUtils.getProperty("spring.application.name", ResourceUtils.getProperty("jeesuite.configcenter.appName"));
+			Validate.notBlank(appName, "config[spring.application.name] not found");
+			String zkServer = ResourceUtils.getAndValidateProperty("zookeeper.servers");
+			
 			zk = new ZooKeeper(zkServer, 10000, this);
-			Stat stat = zk.exists(ROOT_PATH, false);
-			if (stat == null) {
-				zk.create(ROOT_PATH, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			String path = String.format(ROOT_PATH, appName);
+			
+			String[] parts = StringUtils.split(path, "/");
+			String tmpParent = "";
+			Stat stat;
+			for (int i = 0; i < parts.length; i++) {
+				tmpParent = tmpParent + "/" + parts[i];
+				stat = zk.exists(tmpParent, false);
+				if (stat == null) {
+					zk.create(tmpParent, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+				}
 			}
-			String nodePath = ROOT_PATH + "/" + NodeNameHolder.getNodeId();
+			String nodePath = path + "/" + NodeNameHolder.getNodeId();
 			zk.create(nodePath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-			int workerId = zk.getChildren(ROOT_PATH, false).size() + 1;
+			int workerId = zk.getChildren(path, false).size();
 			if (workerId > maxWorkerId || workerId < 0) {
 				throw new IllegalArgumentException(
 						String.format("worker Id can't be greater than %d or less than 0", maxWorkerId));
@@ -129,7 +147,9 @@ public class SnowflakeGenerator implements IdGenerator, Watcher {
 	} 
 
 	public static void main(String[] args) {
-		SnowflakeGenerator generator = new SnowflakeGenerator(32, 32);
+		ResourceUtils.add("spring.application.name", "demo");
+		ResourceUtils.add("zookeeper.servers", "127.0.0.1:2181");
+		SnowflakeGenerator generator = new SnowflakeGenerator();
 		System.out.println(generator.nextId());
 	}
 }

@@ -6,7 +6,9 @@ package com.jeesuite.mybatis.test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -67,15 +69,15 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@After
 	public void after(){
-		List<UserEntity> list = userMapper.selectAll();
-		for (UserEntity userEntity : list) {
-			userMapper.deleteByPrimaryKey(userEntity.getId());
-		}
-		
-		List<SnsAccounyBindingEntity> list2 = snsAccounyBindingMapper.selectAll();
-		for (SnsAccounyBindingEntity snsAccounyBindingEntity : list2) {
-			snsAccounyBindingMapper.deleteByPrimaryKey(snsAccounyBindingEntity.getId());
-		}
+//		List<UserEntity> list = userMapper.selectAll();
+//		for (UserEntity userEntity : list) {
+//			userMapper.deleteByPrimaryKey(userEntity.getId());
+//		}
+//		
+//		List<SnsAccounyBindingEntity> list2 = snsAccounyBindingMapper.selectAll();
+//		for (SnsAccounyBindingEntity snsAccounyBindingEntity : list2) {
+//			snsAccounyBindingMapper.deleteByPrimaryKey(snsAccounyBindingEntity.getId());
+//		}
 	}
 	
 	private void printCacheKeys(String title){
@@ -240,7 +242,10 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testPage2(){
-		Page<UserEntity> pageInfo = userMapper.pageQuery(new PageParams(1,5));
+		Map<String, Object> conditions = new HashMap<>();
+		conditions.put("status", 1);
+		conditions.put("name", "vakin");
+		Page<UserEntity> pageInfo = userMapper.pageQuery(new PageParams(1,5),conditions);
 		
 		System.out.println(pageInfo);
 	}
