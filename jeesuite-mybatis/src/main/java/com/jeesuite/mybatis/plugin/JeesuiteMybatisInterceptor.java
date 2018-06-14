@@ -16,6 +16,8 @@ import org.apache.ibatis.plugin.Plugin;
 import org.apache.ibatis.plugin.Signature;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -48,17 +50,19 @@ import com.jeesuite.spring.SpringInstanceProvider;
             ResultHandler.class }) })  
 public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,DisposableBean,ApplicationContextAware{
 
+	protected static final Logger logger = LoggerFactory.getLogger("com.jeesuite.mybatis");
+	
 	private Properties properties;
 	//CRUD框架驱动 default，mapper3
 	private List<InterceptorHandler> interceptorHandlers = new ArrayList<>();
 	
 	private static boolean cacheEnabled,rwRouteEnabled,dbShardEnabled;
 	
-	//cache,rwRoute,dbShard
+	
 	public void setInterceptorHandlers(String interceptorHandlers) {
-		String[] handlerNames = StringUtils.tokenizeToStringArray(interceptorHandlers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-	    
-		for (String name : handlerNames) {
+		String[] hanlderNames = StringUtils.tokenizeToStringArray(interceptorHandlers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+		for (String name : hanlderNames) {
+			if(org.apache.commons.lang3.StringUtils.isBlank(name))continue;
 			if(CacheHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new CacheHandler());
 				cacheEnabled = true;
@@ -70,6 +74,16 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 				dbShardEnabled = true;
 			}else if(PaginationHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new PaginationHandler());
+			}else{
+				//自定义的拦截器
+				try {
+					Class<?> clazz = Class.forName(name);
+					InterceptorHandler handler = (InterceptorHandler) clazz.newInstance();
+					this.interceptorHandlers.add(handler);
+					logger.info("registered cumstom InterceptorHandler:{}",name);
+				} catch (Exception e) {
+					logger.error("registered cumstom InterceptorHandler error",e);
+				}
 			}
 		}
 		//排序

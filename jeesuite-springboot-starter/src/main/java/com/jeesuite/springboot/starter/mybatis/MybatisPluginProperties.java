@@ -24,6 +24,7 @@ public class MybatisPluginProperties {
 	private boolean nullValueCache = false;
 	private long cacheExpireSeconds = CacheExpires.IN_1HOUR;
 	private boolean dynamicExpire = false;
+	private String interceptorHandlerClass;//自定义拦截器处理
 	
 	public boolean isCacheEnabled() {
 		return cacheEnabled;
@@ -80,7 +81,11 @@ public class MybatisPluginProperties {
 	public void setDynamicExpire(boolean dynamicExpire) {
 		this.dynamicExpire = dynamicExpire;
 	}
-	
-	
-	
+	public String getInterceptorHandlerClass() {
+		return interceptorHandlerClass;
+	}
+	public void setInterceptorHandlerClass(String interceptorHandlerClass) {
+		this.interceptorHandlerClass = interceptorHandlerClass;
+	}
+
 }

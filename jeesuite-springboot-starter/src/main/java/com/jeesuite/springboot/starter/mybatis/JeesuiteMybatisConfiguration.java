@@ -1,5 +1,7 @@
 package com.jeesuite.springboot.starter.mybatis;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -11,13 +13,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 
 import com.jeesuite.mybatis.datasource.MutiRouteDataSource;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.PluginConfig;
+import com.jeesuite.mybatis.plugin.cache.CacheHandler;
+import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
+import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
+import com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler;
 
 import tk.mybatis.mapper.entity.Config;
 import tk.mybatis.mapper.mapperhelper.MapperHelper;
@@ -40,27 +48,33 @@ public class JeesuiteMybatisConfiguration implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		//
 
-		String interceptorHandlers = null;
+		List<String> hanlders = new ArrayList<>();
+	    
+		if(org.apache.commons.lang3.StringUtils.isNotBlank(properties.getInterceptorHandlerClass())){
+			String[] customHanlderClass = StringUtils.tokenizeToStringArray(properties.getInterceptorHandlerClass(), ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+			hanlders.addAll(Arrays.asList(customHanlderClass));
+		}
+		
 		if (properties.isCacheEnabled()) {
-			interceptorHandlers = "cache";
+			hanlders.add(CacheHandler.NAME);
 		}
 
 		if (properties.isRwRouteEnabled()) {
-			interceptorHandlers = interceptorHandlers == null ? "rwRoute" : interceptorHandlers + ",rwRoute";
+			hanlders.add(RwRouteHandler.NAME);
 		}
 
 		if (properties.isDbShardEnabled()) {
-			interceptorHandlers = interceptorHandlers == null ? "dbShard" : interceptorHandlers + ",dbShard";
+			hanlders.add(DatabaseRouteHandler.NAME);
 		}
 		
 		if (properties.isPaginationEnabled()) {
-			interceptorHandlers = interceptorHandlers == null ? "page" : interceptorHandlers + ",page";
+			hanlders.add(PaginationHandler.NAME);
 		}
 
-		if (interceptorHandlers != null) {
+		if (!hanlders.isEmpty()) {
 			JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor();
 			interceptor.setMapperLocations(mapperLocations);
-			interceptor.setInterceptorHandlers(interceptorHandlers);
+			interceptor.setInterceptorHandlers(org.apache.commons.lang3.StringUtils.join(hanlders.toArray(), ","));
 			sqlSessionFactory.getConfiguration().addInterceptor(interceptor);
 			
 			Properties p = new Properties();

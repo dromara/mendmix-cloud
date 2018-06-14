@@ -227,7 +227,7 @@ public class DatabaseRouteHandler implements InterceptorHandler {
 
 	@Override
 	public int interceptorOrder() {
-		return 2;
+		return 8;
 	}
 
 } 
