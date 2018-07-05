@@ -67,8 +67,6 @@
 		<module>jeesuite-log</module>
 		<module>jeesuite-search</module>
 		<module>jeesuite-tx</module>
-		<module>jeesuite-sms</module>
-		<module>jeesuite-pay</module>
 		 -->
 	</modules>
 
