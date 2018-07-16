@@ -16,7 +16,6 @@ import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ResultMap;
 import org.apache.ibatis.mapping.ResultMapping;
 import org.apache.ibatis.mapping.SqlCommandType;
-import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.plugin.Invocation;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ResultHandler;
@@ -25,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.crud.builder.SqlTemplate;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
@@ -40,14 +38,9 @@ public class PaginationHandler implements InterceptorHandler {
 	
 	public static final String NAME = "page";
 	
-	private static final String PARAMETER_SIZE = "pageSize";
-	private static final String PARAMETER_OFFSET = "offset";
-	private static final String PAGE_LIMIT_SUFFIX = "_PageLimit";
 	private static final String PAGE_COUNT_SUFFIX = "_PageCount";
 	
 	private Map<String,Boolean> pageMappedStatements = new HashMap<>();
-	
-	private List<String> createdPageMappedStatements = new ArrayList<>();
 	
 	private DbType dbType = DbType.MYSQL;
 	
@@ -140,29 +133,9 @@ public class PaginationHandler implements InterceptorHandler {
 	        //查询总数
 	        MappedStatement countMappedStatement = getCountMappedStatement(orignMappedStatement);
 	        Long total = executeQueryCount(executor, countMappedStatement, parameter, boundSql, rowBounds, resultHandler);
-	        
-	      //按分页查询
-	    	MappedStatement limitMappedStatement = getLimitMappedStatementIfNotCreate(orignMappedStatement);
-	    	
-	    	List<?> datas;
-	    	BoundSql pageBoundSql;
-	    	if(limitMappedStatement == null){
-	    		if(StringUtils.isBlank(boundSql.getSql())){
-	    			logger.error("create_limit_mappedStatement_error。MappedStatementId:{},pageParamsHolder:{}", orignMappedStatement.getId(),PageExecutor.getPageParams());
-	    			throw new RuntimeException("生成Limit查询语句错误");
-	    		}
-	    		 String pageSql = PageSqlUtils.getLimitSQL(dbType, boundSql.getSql(),pageParams);
-	             pageBoundSql = new BoundSql(orignMappedStatement.getConfiguration(), pageSql, boundSql.getParameterMappings(), parameter);
-	             
-	             datas = executor.query(orignMappedStatement, parameter, RowBounds.DEFAULT, resultHandler,null,pageBoundSql);
-	    	}else{    		
-	    		pageBoundSql = limitMappedStatement.getBoundSql(parameter);
-	    		pageBoundSql.setAdditionalParameter(PARAMETER_OFFSET, pageParams.offset());
-	    		pageBoundSql.setAdditionalParameter(PARAMETER_SIZE, pageParams.getPageSize());
-	    		//
-	    		datas = executor.query(limitMappedStatement, parameter, RowBounds.DEFAULT, resultHandler,null,pageBoundSql);
-	    	}
-	    	
+	        //查询分页数据
+	        List<?> datas = executeQuery(executor, orignMappedStatement, parameter, boundSql, rowBounds, resultHandler, pageParams);	        
+
 	        Page<Object> page = new Page<Object>(pageParams,total,(List<Object>) datas);	
 			
 			List<Page<?>> list = new ArrayList<Page<?>>(1);
@@ -191,6 +164,24 @@ public class PaginationHandler implements InterceptorHandler {
 				countBoundSql);
 		Long count = (Long) ((List) countResultList).get(0);
 		return count;
+	}
+	
+	@SuppressWarnings("rawtypes")
+	private List executeQuery(Executor executor, MappedStatement ms,
+            Object parameter, BoundSql boundSql,
+			RowBounds rowBounds, ResultHandler resultHandler,PageParams pageParams) throws IllegalAccessException, SQLException {
+		CacheKey countKey = executor.createCacheKey(ms, parameter, RowBounds.DEFAULT, boundSql);
+		
+		String orignSql = StringUtils.replace(boundSql.getSql(), ";$", StringUtils.EMPTY);
+		
+		String pageSql = PageSqlUtils.getLimitSQL(dbType,orignSql,pageParams);
+		
+		BoundSql countBoundSql = new BoundSql(ms.getConfiguration(), pageSql, boundSql.getParameterMappings(),
+				parameter);
+		
+		List<?> resultList = executor.query(ms, parameter, RowBounds.DEFAULT, resultHandler, countKey,
+				countBoundSql);
+		return resultList;
 	}
 	
 	/**
@@ -248,61 +239,6 @@ public class PaginationHandler implements InterceptorHandler {
     	}
     	
     }
-
-	
-	
-	
-	private MappedStatement getLimitMappedStatementIfNotCreate(MappedStatement orignMappedStmt) {
-		
-    	String msId = orignMappedStmt.getId() + PAGE_LIMIT_SUFFIX;
-    	
-    	MappedStatement statement = null;
-    	Configuration configuration = orignMappedStmt.getConfiguration();
-    	
-    	try {
-    		statement = configuration.getMappedStatement(msId);
-    		if(statement != null)return statement;
-		} catch (Exception e) {}
-    	
-    	
-    	try {	
-    		//动态生成过，但是报错了
-    		if(createdPageMappedStatements.contains(orignMappedStmt.getId()))return null;
-    		
-    		EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(orignMappedStmt.getId().substring(0, orignMappedStmt.getId().lastIndexOf(".")));
-    		
-    		String orignSql = entityInfo.getMapperSqls().get(orignMappedStmt.getId());
-    		if(StringUtils.isBlank(orignSql)){
-    			logger.error("create_limit_mappedStatement_error。MappedStatementId:{},entityClass:{},pageParamsHolder:{}", orignMappedStmt.getId(),entityInfo.getEntityClass().getName(),PageExecutor.getPageParams());
-    			throw new RuntimeException("生成Limit查询语句错误");
-    		}
-    		synchronized (configuration) {
-    			//
-    			createdPageMappedStatements.add(orignMappedStmt.getId());
-    			
-    			if(configuration.hasStatement(msId))return configuration.getMappedStatement(msId);
-    			String sql = PageSqlUtils.getLimitSQL(dbType, orignSql);
-    			
-    			sql = String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
-    			SqlSource sqlSource = configuration.getDefaultScriptingLanguageInstance().createSqlSource(configuration, sql, Object.class);
-    			
-    			MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, msId, sqlSource,SqlCommandType.SELECT);
-    			
-    			statementBuilder.resource(orignMappedStmt.getResource());
-    			statementBuilder.statementType(orignMappedStmt.getStatementType());
-    			statementBuilder.parameterMap(orignMappedStmt.getParameterMap());
-    			statementBuilder.resultSetType(orignMappedStmt.getResultSetType());
-    			statementBuilder.resultMaps(orignMappedStmt.getResultMaps());
-    			statement = statementBuilder.build();
-    			configuration.addMappedStatement(statement);
-    			
-    			return statement;
-    		}
-		} catch (Exception e) {
-			return null;
-		}
-    }
-
 
 	@Override
 	public void onFinished(Invocation invocation, Object result) {

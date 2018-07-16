@@ -48,15 +48,9 @@ public class MybatisMapperParser {
 	private static Map<String,EntityInfo> mapperRalateEntitys = new HashMap<>();
 	
 	private static String mapperLocations;
-	//private static String mapperFileSuffix = "Mapper.xml";
-	//private static String mapperBaseDir;
+
 	public static void setMapperLocations(String mapperLocations){
 		MybatisMapperParser.mapperLocations = mapperLocations;
-		//classpath:META-INF/mapper/*Mapper.xml
-//		mapperLocations = mapperLocations.split(":")[1];
-//		int spitPos = mapperLocations.lastIndexOf("/");
-//		mapperBaseDir = mapperLocations.substring(0, spitPos);
-//		mapperFileSuffix = mapperLocations.substring(spitPos + 1).replace("*", "");
 	}
 	
 	public static List<EntityInfo> getEntityInfos() {
@@ -113,53 +107,6 @@ public class MybatisMapperParser {
 		}
 	}
 	
-//	private synchronized static void doParse(){
-//		if(caches.isEmpty()){
-//			try {
-//				URL resource = Thread.currentThread().getContextClassLoader().getResource(mapperBaseDir);
-//				if (resource != null) {			
-//					if (resource.getProtocol().equals("file")) {
-//						File mapperDir = new File(resource.getPath());
-//						File[] files = mapperDir.listFiles();						
-//						for (File f : files) {
-//							if(f.getName().endsWith(mapperFileSuffix)){
-//								parseMapperFile(new FileInputStream(f));
-//							}
-//						}
-//					} else if (resource.getProtocol().equals("jar")) {
-//						String jarFilePath = resource.getFile();	
-//						
-//						//file:/Users/vakinge/.m2/repository/com/jeesuite/demo/demo-dao/1.0-SNAPSHOT/demo-dao-1.0-SNAPSHOT.jar!/mapper;
-//						jarFilePath = jarFilePath.split("jar!")[0] + "jar";
-//						jarFilePath = jarFilePath.substring("file:".length());
-//						log.info("mapper file in jar:{}",jarFilePath);
-//						jarFilePath = java.net.URLDecoder.decode(jarFilePath, "UTF-8");
-//
-//						JarFile jarFile = new JarFile(jarFilePath);
-//						
-//						List<String> fileNames = listFiles(jarFile, mapperFileSuffix);
-//						if (fileNames != null && fileNames.size() > 0) {
-//							for (String fileName : fileNames) {
-//								InputStream inputStream = jarFile.getInputStream(jarFile.getJarEntry(fileName));
-//								parseMapperFile(inputStream);
-//								try {inputStream.close();} catch (Exception e) {}
-//							}
-//						}
-//						
-//						jarFile.close();
-//					} else {
-//						log.error("mapper dir is in unsurport protocol");
-//					}															
-//				} else {
-//					log.error("can not find mapper dir");
-//				}				
-//			} catch (Exception e) {
-//				log.error("解析mapper文件异常", e);	
-//				
-//				throw new RuntimeException("解析mapper文件异常");
-//			}
-//		}
-//	}
 	
 	private static void parseMapperFile(String fileName,InputStream inputStream) throws Exception {
 		
