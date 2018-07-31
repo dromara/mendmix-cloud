@@ -13,7 +13,7 @@ public class ExcelValidator {
 	public static final String XLS_SIFFIX = "xls";
 	public static final String XLSX_SIFFIX = "xlsx";
 	
-	public static final String FIELD_SPLIT = ":";
+	public static final String FIELD_SPLIT = "-@-";
 	
 	public final static String BLANK = "";
 	

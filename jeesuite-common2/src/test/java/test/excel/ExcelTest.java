@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
+import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common2.excel.ExcelPerfModeReader;
 import com.jeesuite.common2.excel.ExcelReader;
 import com.jeesuite.common2.excel.ExcelWriter;
@@ -26,17 +27,13 @@ public class ExcelTest {
 	 */
 	public static void main(String[] args) throws InvalidFormatException, IOException {
 		//普通方式读取
-		String excelFilePath = "/Users/jiangwei/Desktop/工资.xlsx";
-		ExcelReader excelReader = new ExcelReader(excelFilePath);
-		excelReader.parse(PersonSalaryInfo.class);
-		excelReader.close();
-		//大文件读取防止内存溢出
-		List<PersonSalaryInfo> list = new ExcelPerfModeReader(excelFilePath).read(PersonSalaryInfo.class);
+		String excelFilePath = "/Users/jiangwei/Desktop/invorderdet_template.xlsx";
 
-		//write
-		ExcelWriter writer = new ExcelWriter("/Users/jiangwei/Desktop/工资bak.xlsx");
-		writer.write(list, PersonSalaryInfo.class);
-		writer.close();
+		//大文件读取防止内存溢出
+		List<SimpleSalaryInfo> list = new ExcelPerfModeReader(excelFilePath).read(SimpleSalaryInfo.class);
+
+		System.out.println(JsonUtils.toPrettyJson(list));
+
 	}
 
 }

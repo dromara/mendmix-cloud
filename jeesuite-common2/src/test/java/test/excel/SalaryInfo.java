@@ -20,7 +20,7 @@ import com.jeesuite.common2.excel.model.TitleMeta;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年11月21日
  */
-public class PersonSalaryInfo {
+public class SalaryInfo {
 
 	private int id;
 	
@@ -133,7 +133,7 @@ public class PersonSalaryInfo {
 	
 	public static void main(String[] args) {
 		List<TitleMeta> titleCellBeans = new ArrayList<>();
-		Field[] fields = PersonSalaryInfo.class.getDeclaredFields();
+		Field[] fields = SalaryInfo.class.getDeclaredFields();
 		
 		Map<String, TitleMeta> parentMap = new HashMap<>();
 		int index = 0,subIndex = 0;
