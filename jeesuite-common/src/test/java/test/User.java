@@ -5,7 +5,6 @@ package test;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Random;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -35,6 +34,8 @@ public class User implements Serializable {
 	private Short status = 1;
 
 	private Date createdAt;
+	
+	private User father;
 
 	public User() {}
 	
@@ -109,5 +110,15 @@ public class User implements Serializable {
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
 	}
+
+	public User getFather() {
+		return father;
+	}
+
+	public void setFather(User father) {
+		this.father = father;
+	}
+	
+	
 
 }

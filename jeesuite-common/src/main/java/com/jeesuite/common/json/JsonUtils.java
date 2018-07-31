@@ -28,6 +28,19 @@ public class JsonUtils {
 		return JsonMapper.nonNullMapper().toJson(object);
 	}
 	
+	/**
+	 * 转换成格式化的json字符串
+	 * @param object
+	 * @return
+	 */
+	public static String toPrettyJson(Object object){
+		try {			
+			return getMapper().writerWithDefaultPrettyPrinter().writeValueAsString(object);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public static <T> T toObject(String jsonString, Class<T> clazz) {
 		return  jsonMapper.toObject(jsonString, clazz);
 	}
@@ -74,6 +87,8 @@ public class JsonUtils {
             return getJsonNodeValue(node.get(s1), s2);  
         }  
     }  
+	
+	
 	
 	public static void main(String[] args) {
 		List<Object> list = new ArrayList<>();

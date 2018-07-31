@@ -21,9 +21,11 @@ import org.apache.commons.lang3.StringUtils;
  * Bean复制<br>
  * Copyright (c) 2015, vakinge@gmail.com.
  */
-public class BeanCopyUtils {
+public class BeanUtils {
 
-    private static Map<String, Map<String, PropertyDescriptor>> cache = new ConcurrentHashMap<>();
+    private static final String CLASS_PROP_NAME = "class";
+
+	private static Map<String, Map<String, PropertyDescriptor>> cache = new ConcurrentHashMap<>();
 
     private static Map<String, List<String>> fieldCache = new HashMap<>();
     
@@ -72,8 +74,13 @@ public class BeanCopyUtils {
                     //类型匹配
                     boolean matched = propertyType == srcDescriptor.getPropertyType();
                     if (!matched) {
+                    	
                         if (value != null || setDefaultValForNull) {
-                            value = toValue(srcDescriptor, value, propertyType);
+                        	if(isSimpleDataType(srcDescriptor)){                        		
+                        		value = toValue(srcDescriptor, value, propertyType);
+                        	}else{
+                        		value = copy(value, propertyType);
+                        	}
                         }
                     }
                     //设置默认值
@@ -273,10 +280,15 @@ public class BeanCopyUtils {
             Map<String, PropertyDescriptor> descriptors = getCachePropertyDescriptors(bean.getClass());
             for (PropertyDescriptor descriptor : descriptors.values()) {
                 String propertyName = descriptor.getName();
+                if(CLASS_PROP_NAME.equalsIgnoreCase(propertyName))continue;
                 Method readMethod = descriptor.getReadMethod();
                 Object result = readMethod.invoke(bean, new Object[0]);
                 if (result != null) {
-                    returnMap.put(propertyName, result);
+                	if(BeanUtils.isSimpleDataType(result)){                		
+                		returnMap.put(propertyName, result);
+                	}else{
+                		returnMap.put(propertyName, beanToMap(result));
+                	}
                 }
             }
         } catch (Exception e) {
@@ -368,9 +380,13 @@ public class BeanCopyUtils {
      * @throws Exception
      */
    public static boolean isSimpleDataType(Object o) {   
-	   Class<? extends Object> clazz = o.getClass();
+       return isSimpleDataType(o.getClass()); 
+   }
+   
+   public static boolean isSimpleDataType(Class<?> clazz) {   
        return 
        (   
+    	   clazz.isPrimitive() ||
            clazz.equals(String.class) ||   
            clazz.equals(Integer.class)||   
            clazz.equals(Byte.class) ||   
@@ -381,8 +397,7 @@ public class BeanCopyUtils {
            clazz.equals(Short.class) ||   
            clazz.equals(BigDecimal.class) ||     
            clazz.equals(Boolean.class) ||   
-           clazz.equals(Date.class) ||   
-           clazz.isPrimitive()   
+           clazz.equals(Date.class)   
        );   
    }
 

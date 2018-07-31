@@ -1,12 +1,10 @@
 package com.jeesuite.common.crypt;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -73,10 +71,13 @@ public class RSA {
          System.out.println("RSA decoded: "  + decrypt(privateKey, encodedText));
     }
 
-    /** 
-     * 随机生成密钥对 
-     */  
-    public static void generateKeyPair(String filePath) {  
+    /**
+     * 生成RSA密匙对
+     * @param keySize
+     * @return [pubkey,prikey]
+     */
+    public static String[] generateKeyPair(int keySize) { 
+    	
         // KeyPairGenerator类用于生成公钥和私钥对，基于RSA算法生成对象  
         KeyPairGenerator keyPairGen = null;  
         try {  
@@ -86,7 +87,7 @@ public class RSA {
             e.printStackTrace();  
         }  
         // 初始化密钥对生成器，密钥大小为96-1024位  
-        keyPairGen.initialize(KEY_SIZE,new SecureRandom());  
+        keyPairGen.initialize(keySize,new SecureRandom());  
         // 生成一个密钥对，保存在keyPair中  
         KeyPair keyPair = keyPairGen.generateKeyPair();  
         // 得到私钥  
@@ -98,21 +99,10 @@ public class RSA {
             String publicKeyString = Base64.encodeToString(publicKey.getEncoded(),true);  
             // 得到私钥字符串  
             String privateKeyString = Base64.encodeToString(privateKey.getEncoded(),true);  
-            // 将密钥对写入到文件  
-            FileWriter pubfw = new FileWriter(filePath + "/public.key");  
-            FileWriter prifw = new FileWriter(filePath + "/private.key");  
-            BufferedWriter pubbw = new BufferedWriter(pubfw);  
-            BufferedWriter pribw = new BufferedWriter(prifw);  
-            pubbw.write(publicKeyString);  
-            pribw.write(privateKeyString);  
-            pubbw.flush();  
-            pubbw.close();  
-            pubfw.close();  
-            pribw.flush();  
-            pribw.close();  
-            prifw.close();  
+           
+            return new String[]{publicKeyString,privateKeyString};
         } catch (Exception e) {  
-            e.printStackTrace();  
+            throw new RuntimeException(e);
         }  
     }  
 
