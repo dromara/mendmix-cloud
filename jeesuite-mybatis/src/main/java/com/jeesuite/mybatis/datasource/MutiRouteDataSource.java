@@ -23,8 +23,6 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.AbstractDataSource;
 import org.springframework.jdbc.datasource.lookup.DataSourceLookup;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
@@ -42,7 +40,7 @@ import com.jeesuite.spring.SpringInstanceProvider;
  * @date 2015年11月18日
  * @Copyright (c) 2015, jwww
  */
-public class MutiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean,EnvironmentAware{  
+public class MutiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean{  
 
 	private static final Logger logger = LoggerFactory.getLogger(MutiRouteDataSource.class);
 	
@@ -55,8 +53,6 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	private Map<Object, DataSource> targetDataSources;
 	
 	private DataSource defaultDataSource;
-	//
-	private Environment environment;
 
 	private DataSourceLookup dataSourceLookup = new JndiDataSourceLookup();
 
@@ -71,17 +67,13 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	public void setDataSourceLookup(DataSourceLookup dataSourceLookup) {
 		this.dataSourceLookup = (dataSourceLookup != null ? dataSourceLookup : new JndiDataSourceLookup());
 	}
-	
-	@Override
-	public void setEnvironment(Environment environment) {
-		this.environment = environment;
-	}  
+
 
 	@Override
 	public void afterPropertiesSet() {
 		
 		try {	
-			dataSourceType = DataSourceType.valueOf(getProperty("db.DataSourceType", DataSourceType.Druid.name()));
+			dataSourceType = DataSourceType.valueOf(ResourceUtils.getProperty("db.DataSourceType", DataSourceType.Druid.name()));
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Property 'db.DataSourceType' expect:" + Arrays.toString(DataSourceType.values()));
 		}
@@ -225,7 +217,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 		int index = 1;
 		while(true){
 			datasourceKey = "slave" + index;
-			if(!containsProperty(datasourceKey + ".db.url") && !containsProperty(datasourceKey + ".db.jdbcUrl"))break;
+			if(!ResourceUtils.containsProperty(datasourceKey + ".db.url") && !ResourceUtils.containsProperty(datasourceKey + ".db.jdbcUrl"))break;
 			nodeProperties = parseNodeConfig(datasourceKey); 
 			mapDataSource.put(datasourceKey, nodeProperties);
 			index++;
@@ -234,17 +226,6 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
         return mapDataSource;  
     }  
     
-
-    
-    private boolean containsProperty(String key){
-    	return environment.containsProperty(key) || ResourceUtils.containsProperty(key);
-    }
-
-    private String getProperty(String key,String defaultValue){
-    	String value = environment.getProperty(key);
-    	if(value == null)value = ResourceUtils.getProperty(key,defaultValue);
-    	return value;
-    }
     
     private Properties parseNodeConfig(String keyPrefix){
     	Properties properties = new Properties();
