@@ -31,7 +31,6 @@ import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
-import com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 
@@ -56,7 +55,7 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 	//CRUD框架驱动 default，mapper3
 	private List<InterceptorHandler> interceptorHandlers = new ArrayList<>();
 	
-	private static boolean cacheEnabled,rwRouteEnabled,dbShardEnabled;
+	private static boolean cacheEnabled,rwRouteEnabled;
 	
 	
 	public void setInterceptorHandlers(String interceptorHandlers) {
@@ -69,9 +68,6 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 			}else if(RwRouteHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new RwRouteHandler());
 				rwRouteEnabled = true;
-			}else if(DatabaseRouteHandler.NAME.equals(name)){
-				this.interceptorHandlers.add(new DatabaseRouteHandler());
-				dbShardEnabled = true;
 			}else if(PaginationHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new PaginationHandler());
 			}else{
@@ -170,10 +166,6 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 
 	public static boolean isRwRouteEnabled() {
 		return rwRouteEnabled;
-	}
-
-	public static boolean isDbShardEnabled() {
-		return dbShardEnabled;
 	}
 
 	@Override

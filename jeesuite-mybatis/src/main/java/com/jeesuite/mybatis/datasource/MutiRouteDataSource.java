@@ -6,14 +6,15 @@ package com.jeesuite.mybatis.datasource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -28,8 +29,9 @@ import org.springframework.jdbc.datasource.AbstractDataSource;
 import org.springframework.jdbc.datasource.lookup.DataSourceLookup;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
-import com.alibaba.druid.pool.DruidDataSource;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.mybatis.datasource.builder.DruidDataSourceBuilder;
+import com.jeesuite.mybatis.datasource.builder.HikariCPDataSourceBuilder;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 
@@ -46,14 +48,13 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	
 	private static final String MASTER_KEY = "master";
 	
+	private DataSourceType dataSourceType = DataSourceType.Druid;
+	
 	private ApplicationContext context;
 	
 	private Map<Object, DataSource> targetDataSources;
 	
 	private DataSource defaultDataSource;
-	
-	private int dbGroupNums = 1;//数据库分库组数
-	
 	//
 	private Environment environment;
 
@@ -78,7 +79,14 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 
 	@Override
 	public void afterPropertiesSet() {
-		Map<String, DataSourceInfo> map = parseDataSourceConfFromProperties();
+		
+		try {	
+			dataSourceType = DataSourceType.valueOf(getProperty("db.DataSourceType", DataSourceType.Druid.name()));
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Property 'db.DataSourceType' expect:" + Arrays.toString(DataSourceType.values()));
+		}
+				
+		Map<String, Properties> map = parseDataSourceConfig();
 		
 		if(map.isEmpty())throw new RuntimeException("Db config Not found..");
 		registerDataSources(map);
@@ -164,76 +172,38 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	 * @param mapCustom
 	 * @param isLatestGroup
 	 */
-    private void registerDataSources(Map<String, DataSourceInfo> mapCustom) {  
+    private void registerDataSources(Map<String, Properties> mapCustom) {  
     	
         DefaultListableBeanFactory acf = (DefaultListableBeanFactory) this.context.getAutowireCapableBeanFactory();  
         Iterator<String> iter = mapCustom.keySet().iterator();  
         
        Map<Object, DataSource> targetDataSources = new HashMap<>();
        
-        while(iter.hasNext()){  
-        	String dsKey = iter.next();  //
-        	DataSourceInfo dataSourceInfo = mapCustom.get(dsKey);
-        	//如果当前库为最新一组数据库，注册beanName为master
-        	
-			logger.info(">>>>>begin to initialize datasource："+dsKey + "\n================\n" + dataSourceInfo.toString() + "\n==============");
-			
-        	BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(DruidDataSource.class);
-        	beanDefinitionBuilder.addPropertyValue("driverClassName", dataSourceInfo.driveClassName);
-        	beanDefinitionBuilder.addPropertyValue("url", dataSourceInfo.connUrl);
-        	beanDefinitionBuilder.addPropertyValue("username", dataSourceInfo.userName);
-        	beanDefinitionBuilder.addPropertyValue("password", dataSourceInfo.password);
-        	//
-        	beanDefinitionBuilder.addPropertyValue("testWhileIdle", true);
-        	beanDefinitionBuilder.addPropertyValue("validationQuery", "SELECT 'x'");
-        	
-        	if(dataSourceInfo.initialSize > 0){
-        		beanDefinitionBuilder.addPropertyValue("initialSize", dataSourceInfo.initialSize);
-        	}
-        	if(dataSourceInfo.maxActive > 0){
-        		beanDefinitionBuilder.addPropertyValue("maxActive", dataSourceInfo.maxActive);
-        	}
-        	if(dataSourceInfo.maxIdle > 0){
-        		beanDefinitionBuilder.addPropertyValue("maxIdle", dataSourceInfo.maxIdle);
-        	}
-        	if(dataSourceInfo.minIdle > 0){
-        		beanDefinitionBuilder.addPropertyValue("minIdle", dataSourceInfo.minIdle);
-        	}
-        	
-        	if(dataSourceInfo.maxWait > 0){
-        		beanDefinitionBuilder.addPropertyValue("maxWait", dataSourceInfo.maxWait);
-        	}
-        	
-        	if(dataSourceInfo.minEvictableIdleTimeMillis > 0){
-        		beanDefinitionBuilder.addPropertyValue("minEvictableIdleTimeMillis", dataSourceInfo.minEvictableIdleTimeMillis);
-        	}
-        	
-        	if(dataSourceInfo.timeBetweenEvictionRunsMillis > 0){
-        		beanDefinitionBuilder.addPropertyValue("timeBetweenEvictionRunsMillis", dataSourceInfo.timeBetweenEvictionRunsMillis);
-        	}
+       BeanDefinitionBuilder beanDefinitionBuilder = null;
+		while (iter.hasNext()) {
+			String dsKey = iter.next(); //
+			Properties nodeProps = mapCustom.get(dsKey);
+			// 如果当前库为最新一组数据库，注册beanName为master
+			logger.info(">>>>>begin to initialize datasource：" + dsKey + "\n================\n" + nodeProps.toString()
+					+ "\n==============");
+			if (DataSourceType.Druid == dataSourceType) {
+				beanDefinitionBuilder = DruidDataSourceBuilder.builder(nodeProps);
+			} else if (DataSourceType.HikariCP == dataSourceType) {
+				beanDefinitionBuilder = HikariCPDataSourceBuilder.builder(nodeProps);
+			}
 
-        	if(dataSourceInfo.maxWait > 0){
-        		beanDefinitionBuilder.addPropertyValue("maxWait", dataSourceInfo.maxWait);
-        	}
-        	
-        	beanDefinitionBuilder.addPropertyValue("testOnBorrow", dataSourceInfo.testOnBorrow);
-        	beanDefinitionBuilder.addPropertyValue("testOnReturn", dataSourceInfo.testOnReturn);
-            
-            acf.registerBeanDefinition(dsKey, beanDefinitionBuilder.getRawBeanDefinition());
+			acf.registerBeanDefinition(dsKey, beanDefinitionBuilder.getRawBeanDefinition());
 
-            DruidDataSource ds = (DruidDataSource)this.context.getBean(dsKey);
-            
+			DataSource ds = (DataSource) this.context.getBean(dsKey);
 			targetDataSources.put(dsKey, ds);
-			
-			// 设置默认数据源
-			if(dataSourceInfo.dbGroupIndex == dbGroupNums - 1){				
+			//  设置默认数据源
+			if (dsKey.equals(MASTER_KEY)) {
 				defaultDataSource = ds;
 			}
-            logger.info("bean["+dsKey+"] has initialized! lookupKey:"+dsKey);
-            
-            //
-            DataSourceContextHolder.get().registerDataSourceKey(dsKey);
-        } 
+			logger.info("bean[" + dsKey + "] has initialized! lookupKey:" + dsKey);
+			//
+			DataSourceContextHolder.get().registerDataSourceKey(dsKey);
+		} 
         
         addTargetDataSources(targetDataSources);
     }  
@@ -243,132 +213,52 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
      * @return 
      * @throws IOException 
      */  
-    private Map<String, DataSourceInfo> parseDataSourceConfFromProperties(){  
+    private Map<String, Properties> parseDataSourceConfig(){  
         // 属性文件  
-        Map<String, DataSourceInfo> mapDataSource = new HashMap<String,DataSourceInfo>(); 
+        Map<String, Properties> mapDataSource = new HashMap<String,Properties>(); 
         
-        dbGroupNums = Integer.parseInt(getProperty("db.group.size", "1"));
-        logger.info(">>>>>>dbGroupNums:" + dbGroupNums);
-        for (int i = 0; i < dbGroupNums; i++) {
-			String groupPrefix = i == 0 ? "" : "group" + i ;
-			String datasourceKey = (StringUtils.isNotBlank(groupPrefix) ? groupPrefix + "." : "") + MASTER_KEY;
-			DataSourceInfo sourceInfo = new DataSourceInfo(i,datasourceKey); 
-			mapDataSource.put(datasourceKey, sourceInfo);
-			
-			//解析同组下面的slave
-			int index = 1;
-			wl:while(true){
-				datasourceKey = (StringUtils.isNotBlank(groupPrefix) ? groupPrefix + "." : "") + "slave" + index;
-				if(!containsProperty(datasourceKey + ".db.url"))break wl;
-				sourceInfo = new DataSourceInfo(i,datasourceKey); 
-				mapDataSource.put(datasourceKey, sourceInfo);
-				index++;
-			}
+		String datasourceKey = MASTER_KEY;
+		Properties nodeProperties = parseNodeConfig(datasourceKey); 
+		mapDataSource.put(datasourceKey, nodeProperties);
+		
+		//解析同组下面的slave
+		int index = 1;
+		while(true){
+			datasourceKey = "slave" + index;
+			if(!containsProperty(datasourceKey + ".db.url") && !containsProperty(datasourceKey + ".db.jdbcUrl"))break;
+			nodeProperties = parseNodeConfig(datasourceKey); 
+			mapDataSource.put(datasourceKey, nodeProperties);
+			index++;
 		}
+		
         return mapDataSource;  
     }  
     
-    private String getProperty(String key,String...defs){
-    	String value = null;
-    	String defValue = defs != null && defs.length > 0 && defs[0] != null ? defs[0] : null;
-    	value = environment.getProperty(key);
-    	if(StringUtils.isBlank(value))value = ResourceUtils.getProperty(key);
-    	return StringUtils.isBlank(value) ? defValue : value;
-    }
+
     
     private boolean containsProperty(String key){
-    	return environment.containsProperty(key) || StringUtils.isNotBlank(ResourceUtils.getProperty(key));
-    }
-	
-	private class DataSourceInfo{  
-		//分库ID
-		public int dbGroupIndex;
-		public String driveClassName;
-        public String connUrl;  
-        public String userName;  
-        public String password;
-        public boolean master;
-        protected int initialSize;
-        protected int maxActive;
-        protected int minIdle;
-        protected int maxIdle;
-        //获取连接等待超时的时间
-        protected long maxWait;
-        //一个连接在池中最小生存的时间，单位是毫秒
-        public long minEvictableIdleTimeMillis;
-        //多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
-        public long timeBetweenEvictionRunsMillis;
-        public boolean testOnBorrow;
-        public boolean testOnReturn;
-          
-		//根据全局配置构造方法		
-		public DataSourceInfo(int groupIndex,String keyPrefix) {
-			String tmpVal = null;
-			this.dbGroupIndex = groupIndex;
-			//全局配置
-			this.driveClassName = getProperty("db.driverClass");
-			this.initialSize = Integer.parseInt(getProperty("db.initialSize","1"));
-			this.minIdle = Integer.parseInt(getProperty("db.minIdle","1"));
-			this.maxActive = Integer.parseInt(getProperty("db.maxActive","10"));
-			this.maxWait = Integer.parseInt(getProperty("db.maxWait","60000"));
-			this.minEvictableIdleTimeMillis = Integer.parseInt(getProperty("db.minEvictableIdleTimeMillis","300000"));
-			this.timeBetweenEvictionRunsMillis = Integer.parseInt(getProperty("db.timeBetweenEvictionRunsMillis","60000"));
-			this.testOnBorrow = Boolean.parseBoolean(getProperty("db.testOnBorrow","false"));
-			this.testOnReturn = Boolean.parseBoolean(getProperty("db.testOnReturn","false"));
-			
-			//私有配置
-			this.master = keyPrefix.contains(MASTER_KEY);
-			this.connUrl = getProperty(keyPrefix + ".db.url");
-			Validate.notBlank(this.connUrl, "Config [%s.db.url] is required", keyPrefix);
-			
-			this.userName = getProperty(keyPrefix + ".db.username");
-			Validate.notBlank(this.userName, "Config [%s.db.username] is required", keyPrefix);
-			
-			this.password = getProperty(keyPrefix + ".db.password");
-			Validate.notBlank(this.password, "Config [%s.db.password] is required", keyPrefix);
-			//覆盖全局配置
-			if((tmpVal = getProperty(keyPrefix + ".db.initialSize")) != null){				
-				this.initialSize = Integer.parseInt(tmpVal);
-			}
-			if((tmpVal = getProperty(keyPrefix + ".db.minIdle")) != null){				
-				this.minIdle = Integer.parseInt(tmpVal);
-			}
-			if((tmpVal = getProperty(keyPrefix + ".db.maxActive")) != null){				
-				this.maxActive = Integer.parseInt(tmpVal);
-			}
-			if((tmpVal = getProperty(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
-				this.minEvictableIdleTimeMillis = Integer.parseInt(tmpVal);
-			}
-			
-			if((tmpVal = getProperty(keyPrefix + ".db.minEvictableIdleTimeMillis")) != null){				
-				this.minEvictableIdleTimeMillis = Integer.parseInt(tmpVal);
-			}
-			
-			if((tmpVal = getProperty(keyPrefix + ".db.timeBetweenEvictionRunsMillis")) != null){				
-				this.timeBetweenEvictionRunsMillis = Integer.parseInt(tmpVal);
-			}
-			
-			if((tmpVal = getProperty(keyPrefix + ".db.testOnBorrow")) != null){				
-				this.testOnBorrow = Boolean.parseBoolean(tmpVal);
-			}
-			
-			if((tmpVal = getProperty(keyPrefix + ".db.testOnReturn")) != null){				
-				this.testOnReturn = Boolean.parseBoolean(tmpVal);
-			}
-			
-		}
-
-		@Override
-		public String toString() {
-			StringBuffer str = new StringBuffer();
-			str.append("dbGroupIndex").append(" = ").append(dbGroupIndex).append("\n");
-			str.append("role").append(" = ").append(master ? "master" : "slave").append("\n");
-			str.append("driveClassName").append(" = ").append(driveClassName).append("\n");
-			str.append("connUrl").append(" = ").append(connUrl).append("\n");
-			str.append("userName").append(" = ").append(userName);
-			return str.toString();
-		}    
+    	return environment.containsProperty(key) || ResourceUtils.containsProperty(key);
     }
 
-	
+    private String getProperty(String key,String defaultValue){
+    	String value = environment.getProperty(key);
+    	if(value == null)value = ResourceUtils.getProperty(key,defaultValue);
+    	return value;
+    }
+    
+    private Properties parseNodeConfig(String keyPrefix){
+    	Properties properties = new Properties();
+    	String prefix = "db.";
+    	Properties tmpProps = ResourceUtils.getAllProperties(prefix);
+    	for (Entry<Object, Object> entry : tmpProps.entrySet()) {
+    		properties.setProperty(entry.getKey().toString().replace(prefix, ""), entry.getValue().toString());
+    	}
+    	//
+    	prefix = keyPrefix + ".db.";
+    	tmpProps = ResourceUtils.getAllProperties(prefix);
+    	for (Entry<Object, Object> entry : tmpProps.entrySet()) {
+    		properties.setProperty(entry.getKey().toString().replace(prefix, ""), entry.getValue().toString());
+    	}
+    	return properties;
+    }
 } 

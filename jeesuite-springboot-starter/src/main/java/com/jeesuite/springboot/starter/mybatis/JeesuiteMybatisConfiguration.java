@@ -25,7 +25,6 @@ import com.jeesuite.mybatis.plugin.PluginConfig;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
-import com.jeesuite.mybatis.plugin.shard.DatabaseRouteHandler;
 
 import tk.mybatis.mapper.entity.Config;
 import tk.mybatis.mapper.mapperhelper.MapperHelper;
@@ -61,10 +60,6 @@ public class JeesuiteMybatisConfiguration implements InitializingBean {
 
 		if (properties.isRwRouteEnabled()) {
 			hanlders.add(RwRouteHandler.NAME);
-		}
-
-		if (properties.isDbShardEnabled()) {
-			hanlders.add(DatabaseRouteHandler.NAME);
 		}
 		
 		if (properties.isPaginationEnabled()) {

@@ -19,7 +19,6 @@ public class MybatisPluginProperties {
 	private String crudDriver = "mapper3";
 	private boolean cacheEnabled = false;
 	private boolean rwRouteEnabled = false;
-	private boolean dbShardEnabled = false;
 	private boolean paginationEnabled = true;
 	private boolean nullValueCache = false;
 	private long cacheExpireSeconds = CacheExpires.IN_1HOUR;
@@ -37,12 +36,6 @@ public class MybatisPluginProperties {
 	}
 	public void setRwRouteEnabled(boolean rwRouteEnabled) {
 		this.rwRouteEnabled = rwRouteEnabled;
-	}
-	public boolean isDbShardEnabled() {
-		return dbShardEnabled;
-	}
-	public void setDbShardEnabled(boolean dbShardEnabled) {
-		this.dbShardEnabled = dbShardEnabled;
 	}
 	
 	public boolean isPaginationEnabled() {

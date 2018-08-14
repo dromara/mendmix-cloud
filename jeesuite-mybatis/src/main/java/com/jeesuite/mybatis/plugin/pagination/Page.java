@@ -1,5 +1,6 @@
 package com.jeesuite.mybatis.plugin.pagination;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Page<T> extends PageParams{
@@ -36,7 +37,7 @@ public class Page<T> extends PageParams{
 		this.pages = pages;
 	}
 	public List<T> getData() {
-		return data;
+		return data == null ? (data = new ArrayList<>()) : data;
 	}
 	public void setData(List<T> data) {
 		this.data = data;
