@@ -539,7 +539,13 @@ public class CacheHandler implements InterceptorHandler {
 			Map<String, QueryMethodCache> tmpMap = new HashMap<>();
 		
 			//接口定义的自动缓存方法
-			Method[] methods = mapperClass.getDeclaredMethods();
+			List<Method> methods = new ArrayList<>(Arrays.asList(mapperClass.getDeclaredMethods()));
+			Class<?>[] interfaces = mapperClass.getInterfaces();
+			if(interfaces != null){		
+				for (Class<?> superClass : interfaces) {					
+					methods.addAll(Arrays.asList(superClass.getDeclaredMethods()));
+				}
+			}
 			for (Method method : methods) {
 				String fullMethodName = mapperClass.getName() + SPLIT_PONIT + method.getName();
 				if(method.isAnnotationPresent(Cache.class)){

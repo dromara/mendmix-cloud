@@ -44,8 +44,6 @@ import com.jeesuite.mybatis.test.mapper.UserEntityMapper;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 
-import tk.mybatis.mapper.entity.Example;
-
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations={"classpath:test-mybatis.xml"})
@@ -167,13 +165,7 @@ public class MybatisTest implements ApplicationContextAware{
 		entity.setEmail(entity.getMobile() + "@qq.com");
 		userMapper.updateByPrimaryKey(entity);
 	}
-	
-	@Test
-	public void testDeleteByExample(){
-		Example example = new Example(UserEntity.class);
-		example.createCriteria().andGreaterThan("id", 100).andEqualTo("status", 1);
-		userMapper.deleteByExample(example);
-	}
+
 	
 	@Test
 	public void testOnDeleteByIdUpdateCache(){
@@ -185,16 +177,7 @@ public class MybatisTest implements ApplicationContextAware{
 		printCacheKeys("after delete");
 	}
 	
-	@Test
-	public void testOnDeleteByQueryUpdateCache(){
-		printCacheKeys("before delete");
-		Example example = new Example(UserEntity.class);
-		example.createCriteria().andEqualTo("mobile", mobiles[1]);
-		userMapper.deleteByExample(example);
-		printCacheKeys("after delete");
-	}
 
-	
 	@Test
 	public void testFindNotExistsThenInsert(){
 		String mobile = "13800000002";
