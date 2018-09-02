@@ -50,8 +50,14 @@ public final class ResourceUtils {
 		
 		merged = envHelperGetAllPropertiesMethod == null && envHelperGetPropertiesMethod == null;
 		try {
-            String classpath = System.getProperty("java.class.path");
-            System.out.println("CLASSPATH: " + classpath);
+			String extPropertyDir = System.getProperty("ext.config.dir");
+			if(StringUtils.isNotBlank(extPropertyDir)){
+				File file = new File(extPropertyDir);
+				if(file.exists()){
+					loadPropertiesFromFile(file);
+				}
+			}
+            System.out.println("CLASSPATH: " + System.getProperty("java.class.path"));
 			URL url = Thread.currentThread().getContextClassLoader().getResource("");
 			if(url == null)url = ResourceUtils.class.getResource("");
 			if(url == null)return;

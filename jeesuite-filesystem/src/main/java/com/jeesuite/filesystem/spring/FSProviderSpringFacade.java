@@ -6,6 +6,7 @@ package com.jeesuite.filesystem.spring;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.DisposableBean;
@@ -84,8 +85,8 @@ public class FSProviderSpringFacade implements InitializingBean,DisposableBean{
 			fsProvider = new QiniuProvider(urlprefix, groupName, accessKey, secretKey,privated);
 		}else if(FdfsProvider.NAME.equals(provider)){
 			Validate.isTrue(servers != null && servers.matches("^.+[:]\\d{1,5}\\s*$"),"[servers] is not valid");
-			String[] serversArray = servers.split(",|;");
-			fsProvider = new FdfsProvider(urlprefix, groupName, serversArray, connectTimeout, maxThreads);
+			Properties properties = new Properties();
+			fsProvider = new FdfsProvider(groupName,properties);
 		}else if(AliyunossProvider.NAME.equals(provider)){
 			Validate.notBlank(endpoint, "[endpoint] not defined");
 			

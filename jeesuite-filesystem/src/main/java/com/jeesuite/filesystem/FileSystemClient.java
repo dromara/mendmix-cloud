@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.lang3.Validate;
 
@@ -39,11 +40,8 @@ public class FileSystemClient {
 			fsProvider = new AliyunossProvider(urlprefix,endpoint, bucketName, accessKey, secretKey,isPrivate);
 		}else if(FdfsProvider.NAME.equals(provider)){
 			String groupName = ResourceUtils.getProperty(id + ".filesystem.groupName");
-			String servers = ResourceUtils.getProperty(id + ".filesystem.servers");
-			Validate.isTrue(servers != null && servers.matches("^.+[:]\\d{1,5}\\s*$"),"[servers] is not valid");
-			long connectTimeout = Long.parseLong(ResourceUtils.getProperty(id + ".filesystem.connectTimeout","3000"));
-			int maxThreads = Integer.parseInt(ResourceUtils.getProperty(id + ".filesystem.maxThreads","50"));
-			fsProvider = new FdfsProvider(urlprefix, groupName, servers.split(",|;"), connectTimeout, maxThreads);
+			Properties properties = new Properties();
+			fsProvider = new FdfsProvider(groupName, properties);
 		}else{
 			throw new IllegalArgumentException("file provider ID:" + id + " not support");
 		}

@@ -28,6 +28,13 @@
       SELECT * FROM users where mobile = #{mobile} 
   </select>
   
+  <select id="findByIds" parameterType="java.util.List" resultMap="BaseResultMap">
+      SELECT * FROM users where id in
+     <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
+			#{id}
+	 </foreach>
+  </select>
+  
    <select id="findMobileByIds" parameterType="java.util.List" resultType="String">
       SELECT mobile FROM users where id in
      <foreach item="id" index="index" collection="list" open="(" separator="," close=")">

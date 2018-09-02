@@ -5,105 +5,87 @@ package com.jeesuite.filesystem.provider.fdfs;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.Properties;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.csource.common.NameValuePair;
+import org.csource.fastdfs.ClientGlobal;
+import org.csource.fastdfs.StorageClient1;
+import org.csource.fastdfs.StorageServer;
+import org.csource.fastdfs.TrackerClient;
+import org.csource.fastdfs.TrackerServer;
 
 import com.jeesuite.filesystem.UploadObject;
 import com.jeesuite.filesystem.UploadTokenParam;
 import com.jeesuite.filesystem.provider.AbstractProvider;
-import com.jeesuite.filesystem.provider.FSOperErrorException;
-import com.jeesuite.filesystem.sdk.fdfs.FastdfsClient;
-import com.jeesuite.filesystem.sdk.fdfs.FastdfsClient.Builder;
-import com.jeesuite.filesystem.sdk.fdfs.FileId;
 
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2017年1月7日
  */
-public class FdfsProvider extends AbstractProvider{
+public class FdfsProvider extends AbstractProvider {
 
 	public static final String NAME = "fastDFS";
-	private FastdfsClient client;
-	
-	public FdfsProvider(String urlprefix, String bucketName,String[] servers,long connectTimeout,int maxThreads) {
-		this.urlprefix = urlprefix.endsWith(DIR_SPLITER) ? urlprefix : urlprefix + DIR_SPLITER;
-		this.bucketName = bucketName;
-		Builder builder = FastdfsClient.newBuilder()
-                         .connectTimeout(connectTimeout)
-                         .readTimeout(connectTimeout)
-                         .maxThreads(maxThreads);
-		
-		String[] tmpArray;
-		for (String s : servers) {
-			tmpArray = s.split(":");
-			builder.tracker(tmpArray[0], Integer.parseInt(tmpArray[1]));
+
+	private String groupName;
+	private StorageClient1 client;
+
+	public FdfsProvider(String groupName, Properties props) {
+		this.groupName = groupName;
+		try {
+			ClientGlobal.initByProperties(props);
+			TrackerClient tracker = new TrackerClient();
+			TrackerServer trackerServer = tracker.getConnection();
+			StorageServer storageServer = tracker.getStoreStorage(trackerServer);
+			client = new StorageClient1(trackerServer, storageServer);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
-		client = builder.build();
 	}
 
 	@Override
 	public String upload(UploadObject object) {
-		CompletableFuture<FileId> upload = null;
-		try {
-			if(object.getFile() != null){
-				upload = client.upload(bucketName, object.getFile());
-			}else if(object.getBytes() != null){
-				upload = client.upload(bucketName, object.getFileName(), object.getBytes());
-			}else if(object.getInputStream() != null){
-				byte[] bs = IOUtils.toByteArray(object.getInputStream());
-				upload = client.upload(bucketName, object.getFileName(), bs);
-			}else if(StringUtils.isNotBlank(object.getUrl())){
-				
-			}
-			return getFullPath(upload.get().toString());
-		} catch (Exception e) {
-			
+		NameValuePair[] metaDatas = new NameValuePair[object.getMetadata().size()];
+		int index = 0;
+		for (String key : object.getMetadata().keySet()) {
+			metaDatas[index++] = new NameValuePair(key, object.getMetadata().get(key).toString());
 		}
-		
+		try {
+			if (object.getFile() != null) {
+				client.upload_file1(groupName, object.getFile().getAbsolutePath(), object.getMimeType(), metaDatas);
+			} else if (object.getBytes() != null) {
+
+			} else if (object.getInputStream() != null) {
+
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 		return null;
 	}
-	
+
 	@Override
 	public Map<String, Object> createUploadToken(UploadTokenParam param) {
 		return null;
 	}
 
-
 	@Override
 	public boolean delete(String fileKey) {
-		try {
-			if (fileKey.contains(DIR_SPLITER))
-				fileKey = fileKey.replace(urlprefix, "");
-			 FileId path = FileId.fromString(fileKey);
-		     client.delete(path).get();
-			return true;
-		} catch (Exception e) {
-			processException(e);
-		}
 		return false;
 	}
-	
+
 	@Override
 	public String getDownloadUrl(String fileKey) {
 		return getFullPath(fileKey);
 	}
 
-	
 	@Override
 	public String name() {
 		return NAME;
 	}
-	
-	private void processException(Exception e) {
-		throw new FSOperErrorException(name(),e);
-	}
 
 	@Override
 	public void close() throws IOException {
-		client.close();
-	}
 
+	}
 }

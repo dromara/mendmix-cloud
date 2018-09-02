@@ -11,13 +11,10 @@ import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.pagination.Page;
 import com.jeesuite.mybatis.plugin.pagination.PageParams;
 import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
+import com.jeesuite.mybatis.test.CustomBaseMapper;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 
-import tk.mybatis.mapper.common.BaseMapper;
-import tk.mybatis.mapper.common.ExampleMapper;
-import tk.mybatis.mapper.common.MySqlMapper;
-
-public interface UserEntityMapper extends BaseMapper<UserEntity>, ExampleMapper<UserEntity>, MySqlMapper<UserEntity> {
+public interface UserEntityMapper extends CustomBaseMapper<UserEntity> {
 
 	@Cache
 	List<UserEntity> findByType(short type);
