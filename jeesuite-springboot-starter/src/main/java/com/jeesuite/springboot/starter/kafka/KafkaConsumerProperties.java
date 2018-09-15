@@ -3,13 +3,14 @@
  */
 package com.jeesuite.springboot.starter.kafka;
 
-import java.util.Map;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Properties;
 
-import org.springframework.boot.bind.RelaxedPropertyResolver;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.core.env.Environment;
+
+import com.jeesuite.common.util.ResourceUtils;
 
 /**
  * @description <br>
@@ -17,7 +18,7 @@ import org.springframework.core.env.Environment;
  * @date 2016年12月31日
  */
 @ConfigurationProperties(prefix="jeesuite.kafka.consumer")
-public class KafkaConsumerProperties implements EnvironmentAware{
+public class KafkaConsumerProperties implements InitializingBean{
 
 	private boolean  independent;
 	private boolean  useNewAPI;
@@ -66,17 +67,18 @@ public class KafkaConsumerProperties implements EnvironmentAware{
 	}
 
 	@Override
-	public void setEnvironment(Environment environment) {
-		String kafkaServers = environment.getProperty("kafka.bootstrap.servers");
-		String zkServers = environment.getProperty("kafka.zkServers");
+	public void afterPropertiesSet() throws Exception {
+		String kafkaServers = ResourceUtils.getProperty("kafka.bootstrap.servers");
+		String zkServers = ResourceUtils.getProperty("kafka.zkServers");
 		configs.put("bootstrap.servers", kafkaServers);
 		if(useNewAPI == false && zkServers != null){
 			configs.put("zookeeper.connect", zkServers);
 		}
-		RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(environment, "kafka.consumer.");
-		Map<String, Object> subProperties = resolver.getSubProperties("");
-		if(subProperties != null && !subProperties.isEmpty()){
-			configs.putAll(subProperties);
+		Properties properties = ResourceUtils.getAllProperties("kafka.consumer.");
+		Iterator<Entry<Object, Object>> iterator = properties.entrySet().iterator();
+		while(iterator.hasNext()){
+			Entry<Object, Object> entry = iterator.next();
+			configs.put(entry.getKey().toString().replace("kafka.consumer.", ""), entry.getValue());
 		}
 	}
 	

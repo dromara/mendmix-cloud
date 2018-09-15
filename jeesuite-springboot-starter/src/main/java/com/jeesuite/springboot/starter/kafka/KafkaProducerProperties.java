@@ -3,13 +3,14 @@
  */
 package com.jeesuite.springboot.starter.kafka;
 
-import java.util.Map;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Properties;
 
-import org.springframework.boot.bind.RelaxedPropertyResolver;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.core.env.Environment;
+
+import com.jeesuite.common.util.ResourceUtils;
 
 /**
  * @description <br>
@@ -17,7 +18,7 @@ import org.springframework.core.env.Environment;
  * @date 2016年12月31日
  */
 @ConfigurationProperties(prefix="jeesuite.kafka.producer")
-public class KafkaProducerProperties implements EnvironmentAware{
+public class KafkaProducerProperties implements InitializingBean{
 
 	
 	private boolean  defaultAsynSend;
@@ -68,17 +69,16 @@ public class KafkaProducerProperties implements EnvironmentAware{
 	}
 	
 	@Override
-	public void setEnvironment(Environment environment) {
-		String kafkaServers = environment.getProperty("kafka.bootstrap.servers");
-		//String zkServers = environment.getProperty("zookeeper.servers");
+	public void afterPropertiesSet() throws Exception {
+		String kafkaServers = ResourceUtils.getProperty("kafka.bootstrap.servers");
 		configs.put("bootstrap.servers", kafkaServers);
-		RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(environment, "kafka.producer.");
-		Map<String, Object> subProperties = resolver.getSubProperties("");
-		if(subProperties != null && !subProperties.isEmpty()){
-			configs.putAll(subProperties);
+		Properties properties = ResourceUtils.getAllProperties("kafka.producer.");
+		Iterator<Entry<Object, Object>> iterator = properties.entrySet().iterator();
+		while(iterator.hasNext()){
+			Entry<Object, Object> entry = iterator.next();
+			configs.put(entry.getKey().toString().replace("kafka.producer.", ""), entry.getValue());
 		}
 	}
-	
 	
 	
 }

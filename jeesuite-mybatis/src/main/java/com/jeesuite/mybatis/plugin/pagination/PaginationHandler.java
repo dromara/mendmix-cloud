@@ -159,6 +159,12 @@ public class PaginationHandler implements InterceptorHandler {
 		
 		BoundSql countBoundSql = new BoundSql(countMs.getConfiguration(), countSql, boundSql.getParameterMappings(),
 				parameter);
+//		for (ParameterMapping parameterMapping : boundSql.getParameterMappings()) {
+//			String propertyName = parameterMapping.getProperty();
+//			if(boundSql.hasAdditionalParameter(propertyName)){
+//				countBoundSql.setAdditionalParameter(propertyName, boundSql.getAdditionalParameter(propertyName));
+//			}
+//		}
 		// 执行 count 查询
 		Object countResultList = executor.query(countMs, parameter, RowBounds.DEFAULT, resultHandler, countKey,
 				countBoundSql);
