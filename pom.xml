@@ -208,8 +208,10 @@
 	<distributionManagement>
 		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
 		<snapshotRepository>
-          <id>snapshots</id>
-          <url>http://test.com/nexus/content/repositories/snapshots</url>
+          <!-- <id>snapshots</id>
+          <url>http://test.com/nexus/content/repositories/snapshots</url> -->
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </snapshotRepository>
 		<repository>
 			<id>ossrh</id>
