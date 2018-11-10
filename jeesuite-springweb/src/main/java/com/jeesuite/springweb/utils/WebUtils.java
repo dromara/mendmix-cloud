@@ -145,6 +145,10 @@ public class WebUtils {
 			baseUrl = schame + host + prefix;
 		}
 		
+		if(StringUtils.isNotBlank(request.getContextPath())){
+			baseUrl = baseUrl + request.getContextPath();
+		}
+		
 		return baseUrl;
 	}
 	

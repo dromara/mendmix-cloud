@@ -113,21 +113,25 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			triggers.add(registerSchedulerTriggerBean(acf,sch));
 		}
 		
-		String beanName = "schedulerFactory";
-		BeanDefinitionBuilder beanDefBuilder = BeanDefinitionBuilder.genericBeanDefinition(SchedulerFactoryBean.class);
-		beanDefBuilder.addPropertyValue("triggers", triggers);
+		SchedulerFactoryBean schFactory = context.getBean(SchedulerFactoryBean.class);
+		if(schFactory == null){
+			String beanName = "quartzScheduler";
+			BeanDefinitionBuilder beanDefBuilder = BeanDefinitionBuilder.genericBeanDefinition(SchedulerFactoryBean.class);
+			beanDefBuilder.addPropertyValue("triggers", triggers);
+			
+			Properties quartzProperties = new Properties();
+			threadPoolSize = threadPoolSize > 0 ? threadPoolSize : (schedulers.size() > 10 ? (schedulers.size()/2 + 1)  : schedulers.size());
+			quartzProperties.setProperty(SchedulerFactoryBean.PROP_THREAD_COUNT, String.valueOf(threadPoolSize));
+			beanDefBuilder.addPropertyValue("quartzProperties", quartzProperties);
+			logger.info("init Scheduler threadPoolSize:"+threadPoolSize);
+			
+			acf.registerBeanDefinition(beanName, beanDefBuilder.getRawBeanDefinition());
+		}else{
+			//schFactory.setTriggers(triggers.toArray(new Trigger[0]));
+		}
 		
-		Properties quartzProperties = new Properties();
-		
-		threadPoolSize = threadPoolSize > 0 ? threadPoolSize : (schedulers.size() > 10 ? (schedulers.size()/2 + 1)  : schedulers.size());
-		quartzProperties.setProperty(SchedulerFactoryBean.PROP_THREAD_COUNT, String.valueOf(threadPoolSize));
-		beanDefBuilder.addPropertyValue("quartzProperties", quartzProperties);
-		logger.info("init Scheduler threadPoolSize:"+threadPoolSize);
-		
-		acf.registerBeanDefinition(beanName, beanDefBuilder.getRawBeanDefinition());
 		
 		for ( AbstractJob sch : schedulers) {
-			
 			final AbstractJob job = (AbstractJob) SpringAopHelper.getTarget(sch);
 			//
 			JobContext.getContext().addJob(job);
@@ -167,6 +171,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		BeanDefinitionBuilder beanDefBuilder = BeanDefinitionBuilder.genericBeanDefinition(MethodInvokingJobDetailFactoryBean.class);
 		beanDefBuilder.addPropertyValue("targetObject", sch);
 		beanDefBuilder.addPropertyValue("targetMethod", "execute");
+		beanDefBuilder.addPropertyValue("group", groupName);
 		beanDefBuilder.addPropertyValue("concurrent", false);
 		acf.registerBeanDefinition(jobDetailBeanName, beanDefBuilder.getRawBeanDefinition());
 		

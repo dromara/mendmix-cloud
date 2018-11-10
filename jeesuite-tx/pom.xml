@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.jeesuite</groupId>
     <artifactId>jeesuite-libs</artifactId>
-    <version>1.3.0-SNAPSHOT</version>
+    <version>1.3.0</version>
   </parent>
   <artifactId>jeesuite-tx</artifactId>
   <description>Distributed transaction</description>

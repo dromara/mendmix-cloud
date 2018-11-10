@@ -59,6 +59,7 @@ public final class ResourceUtils {
 			}
             System.out.println("CLASSPATH: " + System.getProperty("java.class.path"));
 			URL url = Thread.currentThread().getContextClassLoader().getResource("");
+			 System.setProperty("framework.website", "www.jeesuite.com");
 			if(url == null)url = ResourceUtils.class.getResource("");
 			if(url == null)return;
 			if (url.getProtocol().equals("file")) {	

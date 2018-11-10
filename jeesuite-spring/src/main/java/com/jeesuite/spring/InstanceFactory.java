@@ -18,6 +18,7 @@ public class InstanceFactory {
 	private static Long timeStarting = System.currentTimeMillis();
 	private static AtomicBoolean initialized = new AtomicBoolean(false);
 	private static AtomicBoolean loadFinished = new AtomicBoolean(false);
+	static{ System.setProperty("framework.website", "www.jeesuite.com");}
 
 	/**
 	 * 设置实例提供者。
