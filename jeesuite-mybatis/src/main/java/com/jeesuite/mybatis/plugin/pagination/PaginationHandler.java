@@ -23,12 +23,12 @@ import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.mybatis.Configs;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
-import com.jeesuite.mybatis.plugin.PluginConfig;
 import com.jeesuite.mybatis.plugin.pagination.PageSqlUtils.DbType;
 import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
 
@@ -58,7 +58,7 @@ public class PaginationHandler implements InterceptorHandler {
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
 
-		setDbType(context.getProperty(PluginConfig.DB_TYPE));
+		setDbType(Configs.getDbType());
 		
 		logger.info("dbType:{}",dbType.name());
 		

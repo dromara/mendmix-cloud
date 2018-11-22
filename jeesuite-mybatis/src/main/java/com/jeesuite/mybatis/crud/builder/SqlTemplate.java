@@ -17,6 +17,7 @@ public class SqlTemplate {
 	
 	public static final String INSERT = "INSERT INTO %s \n %s \n VALUES \n %s";
 	public static final String UPDATE_BY_KEY = "UPDATE %s %s \n WHERE %s = #{%s}";
+	public static final String BATCH_INSERT = "INSERT INTO %s \n %s \n VALUES \n <foreach collection=\"list\" item=\"item\" index=\"index\" separator=\",\">%s</foreach>";
 	
 	public static String wrapIfTag(String fieldName,String expr,boolean skip){
 		if(skip)return expr;

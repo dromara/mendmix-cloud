@@ -1,20 +1,20 @@
 /**
  * 
  */
-package com.jeesuite.mybatis.plugin.cache.name;
+package com.jeesuite.mybatis.crud.name;
 
-import com.jeesuite.mybatis.plugin.cache.CacheMethodDefine;
+import com.jeesuite.mybatis.crud.CrudMethodDefine;
 
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年9月16日
  */
-public class DefaultCacheMethodDefine implements CacheMethodDefine {
+public class DefaultCrudMethodDefine implements CrudMethodDefine {
 
 	@Override
 	public String selectName() {
-		return "getByKey";
+		return "selectByPrimaryKey";
 	}
 
 	@Override
@@ -24,14 +24,14 @@ public class DefaultCacheMethodDefine implements CacheMethodDefine {
 
 	@Override
 	public String updateName() {
-		return "updateByKey,updateByKeySelective";
+		return "updateByPrimaryKey,updateByPrimaryKeySelective";
 	}
 
 	@Override
 	public String deleteName() {
-		return "deleteByKey";
+		return "deleteByPrimaryKey";
 	}
-	
+
 	@Override
 	public String selectAllName() {
 		return "selectAll";

@@ -61,7 +61,7 @@ public class InsertBuilder {
 	}
 
 	
-	public static String buildInsertSql(EntityMapper entityMapper,boolean selective) {
+	private static String buildInsertSql(EntityMapper entityMapper,boolean selective) {
 
 		// 从表注解里获取表名等信息
 		TableMapper table = entityMapper.getTableMapper();

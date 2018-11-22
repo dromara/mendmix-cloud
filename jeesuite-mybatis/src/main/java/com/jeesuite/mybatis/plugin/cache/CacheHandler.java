@@ -38,20 +38,21 @@ import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.mybatis.Configs;
 import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
+import com.jeesuite.mybatis.crud.CrudMethodDefine;
 import com.jeesuite.mybatis.crud.builder.SqlTemplate;
+import com.jeesuite.mybatis.crud.name.DefaultCrudMethodDefine;
+import com.jeesuite.mybatis.crud.name.Mapper3CrudMethodDefine;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.kit.CacheKeyUtils;
 import com.jeesuite.mybatis.kit.ReflectUtils;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
-import com.jeesuite.mybatis.plugin.PluginConfig;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheEvictCascade;
-import com.jeesuite.mybatis.plugin.cache.name.DefaultCacheMethodDefine;
-import com.jeesuite.mybatis.plugin.cache.name.Mapper3CacheMethodDefine;
 import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
 import com.jeesuite.spring.InstanceFactory;
 
@@ -113,7 +114,7 @@ public class CacheHandler implements InterceptorHandler {
 	
 	protected static CacheProvider cacheProvider;
 	
-	private CacheMethodDefine methodDefine;
+	private CrudMethodDefine methodDefine;
 	
 	private ScheduledExecutorService clearExpiredGroupKeysTimer;
 	
@@ -501,15 +502,15 @@ public class CacheHandler implements InterceptorHandler {
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
 		
-		nullValueCache = Boolean.parseBoolean(context.getProperty(PluginConfig.CACHE_NULL_VALUE, "false"));
-		dynamicCacheTime = Boolean.parseBoolean(context.getProperty(PluginConfig.CACHE_DYNAMIC_EXPIRE, "false"));
-		defaultCacheExpire = Long.parseLong(context.getProperty(PluginConfig.CACHE_EXPIRE_SECONDS, String.valueOf(IN_1HOUR)));
+		nullValueCache = Boolean.parseBoolean(Configs.getProperty(Configs.CACHE_NULL_VALUE, "false"));
+		dynamicCacheTime = Boolean.parseBoolean(Configs.getProperty(Configs.CACHE_DYNAMIC_EXPIRE, "false"));
+		defaultCacheExpire = Long.parseLong(Configs.getProperty(Configs.CACHE_EXPIRE_SECONDS, String.valueOf(IN_1HOUR)));
 		
-		String crudDriver = context.getProperty(PluginConfig.CRUD_DRIVER,"default");
+		String crudDriver = Configs.getCrudDriver();
 		if("mapper3".equalsIgnoreCase(crudDriver)){
-			methodDefine = new Mapper3CacheMethodDefine();
+			methodDefine = new Mapper3CrudMethodDefine();
 		}else{
-			methodDefine = new DefaultCacheMethodDefine();
+			methodDefine = new DefaultCrudMethodDefine();
 		}
 		
 		logger.info("crudDriver use:{},nullValueCache:{},defaultCacheExpireSeconds:{},dynamicCacheTime:{}",crudDriver,nullValueCache,defaultCacheExpire,dynamicCacheTime);

@@ -50,7 +50,7 @@ public class UpdateBuilder {
 	}
 	
 	
-	public static String buildUpdateSql(EntityMapper entityMapper,boolean selective) {
+	private static String buildUpdateSql(EntityMapper entityMapper,boolean selective) {
 
 		// 从表注解里获取表名等信息
 		TableMapper tableMapper = entityMapper.getTableMapper();

@@ -52,7 +52,7 @@ public class DeleteBuilder {
 	}
 	
 	
-	public static String buildDeleteSql(EntityMapper entityMapper) {
+	private static String buildDeleteSql(EntityMapper entityMapper) {
 
 		// 从表注解里获取表名等信息
 		TableMapper tableMapper = entityMapper.getTableMapper();

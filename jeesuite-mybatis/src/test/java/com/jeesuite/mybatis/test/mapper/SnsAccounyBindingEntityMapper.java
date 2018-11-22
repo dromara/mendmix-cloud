@@ -4,14 +4,11 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
+import com.jeesuite.mybatis.core.BaseMapper;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.test.entity.SnsAccounyBindingEntity;
 
-import tk.mybatis.mapper.common.BaseMapper;
-import tk.mybatis.mapper.common.ExampleMapper;
-import tk.mybatis.mapper.common.MySqlMapper;
-
-public interface SnsAccounyBindingEntityMapper extends BaseMapper<SnsAccounyBindingEntity>,ExampleMapper<SnsAccounyBindingEntity>,MySqlMapper<SnsAccounyBindingEntity> {
+public interface SnsAccounyBindingEntityMapper extends BaseMapper<SnsAccounyBindingEntity,Integer>{
 	
 	@Cache
 	SnsAccounyBindingEntity findBySnsOpenId(@Param("snsType") String snsType,@Param("openId") String openId);

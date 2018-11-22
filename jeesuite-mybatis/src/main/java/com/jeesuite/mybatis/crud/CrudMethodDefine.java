@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.mybatis.plugin.cache;
+package com.jeesuite.mybatis.crud;
 
 /**
  * 定义按主键增删改查的方法名
@@ -9,7 +9,7 @@ package com.jeesuite.mybatis.plugin.cache;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年9月16日
  */
-public interface CacheMethodDefine {
+public interface CrudMethodDefine {
 
 	String selectName();
 	

@@ -15,13 +15,8 @@ import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.parsing.XPathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.ResourcePatternUtils;
 import org.w3c.dom.NodeList;
-
-import com.jeesuite.spring.InstanceFactory;
 
 /**
  * mybatismapper数据库字段与实体字段映射关系转换工具
@@ -47,10 +42,13 @@ public class MybatisMapperParser {
 	
 	private static Map<String,EntityInfo> mapperRalateEntitys = new HashMap<>();
 	
-	private static String mapperLocations;
+	private static List<Resource> mapperLocations = new ArrayList<>();
 
-	public static void setMapperLocations(String mapperLocations){
-		MybatisMapperParser.mapperLocations = mapperLocations;
+	public static void addMapperLocations(Resource[] mapperLocations){
+		for (Resource resource : mapperLocations) {			
+			MybatisMapperParser.mapperLocations.add(resource);
+			System.out.println(">>>>>>>>>>>>" + resource);
+		}
 	}
 	
 	public static List<EntityInfo> getEntityInfos() {
@@ -94,10 +92,7 @@ public class MybatisMapperParser {
 	private synchronized static void doParse(){
 		if(!caches.isEmpty())return;
 		try {
-			ResourceLoader resourceLoader = InstanceFactory.getInstance(ResourceLoader.class);
-			if(resourceLoader == null)resourceLoader = new DefaultResourceLoader();
-			Resource[] resources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(mapperLocations);
-			for (Resource resource : resources) {
+			for (Resource resource : mapperLocations) {
 				log.info(">begin parse mapper file:" + resource);
 				parseMapperFile(resource.getFilename(),resource.getInputStream());
 			}

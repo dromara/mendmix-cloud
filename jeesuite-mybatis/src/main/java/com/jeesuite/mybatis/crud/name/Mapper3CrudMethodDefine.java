@@ -1,9 +1,9 @@
 /**
  * 
  */
-package com.jeesuite.mybatis.plugin.cache.name;
+package com.jeesuite.mybatis.crud.name;
 
-import com.jeesuite.mybatis.plugin.cache.CacheMethodDefine;
+import com.jeesuite.mybatis.crud.CrudMethodDefine;
 
 /**
  * Mapper3 框架方法定义
@@ -11,7 +11,7 @@ import com.jeesuite.mybatis.plugin.cache.CacheMethodDefine;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年9月16日
  */
-public class Mapper3CacheMethodDefine implements CacheMethodDefine {
+public class Mapper3CrudMethodDefine implements CrudMethodDefine {
 
 	@Override
 	public String selectName() {

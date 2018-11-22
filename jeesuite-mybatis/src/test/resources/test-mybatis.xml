@@ -33,24 +33,23 @@
 		<property name="redisTemplate" ref="redisTemplate"/> <property name="stringRedisTemplate" 
 		ref="stringRedisTemplate" /> </bean> -->
 
-	<bean id="routeSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	<bean id="routeSqlSessionFactory" class="com.jeesuite.mybatis.spring.SqlSessionFactoryBean">
 		<property name="configLocation" value="classpath:mybatis-configuration.xml" />
 		<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
 		<property name="dataSource" ref="routeDataSource" />
 		<property name="typeAliasesPackage" value="com.jeesuite.mybatis.test.entity" />
+		<!--可选值:default(默认),mapper3(集成mapper框架)-->
+		<property name="crudDriver" value="mapper3" />
+		<property name="dbType" value="Mysql" />
 		<property name="plugins">
 			<array>
 				<bean class="com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor">
-					<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
 					<!--
 				      可选值：cache(自动缓存),rwRoute(读写分离),page(分页)
 				    -->
 					<property name="interceptorHandlers" value="cache,rwRoute,page" />
 					<property name="properties">
 						<props>
-						    <!--可选值:default(默认),mapper3(集成mapper框架)-->
-							<prop key="crudDriver">mapper3</prop>
-							<prop key="dbType">Mysql</prop>
 							<prop key="cache.nullValue">true</prop>
 							<prop key="cache.expire.seconds">1800</prop>
 						</props>
@@ -59,10 +58,10 @@
 			</array>
 		</property>
 	</bean>
-
-	<bean class="tk.mybatis.spring.mapper.MapperScannerConfigurer">
+	
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="sqlSessionFactoryBeanName" value="routeSqlSessionFactory" />
 		<property name="basePackage" value="com.jeesuite.mybatis.test.mapper" />
 	</bean>
-
+	
 </beans>

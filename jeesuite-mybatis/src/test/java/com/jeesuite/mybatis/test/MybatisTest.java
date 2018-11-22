@@ -56,12 +56,12 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Autowired TransactionTemplate transactionTemplate;
 	
-    String[] mobiles = new String[5];
+    String[] mobiles = new String[3];
 	
 	@Before
 	public void init(){
 		for (int i = 0; i <mobiles.length; i++) {
-			mobiles[i] = "1380013800"+i;
+			mobiles[i] = "13800"+RandomStringUtils.random(6, false, true);
 		}
 	}
 	
@@ -166,17 +166,6 @@ public class MybatisTest implements ApplicationContextAware{
 		userMapper.updateByPrimaryKey(entity);
 	}
 
-	
-	@Test
-	public void testOnDeleteByIdUpdateCache(){
-		printCacheKeys("before delete");
-		UserEntity userEntity = userMapper.findByMobile(mobiles[0]);
-		userEntity = new UserEntity();
-		userEntity.setMobile(mobiles[0]);
-		userMapper.delete(userEntity);
-		printCacheKeys("after delete");
-	}
-	
 
 	@Test
 	public void testFindNotExistsThenInsert(){
@@ -280,6 +269,21 @@ public class MybatisTest implements ApplicationContextAware{
 			}
 		});
 		System.out.println();
+	}
+	
+	@Test
+	public void testBatchInsert(){
+		List<UserEntity> users = new ArrayList<>();
+		for (int i = 0; i < mobiles.length; i++) {
+			UserEntity entity = new UserEntity();
+			entity.setCreatedAt(new Date());
+			entity.setEmail(mobiles[i] + "@163.com");
+			entity.setMobile(mobiles[i]);
+			entity.setType((short)(i % 2 == 0 ? 1 : 2));
+			entity.setStatus((short)(i % 3 == 0 ? 1 : 2));
+			users.add(entity);
+		}
+		userMapper.insertList(users);
 	}
 	
 }

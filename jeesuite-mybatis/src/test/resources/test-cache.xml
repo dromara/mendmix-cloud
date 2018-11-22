@@ -28,7 +28,7 @@
 	</bean>
 
 
-	<bean id="jedisConnectionFactory"
+	<!-- <bean id="jedisConnectionFactory"
 		class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"
 		destroy-method="destroy">
 		<property name="hostName" value="127.0.0.1" />
@@ -52,5 +52,5 @@
 
 	<bean id="stringRedisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">
 		<property name="connectionFactory" ref="jedisConnectionFactory" />
-	</bean>
+	</bean> -->
 </beans>

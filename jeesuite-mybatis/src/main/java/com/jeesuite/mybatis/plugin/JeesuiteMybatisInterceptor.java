@@ -26,8 +26,8 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.StringUtils;
 
+import com.jeesuite.mybatis.Configs;
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
@@ -51,8 +51,6 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 
 	protected static final Logger logger = LoggerFactory.getLogger("com.jeesuite.mybatis");
 	
-	private Properties properties;
-	//CRUD框架驱动 default，mapper3
 	private List<InterceptorHandler> interceptorHandlers = new ArrayList<>();
 	
 	private static boolean cacheEnabled,rwRouteEnabled;
@@ -91,10 +89,6 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 		});
 		
 	}
-	
-	public void setMapperLocations(String mapperLocations){
-		MybatisMapperParser.setMapperLocations(mapperLocations);
-	}
 
 	@Override
 	public Object intercept(Invocation invocation) throws Throwable {
@@ -131,7 +125,7 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 
 	@Override
 	public void setProperties(Properties properties) {
-		this.properties = properties;
+		Configs.addPropertis(properties);
 	}
 
 
@@ -149,15 +143,6 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 		for (InterceptorHandler handler : interceptorHandlers) {
 			handler.close();
 		}
-	}
-
-	public String getProperty(String key){
-		return properties == null ? null : properties.getProperty(key);
-	}
-	
-	public String getProperty(String key,String defaultVal){
-		String property = getProperty(key);
-		return property == null ? defaultVal : property;
 	}
 	
 	public static boolean isCacheEnabled() {

@@ -21,7 +21,7 @@ import com.jeesuite.common.util.ResourceUtils;
 public class KafkaConsumerProperties implements InitializingBean{
 
 	private boolean  independent;
-	private boolean  useNewAPI;
+	private boolean  useNewAPI = true;
 	private int processThreads = 100;
 	private String scanPackages;
 	private Properties configs = new Properties();
