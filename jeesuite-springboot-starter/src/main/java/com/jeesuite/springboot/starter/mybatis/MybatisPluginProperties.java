@@ -3,9 +3,11 @@
  */
 package com.jeesuite.springboot.starter.mybatis;
 
+import java.util.Properties;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import com.jeesuite.cache.CacheExpires;
+import com.jeesuite.mybatis.MybatisConfigs;
 
 /**
  * @description <br>
@@ -15,70 +17,46 @@ import com.jeesuite.cache.CacheExpires;
 @ConfigurationProperties(prefix="jeesuite.mybatis")
 public class MybatisPluginProperties {
 
-	private String dbType = "MySQL";
-	private String crudDriver = "mapper3";
-	private boolean cacheEnabled = false;
-	private boolean rwRouteEnabled = false;
-	private boolean paginationEnabled = true;
-	private boolean nullValueCache = false;
-	private long cacheExpireSeconds = CacheExpires.IN_1HOUR;
-	private boolean dynamicExpire = false;
-	private String interceptorHandlerClass;//自定义拦截器处理
+	private Properties properties = new Properties();
 	
-	public boolean isCacheEnabled() {
-		return cacheEnabled;
-	}
 	public void setCacheEnabled(boolean cacheEnabled) {
-		this.cacheEnabled = cacheEnabled;
+		properties.setProperty(MybatisConfigs.CACHE_ENABLED, String.valueOf(cacheEnabled));
 	}
-	public boolean isRwRouteEnabled() {
-		return rwRouteEnabled;
-	}
+
 	public void setRwRouteEnabled(boolean rwRouteEnabled) {
-		this.rwRouteEnabled = rwRouteEnabled;
+		properties.setProperty(MybatisConfigs.RW_ROUTE_ENABLED, String.valueOf(rwRouteEnabled));
 	}
-	
-	public boolean isPaginationEnabled() {
-		return paginationEnabled;
-	}
+
 	public void setPaginationEnabled(boolean paginationEnabled) {
-		this.paginationEnabled = paginationEnabled;
+		properties.setProperty(MybatisConfigs.PAGINATION_ENABLED, String.valueOf(paginationEnabled));
 	}
-	public String getDbType() {
-		return dbType;
-	}
+
 	public void setDbType(String dbType) {
-		this.dbType = dbType;
+		properties.setProperty(MybatisConfigs.DB_TYPE, dbType);
 	}
-	public String getCrudDriver() {
-		return crudDriver;
-	}
+
 	public void setCrudDriver(String crudDriver) {
-		this.crudDriver = crudDriver;
+		properties.setProperty(MybatisConfigs.CRUD_DRIVER, crudDriver);
 	}
-	public boolean isNullValueCache() {
-		return nullValueCache;
-	}
+
 	public void setNullValueCache(boolean nullValueCache) {
-		this.nullValueCache = nullValueCache;
+		properties.setProperty(MybatisConfigs.CACHE_NULL_VALUE, String.valueOf(nullValueCache));
 	}
-	public long getCacheExpireSeconds() {
-		return cacheExpireSeconds;
-	}
+
 	public void setCacheExpireSeconds(long cacheExpireSeconds) {
-		this.cacheExpireSeconds = cacheExpireSeconds;
+		properties.setProperty(MybatisConfigs.CACHE_EXPIRE_SECONDS, String.valueOf(cacheExpireSeconds));
 	}
-	public boolean isDynamicExpire() {
-		return dynamicExpire;
-	}
+
 	public void setDynamicExpire(boolean dynamicExpire) {
-		this.dynamicExpire = dynamicExpire;
+		properties.setProperty(MybatisConfigs.CACHE_DYNAMIC_EXPIRE, String.valueOf(dynamicExpire));
 	}
-	public String getInterceptorHandlerClass() {
-		return interceptorHandlerClass;
-	}
+
 	public void setInterceptorHandlerClass(String interceptorHandlerClass) {
-		this.interceptorHandlerClass = interceptorHandlerClass;
+		properties.setProperty(MybatisConfigs.INTERCEPTOR_HANDLERCLASS, interceptorHandlerClass);
+	}
+
+	public Properties getProperties() {
+		return properties;
 	}
 
 }

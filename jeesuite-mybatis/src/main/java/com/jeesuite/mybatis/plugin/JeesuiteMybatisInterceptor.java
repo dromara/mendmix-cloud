@@ -18,21 +18,12 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.util.StringUtils;
 
-import com.jeesuite.mybatis.Configs;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
-import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
  * mybatis 插件入口
@@ -47,17 +38,21 @@ import com.jeesuite.spring.SpringInstanceProvider;
     @Signature(type = Executor.class, method = "query", args = {  
             MappedStatement.class, Object.class, RowBounds.class,  
             ResultHandler.class }) })  
-public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,DisposableBean,ApplicationContextAware{
+public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 
 	protected static final Logger logger = LoggerFactory.getLogger("com.jeesuite.mybatis");
 	
+	private String groupName;
 	private List<InterceptorHandler> interceptorHandlers = new ArrayList<>();
 	
 	private static boolean cacheEnabled,rwRouteEnabled;
 	
-	
-	public void setInterceptorHandlers(String interceptorHandlers) {
-		String[] hanlderNames = StringUtils.tokenizeToStringArray(interceptorHandlers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+	public JeesuiteMybatisInterceptor(String groupName, String[] hanlderNames) {
+		this.groupName = groupName;
+		this.setInterceptorHandlers(hanlderNames);
+	}
+
+	private void setInterceptorHandlers(String[] hanlderNames) {
 		for (String name : hanlderNames) {
 			if(org.apache.commons.lang3.StringUtils.isBlank(name))continue;
 			if(CacheHandler.NAME.equals(name)){
@@ -124,13 +119,10 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 	}
 
 	@Override
-	public void setProperties(Properties properties) {
-		Configs.addPropertis(properties);
-	}
+	public void setProperties(Properties properties) {}
 
 
-	@Override
-	public void afterPropertiesSet() throws Exception {
+	public void afterRegister()  {
 		Iterator<InterceptorHandler> it = interceptorHandlers.iterator();
 		while(it.hasNext()){
 			InterceptorHandler handler = it.next();
@@ -152,10 +144,8 @@ public class JeesuiteMybatisInterceptor implements Interceptor,InitializingBean,
 	public static boolean isRwRouteEnabled() {
 		return rwRouteEnabled;
 	}
-
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
+	
+	public String getGroupName() {
+		return groupName;
 	}
-
 }

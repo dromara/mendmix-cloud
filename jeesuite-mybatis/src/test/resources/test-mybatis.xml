@@ -36,27 +36,8 @@
 	<bean id="routeSqlSessionFactory" class="com.jeesuite.mybatis.spring.SqlSessionFactoryBean">
 		<property name="configLocation" value="classpath:mybatis-configuration.xml" />
 		<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
-		<property name="dataSource" ref="routeDataSource" />
 		<property name="typeAliasesPackage" value="com.jeesuite.mybatis.test.entity" />
-		<!--可选值:default(默认),mapper3(集成mapper框架)-->
-		<property name="crudDriver" value="mapper3" />
-		<property name="dbType" value="Mysql" />
-		<property name="plugins">
-			<array>
-				<bean class="com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor">
-					<!--
-				      可选值：cache(自动缓存),rwRoute(读写分离),page(分页)
-				    -->
-					<property name="interceptorHandlers" value="cache,rwRoute,page" />
-					<property name="properties">
-						<props>
-							<prop key="cache.nullValue">true</prop>
-							<prop key="cache.expire.seconds">1800</prop>
-						</props>
-					</property>
-				</bean>
-			</array>
-		</property>
+		<property name="dataSource" ref="routeDataSource" />
 	</bean>
 	
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">

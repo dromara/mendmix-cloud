@@ -99,7 +99,7 @@ public class EntityHelper {
                 throw new RuntimeException("实体" + entityClass.getName() + "不存在映射字段");
             }
             if (idColumn == null) {
-                throw new RuntimeException("实体" + entityClass.getName() + "不存在主键或者");
+                throw new RuntimeException("实体" + entityClass.getName() + "不存在主键");
             }
 
             // 解析实体映射信息

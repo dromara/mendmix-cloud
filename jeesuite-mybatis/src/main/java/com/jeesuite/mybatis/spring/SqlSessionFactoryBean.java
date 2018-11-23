@@ -16,39 +16,55 @@
 package com.jeesuite.mybatis.spring;
 
 import org.apache.ibatis.session.Configuration;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
 
-import com.jeesuite.mybatis.Configs;
+import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
+import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月22日
  */
-public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryBean{
+public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryBean implements ApplicationContextAware{
 
-	public void setCrudDriver(String crudDriver) {
-		Configs.addProperty(Configs.CRUD_DRIVER, crudDriver);
+	private String groupName = "default";
+	private Resource[] mapperLocations;
+	
+	public String getGroupName() {
+		return groupName;
 	}
 
-	public void setDbType(String dbType) {
-		Configs.addProperty(Configs.DB_TYPE, dbType);
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
 	}
 
 	@Override
 	public void setMapperLocations(Resource[] mapperLocations) {
 		super.setMapperLocations(mapperLocations);
-		MybatisMapperParser.addMapperLocations(mapperLocations);
+		this.mapperLocations = mapperLocations;
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		super.afterPropertiesSet();
+		MybatisMapperParser.addMapperLocations(groupName, mapperLocations);
+		String prefix = "default".equals(groupName) ? "jeesuite.mybatis" : groupName + ".jeesuite.mybatis";
+		MybatisConfigs.addProperties(groupName, ResourceUtils.getAllProperties(prefix));
 		Configuration configuration = getObject().getConfiguration();
-		AutoCrudRegtisty.register(configuration);
+		JeesuiteMybatisRegistry.register(groupName,configuration);
 	}
 	
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
+	}
 	
 	
 }

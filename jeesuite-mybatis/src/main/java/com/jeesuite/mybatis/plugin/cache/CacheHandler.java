@@ -38,7 +38,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.mybatis.Configs;
+import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.crud.CrudMethodDefine;
@@ -502,11 +502,11 @@ public class CacheHandler implements InterceptorHandler {
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
 		
-		nullValueCache = Boolean.parseBoolean(Configs.getProperty(Configs.CACHE_NULL_VALUE, "false"));
-		dynamicCacheTime = Boolean.parseBoolean(Configs.getProperty(Configs.CACHE_DYNAMIC_EXPIRE, "false"));
-		defaultCacheExpire = Long.parseLong(Configs.getProperty(Configs.CACHE_EXPIRE_SECONDS, String.valueOf(IN_1HOUR)));
+		nullValueCache = MybatisConfigs.getBoolean(context.getGroupName(), MybatisConfigs.CACHE_NULL_VALUE, false);
+		dynamicCacheTime = MybatisConfigs.getBoolean(context.getGroupName(), MybatisConfigs.CACHE_DYNAMIC_EXPIRE, false);
+		defaultCacheExpire = Long.parseLong(MybatisConfigs.getProperty(context.getGroupName(), MybatisConfigs.CACHE_EXPIRE_SECONDS, String.valueOf(IN_1HOUR)));
 		
-		String crudDriver = Configs.getCrudDriver();
+		String crudDriver = MybatisConfigs.getCrudDriver(context.getGroupName());
 		if("mapper3".equalsIgnoreCase(crudDriver)){
 			methodDefine = new Mapper3CrudMethodDefine();
 		}else{
@@ -515,7 +515,7 @@ public class CacheHandler implements InterceptorHandler {
 		
 		logger.info("crudDriver use:{},nullValueCache:{},defaultCacheExpireSeconds:{},dynamicCacheTime:{}",crudDriver,nullValueCache,defaultCacheExpire,dynamicCacheTime);
 
-		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos();
+		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
 		
 		Class<BaseEntity> baseEntityClass = BaseEntity.class;
 		QueryMethodCache methodCache = null;
