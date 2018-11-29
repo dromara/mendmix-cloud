@@ -286,4 +286,15 @@ public class MybatisTest implements ApplicationContextAware{
 		userMapper.insertList(users);
 	}
 	
+	@Test
+	public void testById(){
+		userMapper.selectByPrimaryKey(1);
+	}
+	
+	@Test
+	public void testSelectAll(){
+		List<UserEntity> list = userMapper.selectAll();
+		System.out.println(list.size());
+	}
+	
 }

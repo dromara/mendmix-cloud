@@ -40,6 +40,8 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
      * @return 指定的唯一标识符对应的持久化对象，如果没有对应的持久化对象，则返回null。
      */
 	public T selectByPrimaryKey(ID id);
+	
+	public List<T> selectAll();
 
 	void deleteByPrimaryKey(ID id);
 	

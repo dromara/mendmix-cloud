@@ -3,17 +3,12 @@
  */
 package com.jeesuite.mybatis.crud.builder;
 
-import static org.apache.ibatis.jdbc.SqlBuilder.BEGIN;
-import static org.apache.ibatis.jdbc.SqlBuilder.FROM;
-import static org.apache.ibatis.jdbc.SqlBuilder.SELECT;
-import static org.apache.ibatis.jdbc.SqlBuilder.SQL;
-import static org.apache.ibatis.jdbc.SqlBuilder.WHERE;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.ibatis.jdbc.SQL;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ResultFlag;
 import org.apache.ibatis.mapping.ResultMap;
@@ -68,19 +63,17 @@ public class GetByPrimaryKeyBuilder {
 		// 从表注解里获取表名等信息
 		TableMapper tableMapper = entityMapper.getTableMapper();
 		Set<ColumnMapper> columnsMapper = entityMapper.getColumnsMapper();
-
-		// 根据字段注解和属性值联合生成sql语句
-		BEGIN();
-		FROM(tableMapper.getName());
-
-		for (ColumnMapper columnMapper : columnsMapper) {
-			if (columnMapper.isId()) {
-				WHERE(columnMapper.getColumn() + "=#{" + columnMapper.getProperty() + "}");
-			}
-			SELECT(columnMapper.getColumn());
-		}
-
-		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, SQL());
+		return new SQL() {
+            {
+                SELECT("*");
+                FROM(tableMapper.getName());
+                for (ColumnMapper columnMapper : columnsMapper) {
+        			if (columnMapper.isId()) {
+        				WHERE(columnMapper.getColumn() + "=#{" + columnMapper.getProperty() + "}");
+        			}
+        		}
+            }
+        }.toString();
 	}
 
 	

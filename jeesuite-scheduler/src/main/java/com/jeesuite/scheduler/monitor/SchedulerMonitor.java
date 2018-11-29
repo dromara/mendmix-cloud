@@ -34,9 +34,11 @@ public class SchedulerMonitor implements Closeable{
 	public SchedulerMonitor(String registryType, String servers) {
 		if ("redis".equals(registryType)) {
 
-		} else {
+		}else if("zookeeper".equals(registryType)) {
 			ZkConnection zkConnection = new ZkConnection(servers);
 			zkClient = new ZkClient(zkConnection, 3000);
+		}else{
+			
 		}
 	}
 

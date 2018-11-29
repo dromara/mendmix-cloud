@@ -14,6 +14,7 @@ import com.jeesuite.mybatis.crud.builder.BatchInsertBuilder;
 import com.jeesuite.mybatis.crud.builder.DeleteBuilder;
 import com.jeesuite.mybatis.crud.builder.GetByPrimaryKeyBuilder;
 import com.jeesuite.mybatis.crud.builder.InsertBuilder;
+import com.jeesuite.mybatis.crud.builder.SelectAllBuilder;
 import com.jeesuite.mybatis.crud.builder.UpdateBuilder;
 import com.jeesuite.mybatis.crud.name.DefaultCrudMethodDefine;
 import com.jeesuite.mybatis.parser.EntityInfo;
@@ -50,6 +51,7 @@ public class GeneralSqlGenerator {
 			UpdateBuilder.build(configuration,languageDriver, entity);
 			DeleteBuilder.build(configuration, languageDriver,entity);
 			BatchInsertBuilder.build(configuration, languageDriver, entity);
+			SelectAllBuilder.build(configuration, languageDriver, entity);
 			log.info(" >> generate autoCrud for:[{}] finish",entity.getEntityClass().getName());
 		}
 	}

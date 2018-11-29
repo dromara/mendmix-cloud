@@ -95,6 +95,29 @@ public class InsertBuilder {
 		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
 	}
 	
+//	public String insert(T record) {
+//	    SQL sql = new SQL().INSERT_INTO(this.getTableName());
+//	    getAllDeclaredFields(entityClass).stream()
+//	            .filter(field -> !field.isAnnotationPresent(Ignore.class))
+//	            .forEach(field -> {
+//	                String fieldName = field.getName();
+//	                Object value = valueOfField(record, fieldName);
+//	                if (null != value) {
+//	                    if (field.isAnnotationPresent(Column.class)) {
+//	                        Column annotation = field.getAnnotation(Column.class);
+//	                        sql.VALUES(annotation.column().trim(), fieldExpression(fieldName, annotation));
+//	                    } else {
+//	                        sql.VALUES(columnName(fieldName), fieldExpression(fieldName, null));
+//	                    }
+//	                }
+//	            });
+//	    if (logger.isDebugEnabled()) {
+//	        logger.debug(sql.toString());
+//	    }
+//	    return sql.toString();
+//	}
+	 
+	
 	public static void main(String[] args) {
 		String str = "<if test=\"password != null\">password</if>, <if test=\"type != null\">type</if>, <if test=\"email != null\">email</if>";
 	    System.out.println(str.replaceAll(">,", ">"));

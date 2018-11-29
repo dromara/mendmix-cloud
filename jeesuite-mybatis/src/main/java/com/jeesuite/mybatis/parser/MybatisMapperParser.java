@@ -69,10 +69,12 @@ public class MybatisMapperParser {
 
 	private synchronized static void doParse(String group,Resource[] mapperLocations){
 		try {
+			List<EntityInfo> entityInfos = new ArrayList<>();
 			for (Resource resource : mapperLocations) {
 				log.info(">begin parse mapper file,group:{},file:{}" ,group, resource);
-				parseMapperFile(group,resource.getFilename(),resource.getInputStream());
+				parseMapperFile(entityInfos,resource.getFilename(),resource.getInputStream());
 			}
+			entitiesGroupMap.put(group, entityInfos);
 		} catch (Exception e) {
 			log.error("解析mapper文件异常", e);	
 			throw new RuntimeException("解析mapper文件异常");
@@ -80,9 +82,8 @@ public class MybatisMapperParser {
 	}
 	
 	
-	private static void parseMapperFile(String group,String fileName,InputStream inputStream) throws Exception {
+	private static void parseMapperFile(List<EntityInfo> entityInfos,String fileName,InputStream inputStream) throws Exception {
 		
-		List<EntityInfo> entityInfos = new ArrayList<>();
 		
 		XPathParser parser = new XPathParser(inputStream,true, null, new XMLMapperEntityResolver());
 		XNode evalNode = parser.evalNode("/mapper");
@@ -115,7 +116,6 @@ public class MybatisMapperParser {
 				parseResultNode(entityInfo,xNode2);
 			}
 		}
-		entitiesGroupMap.put(group, entityInfos);
 		
 		if(entityInfo.getErrorMsg() != null){
 			return;

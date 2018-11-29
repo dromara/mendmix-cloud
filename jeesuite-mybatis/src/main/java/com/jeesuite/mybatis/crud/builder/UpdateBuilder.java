@@ -67,10 +67,11 @@ public class UpdateBuilder {
 			if (column.isId()) {
 				idColumn= column.getColumn();
 				idProperty = column.getProperty();
+			}else{
+				String expr = SqlTemplate.wrapIfTag(column.getProperty(), column.getColumn() +"=#{"+column.getProperty()+"}", !selective);
+				set.append(expr);
+				if(!selective)set.append(",");
 			}
-			String expr = SqlTemplate.wrapIfTag(column.getProperty(), column.getColumn() +"=#{"+column.getProperty()+"}", !selective);
-			set.append(expr);
-			if(!selective)set.append(",");
 		}
 		if(!selective)set.deleteCharAt(set.length() - 1);
 		set.append("</trim>");
