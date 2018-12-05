@@ -8,6 +8,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.security.Constants.CacheType;
+import com.jeesuite.security.cache.LocalCache;
+import com.jeesuite.security.cache.RedisCache;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.springweb.utils.WebUtils;
 
@@ -19,86 +22,91 @@ import com.jeesuite.springweb.utils.WebUtils;
  */
 public class SecuritySessionManager {
 	
+	private ThreadLocal<UserSession> sessionThreadHistory = new ThreadLocal<>();
 	private static final String NULL = "null";
 	private static final String ACCESSTOKEN = "accessToken";
-	
-	//auth cache keys
-	private static final String SESSION_CACHE_KEY = "auth:session:%s";
-	private final static String LOGIN_UID_CACHE_KEY = "auth:uid:%s";
+	private final static String SESSION_UID_CACHE_KEY = "uid:%s";
 
 	private Cache cache;
 	private volatile String cookieDomain;
 	private String sessionIdName = "JSESSION_ID";
 	private boolean keepCookie;
 	private boolean multiPointEnable;
+	private int cookieExpireIn = 0;
 	
-	public SecuritySessionManager(SecurityDecisionProvider decisionProvider, Cache cache) {
-		this.cache = cache;
+	public SecuritySessionManager(SecurityDecisionProvider decisionProvider) {
+       if(CacheType.redis == decisionProvider.cacheType()){
+    	   this.cache = new RedisCache("security:session", decisionProvider.sessionExpireIn());
+		}else{
+			this.cache = new LocalCache(decisionProvider.sessionExpireIn());
+		}
 		this.cookieDomain = decisionProvider.cookieDomain();
 		if(StringUtils.isNotBlank(decisionProvider.sessionIdName())){
 			this.sessionIdName = decisionProvider.sessionIdName();
 		}
 		this.keepCookie = decisionProvider.keepCookie();
 		this.multiPointEnable = decisionProvider.multiPointEnable();
+		this.cookieExpireIn = decisionProvider.sessionExpireIn();
 	}
 
 	public UserSession getLoginSession(String sessionId){
 		if(StringUtils.isBlank(sessionId))return null;
-		String key = String.format(SESSION_CACHE_KEY, sessionId);
-		return cache.getObject(key);
+		return cache.getObject(sessionId);
 	}
 	
 	
-	public UserSession getSessionIfNotCreateAnonymous(HttpServletRequest request,HttpServletResponse response){
-		UserSession session = null;
-		String sessionId = getSessionId(request);
-		if(StringUtils.isNotBlank(sessionId)){
-			session = getLoginSession(sessionId);
+	public UserSession getSessionIfNotCreateAnonymous(HttpServletRequest request,HttpServletResponse response,boolean first){
+		UserSession session = first ? null : sessionThreadHistory.get();
+		if(session == null){			
+			String sessionId = getSessionId(request);
+			if(StringUtils.isNotBlank(sessionId)){
+				session = getLoginSession(sessionId);
+			}
 		}
-		
 		if(session == null){			
 			session = UserSession.create();
 			//storgeLoginSession(session);
-			Cookie cookie = createSessionCookies(request,session.getSessionId(), cookieDomain, session.getExpiresIn());
+			Cookie cookie = createSessionCookies(request,session.getSessionId(), cookieExpireIn);
 			response.addCookie(cookie);
 		}
+		if(session != null)sessionThreadHistory.set(session);
 
 		return session;
 	}
 	
 	public UserSession getLoginSessionByUserId(Serializable  serializable){
-		String key = String.format(LOGIN_UID_CACHE_KEY, serializable);
+		String key = String.format(SESSION_UID_CACHE_KEY, serializable);
 		String sessionId = cache.getString(key);
 		if(StringUtils.isBlank(sessionId))return null;
 		return  getLoginSession(sessionId);
 	}
 	
 	public void storgeLoginSession(UserSession session){
-		String key = String.format(SESSION_CACHE_KEY, session.getSessionId());
+		String key = session.getSessionId();
 		cache.setObject(key,session);
 		if(!session.isAnonymous() && multiPointEnable){			
-			key = String.format(LOGIN_UID_CACHE_KEY, session.getUserId());
+			key = String.format(SESSION_UID_CACHE_KEY, session.getUserId());
 			cache.setString(key, session.getSessionId());
 		}
 	}
 	
 	public void removeLoginSession(String sessionId){
-		String key = String.format(SESSION_CACHE_KEY, sessionId);
+		String key = sessionId;
 		UserSession session = getLoginSession(sessionId);
 		if(session != null){
 			cache.remove(key);
-			key = String.format(LOGIN_UID_CACHE_KEY, session.getUserId());
+			key = String.format(SESSION_UID_CACHE_KEY, session.getUserId());
 			cache.remove(key);
 		}
 	}
 
     
-	private Cookie createSessionCookies(HttpServletRequest request,String sessionId,String domain,int expire){
+	private Cookie createSessionCookies(HttpServletRequest request,String sessionId,int expire){
 		if(cookieDomain == null){
 			cookieDomain = WebUtils.getRootDomain(request);
 		}
 		Cookie cookie = new Cookie(sessionIdName,sessionId);  
-		cookie.setDomain(domain);
+		cookie.setDomain(cookieDomain);
 		cookie.setPath("/");
 		cookie.setHttpOnly(true);
 		if(expire == 0 || !keepCookie){			
@@ -141,7 +149,7 @@ public class SecuritySessionManager {
 		if(StringUtils.isNotBlank(sessionId)){
 			removeLoginSession(sessionId);
 			//
-			response.addCookie(createSessionCookies(request,StringUtils.EMPTY, cookieDomain, 0));
+			response.addCookie(createSessionCookies(request,StringUtils.EMPTY, 0));
 		}
 		return sessionId;
 	}

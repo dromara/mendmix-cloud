@@ -53,7 +53,7 @@ public class DelegatingFilter implements Filter {
 		
 		RequestContextHolder.set(request, response);
 
-		UserSession session = SecurityDelegating.getCurrentSession();
+		UserSession session = SecurityDelegating.getCurrentSession(true);
 		try {
 			SecurityDelegating.doAuthorization(session, request.getRequestURI());
 		} catch (UnauthorizedException e) {

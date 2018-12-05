@@ -55,10 +55,7 @@ public abstract class SecurityDecisionProvider {
 		return CacheType.local;
 	}
 	
-	public String contextPath(){
-		return "";
-	}
-	
+	public abstract String contextPath();
 	public abstract String[] anonymousUris();
 	public abstract BaseUserInfo validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
 	public abstract List<String> findAllUriPermissionCodes();

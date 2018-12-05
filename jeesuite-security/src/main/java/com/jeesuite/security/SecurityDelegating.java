@@ -19,8 +19,6 @@ import java.io.Serializable;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.jeesuite.security.Constants.CacheType;
-import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.model.BaseUserInfo;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.spring.InstanceFactory;
@@ -37,23 +35,13 @@ public class SecurityDelegating {
 	private SecurityDecisionProvider decisionProvider;
 	private SecuritySessionManager sessionManager;
 	private SecurityResourceManager resourceManager;
-	private static int sessionExpireSeconds = 7200;
 	
 	private static volatile SecurityDelegating instance;
 
 	private SecurityDelegating() {
 		decisionProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
-		if(decisionProvider.sessionExpireIn() > 0)sessionExpireSeconds = decisionProvider.sessionExpireIn();
-		Cache sessionCache = null;
-		Cache resourceCache = null;
-		if(CacheType.redis == decisionProvider.cacheType()){
-			
-		}else{
-			sessionCache = new LocalCache(sessionExpireSeconds);
-			resourceCache = new LocalCache(86400);
-		}
-		sessionManager = new SecuritySessionManager(decisionProvider, sessionCache);
-		resourceManager = new SecurityResourceManager(decisionProvider, resourceCache);
+		sessionManager = new SecuritySessionManager(decisionProvider);
+		resourceManager = new SecurityResourceManager(decisionProvider);
 	}
 
 	public static SecurityDelegating getInstance() {
@@ -73,8 +61,8 @@ public class SecurityDelegating {
 	public static BaseUserInfo doAuthentication(String name,String password){
 		BaseUserInfo userInfo = getInstance().decisionProvider.validateUser(name, password);
 		
-		UserSession session = getCurrentSession();
-		session.update(userInfo, sessionExpireSeconds);
+		UserSession session = getCurrentSession(false);
+		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
 		
 		if(getInstance().decisionProvider.multiPointEnable()){
 			UserSession otherSession = getInstance().sessionManager.getLoginSessionByUserId(userInfo.getId());
@@ -105,19 +93,31 @@ public class SecurityDelegating {
 			}
 		}
 		//
-		getInstance().decisionProvider.authorizedPostHandle(session);
+		if(session != null && !session.isAnonymous()){			
+			getInstance().decisionProvider.authorizedPostHandle(session);
+		}
 	}
 	
 	public static UserSession getCurrentSession(){
-		return getInstance().sessionManager.getSessionIfNotCreateAnonymous(RequestContextHolder.getRequest(), RequestContextHolder.getResponse());
+		return getCurrentSession(false);
+	}
+	
+	public static UserSession getCurrentSession(boolean first){
+		return getInstance().sessionManager.getSessionIfNotCreateAnonymous(RequestContextHolder.getRequest(), RequestContextHolder.getResponse(),first);
 	}
 	
 	public static void refreshUserPermssion(Serializable...userIds){
-		//getInstance().resourceManager.refreshUserPermssion(userId);
+		if(userIds != null && userIds.length > 0 && userIds[1] != null){
+			for (Serializable userId : userIds) {
+				getInstance().resourceManager.refreshUserPermssions(userId);
+			}
+		}else{
+			getInstance().resourceManager.refreshUserPermssions();
+		}
 	}
 	
 	public static void refreshResources(){
-		
+		getInstance().resourceManager.refreshResources();
 	}
 
     public static void doLogout(){
