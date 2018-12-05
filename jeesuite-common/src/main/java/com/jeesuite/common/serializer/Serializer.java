@@ -5,9 +5,8 @@ import java.io.IOException;
 /**
  * 对象序列化接口
  * @description <br>
- * @author <a href="mailto:wei.jiang@lifesense.com">vakin</a>
- * @date 2015年11月24日
- * @Copyright (c) 2015, lifesense.com
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2016年12月28日
  */
 public interface Serializer {
 	

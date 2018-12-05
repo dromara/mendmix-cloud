@@ -1,5 +1,6 @@
 package com.jeesuite.test;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.BeansException;
@@ -23,12 +24,13 @@ public class ProducerSimpleClient implements ApplicationContextAware{
 	@Test
 	public void testPublish() throws InterruptedException{
         //默认模式（异步/ ）发送
-		for (int i = 0; i < 1; i++) {	
+		for (int i = 0; i < 15; i++) {	
 			User user = new User();
 			user.setId(100+i);
 			user.setName("jack");
-			topicProducer.publish("demo-topic1", new DefaultMessage(user).sendBodyOnly(true));
-			topicProducer.publish("demo-topic2", new DefaultMessage(user));
+			//topicProducer.publish("demo-topic1", new DefaultMessage(user).sendBodyOnly(true));
+			//topicProducer.publish("demo-topic2", new DefaultMessage(user));
+			topicProducer.publishNoWrapperMessage("streams-plaintext-input", "hello " + i);
 		}
 //		
 //		DefaultMessage msg = new DefaultMessage("hello,man")

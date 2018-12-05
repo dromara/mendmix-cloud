@@ -44,11 +44,11 @@ public class ErrorMessageProcessor implements Closeable{
 		return taskQueue.size();
 	}
 
-	public ErrorMessageProcessor(int poolSize,int retryPeriodSeconds,int maxReties,RetryErrorMessageHandler persistHandler) {
+	public ErrorMessageProcessor(int poolSize,int retryPeriodSeconds,int maxReties,RetryErrorMessageHandler retryErrorHandler) {
 		
 		this.retryPeriodUnit = retryPeriodSeconds * 1000;
 		this.maxReties = maxReties;
-		this.retryErrorHandler = persistHandler;
+		this.retryErrorHandler = retryErrorHandler;
 		executor = Executors.newFixedThreadPool(poolSize, new StandardThreadFactory("ErrorMessageProcessor"));
 		executor.submit(new Runnable() {
 			@Override

@@ -3,11 +3,9 @@ package com.jeesuite.common.serializer;
 import java.io.IOException;
 
 /**
- * 对象序列化工具
  * @description <br>
- * @author <a href="mailto:wei.jiang@lifesense.com">vakin</a>
- * @date 2015年10月30日
- * @Copyright (c) 2015, lifesense.com
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2016年12月28日
  */
 public class SerializeUtils {
 

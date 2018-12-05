@@ -20,21 +20,22 @@ public class PathMatcher {
 	private List<Pattern> uriPatterns = new ArrayList<>();
 
 	public PathMatcher(String prefix,String uriPatterns) {
-		if (StringUtils.isNotBlank(uriPatterns)) {
-			String[] segs = uriPatterns.split(";|,");
-			for (String seg : segs) {
-				seg = prefix + seg;
-				if (seg.contains("*")) {
-					if (seg.endsWith("*")) {
-						uriPrefixs.add(seg.replaceAll("\\*+", ""));
-					} else {
-						this.uriPatterns.add(Pattern.compile(seg));
-					}
+		this(prefix, StringUtils.trimToEmpty(uriPatterns).split(";|,"));
+	}
+	
+	public PathMatcher(String prefix,String[] uris) {
+		for (String uri : uris) {
+			if(StringUtils.isBlank(uri))continue;
+			uri = prefix + uri;
+			if (uri.contains("*")) {
+				if (uri.endsWith("*")) {
+					uriPrefixs.add(uri.replaceAll("\\*+", ""));
 				} else {
-					uris.add(seg);
+					this.uriPatterns.add(Pattern.compile(uri));
 				}
+			} else {
+				this.uris.add(uri);
 			}
-
 		}
 	}
 
