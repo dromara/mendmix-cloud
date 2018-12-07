@@ -50,12 +50,12 @@
 			<version>2.5</version>
 		</dependency>
 
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.csource</groupId>
 			<artifactId>fastdfs-client-java</artifactId>
 			<version>1.27-SNAPSHOT</version>
 			<optional>true</optional>
-		</dependency>
+		</dependency> -->
 
 
 		<dependency>
