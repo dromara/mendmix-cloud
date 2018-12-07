@@ -1,6 +1,7 @@
 package com.jeesuite.kafka.serializer;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -22,7 +23,9 @@ public class MessageJsonDeserializer extends JsonDeserializer<DefaultMessage> {
 	private static final String ATTR_CONSUMER_ACK_REQUIRED = "consumerAckRequired";
 	private static final String ATTR_BODY = "body";
 	private static final String ATTR_MSG_ID = "msgId";
+	private static final String ATTR_HEADER = "headers";
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public DefaultMessage deserialize(JsonParser jp, DeserializationContext ctxt)
 			throws IOException, JsonProcessingException {
@@ -33,7 +36,12 @@ public class MessageJsonDeserializer extends JsonDeserializer<DefaultMessage> {
         	body = node.get(ATTR_BODY).toString();
         }
         boolean consumerAckRequired = node.get(ATTR_CONSUMER_ACK_REQUIRED).asBoolean();
-		return new DefaultMessage(msgId, body).consumerAckRequired(consumerAckRequired);
+		DefaultMessage message = new DefaultMessage(msgId, body).consumerAckRequired(consumerAckRequired);
+        if(node.get(ATTR_HEADER) != null){
+			Map headers = node.get(ATTR_HEADER).traverse(jp.getCodec()).readValueAs(Map.class);
+        	message.setHeaders(headers);
+        }
+		return message;
 	}
 
 }
