@@ -113,7 +113,8 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			triggers.add(registerSchedulerTriggerBean(acf,sch));
 		}
 		
-		SchedulerFactoryBean schFactory = context.getBean(SchedulerFactoryBean.class);
+		SchedulerFactoryBean schFactory = null;
+		try {schFactory = context.getBean(SchedulerFactoryBean.class);} catch (Exception e) {}
 		if(schFactory == null){
 			String beanName = "quartzScheduler";
 			BeanDefinitionBuilder beanDefBuilder = BeanDefinitionBuilder.genericBeanDefinition(SchedulerFactoryBean.class);

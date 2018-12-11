@@ -136,6 +136,10 @@ public class JobContext {
 		return activeNodes;
 	}
 	
+	public ExecutorService getSyncExecutor() {
+		return syncExecutor;
+	}
+
 	public void submitSyncTask(Runnable task){
 		syncExecutor.execute(task);
 	}
@@ -146,5 +150,6 @@ public class JobContext {
 		}
 		syncExecutor.shutdown();
 	}
+	
 
 }

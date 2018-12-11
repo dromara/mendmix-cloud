@@ -6,21 +6,22 @@ package com.jeesuite.scheduler.registry;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import com.jeesuite.scheduler.JobRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.Subscribe;
 import com.jeesuite.scheduler.model.JobConfig;
+import com.jeesuite.scheduler.monitor.MonitorCommond;
 
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年12月16日
  */
-public class NullJobRegistry implements JobRegistry {
+public class NullJobRegistry extends AbstarctJobRegistry {
 
-	private Map<String, JobConfig> schedulerConfgs = new ConcurrentHashMap<>();
-
+	private static final Logger logger = LoggerFactory.getLogger("com.jeesuite.scheduler.registry");
 	
 	@Override
 	public void register(JobConfig conf) {
@@ -66,8 +67,12 @@ public class NullJobRegistry implements JobRegistry {
 		return new ArrayList<>(schedulerConfgs.values());
 	}
 
-
 	@Override
 	public void onRegistered() {}
+	
+	@Subscribe
+	public void processCommand(MonitorCommond cmd){
+		execCommond(cmd);
+	}
 
 }

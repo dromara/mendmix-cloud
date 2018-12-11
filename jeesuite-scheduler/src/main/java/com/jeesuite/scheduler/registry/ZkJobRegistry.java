@@ -9,8 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,16 +21,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.zookeeper.data.Stat;
-import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.common.json.JsonUtils;
-import com.jeesuite.scheduler.AbstractJob;
 import com.jeesuite.scheduler.JobContext;
-import com.jeesuite.scheduler.JobRegistry;
 import com.jeesuite.scheduler.model.JobConfig;
 import com.jeesuite.scheduler.monitor.MonitorCommond;
 
@@ -42,11 +37,9 @@ import com.jeesuite.scheduler.monitor.MonitorCommond;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年5月3日
  */
-public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBean{
+public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBean,DisposableBean{
 	
-	private static final Logger logger = LoggerFactory.getLogger(ZkJobRegistry.class);
-	
-	private Map<String, JobConfig> schedulerConfgs = new ConcurrentHashMap<>();
+	private static final Logger logger = LoggerFactory.getLogger("com.jeesuite.scheduler.registry");
 
 	public static final String ROOT = "/schedulers/";
 	
@@ -63,8 +56,6 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	private volatile boolean zkAvailabled = true;
 	
 	private volatile boolean updatingStatus;
-	
-	private boolean nodeEventSubscribed = false;
 	
 	public void setZkServers(String zkServers) {
 		this.zkServers = zkServers;
@@ -130,9 +121,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		}
 		
 		String path = getPath(conf);
-		
 		final String jobName = conf.getJobName();
-		
 		if(!zkClient.exists(nodeStateParentPath)){
 			isFirstNode = true;
 			zkClient.createPersistent(nodeStateParentPath, true);
@@ -142,7 +131,6 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 				isFirstNode = zkClient.getChildren(nodeStateParentPath).size() == 0;
 			}
 		}
-		
 		if(!zkClient.exists(path)){
 			zkClient.createPersistent(path, true);
 		}
@@ -182,10 +170,8 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 			zkClient.writeData(path, JsonUtils.toJson(conf)); 
 		}
 		schedulerConfgs.put(conf.getJobName(), conf);
-		
 		//订阅同步信息变化
         zkClient.subscribeDataChanges(path, new IZkDataListener() {
-			
 			@Override
 			public void handleDataDeleted(String dataPath) throws Exception {
 				schedulerConfgs.remove(jobName);
@@ -198,10 +184,7 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 				schedulerConfgs.put(jobName, _jobConfig);
 			}
 		});
-        
         //
-		regAndSubscribeNodeEvent();
-        
         logger.info("finish register schConfig:{}",ToStringBuilder.reflectionToString(conf, ToStringStyle.MULTI_LINE_STYLE));
 	}
 
@@ -210,11 +193,9 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 	 * @return
 	 */
 	private synchronized void regAndSubscribeNodeEvent() {
-		if(nodeEventSubscribed)return;
 		//创建node节点
 		zkClient.createEphemeral(nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
 		
-		String path;
 		//订阅节点信息变化
         zkClient.subscribeChildChanges(nodeStateParentPath, new IZkChildListener() {
 			@Override
@@ -234,31 +215,14 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		});
         
         logger.info("subscribe nodes change event at path:{}",nodeStateParentPath);
-        
-        //注册手动执行事件监听(来自于监控平台的)
-        path = nodeStateParentPath + "/" + JobContext.getContext().getNodeId();
-        zkClient.subscribeDataChanges(path, new IZkDataListener() {
-			@Override
-			public void handleDataDeleted(String dataPath) throws Exception {}
-			@Override
-			public void handleDataChange(String dataPath, Object data) throws Exception {
-				MonitorCommond cmd = (MonitorCommond) data;
-				if(cmd != null){					
-					logger.info("收到commond:" + cmd.toString());
-					execCommond(cmd);
-				}
-			}
-		});
-        
-        logger.info("subscribe command event at path:{}",path);
-        
-        
+        //注册命令事件
+        registerCommondEvent();
+        logger.info("subscribe command event at path:{}",nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
         //刷新节点列表
         List<String> activeNodes = zkClient.getChildren(nodeStateParentPath);
 		JobContext.getContext().refreshNodes(activeNodes);
 		
 		logger.info("current activeNodes:{}",activeNodes);
-		nodeEventSubscribed = true;
 	}
 	
 	/**
@@ -393,56 +357,6 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 		}
 		return zkAvailabled;
 	}
-	
-	private void execCommond(MonitorCommond cmd){
-		if(cmd == null)return;
-		
-		JobConfig config = schedulerConfgs.get(cmd.getJobName());
-		String key = cmd.getJobGroup() + ":" + cmd.getJobName();
-		final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(key);
-		if(MonitorCommond.TYPE_EXEC == cmd.getCmdType()){
-			if(config.isRunning()){
-				logger.info("任务正在执行中，请稍后再执行");
-				return;
-			}
-			if(abstractJob != null){
-				JobContext.getContext().submitSyncTask(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							logger.info("begin execute job[{}] by MonitorCommond",abstractJob.getJobName());
-							abstractJob.doJob(JobContext.getContext());
-						} catch (Exception e) {
-							logger.error(abstractJob.getJobName(),e);
-						}
-					}
-				});
-			}else{
-				logger.warn("Not found job by key:{} !!!!",key);
-			}
-		}else if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType() 
-				|| MonitorCommond.TYPE_CRON_MOD == cmd.getCmdType()){
-			
-			if(config != null){
-				if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType()){					
-					config.setActive("1".equals(cmd.getBody()));
-				}else{
-					try {
-						new CronExpression(cmd.getBody().toString());
-					} catch (Exception e) {
-						throw new RuntimeException("cron表达式格式错误");
-					}
-					abstractJob.resetTriggerCronExpr(cmd.getBody().toString());
-					config.setCronExpr(cmd.getBody().toString());
-					
-				}
-				updateJobConfig(config);
-				if(JobContext.getContext().getConfigPersistHandler() != null){
-					JobContext.getContext().getConfigPersistHandler().persist(config);
-				}
-			}
-		}
-	}
 
 	@Override
 	public void updateJobConfig(JobConfig config) {
@@ -453,6 +367,8 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
 
 	@Override
 	public void onRegistered() {
+		//注册订阅事件
+		regAndSubscribeNodeEvent();
     	logger.info("==============clear Invalid jobs=================");
     	List<String> jobs = zkClient.getChildren(groupPath);
     	
@@ -468,6 +384,22 @@ public class ZkJobRegistry implements JobRegistry,InitializingBean,DisposableBea
     	logger.info("==============clear Invalid jobs end=================");
     	
     
+	}
+	
+	private void registerCommondEvent() {
+		String path = nodeStateParentPath + "/" + JobContext.getContext().getNodeId();
+        zkClient.subscribeDataChanges(path, new IZkDataListener() {
+			@Override
+			public void handleDataDeleted(String dataPath) throws Exception {}
+			@Override
+			public void handleDataChange(String dataPath, Object data) throws Exception {
+				MonitorCommond cmd = (MonitorCommond) data;
+				if(cmd != null){					
+					logger.info("收到commond:" + cmd.toString());
+					execCommond(cmd);
+				}
+			}
+		});
 	}
 	
 }
