@@ -25,3 +25,6 @@
  - 重构mybaits模块注册逻辑
  - scheduler模块注册兼容springboot2.x
  
+ #### jeesuite-springweb
+ - 日志拦截器请求内容过长截取输出
+ 

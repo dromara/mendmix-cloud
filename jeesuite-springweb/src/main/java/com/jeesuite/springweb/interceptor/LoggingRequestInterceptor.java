@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,10 @@ public class LoggingRequestInterceptor implements ClientHttpRequestInterceptor {
         	builder.append("URI      :").append(request.getURI()).append("\n");
         	builder.append("Method   :").append(request.getMethod()).append("\n");
         	builder.append("Headers  :").append(request.getHeaders()).append("\n");
-        	if(body != null && body.length > 0)builder.append("body     :").append(new String(body)).append("\n");
+        	if(body != null && body.length > 0){
+        		if(body.length > 1024)body = Arrays.copyOf(body, 1024);
+        		builder.append("body     :").append(new String(body)).append("\n");
+        	}
         	builder.append("-----------request end-----------\n");
             log.trace(builder.toString());
         }
