@@ -15,6 +15,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.StringUtils;
 
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.InstanceFactory;
 
 import redis.clients.jedis.Jedis;
@@ -187,6 +188,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 	}
 
 	public void setPassword(String password) {
+		if(ResourceUtils.NULL_VALUE_PLACEHOLDER.equals(password))return;
 		this.password = password;
 	}
 

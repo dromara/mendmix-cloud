@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public final class ResourceUtils {
 	
+	public static final String NULL_VALUE_PLACEHOLDER = "_NULL_PLACEHOLDER_";
 	private static final String PLACEHOLDER_PREFIX = "${";
 	private static final String PLACEHOLDER_SUFFIX = "}";
 
