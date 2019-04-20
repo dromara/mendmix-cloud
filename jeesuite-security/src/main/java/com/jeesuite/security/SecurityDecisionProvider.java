@@ -55,6 +55,7 @@ public abstract class SecurityDecisionProvider {
 		return CacheType.local;
 	}
 	
+	public abstract String superAdminName();
 	public abstract String contextPath();
 	public abstract String[] anonymousUris();
 	public abstract BaseUserInfo validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;

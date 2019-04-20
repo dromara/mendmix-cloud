@@ -7,6 +7,9 @@
 ## 为什么有jeesuite-libs
  - 一些框架使用起来比较复杂(譬如各种配置，各种资源管理，容错等)，针对这种情况我们做了大量二次封装旨在简化使用难度。
  - 一些框架高度抽象貌似能满足所有应用场景，但是实际上大部分情况我们只用到了他10%的功能，结果她却只解决了我们90%的问题，针对这种情况我们就放弃使用而是参考他的设计自己实现一套简化版本
+ 
+## 重要的事情说三遍
+本项目底层框架库，直接跑不起来！所以不要问我怎么直接跑起来~所以不要问我怎么直接跑起来~所以不要问我怎么直接跑起来~。要运行可以关注集成演示项目：[https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
 
 ##官网
 [http://www.jeesuite.com/](http://www.jeesuite.com/) 
@@ -65,7 +68,7 @@
 - 基于注解自动缓存管理（所有查询方法结果自动缓存、自动更新，事务回滚缓存同步回滚机制）
 - 自动缓存实现基于`jeesuite-cache`和`spring-data-redis`
 - 分页组件
-- 简单分库路由（不支持join等跨库操作）
+- 敏感操作拦截
 
 #### scheduler模块
 - 支持分布式保证单节点执行（按节点平均分配job）
@@ -76,7 +79,14 @@
 - 支持配置持久化（启动加载、变更保存）
 - 支持控制台（[jeesuite-admin](http://git.oschina.net/vakinge/jeesuite-admin)）任务监控、开停、动态修改调度时间策略、手动触发执行
 
-
+#### jeesuite-security
+- 配置简单(初始化一个类即可)
+- 满足认证授权基本需求
+- 更加贴近日常使用业务场景
+- 可选本地session和共享session
+- 可选是否支持多端同时登录
+- dubbo、springboot跨服务登录状态传递支持
+ 
 #### rest模块
 - 自动resonse封装（xml、json）
 - i18n

@@ -22,7 +22,7 @@
 		<property name="mode" value="${redis.mode}" />
 		<!-- 多个用“,”隔开 -->
 		<property name="servers" value="${redis.servers}" />
-		<property name="password" value="${redis.password}" />
+		<property name="password" value="${redis.password:_NULL_PLACEHOLDER_}" />
 		<property name="timeout" value="${redis.conn.timeout}" />
 		<!-- sentinel模式才需要该属性 -->
 		<property name="masterName" value="${redis.masterName}" />
@@ -42,7 +42,7 @@
          <!-- 是否启用分布式模式 -->
          <property name="distributedMode" value="true" />
          <property name="bcastServer" value="${redis.servers}" />
-         <property name="password" value="${redis.password}" />
+         <property name="password" value="${redis.password:_NULL_PLACEHOLDER_}" />
          <!-- 防止多个应用使用同一个缓存的情况，出现交叉订阅缓存同步更新情况，请指定eventScope-->
          <property name="bcastScope" value="demo" />
          <property name="cacheProvider">

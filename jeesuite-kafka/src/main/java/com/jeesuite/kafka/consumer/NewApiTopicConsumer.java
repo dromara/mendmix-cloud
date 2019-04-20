@@ -112,7 +112,7 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 					
 					Set<TopicPartition> assignment = consumer.assignment();
 					if(assignment.contains(topicPartition)){
-						if(expectOffsets >= 0 && expectOffsets < metadata.offset()){								
+						if(expectOffsets > 0 && expectOffsets < metadata.offset()){								
 							consumer.seek(topicPartition, expectOffsets);
 							//consumer.seekToBeginning(assignment);
 					        logger.info(">>>>>>> seek Topic[{}] partition[{}] from {} to {}",topic, partition.partition(),metadata.offset(),expectOffsets);
@@ -137,17 +137,9 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 		}else{
 			ConsumerRebalanceListener listener = new ConsumerRebalanceListener() {
 				@Override
-				public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-					worker.assigndPartitions.clear();
-					for (TopicPartition tp : partitions) {
-						worker.assigndPartitions.add(tp);
-						//TODO 
-					}
-				}
+				public void onPartitionsRevoked(Collection<TopicPartition> partitions) {}
 				@Override
 				public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-					//
-					worker.assigndPartitions.clear();
 					for (TopicPartition tp : partitions) {
 						//期望的偏移
 						long startOffset = 0L;
@@ -226,11 +218,11 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 	
 	private class ConsumerWorker implements Runnable {
 
-		private AtomicBoolean closed = new AtomicBoolean();
+		private AtomicBoolean closed = new AtomicBoolean(false);
+		private AtomicBoolean paulsed = new AtomicBoolean(false);
 		private AtomicBoolean commiting = new AtomicBoolean(false);//是否正在提交分区
 		private AtomicInteger uncommittedNums = new AtomicInteger(0); //当前未提交记录
 		KafkaConsumer<String, Serializable> consumer;
-		private List<TopicPartition> assigndPartitions = new ArrayList<>();
 		private Map<TopicPartition, OffsetAndMetadata> uncommittedOffsetMap = new ConcurrentHashMap<>();
 		
 		
@@ -247,11 +239,6 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 			this.commiting.set(commiting);
 		}
 
-        public void addPartitions(TopicPartition partition,long offset){
-        	assigndPartitions.add(partition);
-        	uncommittedOffsetMap.put(partition, new OffsetAndMetadata(offset));
-        	uncommittedNums.incrementAndGet();
-        }
         
         public void resetUncommittedOffsetMap(){
         	uncommittedOffsetMap.clear();
@@ -265,18 +252,22 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 				if(uncommittedNums.get() > 0){					
 					commitOffsets(this);
 				}
-				//如果拉取消息暂停
-				while(!consumerContext.fetchEnabled()){
-					try {Thread.sleep(1000);} catch (Exception e) {}
-				}
-				//当处理线程满后，阻塞处理线程
-				while(true){
-					if(defaultProcessExecutor.getMaximumPoolSize() > defaultProcessExecutor.getSubmittedTasksCount()){
-						break;
+				//拉取消息暂停 || 处理线程满后
+				if(consumerContext.fetchEnabled() == false || defaultProcessExecutor.getSubmittedTasksCount() >= defaultProcessExecutor.getMaximumPoolSize()){
+					if(!paulsed.get()){
+						//暂停所有分区
+						consumer.pause(consumer.assignment()); 
+						paulsed.set(true);
+						logger.info("consumer paused.....");
 					}
-					try {Thread.sleep(100);} catch (Exception e) {}
+					try {Thread.sleep(50);} catch (Exception e) {}
+				}else if(paulsed.get()){
+					//恢复分区
+					consumer.resume(consumer.assignment());
+					paulsed.set(false);
+					logger.info("consumer resumed.....");
 				}
-				
+
 				ConsumerRecords<String,Serializable> records = null;
 				records = consumer.poll(pollTimeout);
 				// no record found
@@ -287,34 +278,6 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 				for (final ConsumerRecord<String,Serializable> record : records) {	
 					processConsumerRecords(record);
 				}
-
-				//提交分区
-			   if(!offsetAutoCommit){
-					//由于处理消息可能产生延时，收到消息后，暂停所有分区并手动发送心跳，以避免consumer group被踢掉
-//					consumer.pause(consumer.assignment());
-//					Future<Boolean> future = executor.submit(new ConsumeRecords(records));
-//					committedOffsetFutures.add(future);
-	//
-//					Boolean isCompleted = false;
-//					while (!isCompleted && !closed.get()) {
-//						try {
-//							//等待 heart-beat 间隔时间
-//							isCompleted = future.get(3, TimeUnit.SECONDS); 
-//						} catch (TimeoutException e) {
-//							logger.debug("heartbeats the coordinator");
-//							consumer.poll(0); // does heart-beat
-//							commitOffsets(topic,consumer,partitionToUncommittedOffsetMap);
-//						} catch (CancellationException e) {
-//							logger.debug("ConsumeRecords Job got cancelled");
-//							break;
-//						} catch (ExecutionException | InterruptedException e) {
-//							logger.error("Error while consuming records", e);
-//							break;
-//						}
-//					}
-//					committedOffsetFutures.remove(future);
-//					consumer.resume(consumer.assignment());
-			   }
 			}
 			consumer.close();
 			logger.info("consumer exited");
@@ -333,7 +296,7 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 			
 			consumerContext.updateConsumerStats(record.topic(),1);
 			//
-			consumerContext.saveOffsetsBeforeProcessed(record.topic(), record.partition(), record.offset());
+			consumerContext.saveOffsetsBeforeProcessed(record.topic(), record.partition(), record.offset() + 1);
 			//第一阶段处理
 			messageHandler.p1Process(message);
 			//第二阶段处理
@@ -354,7 +317,7 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
                         	consumerContext.sendConsumerAck(message.getMsgId());
 						}
 						//
-						consumerContext.saveOffsetsAfterProcessed(record.topic(), record.partition(), record.offset());
+						consumerContext.saveOffsetsAfterProcessed(record.topic(), record.partition(), record.offset() + 1);
 					} catch (Exception e) {
 						boolean processed = messageHandler.onProcessError(message);
 						if(processed == false){

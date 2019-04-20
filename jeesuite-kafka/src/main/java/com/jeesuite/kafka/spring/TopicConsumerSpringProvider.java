@@ -194,7 +194,8 @@ public class TopicConsumerSpringProvider implements InitializingBean, Disposable
 		logger.info("\n============kafka.Consumer.Config============\n" + sb.toString() + "\n");
 
 		ConsumerContext consumerContext = ConsumerContext.getInstance();
-		consumerContext.propertiesSetIfAbsent(configs, groupId, consumerId, topicHandlers, processThreads,offsetLogHanlder ,new ErrorMessageProcessor(1, 10, 3, retryErrorMessageHandler));
+		int retryNums = ResourceUtils.getInt("message.consumer.retry.counts", 3);
+		consumerContext.propertiesSetIfAbsent(configs, groupId, consumerId, topicHandlers, processThreads,offsetLogHanlder ,new ErrorMessageProcessor(1, 10, retryNums, retryErrorMessageHandler));
 
 		if(useNewAPI){			
 			consumer = new NewApiTopicConsumer(consumerContext);

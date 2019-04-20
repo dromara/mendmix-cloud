@@ -1,3 +1,9 @@
+### 1.3.2 
+#### jeesuite-event
+
+#### jeesuite-kafka
+ - 动态消息
+
 ### 1.3.1
 #### jeesuite-security
 `jeesuite-security`是新增模块：可替代shiro或spring-security等安全框架，可以理解是shiro的轻量级版本，配置更简单，更加贴近我们业务场景。

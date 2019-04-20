@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.3.1</version>
+		<version>1.3.2</version>
 	</parent>
 	<artifactId>jeesuite-springboot-starter</artifactId>
 
@@ -64,7 +64,7 @@
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <optional>true</optional>
-            <version>1.3.1</version>
+            <version>1.3.2</version>
        </dependency>
 
 		<dependency>

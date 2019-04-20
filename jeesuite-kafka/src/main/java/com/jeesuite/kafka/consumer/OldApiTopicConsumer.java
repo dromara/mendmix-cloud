@@ -102,7 +102,7 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 					//期望的偏移
 					long expectOffsets = consumerContext.getLatestProcessedOffsets(topic, partition.getPartition());
 					//
-					if(expectOffsets >= 0 && expectOffsets < partition.getOffset()){			
+					if(expectOffsets > 0 && expectOffsets < partition.getOffset()){			
 						command.resetTopicOffsets(consumerContext.getGroupId(), topic, partition.getPartition(), expectOffsets);
 						logger.info("seek Topic[{}] partition[{}] from {} to {}",topic,partition.getPartition(),partition.getOffset(),expectOffsets);
 					}
@@ -153,7 +153,7 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 					message.setTopicMetadata(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());
 					consumerContext.updateConsumerStats(messageAndMeta.topic(),1);
 					//
-					consumerContext.saveOffsetsBeforeProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());
+					consumerContext.saveOffsetsBeforeProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset() + 1);
 					//第一阶段处理
 					messageHandler.p1Process(message);
 					//第二阶段处理
@@ -199,7 +199,7 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
                         if(message.isConsumerAckRequired()){
                         	consumerContext.sendConsumerAck(message.getMsgId());
 						}
-						consumerContext.saveOffsetsAfterProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset());
+						consumerContext.saveOffsetsAfterProcessed(messageAndMeta.topic(), messageAndMeta.partition(), messageAndMeta.offset() + 1);
 					} catch (Exception e) {
 						boolean processed = messageHandler.onProcessError(message);
 						if(processed == false){

@@ -82,7 +82,8 @@ public class SecurityDelegating {
 	 * @param uri
 	 */
 	public static void doAuthorization(UserSession session,String uri) throws UnauthorizedException,ForbiddenAccessException{
-		if(!getInstance().resourceManager.isAnonymous(uri)){
+		boolean isSuperAdmin = getInstance().decisionProvider.superAdminName().equals(session.getUserName());
+		if(!isSuperAdmin && !getInstance().resourceManager.isAnonymous(uri)){
 			if(session == null || session.isAnonymous()){
 				throw new UnauthorizedException();
 			}
