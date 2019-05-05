@@ -39,8 +39,7 @@ public class DES {
 	        byte[] bytes = cipher.doFinal(data.getBytes());            
 	        return byte2hex(bytes);
     	}catch(Exception e){
-    		e.printStackTrace();
-    		return data;
+    		throw new RuntimeException(e);
     	}
     }
 
@@ -65,8 +64,7 @@ public class DES {
             cipher.init(Cipher.DECRYPT_MODE, secretKey, paramSpec);
             return new String(cipher.doFinal(hex2byte(data.getBytes())));
         } catch (Exception e){
-    		e.printStackTrace();
-    		return data;
+        	throw new RuntimeException(e);
         }
     }
 
