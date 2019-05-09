@@ -117,9 +117,10 @@ public class MybatisMapperParser {
 			}
 		}
 		
-		if(entityInfo.getErrorMsg() != null){
+		if(entityInfo == null || entityInfo.getErrorMsg() != null){
 			return;
 		}
+		
 		for (XNode xNode : children) {
 			if ("select|insert|update|delete".contains(xNode.getName().toLowerCase())) {
 				String sql = parseSql(fileName,xNode,includes);
