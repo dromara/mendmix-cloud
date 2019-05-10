@@ -64,7 +64,7 @@ public class SecurityDelegating {
 		UserSession session = getCurrentSession(false);
 		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
 		
-		if(getInstance().decisionProvider.multiPointEnable()){
+		if(!getInstance().decisionProvider.multiPointEnable()){
 			UserSession otherSession = getInstance().sessionManager.getLoginSessionByUserId(userInfo.getId());
 			if(otherSession != null && !otherSession.getSessionId().equals(session.getSessionId())){
 				getInstance().sessionManager.removeLoginSession(otherSession.getSessionId());
@@ -74,6 +74,20 @@ public class SecurityDelegating {
 		getInstance().resourceManager.getUserPermissionCodes(userInfo.getId());
 		
 		return userInfo;
+	}
+	
+	public static void updateSession(BaseUserInfo userInfo){
+		UserSession session = getCurrentSession(false);
+		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
+		
+		if(!getInstance().decisionProvider.multiPointEnable()){
+			UserSession otherSession = getInstance().sessionManager.getLoginSessionByUserId(userInfo.getId());
+			if(otherSession != null && !otherSession.getSessionId().equals(session.getSessionId())){
+				getInstance().sessionManager.removeLoginSession(otherSession.getSessionId());
+			}
+		}
+		getInstance().sessionManager.storgeLoginSession(session);
+		getInstance().resourceManager.getUserPermissionCodes(userInfo.getId());
 	}
 	
 	/**
