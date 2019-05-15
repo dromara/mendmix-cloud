@@ -1,5 +1,6 @@
 package com.jeesuite.common2.lock.redis;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -16,56 +17,58 @@ import redis.clients.jedis.Jedis;
  * @date 2018年3月22日
  */
 public class RedisDistributeLock implements Lock {
+	
+	private static final String GET_LOCK_FLAG = "1";
 
-	
 	private static RedisLockCoordinator coordinator = new RedisLockCoordinator();
-	
+
+    String getLockLua = "local res = redis.call('setnx', KEYS[1],'1')\n" + 
+                    "if tonumber(res) > 0 then\n" + 
+                    "	redis.call('expire', KEYS[1], ARGV[1])\n" + 
+                    "	return 1\n" + 
+                    "else \n" + 
+                    "	return 0\n" + 
+                    "end";
+
 	private static final String LOCK_KEY_PREFIX = "dlock:";
-	private static final int _DEFAULT_MAX_WAIT = 30;
-	private static final int _DEFAULT_MAX_WAIT_LIMIT = 20;
+	private static final int _DEFAULT_MAX_WAIT = 60;
 	private String lockName;
-	private String eventId;
-	private int maxWaitLimt;
-	private int timeoutSeconds;
 	private int maxLiveSeconds;
-	private Jedis client;
+	
+	
 	
 	/**
-	 * 默认最大存活时间30秒,最大排队等待数：20
+	 * 默认最大存活时间60秒
 	 * @param lockName
 	 */
 	public RedisDistributeLock(String lockName) {
-		this(lockName, _DEFAULT_MAX_WAIT,_DEFAULT_MAX_WAIT_LIMIT);
-	}
-	
-	/**
-	 * 默认最大排队等待数：20
-	 * @param lockName
-	 * @param timeoutSeconds
-	 */
-	public RedisDistributeLock(String lockName,int timeoutSeconds) {
-		this(lockName,timeoutSeconds,_DEFAULT_MAX_WAIT_LIMIT);
+		this(lockName, _DEFAULT_MAX_WAIT);
 	}
 
 	/**
 	 * 
 	 * @param lockName
-	 * @param timeoutSeconds 锁超时时间（秒）
-	 * @param maxWaitLimt 最大排队等待数限制
+	 * @param maxLiveSeconds 锁最大存活时间（秒）
 	 */
-	public RedisDistributeLock(String lockName,int timeoutSeconds,int maxWaitLimt) {
+	public RedisDistributeLock(String lockName,int maxLiveSeconds) {
 		this.lockName = LOCK_KEY_PREFIX + lockName;
-		this.timeoutSeconds = timeoutSeconds;
-		this.maxLiveSeconds = timeoutSeconds + 1;
-		this.eventId = coordinator.buildEvenId();
-		this.maxWaitLimt = maxWaitLimt;
+		this.maxLiveSeconds = maxLiveSeconds;
 	}
 
 	@Override
 	public void lock() {
+
+		boolean locked = false;
 		try {
-			tryLock(timeoutSeconds, TimeUnit.SECONDS);			
-		} catch (InterruptedException e) {}
+			locked = tryLock(maxLiveSeconds, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			throw new LockException(e);
+		}
+		if(!locked){
+			unlock();
+			throw new LockException("Lock["+lockName+"] timeout");
+		}
+	
 	}
 
 	@Override
@@ -75,54 +78,56 @@ public class RedisDistributeLock implements Lock {
 
 	@Override
 	public boolean tryLock() {
-		try {
-			return tryLock(0, TimeUnit.SECONDS);			
-		} catch (Exception e) {
-			return false;
+		Jedis client = coordinator.getRedisClient();
+		try {		
+			return checkLock(client);
+		} finally {
+			coordinator.release(client);
 		}
+	
 	}
 
 	@Override
-	public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
-		
-		boolean getLock = true;
-		client = coordinator.getRedisClient();
+	public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
+		Jedis client = coordinator.getRedisClient();
 		try {
-			Long waitCount = client.lpush(lockName, eventId);
-			client.expire(lockName, maxLiveSeconds);
+			long start = System.currentTimeMillis();
+			boolean res = checkLock(client);
+			if(res)return res;
 			
-			if(waitCount == 1){
-				return getLock;
+			long sleep = 300;
+			while (!res) {
+				try {
+					TimeUnit.MILLISECONDS.sleep(sleep);
+				} catch (InterruptedException e) {
+					throw e;
+				}
+				
+				res = checkLock(client);
+				
+				if (res){
+					return res;
+				}else if(sleep > 10){
+					sleep = sleep - 10;
+				}
+				
+				if (System.currentTimeMillis() - start > unit.toMillis(time)) {
+					return false;
+				}
 			}
-			if(waitCount > maxWaitLimt){
-				getLock = false;
-				throw new LockException(String.format("Lock[%s] Too many wait", lockName));
-			}
-			if(timeout == 0){
-				getLock = false;
-				return getLock;
-			}
-			//await
-			getLock = coordinator.await(lockName,eventId, unit.toMillis(timeout));
-			
-			if(!getLock){
-				throw new LockException(String.format("Lock[%s] Timeout", lockName));
-			}
-			return getLock;
-		} finally {
-			if(!getLock)client.lrem(lockName, 1, eventId);
+		}  finally {
+			coordinator.release(client);
 		}
-		
+		return false;
 	}
 
 	@Override
-	public void unlock() { 
-		if(client == null)throw new LockException("cant't unlock,because Lock not found");
-    	try {	
-    		client.lrem(lockName, 1, eventId);
-    		coordinator.notifyNext(client,lockName);
+	public void unlock() {
+		Jedis client = coordinator.getRedisClient();
+    	try {			
+    		client.del(lockName);
 		} finally {
-			if(client != null)coordinator.release(client);
+			coordinator.release(client);
 		}
 	}
 
@@ -131,4 +136,9 @@ public class RedisDistributeLock implements Lock {
 		return null;
 	}
 	
+	private boolean checkLock(Jedis client){
+		Object result = client.evalsha(client.scriptLoad(getLockLua), Arrays.asList(lockName), Arrays.asList(String.valueOf(maxLiveSeconds)));
+		return GET_LOCK_FLAG.equals(String.valueOf(result));
+	}
+
 }

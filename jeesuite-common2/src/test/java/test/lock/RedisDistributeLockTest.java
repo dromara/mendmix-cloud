@@ -39,7 +39,7 @@ public class RedisDistributeLockTest {
 
 		@Override
 		public void run() {
-			Lock lock = new RedisDistributeLock("test",60,20);
+			Lock lock = new RedisDistributeLock("test",60);
 			try {				
 				lock.lock();
 			} catch (Exception e) {

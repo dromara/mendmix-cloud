@@ -21,7 +21,6 @@ public class DruidDataSourceBuilder {
     	beanDefinitionBuilder.addPropertyValue("validationQuery", props.getProperty("validationQuery","SELECT 'x'"));
     	beanDefinitionBuilder.addPropertyValue("maxActive", Integer.parseInt(props.getProperty("maxActive","10")));
     	beanDefinitionBuilder.addPropertyValue("initialSize", Integer.parseInt(props.getProperty("initialSize","1")));
-    	beanDefinitionBuilder.addPropertyValue("maxIdle", Integer.parseInt(props.getProperty("maxIdle","4")));
     	beanDefinitionBuilder.addPropertyValue("minIdle", Integer.parseInt(props.getProperty("minIdle","1")));
     	beanDefinitionBuilder.addPropertyValue("maxWait", Long.parseLong(props.getProperty("maxWait","10000")));
     	beanDefinitionBuilder.addPropertyValue("minEvictableIdleTimeMillis", Long.parseLong(props.getProperty("minEvictableIdleTimeMillis","60000")));
