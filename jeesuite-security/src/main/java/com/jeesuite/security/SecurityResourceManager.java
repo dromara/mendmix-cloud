@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.util.PathMatcher;
-import com.jeesuite.security.Constants.CacheType;
+import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
 

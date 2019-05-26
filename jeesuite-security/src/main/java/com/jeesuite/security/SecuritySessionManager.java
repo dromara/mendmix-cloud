@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.jeesuite.security.Constants.CacheType;
+import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
 import com.jeesuite.security.model.UserSession;
@@ -65,9 +65,10 @@ public class SecuritySessionManager {
 		}
 		if(session == null){			
 			session = UserSession.create();
-			//storgeLoginSession(session);
-			Cookie cookie = createSessionCookies(request,session.getSessionId(), cookieExpireIn);
-			response.addCookie(cookie);
+			if(response != null){				
+				Cookie cookie = createSessionCookies(request,session.getSessionId(), cookieExpireIn);
+				response.addCookie(cookie);
+			}
 		}
 		if(session != null)sessionThreadHistory.set(session);
 
@@ -81,7 +82,7 @@ public class SecuritySessionManager {
 		return  getLoginSession(sessionId);
 	}
 	
-	public void storgeLoginSession(UserSession session){
+	public void storageLoginSession(UserSession session){
 		String key = session.getSessionId();
 		cache.setObject(key,session);
 		if(!session.isAnonymous() && multiPointEnable){			
@@ -89,6 +90,7 @@ public class SecuritySessionManager {
 			cache.setString(key, session.getSessionId());
 		}
 	}
+
 	
 	public void removeLoginSession(String sessionId){
 		String key = sessionId;

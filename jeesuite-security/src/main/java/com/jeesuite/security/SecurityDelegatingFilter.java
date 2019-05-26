@@ -36,7 +36,7 @@ import com.jeesuite.springweb.utils.WebUtils;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月30日
  */
-public class DelegatingFilter implements Filter {
+public class SecurityDelegatingFilter implements Filter {
 
 	private static final String MSG_401_UNAUTHORIZED = "{\"code\": 401,\"msg\":\"401 Unauthorized\"}";
 	private static String MSG_403_FORBIDDEN = "{\"code\": 403,\"msg\":\"403 Forbidden\"}";
@@ -53,7 +53,7 @@ public class DelegatingFilter implements Filter {
 		
 		RequestContextHolder.set(request, response);
 
-		UserSession session = SecurityDelegating.getCurrentSession(true);
+		UserSession session = SecurityDelegating.getCurrentSession();
 		try {
 			SecurityDelegating.doAuthorization(session, request.getRequestURI());
 		} catch (UnauthorizedException e) {

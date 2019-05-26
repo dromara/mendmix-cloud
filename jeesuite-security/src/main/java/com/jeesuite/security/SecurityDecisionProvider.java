@@ -18,7 +18,7 @@ package com.jeesuite.security;
 import java.io.Serializable;
 import java.util.List;
 
-import com.jeesuite.security.Constants.CacheType;
+import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.exception.UserNotFoundException;
 import com.jeesuite.security.exception.UserPasswordWrongException;
 import com.jeesuite.security.model.BaseUserInfo;
@@ -48,6 +48,10 @@ public abstract class SecurityDecisionProvider {
 	}
 	
 	public boolean keepCookie(){
+		return true;
+	}
+	
+	public boolean oauth2Enabled(){
 		return true;
 	}
 	

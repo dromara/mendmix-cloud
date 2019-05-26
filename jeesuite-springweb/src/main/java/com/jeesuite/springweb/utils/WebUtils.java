@@ -2,8 +2,10 @@ package com.jeesuite.springweb.utils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -24,6 +26,8 @@ public class WebUtils {
 	private static final String POINT = ".";
 	private static final String XML_HTTP_REQUEST = "XMLHttpRequest";
 	private static final String MULTIPART = "multipart/";
+	private static List<String> doubleDomainSuffixs = Arrays.asList(".com.cn",".org.cn",".net.cn");
+	
 	
 	public static boolean isAjax(HttpServletRequest request){
 	    return  (request.getHeader(WebConstants.HEADER_REQUESTED_WITH) != null  
@@ -93,23 +97,25 @@ public class WebUtils {
 	public static  String getRootDomain(HttpServletRequest request) {
 		String host = request.getHeader(WebConstants.HEADER_FORWARDED_HOST);
 		if(StringUtils.isBlank(host))host = request.getServerName();
-		
-		if(IpUtils.isIp(host) || IpUtils.LOCAL_HOST.equals(host)){
-			return host;
-		}
-		
-		String[] segs = StringUtils.split(host, POINT);
-		int len = segs.length;
-		return segs[len - 2] + POINT+ segs[len - 1];
+		return parseHostRootDomain(host);
 	}
 	
 	public static  String getRootDomain(String url) {
 		String host = getDomain(url);
-		if(IpUtils.isIp(host) || IpUtils.LOCAL_HOST.equals(host))return host;
-		
+		return parseHostRootDomain(host);
+	}
+	
+	private static String parseHostRootDomain(String host){
+		if(IpUtils.isIp(host) || IpUtils.LOCAL_HOST.equals(host)){
+			return host;
+		}
 		String[] segs = StringUtils.split(host, POINT);
 		int len = segs.length;
-		return segs[len - 2] + POINT+ segs[len - 1];
+		
+		if(doubleDomainSuffixs.stream().anyMatch(e -> host.endsWith(e))){
+			return segs[len - 3] + POINT + segs[len - 2] + POINT + segs[len - 1];
+		}
+		return segs[len - 2] + POINT + segs[len - 1];
 	}
 	
 	public static  String getDomain(String url) {

@@ -24,7 +24,7 @@ import java.util.List;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月30日
  */
-public abstract class BaseUserInfo {
+public class BaseUserInfo {
 
 	private Serializable id;
 	private String userName;

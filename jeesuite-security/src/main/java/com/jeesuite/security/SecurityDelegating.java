@@ -17,8 +17,11 @@ package com.jeesuite.security;
 
 import java.io.Serializable;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.security.model.AccessToken;
 import com.jeesuite.security.model.BaseUserInfo;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.spring.InstanceFactory;
@@ -35,6 +38,7 @@ public class SecurityDelegating {
 	private SecurityDecisionProvider decisionProvider;
 	private SecuritySessionManager sessionManager;
 	private SecurityResourceManager resourceManager;
+	private SecurityOauth2Manager oauth2Manager;
 	
 	private static volatile SecurityDelegating instance;
 
@@ -42,6 +46,9 @@ public class SecurityDelegating {
 		decisionProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
 		sessionManager = new SecuritySessionManager(decisionProvider);
 		resourceManager = new SecurityResourceManager(decisionProvider);
+		if(decisionProvider.oauth2Enabled()){
+			oauth2Manager = new SecurityOauth2Manager(decisionProvider);
+		}
 	}
 
 	public static SecurityDelegating getInstance() {
@@ -57,11 +64,13 @@ public class SecurityDelegating {
 	 * 认证
 	 * @param name
 	 * @param password
+	 * @param setCookies 是否需要把登录信息写入cookies
 	 */
-	public static BaseUserInfo doAuthentication(String name,String password){
+	public static UserSession doAuthentication(String name,String password,boolean setCookies){
 		BaseUserInfo userInfo = getInstance().decisionProvider.validateUser(name, password);
 		
-		UserSession session = getCurrentSession(false);
+		UserSession session = getCurrentSession(false,setCookies);
+
 		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
 		
 		if(!getInstance().decisionProvider.multiPointEnable()){
@@ -70,14 +79,27 @@ public class SecurityDelegating {
 				getInstance().sessionManager.removeLoginSession(otherSession.getSessionId());
 			}
 		}
-		getInstance().sessionManager.storgeLoginSession(session);
+		getInstance().sessionManager.storageLoginSession(session);
 		getInstance().resourceManager.getUserPermissionCodes(userInfo.getId());
 		
-		return userInfo;
+		return session;
+	}
+	
+	public static String doAuthenticationForOauth2(String name,String password){
+		BaseUserInfo userInfo = getInstance().decisionProvider.validateUser(name, password);
+		return getInstance().oauth2Manager.createOauth2AuthCode(userInfo.getId());
+	}
+	
+	public static String oauth2AuthCode2UserId(String authCode){
+		return getInstance().oauth2Manager.authCode2UserId(authCode);
+	}
+	
+	public static AccessToken createOauth2AccessToken(BaseUserInfo user){
+		return getInstance().oauth2Manager.createAccessToken(user);
 	}
 	
 	public static void updateSession(BaseUserInfo userInfo){
-		UserSession session = getCurrentSession(false);
+		UserSession session = getCurrentSession();
 		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
 		
 		if(!getInstance().decisionProvider.multiPointEnable()){
@@ -86,7 +108,7 @@ public class SecurityDelegating {
 				getInstance().sessionManager.removeLoginSession(otherSession.getSessionId());
 			}
 		}
-		getInstance().sessionManager.storgeLoginSession(session);
+		getInstance().sessionManager.storageLoginSession(session);
 		getInstance().resourceManager.getUserPermissionCodes(userInfo.getId());
 	}
 	
@@ -114,11 +136,29 @@ public class SecurityDelegating {
 	}
 	
 	public static UserSession getCurrentSession(){
-		return getCurrentSession(false);
+		return getCurrentSession(true,true);
 	}
 	
-	public static UserSession getCurrentSession(boolean first){
-		return getInstance().sessionManager.getSessionIfNotCreateAnonymous(RequestContextHolder.getRequest(), RequestContextHolder.getResponse(),first);
+	public static UserSession getRequireLoginSession(){
+		UserSession session = getCurrentSession(true,true);
+		if(session == null || session.isAnonymous()){
+			throw new UnauthorizedException();
+		}
+		return session;
+	}
+	
+	private static UserSession getCurrentSession(boolean first,boolean setCookies){
+		HttpServletResponse response = setCookies ? RequestContextHolder.getResponse() : null;
+		return getInstance().sessionManager.getSessionIfNotCreateAnonymous(RequestContextHolder.getRequest(), response,first);
+	}
+	
+	public static UserSession genUserSession(String sessionId){
+    	return getInstance().sessionManager.getLoginSession(sessionId);
+    }
+	
+	public static boolean validateSessionId(String sessionId){
+		UserSession session = getInstance().sessionManager.getLoginSession(sessionId);
+		return session != null && session.isAnonymous() == false; 
 	}
 	
 	public static void refreshUserPermssion(Serializable...userIds){
@@ -138,6 +178,8 @@ public class SecurityDelegating {
     public static void doLogout(){
     	getInstance().sessionManager.destroySessionAndCookies(RequestContextHolder.getRequest(), RequestContextHolder.getResponse());
 	}
+    
+    
     
     
 }
