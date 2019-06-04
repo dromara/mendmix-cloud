@@ -13,7 +13,7 @@ import com.jeesuite.filesystem.provider.AbstractProvider;
 import com.jeesuite.filesystem.provider.FSOperErrorException;
 import com.jeesuite.filesystem.utils.FilePathHelper;
 import com.qiniu.common.QiniuException;
-import com.qiniu.common.Zone;
+import com.qiniu.common.Region;
 import com.qiniu.http.Response;
 import com.qiniu.storage.BucketManager;
 import com.qiniu.storage.Configuration;
@@ -63,8 +63,8 @@ public class QiniuProvider extends AbstractProvider {
 		this.bucketName = bucketName;
 		auth = Auth.create(accessKey, secretKey);
 
-		Zone z = Zone.autoZone();
-		Configuration c = new Configuration(z);
+		Region region = Region.autoRegion();
+		Configuration c = new Configuration(region);
 		uploadManager = new UploadManager(c);
 		bucketManager = new BucketManager(auth,c);
 		
