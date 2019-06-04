@@ -56,6 +56,6 @@ public class RestConst {
     /**
 	 * 慢应用跟踪阀值（毫秒）
 	 */
-    public static final long SLOW_THRESHOLD = Long.parseLong(ResourceUtils.get("slow_request_threshold", "10000"));
+    public static final long SLOW_THRESHOLD = Long.parseLong(ResourceUtils.getProperty("slow_request_threshold", "10000"));
 
 }

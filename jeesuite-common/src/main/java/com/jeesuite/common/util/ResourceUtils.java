@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.jeesuite.common.util;
 
 import java.io.File;
@@ -38,18 +35,15 @@ public final class ResourceUtils {
 	
 	private final static Properties allProperties = new Properties();
 	
-	private static Method envHelperGetPropertiesMethod;
-	private static Method envHelperGetAllPropertiesMethod;
+	private static Method getAllPropertiesFromEnvMethod;
 	
 	private synchronized static void load() {
 		if(inited)return;
 		try {
         	Class<?> threadClazz = Class.forName("com.jeesuite.spring.helper.EnvironmentHelper");  
-        	envHelperGetPropertiesMethod = threadClazz.getMethod("getProperty", String.class);
-        	envHelperGetAllPropertiesMethod = threadClazz.getMethod("getAllProperties", String.class);
+        	getAllPropertiesFromEnvMethod = threadClazz.getMethod("getAllProperties", String.class);
 		} catch (Exception e) {}
-		
-		merged = envHelperGetAllPropertiesMethod == null && envHelperGetPropertiesMethod == null;
+		merged = getAllPropertiesFromEnvMethod == null;
 		try {
 			String extPropertyDir = System.getProperty("ext.config.dir");
 			if(StringUtils.isNotBlank(extPropertyDir)){
@@ -136,32 +130,17 @@ public final class ResourceUtils {
 	private synchronized static void mergeWithEnvironment(){
 		if(merged)return;
 		Map<String, Object> envProperties = null;
-		if(envHelperGetAllPropertiesMethod != null){
+		if(getAllPropertiesFromEnvMethod != null){
 			try {
-				envProperties = (Map<String, Object>) envHelperGetAllPropertiesMethod.invoke(null,"");
-				if(envProperties == null || envProperties.isEmpty())return;
+				envProperties = (Map<String, Object>) getAllPropertiesFromEnvMethod.invoke(null,"");
 				for (String key : envProperties.keySet()) {
-					allProperties.setProperty(key, envProperties.get(key).toString());
+					if(envProperties.get(key) != null){
+						allProperties.setProperty(key, envProperties.get(key).toString());
+					}
 				}
 				merged = true;
 			} catch (Exception e) {}
-			return;
 		}
-		Set<Entry<Object, Object>> entrySet = allProperties.entrySet();
-		
-		for (Entry<Object, Object> entry : entrySet) {
-			Object value = null;
-			try {
-				value = envHelperGetPropertiesMethod.invoke(null, entry.getKey());
-				if(value != null){
-					allProperties.setProperty(entry.getKey().toString(), value.toString());
-				}
-			} catch (Exception e) {
-				return;
-			}
-		}
-		
-		merged = true;
 	}
 
 	/**
@@ -191,15 +170,6 @@ public final class ResourceUtils {
 			}
 		}
 		return properties;
-	}
-	
-	@Deprecated
-	public static String get(String key, String...defaultValue) {
-		if (defaultValue != null && defaultValue.length > 0 && defaultValue[0] != null) {
-			return getProperty(key,defaultValue[0]);
-		} else {
-			return getProperty(key);
-		}
 	}
 	
 	public static String getProperty(String key) {
@@ -270,11 +240,16 @@ public final class ResourceUtils {
         Set<Entry<Object, Object>> entrySet = properties.entrySet();
 		for (Entry<Object, Object> entry : entrySet) {
 			Object value = null;
-			try {value = envHelperGetPropertiesMethod.invoke(null, entry.getKey());} catch (Exception e) {}
 			if(value == null)value = entry.getValue();
 			if(value != null){
 				allProperties.setProperty(entry.getKey().toString(), value.toString());
 			}
+		}
+	}
+	
+	public synchronized static void merge(Map<String, Object> properties){
+		for (String key : properties.keySet()) {
+			allProperties.setProperty(key, properties.get(key).toString());
 		}
 	}
 	

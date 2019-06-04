@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
@@ -36,7 +37,8 @@ public class SecuritySessionManager {
 	
 	public SecuritySessionManager(SecurityDecisionProvider decisionProvider) {
        if(CacheType.redis == decisionProvider.cacheType()){
-    	   this.cache = new RedisCache("security:session", decisionProvider.sessionExpireIn());
+    	   JedisProviderFactory.addGroupProvider("auth");
+    	   this.cache = new RedisCache("security.session", decisionProvider.sessionExpireIn());
 		}else{
 			this.cache = new LocalCache(decisionProvider.sessionExpireIn());
 		}

@@ -18,10 +18,13 @@ package com.jeesuite.springweb.utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -49,6 +52,36 @@ public class ParameterUtils {
 	public final static String PARAM_SIGN_TYPE = "signType";
 	public final static String PARAM_DATA = "data";
 	
+	public static Map<String, Object> queryParamsToMap(HttpServletRequest request) {
+
+		Map<String, Object> params = new HashMap<String, Object>();
+		Enumeration<String> e = request.getParameterNames();
+
+		StringBuilder tmpbuff = new StringBuilder();
+		if (e.hasMoreElements()) {
+			while (e.hasMoreElements()) {
+				String name = e.nextElement();
+				String[] values = request.getParameterValues(name);
+				if (values.length == 1) {
+					if (StringUtils.isNotBlank(values[0]))
+						params.put(name, values[0]);
+				} else {
+					tmpbuff.setLength(0);
+					for (int i = 0; i < values.length; i++) {
+						if (StringUtils.isNotBlank(values[i])) {
+							tmpbuff.append(values[i].trim()).append(",");
+						}
+					}
+					if (tmpbuff.length() > 0) {
+						tmpbuff.deleteCharAt(tmpbuff.length() - 1);
+						params.put(name, tmpbuff.toString());
+					}
+				}
+			}
+		}
+		return params;
+	}
+	
 	public static Map<String, Object> queryParamsToMap(String queryParams){
 		Map<String, Object>  map = new HashMap<String, Object>();
 		String[] paramSegs = StringUtils.split(queryParams, CONTACT_STR);
@@ -61,27 +94,13 @@ public class ParameterUtils {
 		return map;
 	}
 	
-	
-	public static String mapToQueryParams(Map<String, Object> map,boolean sort){
-		StringBuilder sb = new StringBuilder();
-		List<String> keys = new ArrayList<>(map.keySet());
-		if(sort){
-			Collections.sort(keys);
-		}
-		for (String key : keys) {
-			sb.append(key).append(EQUALS_STR).append(map.get(key)).append(CONTACT_STR);
-		}
-		sb.deleteCharAt(sb.length() - 1);
-		return sb.toString();
-	}
-	
-	public static String objectToSignContent(Object param){
+	private static String objectToQueryParams(Object param){
 		Map<String, Object> map = BeanUtils.beanToMap(param);
-		return mapToSignContent(map);
+		return mapToQueryParams(map);
 	}
 	
 	
-	public static String mapToSignContent(Map<String, Object> param){
+	public static String mapToQueryParams(Map<String, Object> param){
 
 		if(param == null || param.isEmpty())return null;
 		StringBuilder sb = new StringBuilder();
@@ -93,7 +112,7 @@ public class ParameterUtils {
 			value = param.get(key);
 			if(value == null || StringUtils.isBlank(value.toString()))continue;
 			if(value instanceof Map){
-				value = mapToSignContent((Map<String, Object>) value);
+				value = mapToQueryParams((Map<String, Object>) value);
 				if(value != null){
 					value = JSON_PREFIX + value + JSON_SUFFIX;
 				}
@@ -106,7 +125,7 @@ public class ParameterUtils {
                 	if(BeanUtils.isSimpleDataType(object)){
                 		sb1.append(object).append(SPLIT_STR);
                 	}else{                		
-                		sb1.append(JSON_PREFIX).append(objectToSignContent(object)).append(JSON_SUFFIX).append(SPLIT_STR);
+                		sb1.append(JSON_PREFIX).append(objectToQueryParams(object)).append(JSON_SUFFIX).append(SPLIT_STR);
                 	}
                 }
                 if(sb1.length() == 1){

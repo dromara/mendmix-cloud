@@ -9,17 +9,23 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 import com.jeesuite.cache.redis.cluster.JedisClusterProvider;
+import com.jeesuite.cache.redis.sentinel.JedisSentinelProvider;
 import com.jeesuite.cache.redis.standalone.JedisStandaloneProvider;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.InstanceFactory;
 
+import redis.clients.jedis.BinaryJedis;
 import redis.clients.jedis.BinaryJedisClusterCommands;
 import redis.clients.jedis.BinaryJedisCommands;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCommands;
+import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.MultiKeyBinaryCommands;
 import redis.clients.jedis.MultiKeyBinaryJedisClusterCommands;
 import redis.clients.jedis.MultiKeyCommands;
@@ -146,5 +152,33 @@ public class JedisProviderFactory {
 	
 	public static boolean isCluster(String groupName){
 		return JedisClusterProvider.MODE.equals(currentMode(groupName));
+	}
+	
+	public static synchronized void addGroupProvider(String groupName){
+		if(containsGroup(groupName))return;
+		String prefix =  groupName + ".cache." ;
+		String mode = ResourceUtils.getAndValidateProperty(prefix + "mode");
+		String server = ResourceUtils.getAndValidateProperty(prefix + "servers");
+		String datebase = ResourceUtils.getAndValidateProperty(prefix + "datebase");
+		String password = ResourceUtils.getProperty(prefix + "password");
+		String maxPoolSize = ResourceUtils.getProperty(prefix + "maxPoolSize","50");
+		
+		JedisPoolConfig poolConfig = new JedisPoolConfig();
+		poolConfig.setMaxIdle(1);
+		poolConfig.setMinEvictableIdleTimeMillis(30*60*1000);
+		poolConfig.setMaxTotal(Integer.parseInt(maxPoolSize));
+		poolConfig.setMaxWaitMillis(5 * 1000);
+		
+		String[] servers = server.split(";|,");
+		int timeout = 3000;
+		if("standalone".equals(mode)){
+			JedisProvider<Jedis,BinaryJedis> provider = new JedisStandaloneProvider(groupName, poolConfig, servers, timeout, password, Integer.parseInt(datebase),null);
+			JedisProviderFactory.addProvider(provider);
+		}else if("sentinel".equals(mode)){
+			String masterName = ResourceUtils.getProperty("jeesuite.lock.redis.masterName", ResourceUtils.getProperty("jeesuite.cache.masterName"));
+			Validate.notBlank(masterName, "config[jeesuite.lock.redis.masterName] not found");
+			JedisSentinelProvider provider = new JedisSentinelProvider(groupName, poolConfig, servers, timeout, password, Integer.parseInt(datebase), null, masterName);
+			JedisProviderFactory.addProvider(provider);
+		}
 	}
 }

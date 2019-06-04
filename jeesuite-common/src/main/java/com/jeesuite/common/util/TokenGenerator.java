@@ -20,7 +20,6 @@ public class TokenGenerator {
 
 	private static final String LINE_THROUGH = "-";
 	private static final int EXPIRE = 1000*60*3;
-	private static final String DES_CRYPT_KEY = ResourceUtils.getProperty("des.crypt.key");
 
 	public static String generate(String...prefixs){
 		String str = StringUtils.replace(UUID.randomUUID().toString(), LINE_THROUGH, StringUtils.EMPTY);
@@ -60,7 +59,6 @@ public class TokenGenerator {
 	}
 	
 	private static String getCryptKey(Date date){
-		if(DES_CRYPT_KEY != null && DES_CRYPT_KEY.length() == 8)return DES_CRYPT_KEY;
 		SimpleDateFormat format = new SimpleDateFormat("ddMMMyy", Locale.ENGLISH);
         String key = format.format(date).toUpperCase();
         key  = DigestUtils.md5(key).substring(0,8);

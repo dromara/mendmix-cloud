@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 
@@ -214,7 +215,10 @@ public class WebUtils {
 			isInner = IpUtils.isInnerIp(StringUtils.split(forwardHost, ":")[0]);
 		}else{			
 			if(!isInner){
-				isInner = IpUtils.isInnerIp(IpUtils.getinvokerIpAddr(request));
+				String referer = request.getHeader(HttpHeaders.REFERER);
+				if(StringUtils.isBlank(referer)){					
+					isInner = IpUtils.isInnerIp(IpUtils.getinvokerIpAddr(request));
+				}
 			}
 		}
 		return isInner;

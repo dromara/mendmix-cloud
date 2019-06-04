@@ -25,6 +25,7 @@ import com.jeesuite.security.model.AccessToken;
 import com.jeesuite.security.model.BaseUserInfo;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.springweb.RequestContextHelper;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
 import com.jeesuite.springweb.exception.UnauthorizedException;
 
@@ -38,6 +39,7 @@ public class SecurityDelegating {
 	private SecurityDecisionProvider decisionProvider;
 	private SecuritySessionManager sessionManager;
 	private SecurityResourceManager resourceManager;
+	private SecurityTicketManager ticketManager;
 	private SecurityOauth2Manager oauth2Manager;
 	
 	private static volatile SecurityDelegating instance;
@@ -45,6 +47,7 @@ public class SecurityDelegating {
 	private SecurityDelegating() {
 		decisionProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
 		sessionManager = new SecuritySessionManager(decisionProvider);
+		ticketManager = new SecurityTicketManager(decisionProvider);
 		resourceManager = new SecurityResourceManager(decisionProvider);
 		if(decisionProvider.oauth2Enabled()){
 			oauth2Manager = new SecurityOauth2Manager(decisionProvider);
@@ -64,12 +67,11 @@ public class SecurityDelegating {
 	 * 认证
 	 * @param name
 	 * @param password
-	 * @param setCookies 是否需要把登录信息写入cookies
 	 */
-	public static UserSession doAuthentication(String name,String password,boolean setCookies){
+	public static UserSession doAuthentication(String name,String password){
 		BaseUserInfo userInfo = getInstance().decisionProvider.validateUser(name, password);
 		
-		UserSession session = getCurrentSession(false,setCookies);
+		UserSession session = getCurrentSession(false);
 
 		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
 		
@@ -98,7 +100,7 @@ public class SecurityDelegating {
 		return getInstance().oauth2Manager.createAccessToken(user);
 	}
 	
-	public static void updateSession(BaseUserInfo userInfo){
+	public static UserSession updateSession(BaseUserInfo userInfo){
 		UserSession session = getCurrentSession();
 		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
 		
@@ -110,6 +112,8 @@ public class SecurityDelegating {
 		}
 		getInstance().sessionManager.storageLoginSession(session);
 		getInstance().resourceManager.getUserPermissionCodes(userInfo.getId());
+		
+		return session;
 	}
 	
 	/**
@@ -136,20 +140,20 @@ public class SecurityDelegating {
 	}
 	
 	public static UserSession getCurrentSession(){
-		return getCurrentSession(true,true);
+		return getCurrentSession(true);
 	}
 	
 	public static UserSession getRequireLoginSession(){
-		UserSession session = getCurrentSession(true,true);
+		UserSession session = getCurrentSession(true);
 		if(session == null || session.isAnonymous()){
 			throw new UnauthorizedException();
 		}
 		return session;
 	}
 	
-	private static UserSession getCurrentSession(boolean first,boolean setCookies){
-		HttpServletResponse response = setCookies ? RequestContextHolder.getResponse() : null;
-		return getInstance().sessionManager.getSessionIfNotCreateAnonymous(RequestContextHolder.getRequest(), response,first);
+	private static UserSession getCurrentSession(boolean first){
+		HttpServletResponse response = RequestContextHelper.getResponse();
+		return getInstance().sessionManager.getSessionIfNotCreateAnonymous(RequestContextHelper.getRequest(), response,first);
 	}
 	
 	public static UserSession genUserSession(String sessionId){
@@ -171,15 +175,24 @@ public class SecurityDelegating {
 		}
 	}
 	
+	public static SecurityDecisionProvider getSecurityDecision(){
+		return getInstance().decisionProvider;
+	}
+	
 	public static void refreshResources(){
 		getInstance().resourceManager.refreshResources();
 	}
 
     public static void doLogout(){
-    	getInstance().sessionManager.destroySessionAndCookies(RequestContextHolder.getRequest(), RequestContextHolder.getResponse());
+    	getInstance().sessionManager.destroySessionAndCookies(RequestContextHelper.getRequest(), RequestContextHelper.getResponse());
 	}
     
     
+    public static String objectToTicket(Object value){
+    	return getInstance().ticketManager.setTicketObject(value);
+    }
     
-    
+    public static <T> T ticketToObject(String ticket){
+    	return getInstance().ticketManager.getTicketObject(ticket);
+    }
 }

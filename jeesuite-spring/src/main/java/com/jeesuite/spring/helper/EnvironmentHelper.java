@@ -23,7 +23,10 @@ public class EnvironmentHelper {
 	}
 
 	public static void init() {
-		if(environment == null && InstanceFactory.isInitialized()){
+		if(!InstanceFactory.isInitialized()){
+			throw new NullPointerException();
+		}
+		if(environment == null){
 			synchronized (EnvironmentHelper.class) {
 				environment = InstanceFactory.getInstance(Environment.class);
 			}

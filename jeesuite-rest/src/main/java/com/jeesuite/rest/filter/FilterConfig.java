@@ -13,18 +13,18 @@ import com.jeesuite.common.util.ResourceUtils;
 public class FilterConfig {
 
 	public static boolean corsEnabled(){
-		return Boolean.parseBoolean(ResourceUtils.get("cors.enabled", "false"));
+		return Boolean.parseBoolean(ResourceUtils.getProperty("cors.enabled", "false"));
 	}
 	
 	public static String getCorsAllowOrgin(){
-		return ResourceUtils.get("cors.allow.origin", "*");
+		return ResourceUtils.getProperty("cors.allow.origin", "*");
 	}
 	
 	public static boolean reqRspLogEnabled(){
-		return Boolean.parseBoolean(ResourceUtils.get("reqres.log.enabled", "false"));
+		return Boolean.parseBoolean(ResourceUtils.getProperty("reqres.log.enabled", "false"));
 	}
 	
 	public static boolean apiDocEnabled(){
-		return Boolean.parseBoolean(ResourceUtils.get("apidoc.enabled", "true"));
+		return Boolean.parseBoolean(ResourceUtils.getProperty("apidoc.enabled", "true"));
 	}
 }

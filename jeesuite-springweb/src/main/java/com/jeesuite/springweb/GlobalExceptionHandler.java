@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.springweb.model.WrapperResponseEntity;
+import com.jeesuite.springweb.utils.WebUtils;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -71,11 +72,13 @@ public class GlobalExceptionHandler {
 			logger.error("", e);
 		}
 
-		int errorCode = resp.getCode();
-		if(errorCode >= 400 && errorCode<=500){
-			response.setStatus(errorCode);
-		}else{
-			response.setStatus(500);
+		if(WebUtils.isInternalRequest(RequestContextHelper.getRequest())){
+			int errorCode = resp.getCode();
+			if(errorCode >= 400 && errorCode<=500){
+				response.setStatus(errorCode);
+			}else{
+				response.setStatus(500);
+			}
 		}
 		
 		return resp;
