@@ -24,6 +24,7 @@ public class PathMatcher {
 	}
 	
 	public PathMatcher(String prefix,String[] uris) {
+		if(uris == null)return;
 		for (String uri : uris) {
 			if(StringUtils.isBlank(uri))continue;
 			uri = prefix + uri;

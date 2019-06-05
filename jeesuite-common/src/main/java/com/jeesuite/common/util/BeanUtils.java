@@ -76,7 +76,7 @@ public class BeanUtils {
                     if (!matched) {
                     	
                         if (value != null || setDefaultValForNull) {
-                        	if(isSimpleDataType(srcDescriptor)){                        		
+                        	if(isSimpleDataType(srcDescriptor.getPropertyType())){                        		
                         		value = toValue(srcDescriptor, value, propertyType);
                         	}else{
                         		value = copy(value, propertyType);
@@ -88,9 +88,9 @@ public class BeanUtils {
                         if (destDescriptor.getPropertyType() == Long.class || destDescriptor.getPropertyType() == Integer.class || destDescriptor.getPropertyType() == Short.class || destDescriptor.getPropertyType() == Double.class || destDescriptor.getPropertyType() == Float.class) {
                             value = 0;
                         } else if (destDescriptor.getPropertyType() == String.class) {
-                            value = "";
+                            value = StringUtils.EMPTY;
                         } else if (destDescriptor.getPropertyType() == BigDecimal.class) {
-                            value = new BigDecimal("0");
+                            value = BigDecimal.ZERO;
                         }
                     }
 
@@ -182,7 +182,7 @@ public class BeanUtils {
     private static Object toValue(PropertyDescriptor srcDescriptor, Object value, Class<?> propertyType) {
         
     	if (propertyType == BigDecimal.class) {
-            value = (value == null) ? new BigDecimal("0") : new BigDecimal(value.toString());
+            value = (value == null) ? BigDecimal.ZERO : new BigDecimal(value.toString());
         } else if (propertyType == byte.class || propertyType == Byte.class) {
             value = (value == null) ? Byte.valueOf("0") : Byte.valueOf(value.toString());
         } else if (propertyType == short.class || propertyType == Short.class) {
@@ -309,15 +309,6 @@ public class BeanUtils {
         }
 
         return map;
-    }
-    
-    private static List<String> getClassFields(Class<?> clazz) throws IntrospectionException{
-    	String canonicalName = clazz.getCanonicalName();
-    	
-    	if(!fieldCache.containsKey(canonicalName)){
-    		doCacheClass(clazz, canonicalName);
-    	}
-    	return fieldCache.get(canonicalName);
     }
 
 	/**
