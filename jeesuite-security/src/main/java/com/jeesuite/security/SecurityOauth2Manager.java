@@ -13,7 +13,7 @@ import com.jeesuite.security.model.BaseUserInfo;
 
 public class SecurityOauth2Manager {
 
-	private static final Integer TOKEN_EXPIRED_SECONDS = ResourceUtils.getInt("security.oauth2.access-token.expirein", 3600 * 24);
+	private static final Integer TOKEN_EXPIRED_SECONDS = ResourceUtils.getInt(SecurityConstants.CONFIG_OAUTH2_TOKEN_EXPIRE_IN, 3600 * 24);
 	private Cache cache;
 	private Cache tokenCache;
 	

@@ -25,6 +25,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.util.PathMatcher;
@@ -46,7 +47,8 @@ public class SecurityResourceManager {
 	private String contextPath;
 	private SecurityDecisionProvider decisionProvider;
 
-	private PathMatcher anonymousUriMatcher;
+	private PathMatcher anonymousUrlMatcher;
+	private PathMatcher protectedUrlMatcher;
 	// 无通配符uri
 	private volatile Map<String, String> nonWildcardUriPerms = new HashMap<>();
 	private volatile Map<Pattern, String> wildcardUriPermPatterns = new HashMap<>();
@@ -67,7 +69,12 @@ public class SecurityResourceManager {
 		if (contextPath.endsWith("/")) {
 			contextPath = contextPath.substring(0, contextPath.indexOf("/"));
 		}
-		anonymousUriMatcher = new PathMatcher(contextPath, decisionProvider.anonymousUris());
+		
+		if(ArrayUtils.isNotEmpty(decisionProvider.protectedUrlPatterns())){
+			protectedUrlMatcher = new PathMatcher(contextPath, decisionProvider.protectedUrlPatterns());
+		}else if(ArrayUtils.isNotEmpty(decisionProvider.anonymousUrlPatterns())){
+			anonymousUrlMatcher = new PathMatcher(contextPath, decisionProvider.anonymousUrlPatterns());
+		}
 		//
 		final boolean forceRefresh = CacheType.redis == decisionProvider.cacheType();
 		refreshExecutor.scheduleAtFixedRate(new Runnable() {
@@ -144,7 +151,13 @@ public class SecurityResourceManager {
 	}
 	
 	public boolean isAnonymous(String uri){
-		return anonymousUriMatcher.match(uri);
+		if(protectedUrlMatcher != null){
+			return !protectedUrlMatcher.match(uri);
+		}
+       if(anonymousUrlMatcher != null){
+			return anonymousUrlMatcher.match(uri);
+		}
+		return false;
 	}
 	
 	public void refreshUserPermssions(Serializable userId){

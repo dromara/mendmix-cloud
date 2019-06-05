@@ -18,6 +18,7 @@ package com.jeesuite.security;
 import java.io.Serializable;
 import java.util.List;
 
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.exception.UserNotFoundException;
 import com.jeesuite.security.exception.UserPasswordWrongException;
@@ -56,14 +57,20 @@ public abstract class SecurityDecisionProvider {
 	}
 	
 	public CacheType cacheType(){
+		if(CacheType.redis.name().equals(ResourceUtils.getProperty(SecurityConstants.CONFIG_STORAGE_TYPE))){
+			return CacheType.redis;
+		}
 		return CacheType.local;
 	}
 	
 	public abstract String superAdminName();
 	public abstract String contextPath();
-	public abstract String[] anonymousUris();
+	public abstract String[] anonymousUrlPatterns();
+	public abstract String[] protectedUrlPatterns();
 	public abstract BaseUserInfo validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
 	public abstract List<String> findAllUriPermissionCodes();
 	public abstract List<String> getUserPermissionCodes(Serializable userId);
 	public abstract void authorizedPostHandle(UserSession session);
+	public abstract String _401_Error_Page();
+	public abstract String _403_Error_Page();
 }
