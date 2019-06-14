@@ -5,6 +5,7 @@ public class AccessToken {
 	private String access_token;
 	private String refresh_token;
 	private int expires_in;
+	private String payload;
 	
 	public String getAccess_token() {
 		return access_token;
@@ -23,6 +24,12 @@ public class AccessToken {
 	}
 	public void setExpires_in(int expires_in) {
 		this.expires_in = expires_in;
+	}
+	public String getPayload() {
+		return payload;
+	}
+	public void setPayload(String payload) {
+		this.payload = payload;
 	}
 	
 	

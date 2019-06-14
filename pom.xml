@@ -65,12 +65,11 @@
 		<module>jeesuite-springboot-starter</module>
 		<module>jeesuite-springweb</module>
 		<!-- 
-		<module>jeesuite-log</module>
 		<module>jeesuite-search</module>
-		<module>jeesuite-tx</module>
 		 -->
 		<module>jeesuite-event</module>
 		<module>jeesuite-security</module>
+		<module>jeesuite-log</module>
 	</modules>
 
 	<dependencies>

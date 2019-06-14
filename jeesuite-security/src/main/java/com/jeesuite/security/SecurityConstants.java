@@ -27,7 +27,6 @@ public class SecurityConstants {
 	// parameter
 	public static final String PARAM_CLIENT_ID = "client_id";
 	public static final String PARAM_RETURN_URL = "return_url";
-	public static final String PARAM_ORIGIN_URL = "origin_url";
 	public static final String PARAM_SESSION_ID = "session_id";
 	public static final String PARAM_LOGIN_TYPE = "login_type";
 	public static final String PARAM_CODE = "code";

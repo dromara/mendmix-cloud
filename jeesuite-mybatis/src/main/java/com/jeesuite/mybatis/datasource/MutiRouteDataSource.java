@@ -34,7 +34,7 @@ import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
- * 自动路由多数据源（读写分离 and 水平分库路由）
+ * 自动路由多数据源（读写分离）
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年11月18日
@@ -176,7 +176,8 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 			String dsKey = iter.next(); //
 			Properties nodeProps = mapCustom.get(dsKey);
 			// 如果当前库为最新一组数据库，注册beanName为master
-			logger.info(">>>>>begin to initialize datasource：" + dsKey + "\n================\n" + nodeProps.toString()
+			logger.info(">>>>>begin to initialize datasource：" + dsKey + "\n================\n"
+			        + String.format("url:%s,username:%s", nodeProps.getProperty("url"),nodeProps.getProperty("username"))
 					+ "\n==============");
 			if (DataSourceType.Druid == dataSourceType) {
 				beanDefinitionBuilder = DruidDataSourceBuilder.builder(nodeProps);

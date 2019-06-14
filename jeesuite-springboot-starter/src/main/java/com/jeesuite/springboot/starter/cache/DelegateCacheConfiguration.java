@@ -3,11 +3,14 @@
  */
 package com.jeesuite.springboot.starter.cache;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,6 +18,8 @@ import com.jeesuite.cache.local.EhCacheLevel1CacheProvider;
 import com.jeesuite.cache.local.GuavaLevel1CacheProvider;
 import com.jeesuite.cache.local.Level1CacheSupport;
 import com.jeesuite.cache.redis.JedisProviderFactoryBean;
+import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.spring.SpringInstanceProvider;
 
 import redis.clients.jedis.JedisPoolConfig;
 
@@ -27,7 +32,7 @@ import redis.clients.jedis.JedisPoolConfig;
 @EnableConfigurationProperties({CacheProperties.class,Level1CacheProperties.class})
 @ConditionalOnClass(JedisProviderFactoryBean.class)
 @ConditionalOnProperty(name="jeesuite.cache.mode")
-public class DelegateCacheConfiguration {
+public class DelegateCacheConfiguration  implements ApplicationContextAware{
 
 	@Autowired
 	private CacheProperties cacheProperties;
@@ -80,5 +85,10 @@ public class DelegateCacheConfiguration {
 			}
 		}
 		return support;
+	}
+	
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
 	}
 }

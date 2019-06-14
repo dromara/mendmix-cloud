@@ -143,7 +143,7 @@ public class SecurityDelegating {
 		return getCurrentSession(true);
 	}
 	
-	public static UserSession getRequireLoginSession(){
+	public static UserSession getAndValidateCurrentSession(){
 		UserSession session = getCurrentSession(true);
 		if(session == null || session.isAnonymous()){
 			throw new UnauthorizedException();

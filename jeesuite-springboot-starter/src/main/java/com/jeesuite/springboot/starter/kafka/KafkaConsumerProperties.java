@@ -7,10 +7,17 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationContextInitializer;
 
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.spring.ApplicationStartedListener;
+import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
  * @description <br>
@@ -18,7 +25,7 @@ import com.jeesuite.common.util.ResourceUtils;
  * @date 2016年12月31日
  */
 @ConfigurationProperties(prefix="jeesuite.kafka.consumer")
-public class KafkaConsumerProperties implements InitializingBean{
+public class KafkaConsumerProperties implements InitializingBean,ApplicationContextAware{
 
 	private boolean  independent;
 	private boolean  useNewAPI = true;
@@ -80,6 +87,11 @@ public class KafkaConsumerProperties implements InitializingBean{
 			Entry<Object, Object> entry = iterator.next();
 			configs.put(entry.getKey().toString().replace("kafka.consumer.", ""), entry.getValue());
 		}
+	}
+	
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
 	}
 	
 }

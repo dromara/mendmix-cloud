@@ -1,4 +1,4 @@
-package com.jeesuite.log.spring;
+package com.jeesuite.log.log4j2;
 
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.config.Order;
@@ -8,11 +8,11 @@ import org.apache.logging.log4j.core.lookup.StrLookup;
 
 import com.jeesuite.common.util.ResourceUtils;
 
-@Plugin(name = "spring", category = StrLookup.CATEGORY)
+@Plugin(name = "context", category = StrLookup.CATEGORY)
 @Order(value=-1)
-public class LogSpringEnvrionmentLookup extends AbstractLookup {
+public class LogConfigLookup extends AbstractLookup {
 
-	public LogSpringEnvrionmentLookup() {
+	public LogConfigLookup() {
 		super();
 	}
 

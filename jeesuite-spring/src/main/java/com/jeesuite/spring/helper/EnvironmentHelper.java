@@ -17,12 +17,19 @@ public class EnvironmentHelper {
 
 	private static Environment environment;
 	
+	
+	public static synchronized void setEnvironment(Environment environment) {
+		if(EnvironmentHelper.environment != null){
+			EnvironmentHelper.environment = environment;
+		}
+	}
+
 	public static String getProperty(String key){
-		init();
+		if(environment == null)init();
 		return environment == null ? null : environment.getProperty(key);
 	}
 
-	public static void init() {
+	private static synchronized void init() {
 		if(!InstanceFactory.isInitialized()){
 			throw new NullPointerException();
 		}
@@ -34,14 +41,13 @@ public class EnvironmentHelper {
 	}
 	
 	public static boolean containsProperty(String key){
-		init();
+		if(environment == null)init();
 		return environment == null ? false : environment.containsProperty(key);
 	}
 	
 	
 	public static Map<String, Object> getAllProperties(String prefix){
-		init();
-		if(environment == null)return null;
+		if(environment == null)init();
 		MutablePropertySources propertySources = ((ConfigurableEnvironment)environment).getPropertySources();
 		
 		Map<String, Object> properties = new LinkedHashMap<String, Object>();
