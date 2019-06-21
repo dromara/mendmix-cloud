@@ -43,11 +43,9 @@ public class GlobalExceptionHandler {
 		}
 
 		WrapperResponseEntity resp = new WrapperResponseEntity();
-		if (e.getCause() != null && e.getCause() instanceof JeesuiteBaseException) {
-			JeesuiteBaseException e1 = (JeesuiteBaseException) e.getCause();
-			resp.setCode(e1.getCode());
-			resp.setMsg(e1.getMessage());
-		} else if (e instanceof JeesuiteBaseException) {
+		
+		e = (Exception) getActualThrowable(e);
+		if (e instanceof JeesuiteBaseException) {
 			JeesuiteBaseException e1 = (JeesuiteBaseException) e;
 			resp.setCode(e1.getCode());
 			resp.setMsg(e1.getMessage());
@@ -82,5 +80,13 @@ public class GlobalExceptionHandler {
 		}
 		
 		return resp;
+	}
+	
+	private Throwable getActualThrowable(Throwable e){
+		Throwable cause = e;
+		while(cause.getCause() != null){
+			cause = cause.getCause();
+		}
+		return cause;
 	}
 }

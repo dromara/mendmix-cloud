@@ -15,7 +15,6 @@
  */
 package com.jeesuite.security.model;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,14 +25,14 @@ import java.util.List;
  */
 public class BaseUserInfo {
 
-	private Serializable id;
+	private String id;
 	private String userName;
 	private List<String> scopes = new ArrayList<>();
 	
-	public Serializable getId() {
+	public String getId() {
 		return id;
 	}
-	public void setId(Serializable id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 	public String getUserName() {
@@ -48,4 +47,6 @@ public class BaseUserInfo {
 	public void setScopes(List<String> scopes) {
 		this.scopes = scopes;
 	}
+	
+
 }

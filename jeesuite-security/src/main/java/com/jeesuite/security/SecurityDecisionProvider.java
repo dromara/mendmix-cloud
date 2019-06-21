@@ -56,6 +56,10 @@ public abstract class SecurityDecisionProvider {
 		return true;
 	}
 	
+	public String superAdminName(){
+		return "sa";
+	}
+	
 	public CacheType cacheType(){
 		if(CacheType.redis.name().equals(ResourceUtils.getProperty(SecurityConstants.CONFIG_STORAGE_TYPE))){
 			return CacheType.redis;
@@ -63,7 +67,6 @@ public abstract class SecurityDecisionProvider {
 		return CacheType.local;
 	}
 	
-	public abstract String superAdminName();
 	public abstract String contextPath();
 	public abstract String[] anonymousUrlPatterns();
 	public abstract String[] protectedUrlPatterns();
