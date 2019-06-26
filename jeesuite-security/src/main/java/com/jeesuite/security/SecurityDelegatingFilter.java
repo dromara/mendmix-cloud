@@ -26,8 +26,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.jeesuite.security.client.LoginContext;
-import com.jeesuite.security.model.UserSession;
 import com.jeesuite.springweb.RequestContextHelper;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
 import com.jeesuite.springweb.exception.UnauthorizedException;
@@ -55,10 +53,8 @@ public class SecurityDelegatingFilter implements Filter {
 		
 		RequestContextHelper.set(request, response);
 
-		UserSession session = SecurityDelegating.getCurrentSession();
 		try {
-			SecurityDelegating.doAuthorization(session, request.getRequestURI());
-			LoginContext.setUserSession(session);
+			SecurityDelegating.doAuthorization();
 		} catch (UnauthorizedException e) {
 			if(WebUtils.isAjax(request)){				
 				WebUtils.responseOutJson(response, MSG_401_UNAUTHORIZED);

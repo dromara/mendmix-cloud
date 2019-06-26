@@ -1,6 +1,7 @@
 package com.jeesuite.common.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -20,10 +21,10 @@ public class PathMatcher {
 	private List<Pattern> uriPatterns = new ArrayList<>();
 
 	public PathMatcher(String prefix,String uriPatterns) {
-		this(prefix, StringUtils.trimToEmpty(uriPatterns).split(";|,"));
+		this(prefix, Arrays.asList(StringUtils.trimToEmpty(uriPatterns).split(";|,")));
 	}
 	
-	public PathMatcher(String prefix,String[] uris) {
+	public PathMatcher(String prefix,List<String> uris) {
 		if(uris == null)return;
 		for (String uri : uris) {
 			if(StringUtils.isBlank(uri))continue;

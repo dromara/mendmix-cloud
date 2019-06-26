@@ -13,6 +13,8 @@ import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
 import com.jeesuite.security.model.UserSession;
+import com.jeesuite.security.util.SecurityCryptUtils;
+import com.jeesuite.springweb.RequestContextHelper;
 import com.jeesuite.springweb.utils.WebUtils;
 
 /**
@@ -141,6 +143,40 @@ public class SecuritySessionManager {
 			}
 		}
 		return sessionId;
+	}
+	
+	public String getCurrentProfile(HttpServletRequest request) {
+		String sessionId = request.getParameter(SecurityConstants.HEADER_AUTH_PROFILE);
+		if(isBlank(sessionId)){
+			sessionId = request.getHeader(SecurityConstants.HEADER_AUTH_PROFILE);
+		}
+		if(isBlank(sessionId)){
+			Cookie[] cookies = request.getCookies();
+			if(cookies == null)return null;
+			for (Cookie cookie : cookies) {
+				if(SecurityConstants.HEADER_AUTH_PROFILE.equals(cookie.getName())){
+					sessionId = cookie.getValue();
+					break;
+				}
+			}
+		}
+		
+		if(StringUtils.isNotBlank(sessionId)){
+			sessionId = SecurityCryptUtils.decrypt(sessionId);
+		}
+		return sessionId;
+	}
+	
+	public void setCurrentProfile(String profile){
+		if(StringUtils.isBlank(profile))return;
+		profile = SecurityCryptUtils.encrypt(profile);
+		Cookie cookie = new Cookie(SecurityConstants.HEADER_AUTH_PROFILE,profile);  
+		cookie.setDomain(cookieDomain);
+		cookie.setPath("/");
+		cookie.setHttpOnly(true);
+		cookie.setMaxAge(3600);
+		
+		RequestContextHelper.getResponse().addCookie(cookie);
 	}
 	
 	private static boolean isBlank(String str){

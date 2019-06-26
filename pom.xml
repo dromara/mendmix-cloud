@@ -44,7 +44,7 @@
 		<spring-boot.version>2.0.1.RELEASE</spring-boot.version>
 		<kafka.version>0.10.2.0</kafka.version>
 		<zkclient.version>0.10</zkclient.version>
-		<zookeeper.version>3.4.9</zookeeper.version>
+		<zookeeper.version>3.4.14</zookeeper.version>
 		<jedis.version>2.9.0</jedis.version>
 		<mybatis.version>3.4.2</mybatis.version>
 		<mapper.version>3.3.9</mapper.version>

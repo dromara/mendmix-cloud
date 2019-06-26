@@ -17,6 +17,7 @@ public class UserSession {
 	private String sessionId;
 	private Integer expiresIn;
 	private Long expiresAt;
+	private String profile;
 	
 	
 	public UserSession() {}
@@ -67,6 +68,14 @@ public class UserSession {
 
 	public void setUserInfo(BaseUserInfo userInfo) {
 		this.userInfo = userInfo;
+	}
+	
+	public String getProfile() {
+		return profile;
+	}
+
+	public void setProfile(String profile) {
+		this.profile = profile;
 	}
 
 	public String getUserId(){

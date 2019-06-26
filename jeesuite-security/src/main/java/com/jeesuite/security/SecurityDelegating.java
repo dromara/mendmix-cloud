@@ -21,9 +21,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.security.client.LoginContext;
 import com.jeesuite.security.model.AccessToken;
 import com.jeesuite.security.model.BaseUserInfo;
 import com.jeesuite.security.model.UserSession;
+import com.jeesuite.security.util.SecurityCryptUtils;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.springweb.RequestContextHelper;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
@@ -82,7 +84,6 @@ public class SecurityDelegating {
 			}
 		}
 		getInstance().sessionManager.storageLoginSession(session);
-		getInstance().resourceManager.getUserPermissionCodes(userInfo.getId());
 		
 		return session;
 	}
@@ -111,7 +112,6 @@ public class SecurityDelegating {
 			}
 		}
 		getInstance().sessionManager.storageLoginSession(session);
-		getInstance().resourceManager.getUserPermissionCodes(userInfo.getId());
 		
 		return session;
 	}
@@ -121,7 +121,11 @@ public class SecurityDelegating {
 	 * @param userId
 	 * @param uri
 	 */
-	public static void doAuthorization(UserSession session,String uri) throws UnauthorizedException,ForbiddenAccessException{
+	public static UserSession doAuthorization() throws UnauthorizedException,ForbiddenAccessException{
+		
+		UserSession session = getCurrentSession();
+		String uri = RequestContextHelper.getRequest().getRequestURI();
+		
 		boolean isSuperAdmin = getInstance().decisionProvider.superAdminName().equals(session.getUserName());
 		if(!isSuperAdmin && !getInstance().resourceManager.isAnonymous(uri)){
 			if(session == null || session.isAnonymous()){
@@ -129,7 +133,7 @@ public class SecurityDelegating {
 			}
 			String permssionCode = getInstance().resourceManager.getPermssionCode(uri);
 			if(StringUtils.isNotBlank(permssionCode) 
-					&& !getInstance().resourceManager.getUserPermissionCodes(session.getUserId()).contains(permssionCode)){
+					&& !getInstance().resourceManager.getUserPermissionCodes(session.getUserId(),session.getProfile()).contains(permssionCode)){
 				throw new ForbiddenAccessException();
 			}
 		}
@@ -137,6 +141,10 @@ public class SecurityDelegating {
 		if(session != null && !session.isAnonymous()){			
 			getInstance().decisionProvider.authorizedPostHandle(session);
 		}
+		//
+		LoginContext.setUserSession(session);
+		
+		return session;
 	}
 	
 	public static UserSession getCurrentSession(){
@@ -153,7 +161,16 @@ public class SecurityDelegating {
 	
 	private static UserSession getCurrentSession(boolean first){
 		HttpServletResponse response = RequestContextHelper.getResponse();
-		return getInstance().sessionManager.getSessionIfNotCreateAnonymous(RequestContextHelper.getRequest(), response,first);
+		UserSession session = getInstance().sessionManager.getSessionIfNotCreateAnonymous(RequestContextHelper.getRequest(), response,first);
+		//profile
+		String profile = getInstance().sessionManager.getCurrentProfile(RequestContextHelper.getRequest());
+		if(StringUtils.isBlank(profile)){
+			profile = getInstance().decisionProvider.getCurrentProfile(RequestContextHelper.getRequest());
+			getInstance().sessionManager.setCurrentProfile(profile);
+		}
+		session.setProfile(profile);
+		
+		return session;
 	}
 	
 	public static UserSession genUserSession(String sessionId){

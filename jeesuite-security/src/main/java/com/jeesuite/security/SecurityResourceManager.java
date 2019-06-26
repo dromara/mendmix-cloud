@@ -25,7 +25,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.util.PathMatcher;
@@ -70,9 +69,9 @@ public class SecurityResourceManager {
 			contextPath = contextPath.substring(0, contextPath.indexOf("/"));
 		}
 		
-		if(ArrayUtils.isNotEmpty(decisionProvider.protectedUrlPatterns())){
+		if(decisionProvider.protectedUrlPatterns() != null){
 			protectedUrlMatcher = new PathMatcher(contextPath, decisionProvider.protectedUrlPatterns());
-		}else if(ArrayUtils.isNotEmpty(decisionProvider.anonymousUrlPatterns())){
+		}else if(decisionProvider.anonymousUrlPatterns() != null){
 			anonymousUrlMatcher = new PathMatcher(contextPath, decisionProvider.anonymousUrlPatterns());
 		}
 		//
@@ -112,22 +111,29 @@ public class SecurityResourceManager {
 		refreshCallable = false;
 	}
 
-	public List<String> getUserPermissionCodes(Serializable userId) {
+	public List<String> getUserPermissionCodes(String userId,String profile) {
 		
-		String cacheKey = String.valueOf(userId);
+		String cacheKey = String.format("%s_%s", profile,userId);
 		List<String> permissionCodes = userPermCache.getObject(cacheKey);
 		if(permissionCodes != null)return permissionCodes;
 		
-		permissionCodes = decisionProvider.getUserPermissionCodes(userId);
-		List<String> removeWildcards = new ArrayList<>();
-		for (String perm : permissionCodes) {
-			if (perm.endsWith("*")) {
-				removeWildcards.add(StringUtils.remove(perm, "*"));
+		Map<String, List<String>> allPermissionCodes = decisionProvider.getUserPermissionCodes(userId);
+		
+		for (String key : allPermissionCodes.keySet()) {
+			cacheKey = String.format("%s_%s", key,userId);
+			permissionCodes = allPermissionCodes.get(key);
+			
+			List<String> removeWildcards = new ArrayList<>();
+			for (String perm : permissionCodes) {
+				if (perm.endsWith("*")) {
+					removeWildcards.add(StringUtils.remove(perm, "*"));
+				}
 			}
+			if (!removeWildcards.isEmpty())
+				permissionCodes.addAll(removeWildcards);
+			
+			userPermCache.setObject(cacheKey, permissionCodes);
 		}
-		if (!removeWildcards.isEmpty())
-			permissionCodes.addAll(removeWildcards);
-		userPermCache.setObject(cacheKey, permissionCodes);
 
 		return permissionCodes;
 	}

@@ -15,8 +15,10 @@
  */
 package com.jeesuite.security;
 
-import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.security.SecurityConstants.CacheType;
@@ -67,12 +69,16 @@ public abstract class SecurityDecisionProvider {
 		return CacheType.local;
 	}
 	
+	public String getCurrentProfile(HttpServletRequest request){
+		return SecurityConstants.DEFAULT_PROFILE;
+	}
+	
 	public abstract String contextPath();
-	public abstract String[] anonymousUrlPatterns();
-	public abstract String[] protectedUrlPatterns();
+	public abstract List<String> anonymousUrlPatterns();
+	public abstract List<String> protectedUrlPatterns();
 	public abstract BaseUserInfo validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
 	public abstract List<String> findAllUriPermissionCodes();
-	public abstract List<String> getUserPermissionCodes(Serializable userId);
+	public abstract Map<String, List<String>> getUserPermissionCodes(String userId);
 	public abstract void authorizedPostHandle(UserSession session);
 	public abstract String _401_Error_Page();
 	public abstract String _403_Error_Page();

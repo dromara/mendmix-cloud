@@ -22,6 +22,9 @@ package com.jeesuite.security;
  */
 public class SecurityConstants {
 
+	
+	public static final String DEFAULT_PROFILE = "default";
+	
 	public static final String ACCESSTOKEN = "access_token";
 
 	// parameter
@@ -36,6 +39,7 @@ public class SecurityConstants {
 
 	// header
 	public static final String HEADER_AUTH_USER = "x-auth-user";
+	public static final String HEADER_AUTH_PROFILE = "x-auth-profile";
 	public static final String JSONP_LOGIN_CALLBACK_FUN_NAME = "jsonpLoginCallback";
 	public static final String JSONP_SETCOOKIE_CALLBACK_FUN_NAME = "jsonpSetCookieCallback";
 	//config
