@@ -109,15 +109,26 @@ public class CrudSupportPlugin extends PluginAdapter {
         FullyQualifiedJavaType entityType = new FullyQualifiedJavaType(introspectedTable.getBaseRecordType());
         //主键
         FullyQualifiedJavaType idType = null;
-        List<IntrospectedColumn> columns = introspectedTable.getPrimaryKeyColumns();
+        List<IntrospectedColumn> columns = introspectedTable.getBaseColumns();
         for (IntrospectedColumn col : columns) {
+        	if(!col.isIdentity())continue;
         	idType = javaTypeResolver.calculateJavaType(col);
-        	break;
+    		break;
+        }
+        
+        if(idType == null){
+        	for (IntrospectedColumn col : columns) {
+            	if("id".equalsIgnoreCase(col.getActualColumnName())){
+            		idType = javaTypeResolver.calculateJavaType(col);
+            		break;
+            	}
+            }
         }
         //import接口
         for (String mapper : mappers) {
             interfaze.addImportedType(new FullyQualifiedJavaType(mapper));
-            interfaze.addSuperInterface(new FullyQualifiedJavaType(mapper + "<" + entityType.getShortName() + ","+idType.getShortName()+">"));
+            String idJavaType = idType != null ? idType.getShortName() : "String";
+            interfaze.addSuperInterface(new FullyQualifiedJavaType(mapper + "<" + entityType.getShortName() + ","+idJavaType+">"));
         }
         //import实体类
         interfaze.addImportedType(entityType);

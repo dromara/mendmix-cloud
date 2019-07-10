@@ -8,11 +8,17 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -52,7 +58,6 @@ public final class ResourceUtils {
 					loadPropertiesFromFile(file);
 				}
 			}
-            System.out.println("CLASSPATH: " + System.getProperty("java.class.path"));
 			URL url = Thread.currentThread().getContextClassLoader().getResource("");
 			 System.setProperty("framework.website", "www.jeesuite.com");
 			if(url == null)url = ResourceUtils.class.getResource("");
@@ -68,9 +73,18 @@ public final class ResourceUtils {
 			}else if (url.getProtocol().equals("jar")) {					
 				loadPropertiesFromJarFile(url);
 			}
+			
+			inited = true;
+			//
+			List<Object> keys = new ArrayList<>(allProperties.keySet());
+			for (Object key : keys) {
+				if(allProperties.getProperty(key.toString()).contains(PLACEHOLDER_PREFIX)){
+					String value = replaceRefValue(allProperties.getProperty(key.toString()));
+					if(StringUtils.isNotBlank(value))allProperties.setProperty(key.toString(), value);
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
-		}finally{
 			inited = true;
 		}
 	}
@@ -89,25 +103,28 @@ public final class ResourceUtils {
 		System.out.println("loadPropertiesFromJarFile,real:" + jarFilePath);
 		JarFile jarFile = new JarFile(jarFilePath);
 		
+		List<String> fileList = new ArrayList<>();
+		String fileExt = null;
+		
 		Enumeration<JarEntry> entries = jarFile.entries(); 
 		while (entries.hasMoreElements()) {  
 			JarEntry entry = entries.nextElement();
 			if(entry.getName().endsWith(".properties")){
-				InputStream inputStream = jarFile.getInputStream(jarFile.getJarEntry(entry.getName()));
-				Properties properties = new Properties();
-				properties.load(inputStream);
-				try {inputStream.close();} catch (Exception e) {}
-				
-				allProperties.putAll(properties);
+				if(entry.getName().contains("i18n"))continue;
+				fileList.add(entry.getName());
+				if(fileExt == null)fileExt = ".properties";
 			}
- 
 		} 
+		
+		parseConfigSortFiles(fileList, fileExt,jarFile);
 		jarFile.close();
 	}
 	
 	private static void loadPropertiesFromFile(File parent) throws FileNotFoundException, IOException{
 		File[] files = parent.listFiles();
 		if(files == null)return;
+		List<String> fileList = new ArrayList<>();
+		String fileExt = null;
 		for (File file : files) {
 			if(file.isDirectory()){
 				loadPropertiesFromFile(file);
@@ -115,16 +132,79 @@ public final class ResourceUtils {
 				String path = file.getPath();
 				if(path.endsWith("properties")){
 					if(path.contains("i18n"))continue;
-					Properties p = new Properties();
-					p.load(new FileReader(file));
-					
-					allProperties.putAll(p);
-					System.out.println("load properties from file:" + path);
+					fileList.add(path);
+					if(fileExt == null)fileExt = ".properties";
+				}
+			}
+		}
+		
+		parseConfigSortFiles(fileList, fileExt,null);
+		
+	}
+
+	/**
+	 * @param fileList
+	 * @param fileExt
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 */
+	private static void parseConfigSortFiles(List<String> fileList, String fileExt,JarFile jarFile)
+			throws IOException, FileNotFoundException {
+		if(fileList.size() == 1){
+			Properties p = parseToProperties(fileList.get(0), jarFile);
+			allProperties.putAll(p);
+		}else if(fileList.size() > 1){
+			sortFileNames(fileList, fileExt);
+			Map<String, Properties> filePropMap = new LinkedHashMap<>(fileList.size());
+			
+			String withProfileKeyFile = null;
+			String profileFileBaseName = null;
+			String activeProfileFile = null;
+			Properties p;
+			for (String file : fileList) {
+				p = parseToProperties(file, jarFile);
+				if(p.containsKey("spring.profiles.active")){
+					withProfileKeyFile = file;
+					profileFileBaseName = file.replace(fileExt, "") + "-";
+					activeProfileFile = profileFileBaseName + p.getProperty("spring.profiles.active") + fileExt;
+				}
+				filePropMap.put(file, p);
+			}
+			
+			for (String filePath : filePropMap.keySet()) {
+				if(profileFileBaseName == null 
+						|| filePath.equals(withProfileKeyFile)
+						|| !filePath.startsWith(profileFileBaseName)
+						|| filePath.equals(activeProfileFile)){
+					allProperties.putAll(filePropMap.get(filePath));
+					System.out.println("load properties from file:" + filePath);
 				}
 			}
 		}
 	}
 	
+	private static Properties parseToProperties(String path,JarFile jarFile) throws FileNotFoundException, IOException{
+		Properties properties = new Properties();
+		if(jarFile == null){
+			properties.load(new FileReader(path));
+		}else{
+			InputStream inputStream = jarFile.getInputStream(jarFile.getJarEntry(path));
+			properties.load(inputStream);
+			try {inputStream.close();} catch (Exception e) {}
+		}
+		return properties;
+	}
+	
+	private static void sortFileNames(List<String> files,String ext){
+		Collections.sort(files, new Comparator<String>() {
+			@Override
+			public int compare(String o1, String o2) {
+				o1 = o1.replace(ext, "");
+				o2 = o2.replace(ext, "");
+				return o1.compareTo(o2);
+			}
+		});
+	}
 	
 	@SuppressWarnings("unchecked")
 	private synchronized static void mergeWithEnvironment(){
@@ -239,23 +319,29 @@ public final class ResourceUtils {
 		
         Set<Entry<Object, Object>> entrySet = properties.entrySet();
 		for (Entry<Object, Object> entry : entrySet) {
-			Object value = null;
-			if(value == null)value = entry.getValue();
+			Object value = entry.getValue();
 			if(value != null){
-				allProperties.setProperty(entry.getKey().toString(), value.toString());
+				String refValue = replaceRefValue(value.toString());
+				if(StringUtils.isNotBlank(refValue)){
+					allProperties.setProperty(entry.getKey().toString(), refValue);
+				}
 			}
 		}
 	}
 	
 	public synchronized static void merge(Map<String, Object> properties){
 		for (String key : properties.keySet()) {
-			allProperties.setProperty(key, properties.get(key).toString());
+			String refValue = replaceRefValue(properties.get(key).toString());
+			if(StringUtils.isNotBlank(refValue)){
+				allProperties.setProperty(key, refValue);
+			}
 		}
 	}
 	
 	public synchronized static void add(String key,String value){
 		if(StringUtils.isAnyBlank(key,value))return;
-		addToProperties(key, value);
+		value = replaceRefValue(value);
+		if(StringUtils.isNotBlank(value))allProperties.setProperty(key, value);
 	}
 	
 	public static boolean  containsProperty(String key){
@@ -267,10 +353,9 @@ public final class ResourceUtils {
 	 * @param key
 	 * @return
 	 */
-    private static String addToProperties(String key,String value ) {
+    public static String replaceRefValue(String value ) {
 		
     	if(!value.contains(PLACEHOLDER_PREFIX)){
-    		allProperties.put(key, value);
     		return value;
     	}
     	
@@ -298,7 +383,9 @@ public final class ResourceUtils {
 					defaultValue = tmpArray[1];
 				}
 				
-				String refValue = getProperty(refKey);
+				String refValue = System.getProperty(refKey);
+				if(StringUtils.isBlank(refValue))refValue = System.getenv(refKey);
+				if(StringUtils.isBlank(refValue))refValue = allProperties.getProperty(refKey);
 				if(StringUtils.isBlank(refValue)){
 					refValue = defaultValue;
 				}
@@ -317,9 +404,12 @@ public final class ResourceUtils {
 			}
 		}
 		
-		allProperties.put(key, finalValue.toString());
-		
 		return finalValue.toString();
 	}
 	
+    public static void main(String[] args) {
+		List<String> list = Arrays.asList("application-b.properties","application.properties","application-aaa.properties");
+		sortFileNames(list, ".properties");
+		System.out.println(Arrays.toString(list.toArray()));
+	}
 }
