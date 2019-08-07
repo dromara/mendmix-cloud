@@ -44,6 +44,12 @@ public class SchedulerMonitor implements Closeable{
 		}
 	}
 
+	/**
+	 * @param zkClient
+	 */
+	public SchedulerMonitor(ZkClient zkClient) {
+		this.zkClient = zkClient;
+	}
 
 	@Override
 	public void close() throws IOException {

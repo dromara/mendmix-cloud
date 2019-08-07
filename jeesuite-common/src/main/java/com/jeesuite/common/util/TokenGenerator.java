@@ -29,47 +29,59 @@ public class TokenGenerator {
 		return str;
 	}
 	
+	public static String generateWithSign(){
+		return generateWithSign(null);
+	}
 	/**
 	 * 生成带签名信息的token
 	 * @return
 	 */
-	public static String generateWithSign(){
+	public static String generateWithSign(String tokenType){
 		Date date = new Date();
-		String cryptKey = getCryptKey(date);
+		String cryptKey = getCryptKey(tokenType,date);
 		String str = DigestUtils.md5Short(generate()).concat(String.valueOf(date.getTime()));	
 		return DES.encrypt(cryptKey, str).toLowerCase();
 	}
 	
 	
+	public static void validate(String token,boolean validateExpire){
+		validate(null, token, validateExpire);
+	}
+	
 	/**
 	 * 验证带签名信息的token
 	 */
-	public static void validate(String token,boolean validateExpire){
+	public static void validate(String tokenType,String token,boolean validateExpire){
 		long timestamp = 0;
 		Date date = new Date();
-		String cryptKey = getCryptKey(date);
+		String cryptKey = getCryptKey(tokenType,date);
 		try {
 			timestamp = Long.parseLong(DES.decrypt(cryptKey,token).substring(6));
 		} catch (Exception e) {
-			throw new JeesuiteBaseException(4005, "格式不正确");
+			throw new JeesuiteBaseException(4005, "authToken错误");
 		}
 		if(validateExpire && date.getTime() - timestamp > EXPIRE){
 			throw new JeesuiteBaseException(4005, "token已过期");
 		}
 	}
 	
-	private static String getCryptKey(Date date){
+	private static String getCryptKey(String tokenType,Date date){
+		String key = StringUtils.EMPTY;
+		if(StringUtils.isNotBlank(tokenType)){
+			key = ResourceUtils.getAndValidateProperty(tokenType + ".cryptKey");
+		}
 		SimpleDateFormat format = new SimpleDateFormat("ddMMMyy", Locale.ENGLISH);
-        String key = format.format(date).toUpperCase();
+        key = key + format.format(date).toUpperCase();
         key  = DigestUtils.md5(key).substring(0,8);
 		return key;
 	}
 	
 	public static void main(String[] args) {
-		String generateWithSign = TokenGenerator.generateWithSign();
+		System.setProperty("jeesuite.configcenter.cryptKey", "sdf2333333333");
+		String generateWithSign = TokenGenerator.generateWithSign("jeesuite.configcenter");
 		System.out.println(generateWithSign);
 		
-		TokenGenerator.validate(generateWithSign, true);
+		TokenGenerator.validate("jeesuite.configcenter",generateWithSign, true);
 		
 	}
 }

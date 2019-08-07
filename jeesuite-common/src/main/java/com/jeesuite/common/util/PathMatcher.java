@@ -17,26 +17,31 @@ import org.apache.commons.lang3.StringUtils;
 public class PathMatcher {
 
 	private List<String> uris = new ArrayList<>();
+	private List<String> uriContains = new ArrayList<>();
 	private List<String> uriPrefixs = new ArrayList<>();
 	private List<Pattern> uriPatterns = new ArrayList<>();
 
 	public PathMatcher(String prefix,String uriPatterns) {
-		this(prefix, Arrays.asList(StringUtils.trimToEmpty(uriPatterns).split(";|,")));
+		this(prefix, Arrays.asList(StringUtils.trimToEmpty(uriPatterns).split(";|,|；")));
 	}
 	
 	public PathMatcher(String prefix,List<String> uris) {
 		if(uris == null)return;
 		for (String uri : uris) {
 			if(StringUtils.isBlank(uri))continue;
-			uri = prefix + uri;
-			if (uri.contains("*")) {
-				if (uri.endsWith("*")) {
-					uriPrefixs.add(uri.replaceAll("\\*+", ""));
-				} else {
-					this.uriPatterns.add(Pattern.compile(uri));
+			if(uri.startsWith("%")){
+				this.uriContains.add(uri.substring(1));
+			}else{
+				uri = prefix + uri;
+				if (uri.contains("*")) {
+					if (uri.endsWith("*")) {
+						uriPrefixs.add(uri.replaceAll("\\*+", ""));
+					} else {
+						this.uriPatterns.add(Pattern.compile(uri));
+					}
+				}else {
+					this.uris.add(uri);
 				}
-			} else {
-				this.uris.add(uri);
 			}
 		}
 	}
@@ -50,6 +55,10 @@ public class PathMatcher {
 			if (matched = uri.startsWith(prefix)) {
 				return true;
 			}
+		}
+		
+		for (String uc : uriContains) {
+			if(uri.contains(uc))return true;
 		}
 
 		for (Pattern pattern : uriPatterns) {

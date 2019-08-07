@@ -9,7 +9,6 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -33,8 +32,8 @@ import org.apache.commons.lang3.StringUtils;
 public final class ResourceUtils {
 	
 	public static final String NULL_VALUE_PLACEHOLDER = "_NULL_PLACEHOLDER_";
-	private static final String PLACEHOLDER_PREFIX = "${";
-	private static final String PLACEHOLDER_SUFFIX = "}";
+	public static final String PLACEHOLDER_PREFIX = "${";
+	public static final String PLACEHOLDER_SUFFIX = "}";
 
 	private static boolean inited;
 	private static boolean merged;
@@ -245,8 +244,9 @@ public final class ResourceUtils {
 		Properties properties = new Properties();
 		Set<Entry<Object, Object>> entrySet = allProperties.entrySet();
 		for (Entry<Object, Object> entry : entrySet) {
-			if(StringUtils.isBlank(prefix) || entry.getKey().toString().startsWith(prefix)){				
-				properties.put(entry.getKey(), entry.getValue());
+			if(StringUtils.isBlank(prefix) || entry.getKey().toString().startsWith(prefix)){	
+				String value = replaceRefValue(entry.getValue().toString());
+				properties.put(entry.getKey(), value);
 			}
 		}
 		return properties;
@@ -279,8 +279,10 @@ public final class ResourceUtils {
 		value = System.getenv(key);
 		if(StringUtils.isNotBlank(value))return value;
 		
-		if (allProperties.containsKey(key)) {
-			return allProperties.getProperty(key);
+		value = allProperties.getProperty(key);
+		if (StringUtils.isNotBlank(value)) {
+			value = replaceRefValue(value);
+			return value;
 		}
 		
 		return defaultValue;
@@ -353,7 +355,7 @@ public final class ResourceUtils {
 	 * @param key
 	 * @return
 	 */
-    public static String replaceRefValue(String value ) {
+    public static String replaceRefValue(Properties properties,String value ) {
 		
     	if(!value.contains(PLACEHOLDER_PREFIX)){
     		return value;
@@ -377,19 +379,24 @@ public final class ResourceUtils {
 				
 				//如果包含默认值，如：${host:127.0.0.1}
 				String defaultValue = null;
-				if(refKey.contains(":")){
-					String[] tmpArray = refKey.split(":");
-					refKey = tmpArray[0];
-					defaultValue = tmpArray[1];
+				int defaultValSpliterIndex = refKey.indexOf(":");
+				if(defaultValSpliterIndex > 0){
+					defaultValue = refKey.substring(defaultValSpliterIndex + 1);
+					refKey = refKey.substring(0,defaultValSpliterIndex);
 				}
 				
 				String refValue = System.getProperty(refKey);
 				if(StringUtils.isBlank(refValue))refValue = System.getenv(refKey);
-				if(StringUtils.isBlank(refValue))refValue = allProperties.getProperty(refKey);
+				if(StringUtils.isBlank(refValue))refValue = properties.getProperty(refKey);
 				if(StringUtils.isBlank(refValue)){
 					refValue = defaultValue;
 				}
-				finalValue.append(refValue);
+				
+				if(StringUtils.isBlank(refValue)){
+					finalValue.append(PLACEHOLDER_PREFIX + refKey + PLACEHOLDER_SUFFIX);
+				}else{
+					finalValue.append(refValue);
+				}
 				
 				if(withBraceString != null){
 					finalValue.append(withBraceString);
@@ -406,10 +413,15 @@ public final class ResourceUtils {
 		
 		return finalValue.toString();
 	}
+    
+    private static String replaceRefValue(String value){
+    	return replaceRefValue(allProperties, value);
+    }
 	
     public static void main(String[] args) {
-		List<String> list = Arrays.asList("application-b.properties","application.properties","application-aaa.properties");
-		sortFileNames(list, ".properties");
-		System.out.println(Arrays.toString(list.toArray()));
-	}
+    	allProperties.setProperty("spring.application.name", "user");
+    	String prop = "${baseUrl:http://localhost:8080}/api";
+    	
+    	System.out.println(replaceRefValue(prop));
+    }
 }

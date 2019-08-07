@@ -19,10 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.AbstractDataSource;
 import org.springframework.jdbc.datasource.lookup.DataSourceLookup;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
@@ -53,6 +55,9 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	private Map<Object, DataSource> targetDataSources;
 	
 	private DataSource defaultDataSource;
+	
+	@Autowired
+	private Environment environment;
 
 	private DataSourceLookup dataSourceLookup = new JndiDataSourceLookup();
 
@@ -232,15 +237,22 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
     	Properties properties = new Properties();
     	String prefix = "db.";
     	Properties tmpProps = ResourceUtils.getAllProperties(prefix);
+    	
+    	String value;
     	for (Entry<Object, Object> entry : tmpProps.entrySet()) {
-    		properties.setProperty(entry.getKey().toString().replace(prefix, ""), entry.getValue().toString());
+    		value = environment.getProperty(entry.getKey().toString());
+    		if(value == null)value = entry.getValue().toString();
+    		properties.setProperty(entry.getKey().toString().replace(prefix, ""), value);
     	}
     	//
     	prefix = keyPrefix + ".db.";
     	tmpProps = ResourceUtils.getAllProperties(prefix);
     	for (Entry<Object, Object> entry : tmpProps.entrySet()) {
-    		properties.setProperty(entry.getKey().toString().replace(prefix, ""), entry.getValue().toString());
+    		value = environment.getProperty(entry.getKey().toString());
+    		if(value == null)value = entry.getValue().toString();
+    		properties.setProperty(entry.getKey().toString().replace(prefix, ""), value);
     	}
     	return properties;
     }
+    
 } 

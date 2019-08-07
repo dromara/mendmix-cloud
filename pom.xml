@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-libs</artifactId>
-	<version>1.3.3</version>
+	<version>1.3.4-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
 	<name>jeesuite-libs</name>
@@ -210,7 +210,7 @@
 		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
 		<snapshotRepository>
          <id>snapshots</id>
-          <url>http://test..com/nexus/content/repositories/snapshots</url> 
+          <url>http://nexus.xx.com/nexus/content/repositories/snapshots</url> 
           
         </snapshotRepository>
 		<repository>

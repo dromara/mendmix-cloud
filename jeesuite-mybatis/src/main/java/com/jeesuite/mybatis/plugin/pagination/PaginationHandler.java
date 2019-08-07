@@ -85,7 +85,7 @@ public class PaginationHandler implements InterceptorHandler {
 					pageMappedStatements.put(msId,true);
 				}else if(method.isAnnotationPresent(Pageable.class)){
 					String msId = ei.getMapperClass().getName() + "." + method.getName();
-					pageMappedStatements.put(msId,false);
+					pageMappedStatements.put(msId,true);
 				}
 			}
 		}
