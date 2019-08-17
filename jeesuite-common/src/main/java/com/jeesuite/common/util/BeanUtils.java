@@ -244,7 +244,7 @@ public class BeanUtils {
         	}
             
         } else if (propertyType == boolean.class || propertyType == Boolean.class) {
-        	result = Boolean.parseBoolean(value);
+        	result = Boolean.parseBoolean(value) || "1".equals(value);
         } 
     	return result;
     }
@@ -262,7 +262,7 @@ public class BeanUtils {
         		if(map.containsKey(propertyName)){
         			Object object = map.get(propertyName);
 					if(object == null)continue;
-					if(object instanceof String){						
+					if(descriptor.getPropertyType() != object.getClass()){						
 						object = stringConvertTo(object.toString(),descriptor.getPropertyType());
 					}
         			descriptor.getWriteMethod().invoke(bean, object);

@@ -48,6 +48,10 @@ public class EntityInfo {
 	public EntityInfo(String mapperClassName, String entityClassName) {
 		try {
 			if(StringUtils.isNotBlank(entityClassName))entityClass = Class.forName(entityClassName);
+//			if(!BaseEntity.class.isAssignableFrom(entityClass)){
+//				errorMsg = "entityClass[" + entityClassName +"] not extend[com.jeesuite.mybatis.core.BaseEntity]";
+//				return;
+//			}
 			if(entityClass.isAnnotationPresent(Table.class)){
 				this.tableName = entityClass.getAnnotation(Table.class).name();
 				

@@ -347,6 +347,8 @@ public final class ResourceUtils {
 	}
 	
 	public static boolean  containsProperty(String key){
+		if(System.getProperties().containsKey(key))return true;
+		if(System.getenv().containsKey(key))return true;
 		return allProperties.containsKey(key);
 	}
 	
