@@ -23,7 +23,7 @@ public class IpUtils {
 	private static final String UNKNOWN = "unknown";
 	private static volatile String localIp;
 	private static Pattern ipPattern = Pattern.compile("(\\d{1,3}\\.)+\\d{1,3}");
-	private static final String[] lanIpPrefixs = new String[]{"127.","192.168","10.","100."};
+	private static final String[] lanIpPrefixs = new String[]{"127.","192.168","10.","100.64.","172."};
 	
 	public static boolean isIp(String ipAddr){
 		if(StringUtils.isBlank(ipAddr))return false;
@@ -32,11 +32,20 @@ public class IpUtils {
 
 	public static boolean isInnerIp(String ipAddr){
 		if(StringUtils.isBlank(ipAddr) || !isIp(ipAddr))return false;
-		for (String prefix : lanIpPrefixs) {
-			if(ipAddr.startsWith(prefix))return true;
+		if(ipAddr.startsWith(lanIpPrefixs[0]))return true;
+		if(ipAddr.startsWith(lanIpPrefixs[1]))return true;
+		if(ipAddr.startsWith(lanIpPrefixs[2]))return true;
+		if(ipAddr.startsWith(lanIpPrefixs[3]))return true;
+		if(ipAddr.startsWith(lanIpPrefixs[4])){
+			//172.16.0.0--172.31.255.255
+			try {				
+				int secondSub = Integer.parseInt(StringUtils.splitByWholeSeparator(ipAddr, ".")[1]);
+				return secondSub >= 16 && secondSub <= 31;
+			} catch (Exception e) {}
 		}
 		return false;
 	}
+	
 	 /**
      * <p>
      * 获取客户端的IP地址的方法是：request.getRemoteAddr()，这种方法在大部分情况下都是有效的。
