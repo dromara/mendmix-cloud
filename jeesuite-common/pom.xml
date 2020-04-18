@@ -4,9 +4,10 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.3.4-SNAPSHOT</version>
+		<version>1.3.4</version>
 	</parent>
 	<artifactId>jeesuite-common</artifactId>
+	<version>1.3.5-SNAPSHOT</version>
 	<description>基础工具类支持</description>
 
 	<dependencies>
@@ -48,6 +49,12 @@
             <artifactId>jbcrypt</artifactId>
             <version>0.3m</version>
         </dependency>
+        
+        <dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.26</version>
+		</dependency>
 
 	</dependencies>
 
