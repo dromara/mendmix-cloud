@@ -3,16 +3,17 @@
  */
 package com.jeesuite.mybatis.kit;
 
-import java.math.BigDecimal;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
+import org.apache.commons.lang3.StringUtils;
+
+import com.jeesuite.common.util.BeanUtils;
+import com.jeesuite.mybatis.plugin.pagination.Page;
 
 /**
  * @description <br>
@@ -21,120 +22,100 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  */
 public class CacheKeyUtils {
 	
-	private static final String CARTSET_UTF_8 = "UTF-8";
-	private static final String MD5_NAME = "MD5";
+	public final static String CONTACT_STR = "&";
+	public final static String EQUALS_STR = "=";
+	public final static String SPLIT_STR = ",";
 	
-	/**
-	 * MD5加密
-	 * @param content
-	 * @return
-	 */
-	private static String md5(Object content) {
-		String keys = null;
-		if (content == null) {
-			return null;
-		}
-		try {
-			MessageDigest md = MessageDigest.getInstance(MD5_NAME);
-			byte[] bPass = String.valueOf(content).getBytes(CARTSET_UTF_8);
-			md.update(bPass);
-			keys = bytesToHexString(md.digest());
-		} catch (NoSuchAlgorithmException aex) {
-			System.out.println(aex);
-		} catch (java.io.UnsupportedEncodingException uex) {
-			System.out.println(uex);
-		}
-		return keys.toLowerCase();
-	}
+	public static final String JSON_SUFFIX = "}";
+	public static final String JSON_PREFIX = "{";
 	
-	private static String bytesToHexString(byte[] bArray) {
-		StringBuffer sb = new StringBuffer(bArray.length);
-		String sTemp;
-		for (int i = 0; i < bArray.length; i++) {
-			sTemp = Integer.toHexString(0xFF & bArray[i]);
-			if (sTemp.length() < 2) {
-				sb.append(0);
+	public static final String BRACKET_PREFIX = "[";
+	public static final String BRACKET_SUFFIX = "]";
+	
+	@SuppressWarnings("unchecked")
+	public static String objcetToString(Object obj){
+		if(obj == null)return StringUtils.EMPTY;
+        if(BeanUtils.isSimpleDataType(obj)){
+			return obj.toString();
+		}
+        if(obj instanceof Iterable) {
+    		StringBuilder sb = new StringBuilder();
+    		sb.append(BRACKET_PREFIX);
+            Iterator<?> it = ((Iterable<?>) obj).iterator();
+            while (it.hasNext()) {
+            	Object object = it.next();
+            	if(BeanUtils.isSimpleDataType(object)){
+            		sb.append(object).append(SPLIT_STR);
+            	}else{                		
+            		sb.append(JSON_PREFIX).append(objcetToString(object)).append(JSON_SUFFIX).append(SPLIT_STR);
+            	}
+            }
+            if(sb.length() == 1){
+            	return StringUtils.EMPTY;
+            } else if(sb.length() > 0){
+            	sb.deleteCharAt(sb.length() - 1);
+            	sb.append(BRACKET_SUFFIX);
+            	return sb.toString();
+            }
+        }
+        
+		Map<String, Object> param = null;
+		if(obj instanceof Map){
+        	param = (Map<String, Object>) obj;
+        }else{
+        	param = BeanUtils.beanToMap(obj,true);
+        }
+		if(param == null || param.isEmpty())return null;
+		StringBuilder sb = new StringBuilder();
+		List<String> keys = new ArrayList<>(param.keySet());
+		Collections.sort(keys);
+		Object value;
+		for (String key : keys) {
+			value = param.get(key);
+			if(value == null || StringUtils.isBlank(value.toString()))continue;
+			if(value instanceof Map){
+				value = objcetToString(value);
+				if(value != null){
+					value = JSON_PREFIX + value + JSON_SUFFIX;
+				}
+			}else if(value instanceof Iterable) {
+        		StringBuilder sb1 = new StringBuilder();
+        		sb1.append(BRACKET_PREFIX);
+                Iterator<?> it = ((Iterable<?>) value).iterator();
+                while (it.hasNext()) {
+                	Object object = it.next();
+                	if(BeanUtils.isSimpleDataType(object)){
+                		sb1.append(object).append(SPLIT_STR);
+                	}else{                		
+                		sb1.append(JSON_PREFIX).append(objcetToString(object)).append(JSON_SUFFIX).append(SPLIT_STR);
+                	}
+                }
+                if(sb1.length() == 1){
+                	value = null;
+                } else if(sb1.length() > 0){
+                	sb1.deleteCharAt(sb1.length() - 1);
+                	sb1.append(BRACKET_SUFFIX);
+                	value = sb1.toString();
+                }
+            }else if(!BeanUtils.isSimpleDataType(value)){
+            	value = JSON_PREFIX + objcetToString(value) + JSON_SUFFIX;
+            }
+			if(value != null){
+				sb.append(key).append(EQUALS_STR).append(value).append(CONTACT_STR);	
 			}
-			sb.append(sTemp.toUpperCase());
 		}
+		sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();
 	}
 	
-	public static String toString(Object obj){
-		if(obj == null)return "_";
-		if(isSimpleDataType(obj)){
-			return obj.toString();
-		}else if(obj instanceof Collection){
-			String toString = obj.toString().replaceAll("\\s{0,}", "");
-			return toString.length() > 32 ? md5(toString) : toString;
-		}else{
-			String toString = ToStringBuilder.reflectionToString(obj, ToStringStyle.SHORT_PREFIX_STYLE);
-			
-			return toString.length() > 32 ? md5(toString) : toString;
-		}
-	}
-	
-	/**
-	 * 生成缓存key
-	 * @param prefix
-	 * @param args
-	 * @return
-	 */
-	public static String generate(String prefix,Object...args){
-		if(args == null || args.length == 0)return prefix;
-		StringBuilder keyBuilder = new StringBuilder(prefix);
-		
-		String keyString = null;
-		if(args != null && args.length > 0){
-			keyBuilder.append(":");
-			StringBuilder argsBuilder = new StringBuilder();
-			for (int i = 0; i < args.length; i++) {
-				if(args[i] == null){
-					argsBuilder.append("_null");
-				}else if(isSimpleDataType(args[i])){
-					argsBuilder.append(args[i].toString());
-				}else if(args[i] instanceof Collection){
-					argsBuilder.append(args[i].toString().replaceAll("\\s{0,}", ""));
-				}else{
-					argsBuilder.append(ToStringBuilder.reflectionToString(args[i], ToStringStyle.SHORT_PREFIX_STYLE));
-				}
-				if(i < args.length - 1)argsBuilder.append("_");
-			}
-			keyString = argsBuilder.length() > 32 ? md5(argsBuilder) : argsBuilder.toString();
-			keyBuilder.append(keyString);
-		}
-		return keyBuilder.toString();
-	}
-	
-	 private static boolean isSimpleDataType(Object o) {   
-		   Class<? extends Object> clazz = o.getClass();
-	       return 
-	       (   
-	           clazz.equals(String.class) ||   
-	           clazz.equals(Integer.class)||   
-	           clazz.equals(Byte.class) ||   
-	           clazz.equals(Long.class) ||   
-	           clazz.equals(Double.class) ||   
-	           clazz.equals(Float.class) ||   
-	           clazz.equals(Character.class) ||   
-	           clazz.equals(Short.class) ||   
-	           clazz.equals(BigDecimal.class) ||     
-	           clazz.equals(Boolean.class) ||   
-	           clazz.equals(Date.class) ||   
-	           clazz.isPrimitive()   
-	       );   
-	}
 	 
 	public static void main(String[] args) {
-		List<Object> ids = new ArrayList<>();
-		ids.add(1);
-		ids.add("2ff ");
-		ids.add(2);
+	
+		Map<String, Object> map = new HashMap<>();
+		map.put("b", "b1");
+		map.put("c", new Page<>());
+		map.put("d", 1);
 		
-		System.out.println(generate("demo_", ids));
-		System.out.println(generate("demo_", ids));
-		
-		String[] arr = new String[]{"1","b"};
-		System.out.println(generate("demo_", arr));
+		System.out.println(objcetToString(map));
 	} 
 }

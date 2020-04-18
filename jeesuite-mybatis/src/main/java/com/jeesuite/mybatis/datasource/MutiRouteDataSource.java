@@ -153,7 +153,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 
 
      protected Object determineCurrentLookupKey() {   
-        return DataSourceContextHolder.get().getDataSourceKey();  
+        return MuitDataSourceManager.get().getDataSourceKey();  
      }  
      
 
@@ -200,7 +200,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 			}
 			logger.info("bean[" + dsKey + "] has initialized! lookupKey:" + dsKey);
 			//
-			DataSourceContextHolder.get().registerDataSourceKey(dsKey);
+			MuitDataSourceManager.get().registerDataSourceKey(dsKey);
 		} 
         
         addTargetDataSources(targetDataSources);

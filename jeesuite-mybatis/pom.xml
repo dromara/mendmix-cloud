@@ -4,22 +4,22 @@
 	<parent>
 		<groupId>com.jeesuite</groupId>
 		<artifactId>jeesuite-libs</artifactId>
-		<version>1.3.4-SNAPSHOT</version>
+		<version>1.3.4</version>
 	</parent>
 	<artifactId>jeesuite-mybatis</artifactId>
-	<version>1.3.4-SNAPSHOT</version>
+	<version>1.3.5-SNAPSHOT</version>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
-			<version>${project.parent.version}</version>
+			<version>1.3.5-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-cache</artifactId>
-			<version>${project.parent.version}</version>
+			<version>1.3.5-SNAPSHOT</version>
 			<optional>true</optional>
 		</dependency>
 

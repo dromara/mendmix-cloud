@@ -275,6 +275,9 @@ public class BeanUtils {
     }
 
     public static Map<String, Object> beanToMap(Object bean) {
+    	return beanToMap(bean, false);
+    }
+    public static Map<String, Object> beanToMap(Object bean,boolean recursive) {
         Map<String, Object> returnMap = new HashMap<String, Object>();
         try {
             Map<String, PropertyDescriptor> descriptors = getCachePropertyDescriptors(bean.getClass());
@@ -284,10 +287,14 @@ public class BeanUtils {
                 Method readMethod = descriptor.getReadMethod();
                 Object result = readMethod.invoke(bean, new Object[0]);
                 if (result != null) {
-                	if(BeanUtils.isSimpleDataType(result)){                		
+                	if(isSimpleDataType(result) || result instanceof Iterable){                		
                 		returnMap.put(propertyName, result);
-                	}else{
-                		returnMap.put(propertyName, beanToMap(result));
+                	}else {
+                		if(recursive){
+                    		returnMap.put(propertyName, beanToMap(result,recursive));
+                    	}else{
+                    		returnMap.put(propertyName,result);
+                    	}
                 	}
                 }
             }

@@ -124,7 +124,7 @@ public class MybatisMapperParser {
 		for (XNode xNode : children) {
 			if ("select|insert|update|delete".contains(xNode.getName().toLowerCase())) {
 				String sql = parseSql(fileName,xNode,includes);
-				entityInfo.addSql(xNode.getStringAttribute("id"), sql);
+				entityInfo.addSql(xNode.getName().toLowerCase(),xNode.getStringAttribute("id"), sql);
 			}
 		}
 		

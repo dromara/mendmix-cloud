@@ -7,34 +7,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 /**
- * 数据源上下文
+ * 多数据源管理器
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年2月2日
  * @Copyright (c) 2015, jwww
  */
-public class DataSourceContextHolder {
+public class MuitDataSourceManager {
 
-	private static final Logger logger = LoggerFactory.getLogger(DataSourceContextHolder.class);
+	private static final Logger logger = LoggerFactory.getLogger(MuitDataSourceManager.class);
 	
 	private final static AtomicLong counter = new AtomicLong(10);
 
 	private static String master;
 	private static final List<String> slaves = new ArrayList<>();
+	private static volatile MuitDataSourceManager holder = new MuitDataSourceManager();
 
-	private final ThreadLocal<DataSourceContextVals> contextVals = new ThreadLocal<DataSourceContextVals>();
-	private static volatile DataSourceContextHolder holder = new DataSourceContextHolder();
-
-	private DataSourceContextHolder() {
+	private MuitDataSourceManager() {
 	}
 
-	public static DataSourceContextHolder get() {
+	public static MuitDataSourceManager get() {
 		return holder;
 	}
 
@@ -51,12 +51,9 @@ public class DataSourceContextHolder {
 	 * 
 	 * @param useSlave
 	 */
-	public DataSourceContextHolder useSlave(boolean useSlave) {
-		DataSourceContextVals vals = contextVals.get();
-		if (vals == null)
-			vals = new DataSourceContextVals();
+	public MuitDataSourceManager useSlave(boolean useSlave) {
+		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
 		vals.userSlave = useSlave;
-		contextVals.set(vals);
 		return this;
 	}
 	
@@ -70,10 +67,8 @@ public class DataSourceContextHolder {
 			return master;
 		}
 		
-		DataSourceContextVals vals = contextVals.get();
-		if(vals == null){
-			vals = new DataSourceContextVals();
-			contextVals.set(vals);
+		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
+		if(vals == null || StringUtils.isBlank(vals.dsKey)){
 			return master;
 		}
 		
@@ -95,12 +90,8 @@ public class DataSourceContextHolder {
 	 * 设置强制使用master库
 	 */
 	public void forceMaster(){
-		DataSourceContextVals vals = contextVals.get();
-		if(vals == null){
-			vals = new DataSourceContextVals();
-			vals.forceMaster = true;
-			contextVals.set(vals);
-		}
+		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
+		vals.forceMaster = true;
 	}
 
 	/**
@@ -109,10 +100,7 @@ public class DataSourceContextHolder {
 	 * @return
 	 */
 	public boolean isForceUseMaster() {
-		DataSourceContextVals vals = contextVals.get();
-		if (vals == null)
-			return false;
-		return vals.forceMaster;
+		return MybatisRuntimeContext.getDataSourceContextVals().forceMaster;
 	}
 
 	/**
@@ -134,12 +122,7 @@ public class DataSourceContextHolder {
 		return slaveKey;
 	}
 
-	public void clear() {
-		contextVals.remove();
-	}
-	
-	
-	private class DataSourceContextVals {
+	public static class DataSourceContextVals {
 		public boolean userSlave; //
 		public boolean forceMaster;
 		public String dsKey;

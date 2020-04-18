@@ -26,4 +26,40 @@ public @interface Cache {
 	 * @return
 	 */
 	long expire() default 0;
+	
+	/**
+	 * 是否业务上唯一索引
+	 * @return
+	 */
+	boolean uniqueIndex() default false;
+
+	/**
+	 * 是否允许并发查询db
+	 * @return
+	 */
+	boolean concurrency() default true;
+	/**
+	 * 缓存范围是否当前登录用户
+	 * @return
+	 */
+	boolean userScope() default false;
+	
+	/**
+	 * 缓存范围：
+	 * @return
+	 */
+	String[] scopeContext() default {};
+	
+	/**
+	 * 配置在那些方法执行后自动清除缓存<br>
+	 * 支持通配符。like:[UserEntityMapper.updateType,AccountEntityMapper.*]
+	 * @return
+	 */
+	String[] evictOnMethods() default {};
+	
+	/**
+	 * 引用缓存key
+	 * @return
+	 */
+	String[] refKey() default {};
 }

@@ -7,7 +7,8 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.jeesuite.mybatis.datasource.DataSourceContextHolder;
+import com.jeesuite.mybatis.MybatisRuntimeContext;
+import com.jeesuite.mybatis.datasource.MuitDataSourceManager;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.UseMaster;
 
@@ -27,15 +28,18 @@ public abstract class MybatisPluginBaseSpringInterceptor {
 			MethodSignature methodSignature = (MethodSignature)pjp.getSignature();    
 			Method method = methodSignature.getMethod();  
 			
-			if(method.isAnnotationPresent(UseMaster.class) || method.isAnnotationPresent(Transactional.class)){				
-				DataSourceContextHolder.get().forceMaster();
+			if(method.isAnnotationPresent(Transactional.class)){
+				MybatisRuntimeContext.setTransactionalMode(true);
+			}
+			if(method.isAnnotationPresent(UseMaster.class)){				
+				MuitDataSourceManager.get().forceMaster();
 			}
 			return pjp.proceed();
 		} catch (Exception e) {
 			CacheHandler.rollbackCache();
 			throw e;
 		}finally {
-			DataSourceContextHolder.get().clear();
+			MybatisRuntimeContext.unset();
 		}
 		
 	}

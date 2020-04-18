@@ -23,14 +23,12 @@ public interface CacheProvider extends Closeable{
 	
 	boolean remove(String key);
 	
-	void putGroup(String cacheGroupKey,String key,long expireSeconds);
-	
-	void removeFromGroup(String cacheGroupKey,String key);
-	
-	void clearExpiredGroupKeys(String cacheGroup);
-	
-	void clearGroup(String groupName,boolean containPkCache);
-	
 	boolean exists(String key);
-
+	
+	void addZsetValue(String key,String value,double score);
+	boolean existZsetValue(String key,String value);
+	boolean removeZsetValue(String key,String value);
+	boolean removeZsetValues(String key,double minScore, double maxScore);
+	
+	boolean setnx(String key,String value,long expireSeconds);
 }

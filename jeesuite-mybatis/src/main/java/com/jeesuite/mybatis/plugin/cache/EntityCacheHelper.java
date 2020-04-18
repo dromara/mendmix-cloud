@@ -53,15 +53,13 @@ public class EntityCacheHelper {
 		}
 		
 		String entityClassName = entityClass.getSimpleName();
-		key = entityClassName + CacheHandler.SPLIT_PONIT + key;
+		key = entityClassName + CacheHandler.DOT + key;
 		T result = CacheHandler.cacheProvider.get(key);
 		if(result == null){
 			try {				
 				result = dataCaller.call();
 				if(result != null){
 					CacheHandler.cacheProvider.set(key, result, expireSeconds);
-					String cacheGroupKey = entityClassName + CacheHandler.GROUPKEY_SUFFIX;
-					CacheHandler.cacheProvider.putGroup(cacheGroupKey, key, expireSeconds);
 				}
 			} catch (Exception e) {
 				throw new RuntimeException(e);
@@ -78,12 +76,8 @@ public class EntityCacheHelper {
     public static void removeCache(Class<? extends BaseEntity> entityClass,String key){
     	if(CacheHandler.cacheProvider == null)return;
     	String entityClassName = entityClass.getSimpleName();
-		key = entityClassName + CacheHandler.SPLIT_PONIT + key;
-		String cacheGroupKey = entityClassName + CacheHandler.GROUPKEY_SUFFIX;
-		
+		key = entityClassName + CacheHandler.DOT + key;
 		CacheHandler.cacheProvider.remove(key);
-		CacheHandler.cacheProvider.removeFromGroup(cacheGroupKey, key);
-		
 	}
 	
 	/**
@@ -103,7 +97,6 @@ public class EntityCacheHelper {
 	public static void removeCache(Class<? extends BaseEntity> entityClass){
 		if(CacheHandler.cacheProvider == null)return;
 		String entityClassName = entityClass.getSimpleName();
-		CacheHandler.cacheProvider.clearGroup(entityClassName,true);
 	}
 	
     

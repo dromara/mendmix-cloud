@@ -16,7 +16,7 @@ import com.jeesuite.mybatis.test.entity.UserEntity;
 
 public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 
-	@Cache
+	@Cache(evictOnMethods = "*")
 	List<UserEntity> findByType(short type);
 
 	@Cache

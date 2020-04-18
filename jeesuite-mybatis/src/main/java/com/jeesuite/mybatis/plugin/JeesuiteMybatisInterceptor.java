@@ -95,13 +95,15 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 			if(result != null)break;
 		}
 		
-		if(result == null){
-			result = invocation.proceed();
-			proceed = true;
-		}
-		
-		for (InterceptorHandler handler : interceptorHandlers) {
-			handler.onFinished(invocation,proceed ? result : null);
+		try {
+			if(result == null){
+				result = invocation.proceed();
+				proceed = true;
+			}
+		} finally {
+			for (InterceptorHandler handler : interceptorHandlers) {
+				handler.onFinished(invocation,proceed ? result : null);
+			}
 		}
 		
 		return result;
