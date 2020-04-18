@@ -36,7 +36,6 @@ public class AliyunossProvider extends AbstractProvider{
 
 	public static final String NAME = "aliyun";
 	
-	private static final String URL_PREFIX_PATTERN = "(http).*\\.(com|cn)\\/";
 	private static final String DEFAULT_CALLBACK_BODY = "filename=${object}&size=${size}&mimeType=${mimeType}&height=${imageInfo.height}&width=${imageInfo.width}";
 	
 	private OSSClient ossClient;

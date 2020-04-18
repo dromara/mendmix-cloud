@@ -13,8 +13,9 @@ import com.jeesuite.filesystem.FSProvider;
  */
 public abstract class AbstractProvider implements FSProvider{
 
-	private static final String HTTP_PREFIX = "http://";
-	private static final String HTTPS_PREFIX = "https://";
+	protected static final String URL_PREFIX_PATTERN = "(http).*\\.(com|cn)\\/";
+	protected static final String HTTP_PREFIX = "http://";
+	protected static final String HTTPS_PREFIX = "https://";
 
 	protected static final String DIR_SPLITER = "/";
 	
