@@ -125,4 +125,13 @@ public class RedisString extends RedisBase{
 	}
 
 
+	public boolean setnx(String value, long expireSeconds) {
+		try {
+			Long result = getJedisCommands(groupName).setnx(key, value);
+			if(result > 0)setExpire(expireSeconds);
+			return result > 0;
+		} finally {
+			getJedisProvider(groupName).release();
+		}
+	}
 }

@@ -177,4 +177,18 @@ public class RedisSortSet extends RedisBinaryCollection {
 			getJedisProvider(groupName).release();
 		}
 	}
+    
+    public double getScore(String value){
+        try {   
+        	Double result;
+        	if(isCluster(groupName)){
+        		result = getBinaryJedisClusterCommands(groupName).zscore(keyBytes, valueSerialize(value));
+        	}else{
+        		result = getBinaryJedisCommands(groupName).zscore(keyBytes, valueSerialize(value)); 
+        	}
+			return result == null ?  -1 : result;
+    	} finally{
+			getJedisProvider(groupName).release();
+		}
+	}
 }
