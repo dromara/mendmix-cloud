@@ -27,6 +27,7 @@ public class EntityHelper {
      * 缓存TableMapper
      */
     private final static Map<Class<?>, EntityMapper> tableMapperCache = new HashMap<Class<?>, EntityMapper>();
+    private final static Map<String, Field> entityFieldMappings = new HashMap<>();
 
     /**
      * 由传入的实体的class构建TableMapper对象，构建好的对象存入缓存中，以后使用时直接从缓存中获取
@@ -93,7 +94,9 @@ public class EntityHelper {
                 }
                 // 添加到所有字段映射信息
                 columnMapperSet.add(columnMapper);
-
+                //
+                field.setAccessible(true);
+                entityFieldMappings.put(field.getName(), field);
             }
             if (columnMapperSet.size() <= 0) {
                 throw new RuntimeException("实体" + entityClass.getName() + "不存在映射字段");
@@ -230,5 +233,9 @@ public class EntityHelper {
             return getAllField(entityClass.getSuperclass(), fieldList);
         }
         return fieldList;
+    }
+    
+    public static Field getEntityField(String fieldName){
+    	return entityFieldMappings.get(fieldName);
     }
 }

@@ -33,6 +33,7 @@ public class MybatisMapperParser {
 	private static Map<String, Map<String, String>> caches = new HashMap<String, Map<String,String>>();
 	private static Map<String, List<EntityInfo>> entitiesGroupMap = new HashMap<>();
 	private static Map<String,EntityInfo> mapperRalateEntitys = new HashMap<>();
+	private static Map<String,EntityInfo> entityRalateEntitys = new HashMap<>();
 	
 	public static void addMapperLocations(String group,Resource[] mapperLocations){
 		doParse(group, mapperLocations);
@@ -44,6 +45,10 @@ public class MybatisMapperParser {
 	
 	public static EntityInfo getEntityInfoByMapper(String mapperName){
 		return mapperRalateEntitys.get(mapperName);
+	}
+	
+	public static EntityInfo getEntityInfoByEntityName(String entityName){
+		return entityRalateEntitys.get(entityName);
 	}
 	
 	public static boolean entityHasProperty(Class<?> entityClass,String propName){
@@ -110,6 +115,7 @@ public class MybatisMapperParser {
 			}
 			entityInfos.add(entityInfo);
 			mapperRalateEntitys.put(mapperClass, entityInfo);
+			entityRalateEntitys.put(entityClass, entityInfo);
 			//
 			List<XNode> resultNodes = xNode.getChildren();
 			for (XNode xNode2 : resultNodes) {

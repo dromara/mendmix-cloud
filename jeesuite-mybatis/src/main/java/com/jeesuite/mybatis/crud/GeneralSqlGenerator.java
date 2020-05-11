@@ -10,13 +10,14 @@ import org.apache.ibatis.session.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.mybatis.crud.builder.BatchInsertBuilder;
-import com.jeesuite.mybatis.crud.builder.DeleteBuilder;
-import com.jeesuite.mybatis.crud.builder.GetByPrimaryKeyBuilder;
+import com.jeesuite.mybatis.crud.builder.InsertListBuilder;
+import com.jeesuite.mybatis.crud.builder.CountAllBuilder;
+import com.jeesuite.mybatis.crud.builder.DeleteByPrimaryKeyBuilder;
 import com.jeesuite.mybatis.crud.builder.InsertBuilder;
 import com.jeesuite.mybatis.crud.builder.SelectAllBuilder;
+import com.jeesuite.mybatis.crud.builder.SelectByPrimaryKeyBuilder;
+import com.jeesuite.mybatis.crud.builder.SelectByPrimaryKeysBuilder;
 import com.jeesuite.mybatis.crud.builder.UpdateBuilder;
-import com.jeesuite.mybatis.crud.name.DefaultCrudMethodDefine;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 
@@ -29,7 +30,6 @@ import com.jeesuite.mybatis.parser.MybatisMapperParser;
 public class GeneralSqlGenerator {
 
 	private static final Logger log = LoggerFactory.getLogger(GeneralSqlGenerator.class);
-	public static DefaultCrudMethodDefine methodDefines = new DefaultCrudMethodDefine();
 	
 	private LanguageDriver languageDriver;
 	private Configuration configuration;
@@ -45,13 +45,14 @@ public class GeneralSqlGenerator {
 		if(languageDriver == null)languageDriver = configuration.getDefaultScriptingLanguageInstance();
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(group);
 		for (EntityInfo entity : entityInfos) {
-			//TODO 排除生成
-			GetByPrimaryKeyBuilder.build(configuration, languageDriver,entity);
-			InsertBuilder.build(configuration,languageDriver, entity);
-			UpdateBuilder.build(configuration,languageDriver, entity);
-			DeleteBuilder.build(configuration, languageDriver,entity);
-			BatchInsertBuilder.build(configuration, languageDriver, entity);
-			SelectAllBuilder.build(configuration, languageDriver, entity);
+			new InsertBuilder().build(configuration, languageDriver,entity);
+			new InsertListBuilder().build(configuration,languageDriver, entity);
+			new DeleteByPrimaryKeyBuilder().build(configuration,languageDriver, entity);
+			new UpdateBuilder().build(configuration,languageDriver, entity);
+			new SelectAllBuilder().build(configuration, languageDriver,entity);
+			new SelectByPrimaryKeyBuilder().build(configuration, languageDriver, entity);
+			new SelectByPrimaryKeysBuilder().build(configuration, languageDriver, entity);
+			new CountAllBuilder().build(configuration, languageDriver, entity);
 			log.info(" >> generate autoCrud for:[{}] finish",entity.getEntityClass().getName());
 		}
 	}

@@ -132,7 +132,7 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test 
 	public void testBaseQuery() {
-		insertTestData();
+		//insertTestData();
 		userMapper.findByMobile(mobiles[0]);
 		userMapper.findByMobile(mobiles[1]);
 		userMapper.findByStatus((short) 1);
@@ -287,8 +287,14 @@ public class MybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
-	public void testById(){
-		userMapper.selectByPrimaryKey(1);
+	public void test00(){
+		userMapper.findByType((short)1);
+		UserEntity entity = userMapper.selectByPrimaryKey(4);
+		entity.setName("张三");
+		userMapper.updateByPrimaryKeySelective(entity);
+		userMapper.findByType((short)1);
+		
+		System.out.println();
 	}
 	
 	@Test

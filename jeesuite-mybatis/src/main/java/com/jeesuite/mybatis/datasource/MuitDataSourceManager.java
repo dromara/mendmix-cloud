@@ -29,13 +29,13 @@ public class MuitDataSourceManager {
 
 	private static String master;
 	private static final List<String> slaves = new ArrayList<>();
-	private static volatile MuitDataSourceManager holder = new MuitDataSourceManager();
+	private static volatile MuitDataSourceManager instance = new MuitDataSourceManager();
 
 	private MuitDataSourceManager() {
 	}
 
 	public static MuitDataSourceManager get() {
-		return holder;
+		return instance;
 	}
 
 	protected void registerDataSourceKey(String dsKey) {
@@ -44,17 +44,6 @@ public class MuitDataSourceManager {
 		} else {
 			slaves.add(dsKey);
 		}
-	}
-	
-	/**
-	 * 设置是否使用从库
-	 * 
-	 * @param useSlave
-	 */
-	public MuitDataSourceManager useSlave(boolean useSlave) {
-		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
-		vals.userSlave = useSlave;
-		return this;
 	}
 	
 	/**
@@ -68,12 +57,7 @@ public class MuitDataSourceManager {
 		}
 		
 		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
-		if(vals == null || StringUtils.isBlank(vals.dsKey)){
-			return master;
-		}
-		
 		String dsKey = null;
-		
         if (vals.forceMaster || !vals.userSlave){
 			dsKey = master;
 		}else{
@@ -84,23 +68,6 @@ public class MuitDataSourceManager {
 		logger.debug("current route rule is:userSlave[{}]|forceMaster[{}], use dataSource key is [{}]!",vals.userSlave,vals.forceMaster,vals.dsKey);
 		
 		return dsKey;
-	}
-	
-	/**
-	 * 设置强制使用master库
-	 */
-	public void forceMaster(){
-		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
-		vals.forceMaster = true;
-	}
-
-	/**
-	 * 判断是否强制使用一种方式
-	 * 
-	 * @return
-	 */
-	public boolean isForceUseMaster() {
-		return MybatisRuntimeContext.getDataSourceContextVals().forceMaster;
 	}
 
 	/**
@@ -120,12 +87,6 @@ public class MuitDataSourceManager {
 		int selectIndex = (int) (counter.getAndIncrement() % slaves.size());
 		String slaveKey = slaves.get(selectIndex);
 		return slaveKey;
-	}
-
-	public static class DataSourceContextVals {
-		public boolean userSlave; //
-		public boolean forceMaster;
-		public String dsKey;
 	}
 }
 

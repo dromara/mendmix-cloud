@@ -7,8 +7,8 @@ import org.apache.ibatis.plugin.Invocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.datasource.MuitDataSourceManager;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 
@@ -31,7 +31,7 @@ public class RwRouteHandler implements InterceptorHandler {
 		Object[] objects = invocation.getArgs();
 		MappedStatement ms = (MappedStatement) objects[0];
 		//已指定强制使用
-		if(MuitDataSourceManager.get().isForceUseMaster()){
+		if(MybatisRuntimeContext.isForceUseMaster()){
 			logger.debug("Method[{}] force use Master..",ms.getId());
 			return null;
 		}
@@ -40,12 +40,12 @@ public class RwRouteHandler implements InterceptorHandler {
 		if(ms.getSqlCommandType().equals(SqlCommandType.SELECT)){
 			//!selectKey 为自增id查询主键(SELECT LAST_INSERT_ID() )方法，使用主库
 			if(!ms.getId().contains(SelectKeyGenerator.SELECT_KEY_SUFFIX)){				
-				MuitDataSourceManager.get().useSlave(true);
+				MybatisRuntimeContext.useSlave(true);
 				logger.debug("Method[{} use Slave Strategy..",ms.getId());
 			}
 		}else{
 			logger.debug("Method[{}] use Master Strategy..",ms.getId());
-			MuitDataSourceManager.get().useSlave(false);
+			MybatisRuntimeContext.useSlave(false);
 		}
 		
 		return null;

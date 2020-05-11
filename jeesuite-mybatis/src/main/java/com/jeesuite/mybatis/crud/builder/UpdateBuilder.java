@@ -7,50 +7,33 @@ import java.util.Set;
 
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
-import org.apache.ibatis.mapping.SqlSource;
-import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
-import com.jeesuite.mybatis.crud.GeneralSqlGenerator;
+import com.jeesuite.mybatis.crud.SqlTemplate;
 import com.jeesuite.mybatis.crud.helper.ColumnMapper;
-import com.jeesuite.mybatis.crud.helper.EntityHelper;
 import com.jeesuite.mybatis.crud.helper.EntityMapper;
 import com.jeesuite.mybatis.crud.helper.TableMapper;
-import com.jeesuite.mybatis.parser.EntityInfo;
 
 /**
+ * 批量插入
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
- * @date 2015年12月2日
- * @Copyright (c) 2015, jwww
+ * @date 2018年11月22日
  */
-public class UpdateBuilder {
+public class UpdateBuilder  extends AbstractMethodBuilder{
 
-	/**
-	 * @param configuration
-	 * @param entity
-	 */
-	public static void build(Configuration configuration,LanguageDriver languageDriver, EntityInfo entity) {
-		String[] names = GeneralSqlGenerator.methodDefines.updateName().split(",");
-		for (String name : names) {			
-			String msId = entity.getMapperClass().getName() + "." + name;
-			
-			EntityMapper entityMapper = EntityHelper.getEntityMapper(entity.getEntityClass());
-			
-			String sql = buildUpdateSql(entityMapper,name.endsWith("Selective"));
-			
-			SqlSource sqlSource = languageDriver.createSqlSource(configuration, sql, entity.getEntityClass());
-			
-			MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, msId, sqlSource,SqlCommandType.UPDATE);
-			
-			MappedStatement statement = statementBuilder.build();
-			
-			configuration.addMappedStatement(statement);
-		}
+	@Override
+	SqlCommandType sqlCommandType() {
+		return SqlCommandType.UPDATE;
 	}
-	
-	
-	private static String buildUpdateSql(EntityMapper entityMapper,boolean selective) {
+
+	@Override
+	String[] methodNames() {
+		return new String[]{"updateByPrimaryKey","updateByPrimaryKeySelective"};
+	}
+
+	@Override
+	String buildSQL(EntityMapper entityMapper, boolean selective) {
 
 		// 从表注解里获取表名等信息
 		TableMapper tableMapper = entityMapper.getTableMapper();
@@ -82,4 +65,8 @@ public class UpdateBuilder {
 	}
 
 
+	@Override
+	void setResultType(Configuration configuration, MappedStatement statement, Class<?> entityClass) {}
+	
 }
+

@@ -33,9 +33,7 @@ import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.crud.CrudMethodDefine;
-import com.jeesuite.mybatis.crud.name.DefaultCrudMethodDefine;
-import com.jeesuite.mybatis.crud.name.Mapper3CrudMethodDefine;
+import com.jeesuite.mybatis.crud.CrudMethods;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.kit.CacheKeyUtils;
 import com.jeesuite.mybatis.kit.ReflectUtils;
@@ -44,6 +42,7 @@ import com.jeesuite.mybatis.parser.EntityInfo.MapperMethod;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
+import com.jeesuite.mybatis.plugin.cache.annotation.CacheIgnore;
 import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
 import com.jeesuite.spring.InstanceFactory;
 
@@ -95,8 +94,6 @@ public class CacheHandler implements InterceptorHandler {
 	private static Map<String, List<String>> requiredCheckCacheMethodMapppings = new HashMap<>();
 	
 	protected static CacheProvider cacheProvider;
-	
-	private CrudMethodDefine methodDefine;
 	
 	private ScheduledExecutorService clearExpiredKeysTimer;
 	
@@ -185,9 +182,9 @@ public class CacheHandler implements InterceptorHandler {
 			}
 			
 			if(nullPlaceholder){
-				cacheObject = new ArrayList<>();
+				cacheObject = new ArrayList<>(0);
 			}else if(cacheObject != null && !(cacheObject instanceof Collection)){						
-				cacheObject = new ArrayList<>(Arrays.asList(cacheObject));
+				cacheObject = Arrays.asList(cacheObject);
 			}
 			
 			return cacheObject;
@@ -390,7 +387,7 @@ public class CacheHandler implements InterceptorHandler {
 	private QueryMethodCache getQueryByPkMethodCache(String mtId){
 		mtId = mtId.substring(0, mtId.lastIndexOf(DOT));
 		if(queryCacheMethods.containsKey(mtId)){
-			return queryCacheMethods.get(mtId).get(mtId + "." + methodDefine.selectName());
+			return queryCacheMethods.get(mtId).get(mtId + "." + CrudMethods.selectByPrimaryKey.name());
 		}
 		return null;
 	}
@@ -467,21 +464,14 @@ public class CacheHandler implements InterceptorHandler {
 		nullValueCache = MybatisConfigs.getBoolean(context.getGroupName(), MybatisConfigs.CACHE_NULL_VALUE, false);
 		dynamicCacheTime = MybatisConfigs.getBoolean(context.getGroupName(), MybatisConfigs.CACHE_DYNAMIC_EXPIRE, false);
 		defaultCacheExpire = Long.parseLong(MybatisConfigs.getProperty(context.getGroupName(), MybatisConfigs.CACHE_EXPIRE_SECONDS, String.valueOf(IN_1HOUR)));
-		
-		String crudDriver = MybatisConfigs.getCrudDriver(context.getGroupName());
-		if("mapper3".equalsIgnoreCase(crudDriver)){
-			methodDefine = new Mapper3CrudMethodDefine();
-		}else{
-			methodDefine = new DefaultCrudMethodDefine();
-		}
-		
-		logger.info("crudDriver use:{},nullValueCache:{},defaultCacheExpireSeconds:{},dynamicCacheTime:{}",crudDriver,nullValueCache,defaultCacheExpire,dynamicCacheTime);
+		logger.info("nullValueCache:{},defaultCacheExpireSeconds:{},dynamicCacheTime:{}",nullValueCache,defaultCacheExpire,dynamicCacheTime);
 
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
 		
 		Class<BaseEntity> baseEntityClass = BaseEntity.class;
 		QueryMethodCache methodCache = null;
 		for (EntityInfo ei : entityInfos) {
+			if(ei.getMapperClass().isAnnotationPresent(CacheIgnore.class))continue;
 			if(!baseEntityClass.isAssignableFrom(ei.getEntityClass())){
 				logger.warn("[{}] not extends from [{}],ignore register auto cache!!!!",ei.getEntityClass().getName(),baseEntityClass.getName());
 				continue;
@@ -490,15 +480,12 @@ public class CacheHandler implements InterceptorHandler {
 			
 			//按主键查询方法定义
 			QueryMethodCache queryByPKMethod = generateQueryByPKMethod(mapperClass, ei.getEntityClass());
-			
 			if(queryByPKMethod == null)continue;
-			
-            boolean entityWithAnnotation = ei.getEntityClass().isAnnotationPresent(Cache.class);
+			Map<String, QueryMethodCache> tmpMap = new HashMap<>();
+			//主键查询方法
+			tmpMap.put(queryByPKMethod.methodName, queryByPKMethod);
 			
 			String keyPatternForPK = queryByPKMethod.keyPattern;
-
-			Map<String, QueryMethodCache> tmpMap = new HashMap<>();
-		
 			//接口定义的自动缓存方法
 			for (MapperMethod method : ei.getMapperMethods()) {
 				if(method.getMethod().isAnnotationPresent(Cache.class)){
@@ -508,20 +495,8 @@ public class CacheHandler implements InterceptorHandler {
 					logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",methodCache.methodName,methodCache.keyPattern);
 				}
 			}
-			
-			//无任何需要自动缓存的方法
-			if(entityWithAnnotation == false && tmpMap.isEmpty()){
-				continue;
-			}
-			//
-			if(entityWithAnnotation){
-				queryByPKMethod.setExpire(ei.getEntityClass().getAnnotation(Cache.class).expire());
-			}
-			
 			//缓存需要自动缓存的mapper
 			cacheEnableMappers.add(ei.getMapperClass().getName());
-			//主键查询方法
-			tmpMap.put(queryByPKMethod.methodName, queryByPKMethod);
 			logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",queryByPKMethod.methodName,queryByPKMethod.keyPattern);
 			
 			queryCacheMethods.put(mapperClass.getName(), tmpMap);
@@ -563,7 +538,8 @@ public class CacheHandler implements InterceptorHandler {
 				methodCache.isPk = true;
 				methodCache.collectionResult = false;
 				methodCache.keyPattern = entityClass.getSimpleName() + ".id:%s";
-				methodCache.methodName = mapperClass.getName() + "." + methodDefine.selectName();
+				methodCache.methodName = mapperClass.getName() + "." + CrudMethods.selectByPrimaryKey.name();
+				methodCache.expire = defaultCacheExpire;
 			}
 		}
 		return methodCache;
@@ -571,22 +547,18 @@ public class CacheHandler implements InterceptorHandler {
 	
 	private void generateUpdateByPkCacheMethod(Class<?> mapperClass,Class<?> entityClass,String keyPatternForPK){
 		String methodName = null;
-		//按主键插入
-		String[] insertNames = methodDefine.insertName().split(",");
-		for (String name : insertNames) {				
-			methodName = mapperClass.getName() + "." + name;
-			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.INSERT));
-		}
-		
-		//按主键更新
-		String[] updateNames = methodDefine.updateName().split(",");
-		for (String name : updateNames) {				
-			methodName = mapperClass.getName() + "." + name;
-			updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.UPDATE));
-		}
-		
+	    methodName = mapperClass.getName() + "." + CrudMethods.insert.name();
+	    updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.INSERT));
+	    methodName = mapperClass.getName() + "." + CrudMethods.insertSelective.name();
+	    updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.INSERT));
+	   //
+        methodName = mapperClass.getName() + "." + CrudMethods.updateByPrimaryKey.name();
+        updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.UPDATE));
+        methodName = mapperClass.getName() + "." + CrudMethods.updateByPrimaryKeySelective.name();
+        updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.UPDATE));
+
 		//按主键删除
-		methodName = mapperClass.getName() + "." + methodDefine.deleteName();
+		methodName = mapperClass.getName() + "." +  CrudMethods.deleteByPrimaryKey.name();
 		updateCacheMethods.put(methodName, new UpdateByPkMethodCache(entityClass,methodName, keyPatternForPK, SqlCommandType.DELETE));
 
 	}

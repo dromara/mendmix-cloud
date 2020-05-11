@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.jeesuite.mybatis.datasource.MuitDataSourceManager.DataSourceContextVals;
+import com.jeesuite.mybatis.datasource.DataSourceContextVals;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 
 /**
@@ -54,6 +54,9 @@ public class MybatisRuntimeContext {
 			context.set(new HashMap<>(3));
 		}
 		context.get().put(CONTEXT_TRANS_ON_KEY, String.valueOf(on));
+		if(on){
+			forceMaster();
+		}
 	}
 	
 	public static String getTransactionalMode(){
@@ -66,6 +69,37 @@ public class MybatisRuntimeContext {
 	
 	public static boolean isTransactionalOn(){
 		return Boolean.parseBoolean(getStringValue(CONTEXT_TRANS_ON_KEY));
+	}
+	
+	public static boolean isEmpty(){
+		return context.get() == null || context.get().isEmpty();
+	}
+	
+	/**
+	 * 设置是否使用从库
+	 * 
+	 * @param useSlave
+	 */
+	public static void useSlave(boolean useSlave) {
+		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
+		vals.userSlave = useSlave;
+	}
+	
+	/**
+	 * 设置强制使用master库
+	 */
+	public static void forceMaster(){
+		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
+		vals.forceMaster = true;
+	}
+	
+	/**
+	 * 判断是否强制使用一种方式
+	 * 
+	 * @return
+	 */
+	public static boolean isForceUseMaster() {
+		return MybatisRuntimeContext.getDataSourceContextVals().forceMaster;
 	}
 	
 	public static DataSourceContextVals getDataSourceContextVals(){

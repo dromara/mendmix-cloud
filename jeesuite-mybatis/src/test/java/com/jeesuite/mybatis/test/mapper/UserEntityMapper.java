@@ -9,11 +9,13 @@ import org.apache.ibatis.annotations.Select;
 
 import com.jeesuite.mybatis.core.BaseMapper;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
+import com.jeesuite.mybatis.plugin.cache.annotation.CacheIgnore;
 import com.jeesuite.mybatis.plugin.pagination.Page;
 import com.jeesuite.mybatis.plugin.pagination.PageParams;
 import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 
+@CacheIgnore
 public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 
 	@Cache(evictOnMethods = "*")
@@ -32,9 +34,6 @@ public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 	@Cache
 	@Pageable
 	List<UserEntity> queryByExample(UserEntity user);
-
-	@Cache
-	int countByExample(UserEntity user);
 
 	@Cache
 	@Select("SELECT count(*) FROM users where type=#{type}")

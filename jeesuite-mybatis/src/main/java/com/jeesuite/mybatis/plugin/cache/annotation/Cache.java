@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  * @date 2015年12月10日
  * @Copyright (c) 2015, jwww
  */
-@Target({ ElementType.METHOD, ElementType.TYPE })
+@Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
