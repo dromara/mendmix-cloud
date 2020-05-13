@@ -22,7 +22,7 @@ public class RedisDistributeLock implements Lock {
 
 	private static RedisLockCoordinator coordinator = new RedisLockCoordinator();
 
-    String getLockLua = "local res = redis.call('setnx', KEYS[1],'1')\n" + 
+	private static String getLockLua = "local res = redis.call('setnx', KEYS[1],'1')\n" + 
                     "if tonumber(res) > 0 then\n" + 
                     "	redis.call('expire', KEYS[1], ARGV[1])\n" + 
                     "	return 1\n" + 

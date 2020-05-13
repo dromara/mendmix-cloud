@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.jeesuite.common.util.NodeNameHolder;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.scheduler.helper.ConsistencyHash;
 import com.jeesuite.scheduler.registry.NullJobRegistry;
 
@@ -92,6 +93,9 @@ public class JobContext {
 	}
 
 	public void setRegistry(JobRegistry registry) {
+		if(ResourceUtils.getBoolean("jeesuite.task.registry.disabled", false)){
+        	return;
+        }
 		this.registry = registry;
 	}
 

@@ -33,13 +33,14 @@ import com.jeesuite.scheduler.registry.ZkJobRegistry;
 public class DelegateScheConfiguration {
 
 	@Autowired
-	private SchedulerProperties cacheProperties;
+	private SchedulerProperties schProperties;
 
 	@Bean
 	public JobRegistry jobRegistry(){
-		if(StringUtils.isNotBlank(cacheProperties.getRegistryServers())){
+		if("zookeeper".equals(schProperties.getRegistryType()) 
+				&& StringUtils.isNotBlank(schProperties.getRegistryServers())){
 			ZkJobRegistry registry = new ZkJobRegistry();
-			registry.setZkServers(cacheProperties.getRegistryServers());
+			registry.setZkServers(schProperties.getRegistryServers());
 			return registry;
 		}else{
 			return new NullJobRegistry();
@@ -50,10 +51,10 @@ public class DelegateScheConfiguration {
 	@Order(Ordered.LOWEST_PRECEDENCE)
 	public SchedulerFactoryBeanWrapper schedulerFactoryBean(JobRegistry jobRegistry) {
 		SchedulerFactoryBeanWrapper bean = new SchedulerFactoryBeanWrapper();
-		bean.setGroupName(cacheProperties.getGroupName());
-		bean.setThreadPoolSize(cacheProperties.getThreadPoolSize());
+		bean.setGroupName(schProperties.getGroupName());
+		bean.setThreadPoolSize(schProperties.getThreadPoolSize());
 		bean.setRegistry(jobRegistry);
-		bean.setScanPackages(cacheProperties.getScanPackages());
+		bean.setScanPackages(schProperties.getScanPackages());
 		return bean;
 	}
 

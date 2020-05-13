@@ -47,6 +47,4 @@ public class BaseUserInfo {
 	public void setScopes(List<String> scopes) {
 		this.scopes = scopes;
 	}
-	
-
 }

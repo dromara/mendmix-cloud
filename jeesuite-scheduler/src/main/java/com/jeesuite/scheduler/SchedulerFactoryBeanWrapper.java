@@ -106,6 +106,11 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			scanAndRegisterAnnotationJobs(packages);
 		}
 		
+		if(schedulers.isEmpty()){
+			logger.warn("Scheduler init failed,Any job not found");
+			return;
+		}
+		
 		List<Trigger> triggers = new ArrayList<>();
 		for (AbstractJob sch : schedulers) {
 			sch.setGroup(groupName);
@@ -121,7 +126,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			beanDefBuilder.addPropertyValue("triggers", triggers);
 			
 			Properties quartzProperties = new Properties();
-			threadPoolSize = threadPoolSize > 0 ? threadPoolSize : (schedulers.size() > 10 ? (schedulers.size()/2 + 1)  : schedulers.size());
+			threadPoolSize = threadPoolSize > 0 ? threadPoolSize : (schedulers.size() > 10 ? (schedulers.size()/2)  : schedulers.size());
 			quartzProperties.setProperty(SchedulerFactoryBean.PROP_THREAD_COUNT, String.valueOf(threadPoolSize));
 			beanDefBuilder.addPropertyValue("quartzProperties", quartzProperties);
 			logger.info("init Scheduler threadPoolSize:"+threadPoolSize);

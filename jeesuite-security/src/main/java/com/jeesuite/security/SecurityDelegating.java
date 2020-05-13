@@ -25,7 +25,6 @@ import com.jeesuite.security.client.LoginContext;
 import com.jeesuite.security.model.AccessToken;
 import com.jeesuite.security.model.BaseUserInfo;
 import com.jeesuite.security.model.UserSession;
-import com.jeesuite.security.util.SecurityCryptUtils;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.springweb.RequestContextHelper;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
