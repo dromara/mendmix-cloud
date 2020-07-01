@@ -36,7 +36,7 @@ import com.jeesuite.spring.InstanceFactory;
  * 修 改 者    修改日期     文件版本   修改说明    
  */
 public abstract class AbstractJob implements DisposableBean{
-    private static final Logger logger = LoggerFactory.getLogger(AbstractJob.class);
+    private static final Logger logger = LoggerFactory.getLogger("com.jeesuite.scheduler");
 
     protected String group;
     protected String jobName;

@@ -6,6 +6,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -238,11 +239,14 @@ public class BeanUtils {
         	result = Double.valueOf(value.toString());
         } else if (propertyType == long.class || propertyType == Long.class) {
         	result = Long.valueOf(value.toString());
-        }  else if (propertyType == Date.class) {
+        } else if (propertyType == Date.class) {
         	if(value != null){
         		result = DateUtils.parseDate(value);
         	}
-            
+        } else if (propertyType == LocalDate.class) {
+        	if(value != null){
+        		result = LocalDate.parse(value);
+        	}
         } else if (propertyType == boolean.class || propertyType == Boolean.class) {
         	result = Boolean.parseBoolean(value) || "1".equals(value);
         } 

@@ -9,12 +9,15 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -30,6 +33,7 @@ import org.springframework.jdbc.datasource.lookup.DataSourceLookup;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.datasource.builder.DruidDataSourceBuilder;
 import com.jeesuite.mybatis.datasource.builder.HikariCPDataSourceBuilder;
 import com.jeesuite.spring.InstanceFactory;
@@ -58,6 +62,8 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	
 	@Autowired
 	private Environment environment;
+	@Autowired(required = false)
+	private DataSourceConfigLoader dataSourceConfigLoader;
 
 	private DataSourceLookup dataSourceLookup = new JndiDataSourceLookup();
 
@@ -82,20 +88,49 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Property 'db.DataSourceType' expect:" + Arrays.toString(DataSourceType.values()));
 		}
-				
-		Map<String, Properties> map = parseDataSourceConfig();
+		
+		boolean tenantMode = MybatisConfigs.isTenantModeEnabled();
+		 // 属性文件  
+        Map<String, Properties> map = new HashMap<String,Properties>(); 
+        if(dataSourceConfigLoader != null){
+        	List<DataSourceConfig> configs = dataSourceConfigLoader.load();
+        	int slaveIndex = 0;
+        	for (DataSourceConfig config : configs) {
+        		if(!config.isMaster()){
+        			config.setIndex(++slaveIndex);
+        		}
+        		buildDataSourceProperties(tenantMode,config,map);
+			}
+        }else{
+        	if(tenantMode){
+        		Properties properties = ResourceUtils.getAllProperties("tenant\\[.*\\]\\.master.*", false);
+        		if(properties.isEmpty())throw new RuntimeException("tenant support Db config Like tenant[xxx].master.db.xxx");
+        		
+        		List<String> tenantIds = properties.keySet().stream().map(s -> {
+        			return s.toString().split("\\[|\\]")[1];
+        		}).distinct().collect(Collectors.toList());
+        		
+        		for (String tenantId : tenantIds) {
+        			parseDataSourceConfig(tenantId,map);
+        			logger.info("Load tenant config finish, -> tenantId:{}",tenantId);
+    			}
+        	}else{    		
+        		parseDataSourceConfig(null,map);
+        	}
+        }
 		
 		if(map.isEmpty())throw new RuntimeException("Db config Not found..");
-		registerDataSources(map);
+		registerDataSources(tenantMode,map);
 		
 		if (this.targetDataSources == null || targetDataSources.isEmpty()) {
 			throw new IllegalArgumentException("Property 'targetDataSources' is required");
 		}
 		
-		if (this.defaultDataSource == null) {
+		if (this.defaultDataSource == null && !tenantMode) {
 			throw new IllegalArgumentException("Property 'defaultDataSource' is required");
 		}
 	}
+
 
 	protected Object resolveSpecifiedLookupKey(Object lookupKey) {
 		return lookupKey;
@@ -140,10 +175,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	}
 
 	protected DataSource determineTargetDataSource() {
-		Object lookupKey = determineCurrentLookupKey();
-		if(lookupKey == null){
-			return defaultDataSource;
-		}
+		Object lookupKey =MuitDataSourceManager.get().getDataSourceKey();
 		DataSource dataSource = targetDataSources.get(lookupKey);
 		if (dataSource == null) {
 			throw new IllegalStateException("Cannot determine target DataSource for lookup key [" + lookupKey + "]");
@@ -151,11 +183,6 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 		return dataSource;
 	}
 
-
-     protected Object determineCurrentLookupKey() {   
-        return MuitDataSourceManager.get().getDataSourceKey();  
-     }  
-     
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -169,7 +196,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	 * @param mapCustom
 	 * @param isLatestGroup
 	 */
-    private void registerDataSources(Map<String, Properties> mapCustom) {  
+    private void registerDataSources(boolean tenantMode,Map<String, Properties> mapCustom) {  
     	
         DefaultListableBeanFactory acf = (DefaultListableBeanFactory) this.context.getAutowireCapableBeanFactory();  
         Iterator<String> iter = mapCustom.keySet().iterator();  
@@ -190,9 +217,10 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 				beanDefinitionBuilder = HikariCPDataSourceBuilder.builder(nodeProps);
 			}
 
-			acf.registerBeanDefinition(dsKey, beanDefinitionBuilder.getRawBeanDefinition());
+			String beanName = dsKey.replaceAll("\\[|\\]|\\.", "") + "DataSource";
+			acf.registerBeanDefinition(beanName, beanDefinitionBuilder.getRawBeanDefinition());
 
-			DataSource ds = (DataSource) this.context.getBean(dsKey);
+			DataSource ds = (DataSource) this.context.getBean(beanName);
 			targetDataSources.put(dsKey, ds);
 			//  设置默认数据源
 			if (dsKey.equals(MASTER_KEY)) {
@@ -211,29 +239,24 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
      * @return 
      * @throws IOException 
      */  
-    private Map<String, Properties> parseDataSourceConfig(){  
-        // 属性文件  
-        Map<String, Properties> mapDataSource = new HashMap<String,Properties>(); 
-        
-		String datasourceKey = MASTER_KEY;
-		Properties nodeProperties = parseNodeConfig(datasourceKey); 
-		mapDataSource.put(datasourceKey, nodeProperties);
+    private void parseDataSourceConfig(String tenantId,Map<String, Properties> mapDataSource){  
+    	String tenantPrefix = tenantId == null ? "" : "tenant["+tenantId+"].";
+		String datasourceKey = tenantPrefix + MASTER_KEY;
+		parseEachConfig(datasourceKey,mapDataSource); 
 		
 		//解析同组下面的slave
 		int index = 1;
 		while(true){
-			datasourceKey = "slave" + index;
+			datasourceKey = tenantPrefix + "slave" + index;
 			if(!ResourceUtils.containsProperty(datasourceKey + ".db.url") && !ResourceUtils.containsProperty(datasourceKey + ".db.jdbcUrl"))break;
-			nodeProperties = parseNodeConfig(datasourceKey); 
-			mapDataSource.put(datasourceKey, nodeProperties);
+			parseEachConfig(datasourceKey,mapDataSource); 
 			index++;
 		}
-		
-        return mapDataSource;  
     }  
     
     
-    private Properties parseNodeConfig(String keyPrefix){
+    private void parseEachConfig(String keyPrefix,Map<String, Properties> mapDataSource){
+    	
     	Properties properties = new Properties();
     	String prefix = "db.";
     	Properties tmpProps = ResourceUtils.getAllProperties(prefix);
@@ -252,7 +275,27 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
     		if(value == null)value = entry.getValue().toString();
     		properties.setProperty(entry.getKey().toString().replace(prefix, ""), value);
     	}
-    	return properties;
+    	
+    	mapDataSource.put(keyPrefix, properties);
     }
+    
+  
+	private void buildDataSourceProperties(boolean tenantMode,DataSourceConfig config, Map<String, Properties> map) {
+		if(tenantMode && StringUtils.isBlank(config.getTenantId())){
+			throw new IllegalArgumentException("On tenantMode tenantId required ");
+		}
+		String dsKey = config.isMaster() ? MASTER_KEY : "slave" + config.getIndex();
+		if(tenantMode)dsKey = "tenant["+config.getTenantId()+"]." + dsKey;
+		Properties properties = new Properties();
+		properties.setProperty("url", config.getUrl());
+		properties.setProperty("username", config.getUsername());
+		properties.setProperty("password", config.getPassword());
+		
+		String prefix = "db.";
+    	Properties tmpProps = ResourceUtils.getAllProperties(prefix);
+    	properties.putAll(tmpProps);
+		
+		map.put(dsKey, properties);
+	}
     
 } 

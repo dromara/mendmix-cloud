@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.BeansException;
@@ -19,6 +20,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 import com.jeesuite.mybatis.test.mapper.UserEntityMapper;
 import com.jeesuite.spring.InstanceFactory;
@@ -35,6 +37,11 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	@Override
 	public void setApplicationContext(ApplicationContext arg0) throws BeansException {	
 		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(arg0));
+	}
+	
+	@Before
+	public void init(){
+		MybatisRuntimeContext.setTenantId("1000");
 	}
 	
 	@Test

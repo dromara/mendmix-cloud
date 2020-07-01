@@ -243,17 +243,34 @@ public final class ResourceUtils {
 	}
 	
 	/**
-	 * 获取指定前缀的配置
+	 * 按前缀匹配配置列表
+	 * @param prefix
+	 * @return
 	 */
 	public static Properties getAllProperties(String prefix) {
+		return getAllProperties(prefix, true);
+	}
+	/**
+	 * 按key模糊匹配配置列表
+	 */
+	public static Properties getAllProperties(String keyPattern,boolean matchPrefix) {
 		if(!inited){
 			load();
 		}
 
 		Properties properties = new Properties();
 		Set<Entry<Object, Object>> entrySet = allProperties.entrySet();
+		boolean match = false;
 		for (Entry<Object, Object> entry : entrySet) {
-			if(StringUtils.isBlank(prefix) || entry.getKey().toString().startsWith(prefix)){	
+			match = StringUtils.isBlank(keyPattern) ;
+			if(!match){
+				if(matchPrefix){
+					match = entry.getKey().toString().startsWith(keyPattern);
+				}else{
+					match = entry.getKey().toString().matches(keyPattern);
+				}
+			}
+			if(match){	
 				String value = replaceRefValue(entry.getValue().toString());
 				properties.put(entry.getKey(), value);
 			}

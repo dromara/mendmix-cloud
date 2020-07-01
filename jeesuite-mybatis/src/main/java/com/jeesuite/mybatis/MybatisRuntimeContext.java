@@ -1,12 +1,10 @@
 package com.jeesuite.mybatis;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.mybatis.datasource.DataSourceContextVals;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 
@@ -22,16 +20,18 @@ import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 public class MybatisRuntimeContext {
 
 
-	private static ThreadLocal<Map<String, Object>> context = new ThreadLocal<>();
-	private static final String CONTEXT_USER_ID_KEY = "_context_user_id_";
-	private static final String CONTEXT_TRANS_ON_KEY = "_context_trans_on_";
-	private static final String CONTEXT_DATASOURCE_KEY = "_context_ds_";
+	private static final String CONTEXT_USER_ID_KEY = "_ctx_userId_";
+	private static final String CONTEXT_TRANS_ON_KEY = "_ctx_trans_on_";
+	private static final String CONTEXT_DATASOURCE_KEY = "_ctx_ds_";
+	private static final String CONTEXT_TENANT_ID_KEY = "_ctx_tenantId_";
 	
 	public static void setCurrentUserId(Serializable userId){
-		if(context.get() == null){
-			context.set(new HashMap<>(5));
-		}
-		context.get().put(CONTEXT_USER_ID_KEY, userId);
+		ThreadLocalContext.set(CONTEXT_USER_ID_KEY, userId);
+	}
+	
+	public static void setTenantId(String tenantId){
+		if(StringUtils.isBlank(tenantId))return;
+		ThreadLocalContext.set(CONTEXT_TENANT_ID_KEY, tenantId);
 	}
 	
 	public static String getContextParam(String paramName){
@@ -39,40 +39,38 @@ public class MybatisRuntimeContext {
 		if(CacheHandler.CURRENT_USER_CONTEXT_NAME.equals(paramName)){
 			return getCurrentUserId();
 		}
-		return getStringValue(paramName);
+		return ThreadLocalContext.getStringValue(paramName);
 	}
 	
 	public static void setContextParam(String name,String value){
-		if(context.get() == null){
-			context.set(new HashMap<>(5));
-		}
-		context.get().put(name, value);
+		ThreadLocalContext.set(name, value);
 	}
 	
 	public static void setTransactionalMode(boolean on){
-		if(context.get() == null){
-			context.set(new HashMap<>(3));
-		}
-		context.get().put(CONTEXT_TRANS_ON_KEY, String.valueOf(on));
+		ThreadLocalContext.set(CONTEXT_TRANS_ON_KEY, String.valueOf(on));
 		if(on){
 			forceMaster();
 		}
 	}
 	
 	public static String getTransactionalMode(){
-		return getStringValue(CONTEXT_TRANS_ON_KEY);
+		return ThreadLocalContext.getStringValue(CONTEXT_TRANS_ON_KEY);
 	}
 	
 	public static String getCurrentUserId(){
-		return getStringValue(CONTEXT_USER_ID_KEY);
+		return ThreadLocalContext.getStringValue(CONTEXT_USER_ID_KEY);
+	}
+	
+	public static String getTenantId(){
+		return ThreadLocalContext.getStringValue(CONTEXT_TENANT_ID_KEY);
 	}
 	
 	public static boolean isTransactionalOn(){
-		return Boolean.parseBoolean(getStringValue(CONTEXT_TRANS_ON_KEY));
+		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_TRANS_ON_KEY));
 	}
 	
 	public static boolean isEmpty(){
-		return context.get() == null || context.get().isEmpty();
+		return ThreadLocalContext.isEmpty();
 	}
 	
 	/**
@@ -103,29 +101,16 @@ public class MybatisRuntimeContext {
 	}
 	
 	public static DataSourceContextVals getDataSourceContextVals(){
-		DataSourceContextVals dataSourceContextVals = null;
-		if(context.get() != null){
-			dataSourceContextVals = (DataSourceContextVals) context.get().get(CONTEXT_DATASOURCE_KEY);
-		}
+		DataSourceContextVals dataSourceContextVals = ThreadLocalContext.get(CONTEXT_DATASOURCE_KEY);
 		if(dataSourceContextVals == null){
-			if(context.get() == null){
-				context.set(new HashMap<>(3));
-			}
 			dataSourceContextVals = new DataSourceContextVals();
-			context.get().put(CONTEXT_DATASOURCE_KEY, dataSourceContextVals);
+			ThreadLocalContext.set(CONTEXT_DATASOURCE_KEY, dataSourceContextVals);
 		}
 		return dataSourceContextVals;
 	}
 	
-	
 	public static void unset(){
-		if(context.get() != null){
-			context.get().clear();
-		}
+		ThreadLocalContext.remove(CONTEXT_TRANS_ON_KEY);
 	}
 	
-	private static String getStringValue(String key){
-		if(context.get() == null)return null;
-		return Objects.toString(context.get().get(key), null);
-	}
 }

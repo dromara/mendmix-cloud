@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.cache.CacheExpires;
+import com.jeesuite.cache.CacheNamespaceHolder;
 import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common.serializer.SerializeUtils;
 
@@ -59,7 +60,11 @@ public abstract class RedisBase {
 	
 	public RedisBase(String key,String groupName,boolean isBinary) {
 		this.groupName = groupName;
-		this.key = key;
+		if(CacheNamespaceHolder.namespaceEnabled){
+			this.key = CacheNamespaceHolder.getNameSpace() + key;
+		}else{
+			this.key = key;
+		}
 		this.isBinary = isBinary;
 		if(isBinary)this.keyBytes = SafeEncoder.encode(key);
 	}

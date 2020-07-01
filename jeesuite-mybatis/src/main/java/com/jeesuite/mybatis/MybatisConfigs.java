@@ -45,6 +45,8 @@ public class MybatisConfigs {
 	public static final String CACHE_DYNAMIC_EXPIRE = "jeesuite.mybatis.dynamicExpire";
 	public static final String RW_ROUTE_ENABLED = "jeesuite.mybatis.rwRouteEnabled";
 	public static final String PAGINATION_ENABLED = "jeesuite.mybatis.paginationEnabled";
+	public static final String TENANT_MODE_ENABLED = "jeesuite.mybatis.tenantModeEnabled";
+	public static final String PAGINATION_MAX_LIMIT = "jeesuite.mybatis.pagination.maxLimit";
 	public static final String INTERCEPTOR_HANDLERCLASS = "jeesuite.mybatis.interceptorHandlerClass";
 	
 	private static Map<String, Properties> groupProperties = new HashMap<>();
@@ -83,6 +85,14 @@ public class MybatisConfigs {
 	
 	public static boolean isPaginationEnabled(String group) {
 		return getBoolean(group,PAGINATION_ENABLED, true);
+	}
+	
+	public static boolean isTenantModeEnabled() {
+		return ResourceUtils.getBoolean(TENANT_MODE_ENABLED, false);
+	}
+	
+	public static int getPaginationMaxLimit(){
+		return ResourceUtils.getInt(PAGINATION_MAX_LIMIT, 0);
 	}
 	
 	public static String[] getHanlderNames(String group){

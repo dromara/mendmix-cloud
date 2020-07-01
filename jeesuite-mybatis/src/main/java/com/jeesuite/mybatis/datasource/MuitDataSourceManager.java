@@ -4,13 +4,15 @@
 package com.jeesuite.mybatis.datasource;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
@@ -25,10 +27,11 @@ public class MuitDataSourceManager {
 
 	private static final Logger logger = LoggerFactory.getLogger(MuitDataSourceManager.class);
 	
+	private static final String NON_TENANT_KEY = "_none";
 	private final static AtomicLong counter = new AtomicLong(10);
-
-	private static String master;
-	private static final List<String> slaves = new ArrayList<>();
+	private static final Map<String, String> masters = new HashMap<>();
+	private static final Map<String, List<String>> slaves = new HashMap<>();
+	
 	private static volatile MuitDataSourceManager instance = new MuitDataSourceManager();
 
 	private MuitDataSourceManager() {
@@ -39,10 +42,15 @@ public class MuitDataSourceManager {
 	}
 
 	protected void registerDataSourceKey(String dsKey) {
+		
+		String tenantId = dsKey.startsWith("tenant") ? dsKey.split("\\[|\\]")[1] : NON_TENANT_KEY;
 		if (dsKey.contains("master")) {
-			master = dsKey;
+			masters.put(tenantId, dsKey);
 		} else {
-			slaves.add(dsKey);
+			if(!slaves.containsKey(tenantId)){
+				slaves.put(tenantId, new ArrayList<>());
+			}
+			slaves.get(tenantId).add(dsKey);
 		}
 	}
 	
@@ -52,20 +60,32 @@ public class MuitDataSourceManager {
 	 * @return
 	 */
 	protected String getDataSourceKey() {
-		if(JeesuiteMybatisInterceptor.isRwRouteEnabled() == false){
-			return master;
+		String tenantId = MybatisRuntimeContext.getTenantId();
+		if(tenantId == null || !MybatisConfigs.isTenantModeEnabled()){
+			tenantId = NON_TENANT_KEY;
 		}
 		
-		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
+		if(tenantId == null){
+        	throw new DataSourceRouteException("Tenant routeKey Not found");
+        }
+		
 		String dsKey = null;
-        if (vals.forceMaster || !vals.userSlave){
-			dsKey = master;
+		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
+		if(JeesuiteMybatisInterceptor.isRwRouteEnabled() == false){
+			dsKey = masters.get(tenantId);
 		}else{
-			dsKey = selectSlave();
+	        if (vals.forceMaster || !vals.userSlave){
+				dsKey = masters.get(tenantId);
+			}else{
+				dsKey = selectSlave(tenantId);
+			}
+	        vals.dsKey = dsKey;
 		}
 		
-		vals.dsKey = dsKey;
-		logger.debug("current route rule is:userSlave[{}]|forceMaster[{}], use dataSource key is [{}]!",vals.userSlave,vals.forceMaster,vals.dsKey);
+        if(dsKey == null){
+        	throw new DataSourceRouteException("Not found any dsKey for ["+tenantId+"]");
+        }
+		logger.debug("current route rule is:tenantId:[{}],userSlave[{}]|forceMaster[{}], use dataSource key is [{}]!",tenantId,vals.userSlave,vals.forceMaster,vals.dsKey);
 		
 		return dsKey;
 	}
@@ -75,18 +95,24 @@ public class MuitDataSourceManager {
 	 * 
 	 * @return
 	 */
-	private static String selectSlave() {
+	private static String selectSlave(String tenantId) {
 		//  无从库则路由到主库
 		if (slaves.isEmpty()) {
-			logger.debug("current no slave found ,default use [{}]!",master);
-			return master;
+			logger.debug("current no slave found ,default use [{}]!",masters.get(tenantId));
+			return masters.get(tenantId);
 		}
 		if (slaves.size() == 1)
-			return slaves.get(0);
+			return slaves.get(tenantId).get(0);
 		
 		int selectIndex = (int) (counter.getAndIncrement() % slaves.size());
-		String slaveKey = slaves.get(selectIndex);
+		String slaveKey = slaves.get(tenantId).get(selectIndex);
 		return slaveKey;
+	}
+	
+	public List<String> getStandaloneDadaSourceTenantIds(){
+		ArrayList<String> list = new ArrayList<>(masters.keySet());
+		list.remove(NON_TENANT_KEY);
+		return list;
 	}
 }
 

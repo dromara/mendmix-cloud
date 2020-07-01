@@ -54,6 +54,10 @@ public class MybatisPluginProperties {
 	public void setInterceptorHandlerClass(String interceptorHandlerClass) {
 		properties.setProperty(MybatisConfigs.INTERCEPTOR_HANDLERCLASS, interceptorHandlerClass);
 	}
+	
+	public void setTenantModeEnabled(boolean tenantModeEnabled) {
+		properties.setProperty(MybatisConfigs.TENANT_MODE_ENABLED, String.valueOf(tenantModeEnabled));
+	}
 
 	public Properties getProperties() {
 		return properties;

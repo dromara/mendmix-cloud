@@ -1,7 +1,10 @@
 package com.jeesuite.mybatis.plugin.pagination;
 
+import com.jeesuite.mybatis.MybatisConfigs;
+
 public class PageParams {
 
+	private static int maxPageSizeLimit = MybatisConfigs.getPaginationMaxLimit();
 	//当前页
     private int pageNo = 1;
     //每页的数量
@@ -11,22 +14,30 @@ public class PageParams {
 	public PageParams() {}
 
 	public PageParams(int pageNo, int pageSize) {
-		super();
-		this.pageNo = pageNo;
-		this.pageSize = pageSize;
+		setPageNo(pageNo);
+		setPageSize(pageSize);
 	}
 	
 	public int getPageNo() {
 		return pageNo;
 	}
 	public void setPageNo(int pageNo) {
-		this.pageNo = pageNo;
+		if(pageNo > 0){
+			this.pageNo = pageNo;
+		}
+		
 	}
+	
 	public int getPageSize() {
 		return pageSize;
 	}
+	
 	public void setPageSize(int pageSize) {
-		this.pageSize = pageSize;
+		if(maxPageSizeLimit > 0 && pageSize > maxPageSizeLimit){
+			this.pageSize = maxPageSizeLimit;
+		}else if(pageSize > 0){			
+			this.pageSize = pageSize;
+		}
 	}
     
 	public int offset() {
