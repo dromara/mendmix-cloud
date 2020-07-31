@@ -120,6 +120,23 @@ public class RedisSet extends RedisBinaryCollection {
 		}
 	}
 	
+	public boolean containsAny(Object...objects) {
+        try {  
+        	boolean result;
+        	for (Object object : objects) {
+        		if(isCluster(groupName)){
+        			result = getBinaryJedisClusterCommands(groupName).sismember(keyBytes, valueSerialize(object));
+            	}else{
+            		result = getBinaryJedisCommands(groupName).sismember(keyBytes, valueSerialize(object));
+            	}
+        		if(result)return result;
+			}
+        	return false;
+    	} finally{
+			getJedisProvider(groupName).release();
+		}
+	}
+	
 
 	protected <T> Set<T> toObjectSet(Set<byte[]> datas) {
 		Set<T> result = new HashSet<>();

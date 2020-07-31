@@ -162,4 +162,13 @@ private long expireTime;//过期时间（秒）
 		}
 
 	}
+	
+	public long incr(String field,long value) {
+		try {
+			return getJedisCommands(groupName).hincrBy(key, field, value);
+		} finally {
+			getJedisProvider(groupName).release();
+		}
+
+	}
 }

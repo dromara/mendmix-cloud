@@ -78,7 +78,7 @@ public class BeanUtils {
                     	
                         if (value != null || setDefaultValForNull) {
                         	if(isSimpleDataType(srcDescriptor.getPropertyType())){                        		
-                        		value = toValue(srcDescriptor, value, propertyType);
+                        		value = toValue(srcDescriptor.getPropertyType(), value, propertyType);
                         	}else{
                         		value = copy(value, propertyType);
                         	}
@@ -179,8 +179,9 @@ public class BeanUtils {
             throw new BeanConverterException(e);
         }
     }
+    
 
-    private static Object toValue(PropertyDescriptor srcDescriptor, Object value, Class<?> propertyType) {
+    private static Object toValue(Class<?> srcpropertyType, Object value, Class<?> propertyType) {
         
     	if (propertyType == BigDecimal.class) {
             value = (value == null) ? BigDecimal.ZERO : new BigDecimal(value.toString());
@@ -189,7 +190,7 @@ public class BeanUtils {
         } else if (propertyType == short.class || propertyType == Short.class) {
             value = (value == null) ? Short.valueOf("0") : Short.valueOf(value.toString());
         } else if (propertyType == int.class || propertyType == Integer.class) {
-            if (srcDescriptor.getPropertyType() == boolean.class || srcDescriptor.getPropertyType() == Boolean.class) {
+            if (srcpropertyType == boolean.class || srcpropertyType == Boolean.class) {
                 value = Boolean.parseBoolean(value.toString()) ? 1 : 0;
             } else {
                 value = (value == null) ? Integer.valueOf("0") : Integer.valueOf(value.toString());
@@ -198,9 +199,9 @@ public class BeanUtils {
             value = (value == null) ? Double.valueOf("0") : Double.valueOf(value.toString());
         } else if (propertyType == Date.class) {
         	if(value != null){
-        		if(srcDescriptor.getPropertyType() == String.class){
+        		if(srcpropertyType == String.class){
         			value = DateUtils.parseDate(value.toString());
-        		}else if (srcDescriptor.getPropertyType() == Long.class || srcDescriptor.getPropertyType() == Integer.class || srcDescriptor.getPropertyType() == long.class || srcDescriptor.getPropertyType() == int.class) {
+        		}else if (srcpropertyType == Long.class || srcpropertyType == Integer.class || srcpropertyType == long.class || srcpropertyType == int.class) {
                     Long val = Long.valueOf(value.toString());
                     if (val.longValue() != 0)
                         value = new Date(val);
@@ -209,9 +210,9 @@ public class BeanUtils {
                 }
         	}
             
-        } else if (propertyType == String.class && srcDescriptor.getPropertyType() != String.class) {
+        } else if (propertyType == String.class && srcpropertyType != String.class) {
             if (value != null) {
-            	if(srcDescriptor.getPropertyType() == Date.class){
+            	if(srcpropertyType == Date.class){
             		value = DateUtils.format((Date)value);
             	}else{            		
             		value = value.toString();
@@ -309,6 +310,22 @@ public class BeanUtils {
 
         return returnMap;
 
+    }
+    
+    public static void copy(Map<String, Object> src,Object dist){
+    	try {
+    		Map<String, PropertyDescriptor> descriptors = getCachePropertyDescriptors(dist.getClass());
+            for (PropertyDescriptor descriptor : descriptors.values()) {
+                String propertyName = descriptor.getName();
+                if(CLASS_PROP_NAME.equalsIgnoreCase(propertyName))continue;
+                if(!src.containsKey(propertyName))continue;
+                Object value = src.get(propertyName);
+                value = toValue(value.getClass(), value, descriptor.getPropertyType());
+                descriptor.getWriteMethod().invoke(dist, value);
+            }
+		} catch (Exception e) {
+			throw new BeanConverterException(e);
+		}
     }
 
     private static  Map<String, PropertyDescriptor> getCachePropertyDescriptors(Class<?> clazz) throws IntrospectionException {

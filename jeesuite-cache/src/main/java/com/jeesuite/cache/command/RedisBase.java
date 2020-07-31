@@ -19,9 +19,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.cache.CacheExpires;
-import com.jeesuite.cache.CacheNamespaceHolder;
 import com.jeesuite.cache.redis.JedisProviderFactory;
+import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.serializer.SerializeUtils;
+import com.jeesuite.common.util.ResourceUtils;
 
 import redis.clients.util.SafeEncoder;
 
@@ -35,6 +36,11 @@ public abstract class RedisBase {
 	
 	protected static final Logger logger = LoggerFactory.getLogger(RedisBase.class);
 	
+	public static final String TENANT_KEY_PREFIX = "_tenant@";
+	private static final String TENANT_ID_KEY = "_ctx_tenantId_";
+	private static final String KEY_SPLITER = ":";
+	public final static boolean tenantModeEnabled = ResourceUtils.getBoolean("jeesuite.cache.tenantModeEnabled", false);
+	
 	protected static final String RESP_OK = "OK";
 	//
 	//
@@ -45,6 +51,10 @@ public abstract class RedisBase {
 	protected String key;
 	
 	boolean isBinary = true;
+	
+	public String key() {
+		return key;
+	}
 	
 	public byte[] getKey() {
 		return keyBytes;
@@ -60,13 +70,20 @@ public abstract class RedisBase {
 	
 	public RedisBase(String key,String groupName,boolean isBinary) {
 		this.groupName = groupName;
-		if(CacheNamespaceHolder.namespaceEnabled){
-			this.key = CacheNamespaceHolder.getNameSpace() + key;
+		if(tenantModeEnabled){
+			this.key = buildTenantNameSpaceKey(key);
 		}else{
 			this.key = key;
 		}
 		this.isBinary = isBinary;
-		if(isBinary)this.keyBytes = SafeEncoder.encode(key);
+		if(isBinary)this.keyBytes = SafeEncoder.encode(this.key);
+	}
+	
+	public static String buildTenantNameSpaceKey(String key){
+		String tenantId = ThreadLocalContext.getStringValue(TENANT_ID_KEY);
+		if(tenantId == null)throw new NullPointerException("无法识别租户");
+		if(key.startsWith(TENANT_KEY_PREFIX))return key;
+		return new StringBuilder(TENANT_KEY_PREFIX).append(tenantId).append(KEY_SPLITER).append(key).toString();
 	}
 
 	/**

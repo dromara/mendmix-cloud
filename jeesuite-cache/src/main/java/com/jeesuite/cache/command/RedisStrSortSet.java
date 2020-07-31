@@ -93,9 +93,17 @@ private long expireTime;//过期时间（秒）
      * @param end
      * @return
      */
-    public List<String> range(int start,int end){
+    public List<String> range(long start,long end){
         try {    		
         	return new ArrayList<>(getJedisCommands(groupName).zrange(key, start, end));
+    	} finally{
+			getJedisProvider(groupName).release();
+		}
+	}
+    
+    public List<String> rangeByScore(double min,double max){
+        try {    		
+        	return new ArrayList<>(getJedisCommands(groupName).zrangeByScore(key, min, max));
     	} finally{
 			getJedisProvider(groupName).release();
 		}

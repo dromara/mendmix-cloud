@@ -3,8 +3,7 @@
  */
 package com.jeesuite.cache;
 
-import org.apache.commons.lang3.StringUtils;
-
+import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.util.ResourceUtils;
 
 /**
@@ -18,20 +17,16 @@ import com.jeesuite.common.util.ResourceUtils;
  */
 public class CacheNamespaceHolder {
 
-	private static final String CACHE_KEY_SPLITER = ":";
-	public final static boolean namespaceEnabled = ResourceUtils.getBoolean("cache.namespace.enabled", false);
-	private static ThreadLocal<String> holder = new ThreadLocal<>();
+	private static final String TENANT_ID_KEY = "_ctx_tenantId_";
+	public final static boolean tenantModeEnabled = ResourceUtils.getBoolean("jeesuite.cache.tenantModeEnabled", false);
 	
-	public static String getNameSpace(){
-		if(!namespaceEnabled)return null;
-		return StringUtils.trimToEmpty(holder.get());
+	public static String getTenantIdKeyPrefix(){
+		if(!tenantModeEnabled)return null;
+		return ThreadLocalContext.getStringValue(TENANT_ID_KEY);
 	}
 	
-	public static void setNamespace(String namespace){
-		holder.set(namespace + CACHE_KEY_SPLITER);
+	public static void setTenantId(String tenantId){
+		ThreadLocalContext.set(TENANT_ID_KEY, tenantId);
 	}
-	
-	public static void unset(){
-		holder.remove();
-	}
+
 }

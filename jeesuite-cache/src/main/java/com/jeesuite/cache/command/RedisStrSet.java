@@ -78,4 +78,15 @@ private long expireTime;//过期时间（秒）
 			getJedisProvider(groupName).release();
 		}
 	}
+	
+	public boolean containsAny(String...objects) {
+        try {  
+        	for (String object : objects) {
+        		if(getJedisCommands(groupName).sismember(key, object))return true;
+			}
+        	return false;
+    	} finally{
+			getJedisProvider(groupName).release();
+		}
+	}
 }

@@ -1,6 +1,11 @@
 package com.jeesuite.common.util;
 
 import java.text.SimpleDateFormat;
+import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -15,6 +20,7 @@ import org.apache.commons.lang3.time.DateFormatUtils;
  * @date 2012年12月20日
  */
 public class DateUtils extends org.apache.commons.lang3.time.DateUtils{
+	private static final String[] weekDays = { "sunday","monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
     public static final String DATE_PATTERN = "yyyy-MM-dd";
     public static final String TIMESTAMP_PATTERN = "yyyy-MM-dd HH:mm:ss";
     public static final String TIME_PATTERN = "HH:mm";
@@ -248,29 +254,6 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils{
      * 获取两个时间相差月份
      * */
     public static int getDiffMonth(Date start, Date end) {
-//        Calendar startCalendar = Calendar.getInstance();
-//        startCalendar.setTime(start);
-//        Calendar endCalendar = Calendar.getInstance();
-//        endCalendar.setTime(end);
-//        Calendar temp = Calendar.getInstance();
-//        temp.setTime(end);
-//        temp.add(Calendar.DATE, 1);
-//        int year = endCalendar.get(Calendar.YEAR)
-//                - startCalendar.get(Calendar.YEAR);
-//        int month = endCalendar.get(Calendar.MONTH)
-//                - startCalendar.get(Calendar.MONTH);
-//        if ((startCalendar.get(Calendar.DATE) == 1)
-//                && (temp.get(Calendar.DATE) == 1)) {
-//            return year * 12 + month + 1;
-//        } else if ((startCalendar.get(Calendar.DATE) != 1)
-//                && (temp.get(Calendar.DATE) == 1)) {
-//            return year * 12 + month + 1;
-//        } else if ((startCalendar.get(Calendar.DATE) == 1)
-//                && (temp.get(Calendar.DATE) != 1)) {
-//            return year * 12 + month + 1;
-//        } else {
-//            return (year * 12 + month - 1) < 0 ? 0 : (year * 12 + month);
-//        }
     	Calendar startCalendar = Calendar.getInstance();
 		startCalendar.setTime(start);
 		Calendar endCalendar = Calendar.getInstance();
@@ -313,4 +296,35 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils{
         c.add(calendarField, amount);
         return c.getTime();
     }
+    
+    public static String getDateWeekEnName(Date date){
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        int w = cal.get(Calendar.DAY_OF_WEEK) - 1;
+        if (w < 0) {
+            w = 0;
+        }
+        return weekDays[w];
+    }
+    
+    
+    public static Date firstDayOfWeek(Date date) {
+		ZoneId zoneId = ZoneId.of("Asia/Shanghai");
+    	long timeMills =  LocalDate.now(Clock.fixed(Instant.ofEpochMilli(date.getTime()),zoneId))
+    	.with(DayOfWeek.MONDAY)
+    	.atStartOfDay(zoneId)
+    	.toInstant()
+    	.toEpochMilli();
+    	return new Date(timeMills);
+     }
+    
+    public static Date lastDayOfWeek(Date date) {
+ 		ZoneId zoneId = ZoneId.of("Asia/Shanghai");
+ 		long timeMills =  LocalDate.now(Clock.fixed(Instant.ofEpochMilli(date.getTime()),zoneId))
+     	.with(DayOfWeek.SUNDAY)
+     	.atStartOfDay(zoneId)
+     	.toInstant()
+     	.toEpochMilli();
+ 		return new Date(timeMills);
+      }
 }
