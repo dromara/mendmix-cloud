@@ -84,9 +84,9 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	public void afterPropertiesSet() {
 		
 		try {	
-			dataSourceType = DataSourceType.valueOf(ResourceUtils.getProperty("db.DataSourceType", DataSourceType.Druid.name()));
+			dataSourceType = DataSourceType.valueOf(ResourceUtils.getProperty("db.dataSourceType", DataSourceType.Druid.name()));
 		} catch (Exception e) {
-			throw new IllegalArgumentException("Property 'db.DataSourceType' expect:" + Arrays.toString(DataSourceType.values()));
+			throw new IllegalArgumentException("Property 'db.dataSourceType' expect:" + Arrays.toString(DataSourceType.values()));
 		}
 		
 		boolean tenantMode = MybatisConfigs.isTenantModeEnabled();

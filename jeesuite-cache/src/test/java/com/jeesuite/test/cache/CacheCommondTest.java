@@ -3,6 +3,7 @@
  */
 package com.jeesuite.test.cache;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,6 +25,7 @@ import com.jeesuite.cache.command.RedisSet;
 import com.jeesuite.cache.command.RedisSortSet;
 import com.jeesuite.cache.command.RedisStrHashMap;
 import com.jeesuite.cache.command.RedisStrSet;
+import com.jeesuite.cache.command.RedisStrSortSet;
 import com.jeesuite.cache.command.RedisString;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
@@ -192,10 +194,16 @@ public class CacheCommondTest implements ApplicationContextAware{
 	}
 	
 	@Test
-	public void batchTest(){
-		new RedisString("batchtest.string").set("1");
-		new RedisObject("batchtest.obj").set("2");
-		RedisBatchCommand.removeByKeyPrefix("batchtest");
+	public void redisStrSortSetTest(){
+		RedisStrSortSet sortSet = new RedisStrSortSet("sorttest");
+		sortSet.add(2020091010, "2020091010");
+		sortSet.add(2020091011, "2020091011");
+		sortSet.add(2020091012, "2020091012");
+		sortSet.add(2020091013, "2020091013");
+		
+		List<String> score = sortSet.rangeByScore(2020091010, 2020091012);
+		
+		System.out.println(score);
 	}
 	
 }

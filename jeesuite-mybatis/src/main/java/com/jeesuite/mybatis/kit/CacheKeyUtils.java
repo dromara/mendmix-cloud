@@ -4,6 +4,7 @@
 package com.jeesuite.mybatis.kit;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -116,6 +117,8 @@ public class CacheKeyUtils {
 		map.put("c", new Page<>());
 		map.put("d", 1);
 		
-		System.out.println(objcetToString(map));
+		List<String> list = Arrays.asList("x","y");
+		
+		System.out.println(objcetToString(list));
 	} 
 }

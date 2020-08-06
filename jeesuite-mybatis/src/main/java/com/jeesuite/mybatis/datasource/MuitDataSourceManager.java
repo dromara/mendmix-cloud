@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.TenantIdHolder;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
@@ -51,6 +52,10 @@ public class MuitDataSourceManager {
 				slaves.put(tenantId, new ArrayList<>());
 			}
 			slaves.get(tenantId).add(dsKey);
+		}
+		
+		if(!NON_TENANT_KEY.equals(tenantId)){
+			TenantIdHolder.addTenantId(tenantId);
 		}
 	}
 	
@@ -107,12 +112,6 @@ public class MuitDataSourceManager {
 		int selectIndex = (int) (counter.getAndIncrement() % slaves.size());
 		String slaveKey = slaves.get(tenantId).get(selectIndex);
 		return slaveKey;
-	}
-	
-	public List<String> getStandaloneDadaSourceTenantIds(){
-		ArrayList<String> list = new ArrayList<>(masters.keySet());
-		list.remove(NON_TENANT_KEY);
-		return list;
 	}
 }
 
