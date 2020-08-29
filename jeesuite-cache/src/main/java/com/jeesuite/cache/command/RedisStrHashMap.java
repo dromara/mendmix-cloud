@@ -22,6 +22,10 @@ private long expireTime;//过期时间（秒）
 	public RedisStrHashMap(String key) {
 		this(key, null, RedisBase.getDefaultExpireSeconds());
 	}
+	
+	public RedisStrHashMap(String key,long expireTime) {
+		this(key, null, expireTime);
+	}
 	/**
 	 * 
 	 * @param key

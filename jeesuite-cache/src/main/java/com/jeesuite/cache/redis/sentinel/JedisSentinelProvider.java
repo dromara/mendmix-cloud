@@ -47,6 +47,7 @@ public class JedisSentinelProvider implements JedisProvider<Jedis,BinaryJedis>{
 	
 	private ScheduledExecutorService failoverCheker;
 	
+	private boolean tenantModeEnabled; 
 
 	public JedisSentinelProvider(final String groupName,final JedisPoolConfig jedisPoolConfig, String[] servers, final int timeout, final String password, final int database, final String clientName, final String masterName) {
 		super();
@@ -130,6 +131,15 @@ public class JedisSentinelProvider implements JedisProvider<Jedis,BinaryJedis>{
 	@Override
 	public String groupName() {
 		return groupName;
+	}
+
+	public void setTenantModeEnabled(boolean tenantModeEnabled) {
+		this.tenantModeEnabled = tenantModeEnabled;
+	}
+	
+	@Override
+	public boolean tenantMode() {
+		return tenantModeEnabled;
 	}
 
 }

@@ -21,5 +21,7 @@ public interface JedisProvider<S,B> extends DisposableBean{
 	public String mode();
 	
 	public String groupName();
+	
+	public boolean tenantMode();
 
 }

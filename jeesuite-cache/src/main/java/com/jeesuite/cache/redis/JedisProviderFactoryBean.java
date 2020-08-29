@@ -57,6 +57,7 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 	private int database = Protocol.DEFAULT_DATABASE;
 	private String masterName;
 	private String clientName;
+	private boolean tenantModeEnabled;
 	
 	private ApplicationContext context;
 
@@ -101,6 +102,10 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 
 	public void setClientName(String clientName) {
 		this.clientName = clientName;
+	}
+
+	public void setTenantModeEnabled(boolean tenantModeEnabled) {
+		this.tenantModeEnabled = tenantModeEnabled;
 	}
 
 	@Override
@@ -171,6 +176,8 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 		if(JedisSentinelProvider.MODE.equalsIgnoreCase(mode)){
 			beanDefinitionBuilder.addConstructorArgValue(masterName);
 		}
+		
+		beanDefinitionBuilder.addPropertyValue("tenantModeEnabled", tenantModeEnabled);
 		
 		acf.registerBeanDefinition(beanName, beanDefinitionBuilder.getRawBeanDefinition());
 		//

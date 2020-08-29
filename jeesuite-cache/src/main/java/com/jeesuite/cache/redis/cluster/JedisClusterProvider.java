@@ -31,6 +31,8 @@ public class JedisClusterProvider implements JedisProvider<JedisCluster,BinaryJe
 	private BinaryJedisCluster binaryJedisCluster;
 	
 	private String groupName;
+	
+	private boolean tenantModeEnabled; 
 
 	/**
 	 * 
@@ -86,6 +88,15 @@ public class JedisClusterProvider implements JedisProvider<JedisCluster,BinaryJe
 	@Override
 	public String groupName() {
 		return groupName;
+	}
+	
+	public void setTenantModeEnabled(boolean tenantModeEnabled) {
+		this.tenantModeEnabled = tenantModeEnabled;
+	}
+	
+	@Override
+	public boolean tenantMode() {
+		return tenantModeEnabled;
 	}
 
 }

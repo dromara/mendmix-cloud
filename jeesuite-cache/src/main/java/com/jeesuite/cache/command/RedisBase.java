@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +21,6 @@ import com.jeesuite.cache.CacheExpires;
 import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.serializer.SerializeUtils;
-import com.jeesuite.common.util.ResourceUtils;
 
 import redis.clients.util.SafeEncoder;
 
@@ -39,7 +37,6 @@ public abstract class RedisBase {
 	public static final String TENANT_KEY_PREFIX = "_tenant@";
 	private static final String TENANT_ID_KEY = "_ctx_tenantId_";
 	private static final String KEY_SPLITER = ":";
-	public final static boolean tenantModeEnabled = ResourceUtils.getBoolean("jeesuite.cache.tenantModeEnabled", false);
 	
 	protected static final String RESP_OK = "OK";
 	//
@@ -70,7 +67,7 @@ public abstract class RedisBase {
 	
 	public RedisBase(String key,String groupName,boolean isBinary) {
 		this.groupName = groupName;
-		if(tenantModeEnabled){
+		if(getJedisProvider(groupName).tenantMode()){
 			this.key = buildTenantNameSpaceKey(key);
 		}else{
 			this.key = key;
@@ -183,6 +180,7 @@ public abstract class RedisBase {
 	 * @return
 	 */
 	public boolean setExpireIfNot(long seconds) {
+		if(seconds <= 0)return true;
 		Long ttl = getTtl();
 		if(ttl == -1){
 			return setExpire(seconds);
@@ -318,6 +316,6 @@ public abstract class RedisBase {
 	 * @return
 	 */
 	public static long getDefaultExpireSeconds(){
-		return CacheExpires.IN_1WEEK + RandomUtils.nextLong(1, CacheExpires.IN_1DAY);
+		return CacheExpires.todayEndSeconds();
 	}
 }

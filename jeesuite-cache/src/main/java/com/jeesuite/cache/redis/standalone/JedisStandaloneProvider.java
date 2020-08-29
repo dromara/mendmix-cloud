@@ -33,6 +33,7 @@ public class JedisStandaloneProvider implements JedisProvider<Jedis,BinaryJedis>
 	
 	private String groupName;
 	
+	private boolean tenantModeEnabled; 
 
 	public JedisStandaloneProvider(String groupName,JedisPoolConfig jedisPoolConfig, String[] servers, int timeout, String password, int database, String clientName) {
 		super();
@@ -90,6 +91,16 @@ public class JedisStandaloneProvider implements JedisProvider<Jedis,BinaryJedis>
 	@Override
 	public String groupName() {
 		return groupName;
+	}
+	
+	
+	public void setTenantModeEnabled(boolean tenantModeEnabled) {
+		this.tenantModeEnabled = tenantModeEnabled;
+	}
+
+	@Override
+	public boolean tenantMode() {
+		return tenantModeEnabled;
 	}
 
 }

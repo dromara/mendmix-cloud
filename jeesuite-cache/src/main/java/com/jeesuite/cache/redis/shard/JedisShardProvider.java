@@ -37,6 +37,7 @@ public class JedisShardProvider implements JedisProvider<ShardedJedis,BinaryShar
 	
 	private String groupName;
 	
+	private boolean tenantModeEnabled; 
 
 	public JedisShardProvider(String groupName,JedisPoolConfig jedisPoolConfig, String[] servers, int timeout) {
 		super();
@@ -106,5 +107,13 @@ public class JedisShardProvider implements JedisProvider<ShardedJedis,BinaryShar
 	public String groupName() {
 		return groupName;
 	}
+	
+	public void setTenantModeEnabled(boolean tenantModeEnabled) {
+		this.tenantModeEnabled = tenantModeEnabled;
+	}
 
+	@Override
+	public boolean tenantMode() {
+		return tenantModeEnabled;
+	}
 }
