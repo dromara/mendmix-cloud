@@ -18,6 +18,7 @@ public class ThreadLocalContext {
 
 	private static ThreadLocal<Map<String, Object>> context = new ThreadLocal<>();
 	
+	public static final String TENANT_ID_KEY = "_ctx_tenantId_";
 	
 	public static void set(String key,Object value){
 		if(value == null)return;
