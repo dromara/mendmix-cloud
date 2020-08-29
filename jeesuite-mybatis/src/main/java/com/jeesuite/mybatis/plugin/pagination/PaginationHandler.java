@@ -257,7 +257,7 @@ public class PaginationHandler implements InterceptorHandler {
 
 	@Override
 	public int interceptorOrder() {
-		return 9;
+		return 3;
 	}
 
 }

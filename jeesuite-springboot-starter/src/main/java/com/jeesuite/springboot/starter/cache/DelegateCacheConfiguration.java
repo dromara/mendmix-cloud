@@ -52,6 +52,7 @@ public class DelegateCacheConfiguration  implements ApplicationContextAware{
 		bean.setPassword(cacheProperties.getPassword());
 		bean.setMasterName(cacheProperties.getMasterName());
 		bean.setGroup(cacheProperties.getGroupName());
+		bean.setTenantModeEnabled(cacheProperties.isTenantModeEnabled());
 		return bean;
 	}
 

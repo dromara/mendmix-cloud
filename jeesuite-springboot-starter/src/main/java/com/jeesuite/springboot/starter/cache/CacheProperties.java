@@ -26,6 +26,8 @@ public class CacheProperties {
 	
 	private String masterName;
 	
+	private boolean tenantModeEnabled;
+	
 	public String getGroupName() {
 		return groupName;
 	}
@@ -90,6 +92,13 @@ public class CacheProperties {
 	public void setMasterName(String masterName) {
 		this.masterName = masterName;
 	}
+	public boolean isTenantModeEnabled() {
+		return tenantModeEnabled;
+	}
+	public void setTenantModeEnabled(boolean tenantModeEnabled) {
+		this.tenantModeEnabled = tenantModeEnabled;
+	}
+	
 	
 	
 }

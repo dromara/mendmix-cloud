@@ -63,6 +63,6 @@ public class RwRouteHandler implements InterceptorHandler {
 
 	@Override
 	public int interceptorOrder() {
-		return 7;
+		return 2;
 	}
 }

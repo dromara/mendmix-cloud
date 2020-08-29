@@ -44,6 +44,7 @@ import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheIgnore;
 import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
+import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
 import com.jeesuite.spring.InstanceFactory;
 
 
@@ -104,6 +105,7 @@ public class CacheHandler implements InterceptorHandler {
 	private static CacheProvider getCacheProvider() {
 		if(cacheProvider == null){
 			synchronized (CacheHandler.class) {
+				if(cacheProvider != null)return cacheProvider;
 				if(cacheProvider == null){
 					cacheProvider = InstanceFactory.getInstance(CacheProvider.class);
 				}
@@ -127,6 +129,10 @@ public class CacheHandler implements InterceptorHandler {
 		boolean getLock = false;
 		String cacheKey = null;
 		if(mt.getSqlCommandType().equals(SqlCommandType.SELECT)){	
+			//分页查询
+			if(PageExecutor.getPageParams() != null){
+				return null;
+			}
 			//事务方法内部的查询不走缓存
 			if(MybatisRuntimeContext.isTransactionalOn()){
 				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process  isTransactionalOn SKIP -> mapperId:{}",mt.getId());
@@ -765,6 +771,6 @@ public class CacheHandler implements InterceptorHandler {
 
 	@Override
 	public int interceptorOrder() {
-		return 0;
+		return 1;
 	}
 }
