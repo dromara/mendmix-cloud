@@ -89,13 +89,13 @@ public class RedisHashMap extends RedisBinaryCollection {
 	public <T> Map<String, T> getAll() {
 		try {
 			Map<byte[], byte[]> datas = null;
-			Map<String, T> result = new HashMap<>();
+			Map<String, T> result = null;
 			if (isCluster(groupName)) {
 				datas = getBinaryJedisClusterCommands(groupName).hgetAll(keyBytes);
 			} else {
 				datas = getBinaryJedisCommands(groupName).hgetAll(keyBytes);
 			}
-
+			result = new HashMap<>(datas.size());
 			Iterator<Map.Entry<byte[], byte[]>> it = datas.entrySet().iterator();
 			while(it.hasNext()){
 				Map.Entry<byte[], byte[]> entry=it.next();

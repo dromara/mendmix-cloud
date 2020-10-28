@@ -116,4 +116,13 @@ private long expireTime;//过期时间（秒）
 			getJedisProvider(groupName).release();
 		}
 	}
+    
+    public double getScore(String member){
+        try {   
+			Double zscore = getJedisCommands(groupName).zscore(key, member);
+			return zscore == null ? -1 : zscore.doubleValue();
+    	} finally{
+			getJedisProvider(groupName).release();
+		}
+	}
 }
