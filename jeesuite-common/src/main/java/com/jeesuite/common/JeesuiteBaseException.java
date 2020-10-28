@@ -9,6 +9,10 @@ public class JeesuiteBaseException extends RuntimeException {
 	public JeesuiteBaseException() {
 		super();
 	}
+	
+	public JeesuiteBaseException(String message) {
+		this(500, message);
+	}
 
 	public JeesuiteBaseException(int code,String message) {
 		super(message);
