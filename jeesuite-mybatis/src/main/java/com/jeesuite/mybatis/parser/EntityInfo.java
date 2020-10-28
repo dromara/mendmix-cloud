@@ -83,14 +83,9 @@ public class EntityInfo {
 			}
 			mapperClass = Class.forName(mapperClassName);
 			//
-			List<Method> methods = new ArrayList<>(Arrays.asList(mapperClass.getDeclaredMethods()));
-			Class<?>[] interfaces = mapperClass.getInterfaces();
-			if(interfaces != null){		
-				for (Class<?> superClass : interfaces) {					
-					methods.addAll(Arrays.asList(superClass.getDeclaredMethods()));
-				}
-			}
-			
+			List<Method> methods = new ArrayList<>();
+			parseAllMethod(mapperClass, methods);
+	
 			String sql = null;
 			String fullName;
 			SqlCommandType sqlType;
@@ -202,6 +197,18 @@ public class EntityInfo {
 	
 	public List<MapperMethod> getMapperMethods() {
 		return mapperMethods;
+	}
+	
+	private static void parseAllMethod(Class<?> clazz,List<Method> methods) {
+		if(clazz.getDeclaredMethods() != null) {
+			for (Method method : clazz.getDeclaredMethods()) {
+				methods.add(method);
+			}
+		}
+    	Class<?>[] interfaces = clazz.getInterfaces();
+    	for (Class<?> interClass : interfaces) {
+    		parseAllMethod(interClass, methods);
+		}
 	}
 
 	public static class MapperMethod {

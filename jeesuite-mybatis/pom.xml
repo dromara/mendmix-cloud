@@ -128,11 +128,11 @@
 		</dependency>
 
 		<dependency>
-			<groupId>tk.mybatis</groupId>
-			<artifactId>mapper</artifactId>
-			<version>3.4.3</version>
-			<optional>true</optional>
+			<groupId>com.github.jsqlparser</groupId>
+			<artifactId>jsqlparser</artifactId>
+			<version>3.2</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>
