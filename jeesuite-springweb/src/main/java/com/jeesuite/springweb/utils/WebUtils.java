@@ -19,7 +19,7 @@ import org.springframework.http.MediaType;
 
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.TokenGenerator;
-import com.jeesuite.springweb.RequestContextHelper;
+import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.WebConstants;
 
 public class WebUtils {
@@ -129,30 +129,43 @@ public class WebUtils {
 		return segs[0] + "//" + segs[1];
 	}
 	
+	public static String getBaseUrl(HttpServletRequest request){
+		return getBaseUrl(request, true);
+	}
+	
 	/**
 	 * 获取baseurl<br>
 	 * nginx转发需设置 proxy_set_header   X-Forwarded-Proto $scheme;
 	 * @param request
+	 * @param withContextPath
 	 * @return
 	 */
-	public static String getBaseUrl(HttpServletRequest request){
-        String baseUrl = null;					
+	public static String getBaseUrl(HttpServletRequest request,boolean withContextPath){
+        String baseUrl = null;
+        
+        String schame = request.getHeader(WebConstants.HEADER_FORWARDED_PROTO);
 		String host = request.getHeader(WebConstants.HEADER_FORWARDED_HOST);
 		String prefix = request.getHeader(WebConstants.HEADER_FORWARDED_PRIFIX);
-		if(StringUtils.isAnyBlank(host,prefix)){
+		if(StringUtils.isBlank(host)){
 			String[] segs = StringUtils.split(request.getRequestURL().toString(),"/");
 			baseUrl = segs[0] + "//" + segs[1];
 		}else{
-			//由于nginx 没有设置  proxy_set_header   X-Forwarded-Proto $scheme;
-		    //导致https通过nginx转发后，在api网关获取到的scheme为：http,
-			//String proto = request.getHeader(BaseConstants.HEADER_FORWARDED_ORIGN_PROTO);
-			//if(proto == null)proto = request.getHeader(BaseConstants.HEADER_FORWARDED_PROTO);
-			 String port = request.getHeader(WebConstants.HEADER_FORWARDED_PORT);
-			String schame = "443".equals(port) ? "https://" : "http://";
-			baseUrl = schame + host + prefix;
+			if(StringUtils.isBlank(schame)){
+				String port = request.getHeader(WebConstants.HEADER_FORWARDED_PORT);
+				schame = "443".equals(port) ? "https://" : "http://";
+			}else{
+				if(schame.contains(",")){
+					schame = StringUtils.split(schame, ",")[0];
+				}
+				schame = schame + "://";
+			}
+			if(host.contains(",")){
+				host = StringUtils.split(host, ",")[0];
+			}
+			baseUrl = schame + host + StringUtils.trimToEmpty(prefix);
 		}
 		
-		if(StringUtils.isNotBlank(request.getContextPath())){
+		if(withContextPath && StringUtils.isNotBlank(request.getContextPath())){
 			baseUrl = baseUrl + request.getContextPath();
 		}
 		
@@ -161,7 +174,7 @@ public class WebUtils {
 	
 	public static Map<String, String> getCustomHeaders(){
 		Map<String, String> headers = new HashMap<>();
-		 HttpServletRequest request = RequestContextHelper.getRequest();
+		 HttpServletRequest request = CurrentRuntimeContext.getRequest();
 		Enumeration<String> headerNames = request.getHeaderNames();
 		 while(headerNames.hasMoreElements()){
 			 String headerName = headerNames.nextElement().toLowerCase();

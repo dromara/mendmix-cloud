@@ -1,12 +1,15 @@
 package com.jeesuite.springweb;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -58,6 +61,12 @@ public class GlobalExceptionHandler {
 		} else if (e instanceof org.springframework.web.bind.MissingServletRequestParameterException) {
 			resp.setCode(1001);
 			resp.setMsg(e.getMessage());
+		} else if(e instanceof MethodArgumentNotValidException){
+			List<ObjectError> errors = ((MethodArgumentNotValidException)e).getBindingResult().getAllErrors();
+			StringBuffer errorMsg=new StringBuffer();
+	        errors.stream().forEach(x -> errorMsg.append(x.getDefaultMessage()).append(";"));
+	        resp.setCode(400);
+			resp.setMsg(errorMsg.toString());
 		} else {
 			Throwable parent = e.getCause();
 			if (parent instanceof IllegalStateException) {
@@ -70,7 +79,7 @@ public class GlobalExceptionHandler {
 			logger.error("", e);
 		}
 
-		if(WebUtils.isInternalRequest(RequestContextHelper.getRequest())){
+		if(WebUtils.isInternalRequest(CurrentRuntimeContext.getRequest())){
 			int errorCode = resp.getCode();
 			if(errorCode >= 400 && errorCode<=500){
 				response.setStatus(errorCode);

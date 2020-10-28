@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.io.CharStreams;
-import com.jeesuite.springweb.base.CustomHttpServletRequestWrapper;
+import com.jeesuite.springweb.ext.servlet.CustomHttpServletRequestWrapper;
 import com.jeesuite.springweb.utils.UnsafeCharCheckUtils;
 import com.jeesuite.springweb.utils.WebUtils;
 

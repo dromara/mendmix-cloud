@@ -13,6 +13,16 @@ import com.google.common.io.CharStreams;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.json.JsonUtils;
 
+/**
+ * 全局错误处理hanlder
+ * 
+ * <br>
+ * Class Name   : CustomResponseErrorHandler
+ *
+ * @author jiangwei
+ * @version 1.0.0
+ * @date 2018年10月17日
+ */
 public class CustomResponseErrorHandler extends DefaultResponseErrorHandler {
 	/**
 	 * 

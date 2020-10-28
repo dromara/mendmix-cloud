@@ -1,4 +1,4 @@
-package com.jeesuite.springweb.base;
+package com.jeesuite.springweb.ext.servlet;
 
 import java.io.IOException;
 
