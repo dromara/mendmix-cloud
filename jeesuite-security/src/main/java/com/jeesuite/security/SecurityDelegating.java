@@ -21,12 +21,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.jeesuite.security.client.LoginContext;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.security.model.AccessToken;
-import com.jeesuite.security.model.BaseUserInfo;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.springweb.RequestContextHelper;
+import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
 import com.jeesuite.springweb.exception.UnauthorizedException;
 
@@ -70,7 +69,7 @@ public class SecurityDelegating {
 	 * @param password
 	 */
 	public static UserSession doAuthentication(String name,String password){
-		BaseUserInfo userInfo = getInstance().decisionProvider.validateUser(name, password);
+		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
 		
 		UserSession session = getCurrentSession(false);
 
@@ -88,7 +87,7 @@ public class SecurityDelegating {
 	}
 	
 	public static String doAuthenticationForOauth2(String name,String password){
-		BaseUserInfo userInfo = getInstance().decisionProvider.validateUser(name, password);
+		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
 		return getInstance().oauth2Manager.createOauth2AuthCode(userInfo.getId());
 	}
 	
@@ -96,11 +95,11 @@ public class SecurityDelegating {
 		return getInstance().oauth2Manager.authCode2UserId(authCode);
 	}
 	
-	public static AccessToken createOauth2AccessToken(BaseUserInfo user){
+	public static AccessToken createOauth2AccessToken(AuthUser user){
 		return getInstance().oauth2Manager.createAccessToken(user);
 	}
 	
-	public static UserSession updateSession(BaseUserInfo userInfo){
+	public static UserSession updateSession(AuthUser userInfo){
 		UserSession session = getCurrentSession();
 		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
 		
@@ -123,9 +122,9 @@ public class SecurityDelegating {
 	public static UserSession doAuthorization() throws UnauthorizedException,ForbiddenAccessException{
 		
 		UserSession session = getCurrentSession();
-		String uri = RequestContextHelper.getRequest().getRequestURI();
+		String uri = CurrentRuntimeContext.getRequest().getRequestURI();
 		
-		boolean isSuperAdmin = getInstance().decisionProvider.superAdminName().equals(session.getUserName());
+		boolean isSuperAdmin = getInstance().decisionProvider.superAdminName().equals(session.getUserInfo().getName());
 		if(!isSuperAdmin && !getInstance().resourceManager.isAnonymous(uri)){
 			if(session == null || session.isAnonymous()){
 				throw new UnauthorizedException();
@@ -141,7 +140,7 @@ public class SecurityDelegating {
 			getInstance().decisionProvider.authorizedPostHandle(session);
 		}
 		//
-		LoginContext.setUserSession(session);
+		CurrentRuntimeContext.setAuthUser(session.getUserInfo());
 		
 		return session;
 	}
@@ -159,12 +158,12 @@ public class SecurityDelegating {
 	}
 	
 	private static UserSession getCurrentSession(boolean first){
-		HttpServletResponse response = RequestContextHelper.getResponse();
-		UserSession session = getInstance().sessionManager.getSessionIfNotCreateAnonymous(RequestContextHelper.getRequest(), response,first);
+		HttpServletResponse response = CurrentRuntimeContext.getResponse();
+		UserSession session = getInstance().sessionManager.getSessionIfNotCreateAnonymous(CurrentRuntimeContext.getRequest(), response,first);
 		//profile
-		String profile = getInstance().sessionManager.getCurrentProfile(RequestContextHelper.getRequest());
+		String profile = getInstance().sessionManager.getCurrentProfile(CurrentRuntimeContext.getRequest());
 		if(StringUtils.isBlank(profile)){
-			profile = getInstance().decisionProvider.getCurrentProfile(RequestContextHelper.getRequest());
+			profile = getInstance().decisionProvider.getCurrentProfile(CurrentRuntimeContext.getRequest());
 			getInstance().sessionManager.setCurrentProfile(profile);
 		}
 		session.setProfile(profile);
@@ -200,7 +199,7 @@ public class SecurityDelegating {
 	}
 
     public static void doLogout(){
-    	getInstance().sessionManager.destroySessionAndCookies(RequestContextHelper.getRequest(), RequestContextHelper.getResponse());
+    	getInstance().sessionManager.destroySessionAndCookies(CurrentRuntimeContext.getRequest(), CurrentRuntimeContext.getResponse());
 	}
     
     

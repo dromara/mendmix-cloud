@@ -38,8 +38,11 @@ public class TokenGenerator {
 	 */
 	public static String generateWithSign(String tokenType){
 		Date date = new Date();
-		String cryptKey = getCryptKey(tokenType,date);
 		String str = DigestUtils.md5Short(generate()).concat(String.valueOf(date.getTime()));	
+		if(tokenType == null){
+			return SimpleCryptUtils.encrypt(str);
+		}
+		String cryptKey = getCryptKey(tokenType,date);
 		return DES.encrypt(cryptKey, str).toLowerCase();
 	}
 	
@@ -54,11 +57,15 @@ public class TokenGenerator {
 	public static void validate(String tokenType,String token,boolean validateExpire){
 		long timestamp = 0;
 		Date date = new Date();
-		String cryptKey = getCryptKey(tokenType,date);
 		try {
-			timestamp = Long.parseLong(DES.decrypt(cryptKey,token).substring(6));
+			if(tokenType == null){
+				timestamp = Long.parseLong(SimpleCryptUtils.decrypt(token).substring(6));
+			}else{
+				String cryptKey = getCryptKey(tokenType,date);
+				timestamp = Long.parseLong(DES.decrypt(cryptKey,token).substring(6));
+			}
 		} catch (Exception e) {
-			throw new JeesuiteBaseException(4005, "authToken错误");
+			throw new JeesuiteBaseException(4005, "token格式错误");
 		}
 		if(validateExpire && date.getTime() - timestamp > EXPIRE){
 			throw new JeesuiteBaseException(4005, "token已过期");

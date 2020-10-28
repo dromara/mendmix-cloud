@@ -20,11 +20,11 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.exception.UserNotFoundException;
 import com.jeesuite.security.exception.UserPasswordWrongException;
-import com.jeesuite.security.model.BaseUserInfo;
 import com.jeesuite.security.model.UserSession;
 
 /**
@@ -76,7 +76,7 @@ public abstract class SecurityDecisionProvider {
 	public abstract String contextPath();
 	public abstract List<String> anonymousUrlPatterns();
 	public abstract List<String> protectedUrlPatterns();
-	public abstract BaseUserInfo validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
+	public abstract AuthUser validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
 	public abstract List<String> findAllUriPermissionCodes();
 	public abstract Map<String, List<String>> getUserPermissionCodes(String userId);
 	public abstract void authorizedPostHandle(UserSession session);

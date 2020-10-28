@@ -26,7 +26,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.jeesuite.springweb.RequestContextHelper;
+import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
 import com.jeesuite.springweb.exception.UnauthorizedException;
 import com.jeesuite.springweb.utils.WebUtils;
@@ -51,7 +51,7 @@ public class SecurityDelegatingFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
 		
-		RequestContextHelper.set(request, response);
+		CurrentRuntimeContext.init(request, response);
 
 		try {
 			SecurityDelegating.doAuthorization();

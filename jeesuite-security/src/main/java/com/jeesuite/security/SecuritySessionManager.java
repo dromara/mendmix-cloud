@@ -14,7 +14,7 @@ import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.security.util.SecurityCryptUtils;
-import com.jeesuite.springweb.RequestContextHelper;
+import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.utils.WebUtils;
 
 /**
@@ -176,7 +176,7 @@ public class SecuritySessionManager {
 		cookie.setHttpOnly(true);
 		cookie.setMaxAge(3600);
 		
-		RequestContextHelper.getResponse().addCookie(cookie);
+		CurrentRuntimeContext.getResponse().addCookie(cookie);
 	}
 	
 	private static boolean isBlank(String str){

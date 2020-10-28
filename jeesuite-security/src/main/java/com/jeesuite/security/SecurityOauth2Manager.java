@@ -3,13 +3,13 @@ package com.jeesuite.security;
 import java.io.Serializable;
 
 import com.jeesuite.cache.redis.JedisProviderFactory;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
 import com.jeesuite.security.model.AccessToken;
-import com.jeesuite.security.model.BaseUserInfo;
 
 public class SecurityOauth2Manager {
 
@@ -38,7 +38,7 @@ public class SecurityOauth2Manager {
 		return cache.getString(authCode);
 	}
 	
-	public AccessToken createAccessToken(BaseUserInfo user){
+	public AccessToken createAccessToken(AuthUser user){
 		AccessToken accessToken = new AccessToken();
 		accessToken.setAccess_token(TokenGenerator.generate());
 		accessToken.setRefresh_token(TokenGenerator.generate());
