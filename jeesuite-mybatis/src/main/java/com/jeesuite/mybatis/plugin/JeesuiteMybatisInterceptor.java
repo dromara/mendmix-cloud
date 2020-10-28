@@ -22,6 +22,7 @@ import org.springframework.beans.factory.DisposableBean;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
+import com.jeesuite.mybatis.plugin.dataprofile.DataProfileHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
 
@@ -32,12 +33,10 @@ import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
  * @date 2015年12月7日
  * @Copyright (c) 2015, jwww
  */
-@Intercepts({  
-    @Signature(type = Executor.class, method = "update", args = {  
-            MappedStatement.class, Object.class }),  
-    @Signature(type = Executor.class, method = "query", args = {  
-            MappedStatement.class, Object.class, RowBounds.class,  
-            ResultHandler.class }) })  
+@Intercepts({ 
+	//@Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class}),
+    @Signature(type = Executor.class, method = "update", args = { MappedStatement.class, Object.class }),  
+    @Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class }) })  
 public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 
 	protected static final Logger logger = LoggerFactory.getLogger("com.jeesuite.mybatis");
@@ -63,6 +62,8 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 				rwRouteEnabled = true;
 			}else if(PaginationHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new PaginationHandler());
+			}else if(DataProfileHandler.NAME.equals(name)){
+				this.interceptorHandlers.add(new DataProfileHandler());
 			}else{
 				//自定义的拦截器
 				try {
@@ -75,6 +76,7 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 				}
 			}
 		}
+		
 		//排序
 		Collections.sort(this.interceptorHandlers, new Comparator<InterceptorHandler>() {
 			@Override

@@ -30,6 +30,10 @@ public class MybatisPluginProperties {
 	public void setPaginationEnabled(boolean paginationEnabled) {
 		properties.setProperty(MybatisConfigs.PAGINATION_ENABLED, String.valueOf(paginationEnabled));
 	}
+	
+	public void setDataProfileEnabled(boolean dataprofileEnabled) {
+		properties.setProperty(MybatisConfigs.DATA_PROFILE_ENABLED, String.valueOf(dataprofileEnabled));
+	}
 
 	public void setDbType(String dbType) {
 		properties.setProperty(MybatisConfigs.DB_TYPE, dbType);

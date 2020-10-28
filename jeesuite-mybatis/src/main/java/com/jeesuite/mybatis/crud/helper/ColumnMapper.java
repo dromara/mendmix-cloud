@@ -77,6 +77,41 @@ public class ColumnMapper {
 	public void setTypeHandler(Class<? extends TypeHandler<?>> typeHandler) {
 		this.typeHandler = typeHandler;
 	}
-	
-    
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((column == null) ? 0 : column.hashCode());
+		result = prime * result + ((property == null) ? 0 : property.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ColumnMapper other = (ColumnMapper) obj;
+		if (column == null) {
+			if (other.column != null)
+				return false;
+		} else if (!column.equals(other.column))
+			return false;
+		if (property == null) {
+			if (other.property != null)
+				return false;
+		} else if (!property.equals(other.property))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "ColumnMapper [property=" + property + ", column=" + column + "]";
+	}
+
 }

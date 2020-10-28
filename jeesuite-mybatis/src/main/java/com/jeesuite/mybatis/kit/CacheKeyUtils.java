@@ -14,6 +14,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.util.BeanUtils;
+import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.pagination.Page;
 
 /**
@@ -111,14 +112,12 @@ public class CacheKeyUtils {
 	
 	 
 	public static void main(String[] args) {
-	
-		Map<String, Object> map = new HashMap<>();
-		map.put("b", "b1");
-		map.put("c", new Page<>());
-		map.put("d", 1);
-		
-		List<String> list = Arrays.asList("x","y");
-		
-		System.out.println(objcetToString(list));
+		String keyPattern = "key:%s_%s_%s";
+		Map<String, Object> param = new HashMap<>();
+		param.put("a", "1");
+		param.put("b", "2");
+		param.put("c", "3");
+		String key = CacheHandler.genarateQueryCacheKey(keyPattern, param);
+		System.out.println(key);
 	} 
 }

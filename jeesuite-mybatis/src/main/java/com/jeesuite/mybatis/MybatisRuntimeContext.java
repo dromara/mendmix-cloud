@@ -1,6 +1,8 @@
 package com.jeesuite.mybatis;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -23,7 +25,7 @@ public class MybatisRuntimeContext {
 	private static final String CONTEXT_USER_ID_KEY = "_ctx_userId_";
 	private static final String CONTEXT_TRANS_ON_KEY = "_ctx_trans_on_";
 	private static final String CONTEXT_DATASOURCE_KEY = "_ctx_ds_";
-	private static final String CONTEXT_TENANT_ID_KEY = "_ctx_tenantId_";
+	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
 	
 	public static void setCurrentUserId(Serializable userId){
 		ThreadLocalContext.set(CONTEXT_USER_ID_KEY, userId);
@@ -31,7 +33,7 @@ public class MybatisRuntimeContext {
 	
 	public static void setTenantId(String tenantId){
 		if(StringUtils.isBlank(tenantId))return;
-		ThreadLocalContext.set(CONTEXT_TENANT_ID_KEY, tenantId);
+		ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, tenantId);
 	}
 	
 	public static String getContextParam(String paramName){
@@ -62,7 +64,7 @@ public class MybatisRuntimeContext {
 	}
 	
 	public static String getTenantId(){
-		return ThreadLocalContext.getStringValue(CONTEXT_TENANT_ID_KEY);
+		return ThreadLocalContext.getStringValue(ThreadLocalContext.TENANT_ID_KEY);
 	}
 	
 	public static boolean isTransactionalOn(){
@@ -109,8 +111,21 @@ public class MybatisRuntimeContext {
 		return dataSourceContextVals;
 	}
 	
+	public static void addDataProfileMappings(String fieldName,String...fieldValues){
+		Map<String, String[]> map = getDataProfileMappings();
+		if(map == null){
+			map = new HashMap<>(5);
+			ThreadLocalContext.set(CONTEXT_DATA_PROFILE_KEY,map);
+		}
+		map.put(fieldName, fieldValues);
+	}
+	
+	public static Map<String, String[]> getDataProfileMappings(){
+		return ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
+	}
+	
 	public static void unset(){
-		ThreadLocalContext.remove(CONTEXT_TRANS_ON_KEY);
+		ThreadLocalContext.remove(CONTEXT_TRANS_ON_KEY,CONTEXT_DATASOURCE_KEY);
 	}
 	
 }

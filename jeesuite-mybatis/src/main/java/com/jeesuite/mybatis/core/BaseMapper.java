@@ -60,7 +60,7 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
 	
 	long countAll();
 	
-	List<T> selectByPrimaryKeys(List<ID> id);
+	List<T> selectByPrimaryKeys(List<ID> ids);
 	
 	@SelectProvider(type = CountByExampleProvider.class, method = "countByExample")
 	@ResultType(Long.class)

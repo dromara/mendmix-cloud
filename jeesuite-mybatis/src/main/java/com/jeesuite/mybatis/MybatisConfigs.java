@@ -27,6 +27,7 @@ import org.springframework.util.StringUtils;
 
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
+import com.jeesuite.mybatis.plugin.dataprofile.DataProfileHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
 
@@ -46,6 +47,7 @@ public class MybatisConfigs {
 	public static final String RW_ROUTE_ENABLED = "jeesuite.mybatis.rwRouteEnabled";
 	public static final String PAGINATION_ENABLED = "jeesuite.mybatis.paginationEnabled";
 	public static final String TENANT_MODE_ENABLED = "jeesuite.mybatis.tenantModeEnabled";
+	public static final String DATA_PROFILE_ENABLED = "jeesuite.mybatis.dataProfileEnabled";
 	public static final String PAGINATION_MAX_LIMIT = "jeesuite.mybatis.pagination.maxLimit";
 	public static final String INTERCEPTOR_HANDLERCLASS = "jeesuite.mybatis.interceptorHandlerClass";
 	
@@ -91,6 +93,10 @@ public class MybatisConfigs {
 		return ResourceUtils.getBoolean(TENANT_MODE_ENABLED, false);
 	}
 	
+	public static boolean isDataProfileEnabled() {
+		return ResourceUtils.getBoolean(DATA_PROFILE_ENABLED, false);
+	}
+	
 	public static int getPaginationMaxLimit(){
 		return ResourceUtils.getInt(PAGINATION_MAX_LIMIT, 0);
 	}
@@ -112,6 +118,10 @@ public class MybatisConfigs {
 		
 		if (isPaginationEnabled(group)) {
 			hanlders.add(PaginationHandler.NAME);
+		}
+		
+		if (isDataProfileEnabled()) {
+			hanlders.add(DataProfileHandler.NAME);
 		}
 		
 		return hanlders.toArray(new String[0]);

@@ -302,7 +302,7 @@ public class CacheHandler implements InterceptorHandler {
 	private void cacheUniqueSelectRef(Object object, MappedStatement mt, String cacheKey) {
 		Collection<QueryMethodCache> mcs = queryCacheMethods.get(mt.getId().substring(0, mt.getId().lastIndexOf(DOT))).values();
 		outter:for (QueryMethodCache methodCache : mcs) {
-			if(methodCache.isPk)continue;
+			if(!methodCache.isSecondQueryById())continue;
 			try {	
 				Object[] cacheFieldValues = new Object[methodCache.fieldNames.length];
 				for (int i = 0; i < cacheFieldValues.length; i++) {
@@ -341,7 +341,7 @@ public class CacheHandler implements InterceptorHandler {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private String genarateQueryCacheKey(String keyPattern,Object param){
+	public static String genarateQueryCacheKey(String keyPattern,Object param){
 		String text;
 		try {
 			Object[] args;
@@ -612,7 +612,6 @@ public class CacheHandler implements InterceptorHandler {
 		}
 		methodCache.collectionResult = method.getReturnType() == List.class || method.getReturnType() == Set.class;
 		methodCache.fieldNames = new String[method.getParameterTypes().length];
-		StringBuilder sb = new StringBuilder(entityClass.getSimpleName()).append(DOT).append(method.getName());
 		Annotation[][] annotations = method.getParameterAnnotations();
 		boolean uniqueQuery = method.getReturnType().isAnnotationPresent(Table.class);
 		for (int i = 0; i < annotations.length; i++) {
@@ -630,9 +629,8 @@ public class CacheHandler implements InterceptorHandler {
 				}
 			}
 			//
-			sb.append(i == 0 ? ":" : "_").append("%s");
 		}
-		methodCache.keyPattern = sb.toString();
+		methodCache.keyPattern = new StringBuilder(entityClass.getSimpleName()).append(DOT).append(method.getName()).append(":%s").toString();
 		
 		if(uniqueQuery){
 			for (String name : methodCache.fieldNames) {
