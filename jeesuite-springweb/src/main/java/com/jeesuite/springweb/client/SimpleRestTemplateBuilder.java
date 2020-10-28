@@ -12,11 +12,11 @@ import com.jeesuite.springweb.interceptor.LoggingRequestInterceptor;
 public class SimpleRestTemplateBuilder {
 
 	
-	public RestTemplate build(){
+	public static RestTemplate build(){
 		return build(30000);
 	}
 	
-	public RestTemplate build(int readTimeout){
+	public static RestTemplate build(int readTimeout){
 		
 		HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();  
         factory.setReadTimeout(readTimeout);//ms  

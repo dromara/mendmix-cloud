@@ -32,6 +32,16 @@ import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.pagination.PageSqlUtils.DbType;
 import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
 
+/**
+ * 
+ * 
+ * <br>
+ * Class Name   : PaginationHandler
+ *
+ * @author jiangwei
+ * @version 1.0.0
+ * @date 2018年9月05日
+ */
 public class PaginationHandler implements InterceptorHandler {
 
 	private static Logger logger = LoggerFactory.getLogger(PaginationHandler.class);
