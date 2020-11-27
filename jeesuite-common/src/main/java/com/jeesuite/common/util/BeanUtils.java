@@ -115,7 +115,7 @@ public class BeanUtils {
         if (srcs == null)
             return new ArrayList<T>();
 
-        List<T> dests = new ArrayList<T>();
+        List<T> dests = new ArrayList<T>(srcs.size());
         for (Object src : srcs) {
             dests.add(copy(src, destClass, setDefaultValForNull));
         }

@@ -20,7 +20,11 @@
   </select>
   
   <select id="findByWxUnionIdAndOpenId" resultMap="BaseResultMap">
-      SELECT id,user_id,sns_type,union_id,open_id,source_app_id,enabled FROM sns_account_binding WHERE union_id = #{unionId} and open_id = #{openId}
+      SELECT id,user_id,sns_type,union_id,open_id,source_app_id,enabled FROM sns_account_binding 
+      WHERE union_id = #{unionId}
+      <if test="openId != null">  
+        and open_id = #{openId}
+    </if> 
   </select>
   
   

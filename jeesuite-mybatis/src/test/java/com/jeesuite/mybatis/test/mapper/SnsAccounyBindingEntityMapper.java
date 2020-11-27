@@ -10,7 +10,7 @@ import com.jeesuite.mybatis.test.entity.SnsAccounyBindingEntity;
 
 public interface SnsAccounyBindingEntityMapper extends BaseMapper<SnsAccounyBindingEntity,Integer>{
 	
-	@Cache
+	@Cache(uniqueIndex = true)
 	SnsAccounyBindingEntity findBySnsOpenId(@Param("snsType") String snsType,@Param("openId") String openId);
 	
 	@Cache

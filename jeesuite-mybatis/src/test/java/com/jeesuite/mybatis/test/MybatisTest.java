@@ -32,6 +32,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common.util.DigestUtils;
+import com.jeesuite.common.util.TokenGenerator;
+import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.plugin.cache.EntityCacheHelper;
 import com.jeesuite.mybatis.plugin.pagination.Page;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
@@ -299,8 +301,21 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testSelectAll(){
-		List<UserEntity> list = userMapper.selectAll();
-		System.out.println(list.size());
+
+		SnsAccounyBindingEntity entity = new SnsAccounyBindingEntity();
+		entity.setSnsType("weixin");
+		entity.setUserId(RandomUtils.nextInt(100, 99999));
+		String openId = TokenGenerator.generate();
+		String unionId = TokenGenerator.generate();
+		entity.setOpenId(openId);
+		entity.setUnionId(unionId);
+		entity.setEnabled(true);
+		
+		snsAccounyBindingMapper.insertSelective(entity);
+		
+		snsAccounyBindingMapper.findBySnsOpenId("weixin", openId);
+		
+		snsAccounyBindingMapper.findByWxUnionIdAndOpenId(unionId, openId);
 	}
 	
 }

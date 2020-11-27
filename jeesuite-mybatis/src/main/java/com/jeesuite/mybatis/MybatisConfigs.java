@@ -101,7 +101,7 @@ public class MybatisConfigs {
 		return ResourceUtils.getInt(PAGINATION_MAX_LIMIT, 0);
 	}
 	
-	public static String[] getHanlderNames(String group){
+	public static String[] getHandlerNames(String group){
         List<String> hanlders = new ArrayList<>();
 		if(ResourceUtils.containsProperty(INTERCEPTOR_HANDLERCLASS)){
 			String[] customHanlderClass = StringUtils.tokenizeToStringArray(ResourceUtils.getProperty(INTERCEPTOR_HANDLERCLASS), ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);

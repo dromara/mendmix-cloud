@@ -13,6 +13,7 @@ import org.mybatis.generator.config.MergeConstants;
 import org.mybatis.generator.internal.util.StringUtility;
 
 import java.util.Properties;
+import java.util.Set;
 
 public class MapperCommentGenerator implements CommentGenerator {
     //开始的分隔符，例如mysql为`，sqlserver为[
@@ -227,4 +228,39 @@ public class MapperCommentGenerator implements CommentGenerator {
      */
     public void addClassComment(InnerClass innerClass, IntrospectedTable introspectedTable, boolean markAsDoNotDelete) {
     }
+
+	@Override
+	public void addGeneralMethodAnnotation(Method method, IntrospectedTable introspectedTable,
+			Set<FullyQualifiedJavaType> imports) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addGeneralMethodAnnotation(Method method, IntrospectedTable introspectedTable,
+			IntrospectedColumn introspectedColumn, Set<FullyQualifiedJavaType> imports) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addFieldAnnotation(Field field, IntrospectedTable introspectedTable,
+			Set<FullyQualifiedJavaType> imports) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addFieldAnnotation(Field field, IntrospectedTable introspectedTable,
+			IntrospectedColumn introspectedColumn, Set<FullyQualifiedJavaType> imports) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addClassAnnotation(InnerClass innerClass, IntrospectedTable introspectedTable,
+			Set<FullyQualifiedJavaType> imports) {
+		// TODO Auto-generated method stub
+		
+	}
 }

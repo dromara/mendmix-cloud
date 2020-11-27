@@ -58,7 +58,7 @@ public class JeesuiteMybatisRegistry {
 			new GeneralSqlGenerator(group,configuration).generate();
 		}
 		//注册拦截器
-		String[] hanlderNames = MybatisConfigs.getHanlderNames(group);
+		String[] hanlderNames = MybatisConfigs.getHandlerNames(group);
 		if(hanlderNames.length > 0){
 			JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor(group,hanlderNames);
 			configuration.addInterceptor(interceptor);

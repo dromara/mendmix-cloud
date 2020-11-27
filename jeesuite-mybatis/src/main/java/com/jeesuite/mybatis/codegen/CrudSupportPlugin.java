@@ -3,6 +3,7 @@
  */
 package com.jeesuite.mybatis.codegen;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -23,11 +24,12 @@ import org.mybatis.generator.internal.util.StringUtility;
 
 
 public class CrudSupportPlugin extends PluginAdapter {
+	
+	private List<String> standardTableBaseColumns = Arrays.asList("enabled","deleted","created_at","created_by","updated_at","updated_by");
+	
     private Set<String> mappers = new HashSet<String>();
     private boolean caseSensitive = false;
-    //开始的分隔符，例如mysql为`，sqlserver为[
     private String beginningDelimiter = "";
-    //结束的分隔符，例如mysql为`，sqlserver为]
     private String endingDelimiter = "";
     //数据库模式
     private String schema;
@@ -39,11 +41,11 @@ public class CrudSupportPlugin extends PluginAdapter {
     @Override
     public void setContext(Context context) {
         super.setContext(context);
-        //设置默认的注释生成器
+        //默认的注释生成器
         commentCfg = new CommentGeneratorConfiguration();
         commentCfg.setConfigurationType(MapperCommentGenerator.class.getCanonicalName());
         context.setCommentGeneratorConfiguration(commentCfg);
-        //支持oracle获取注释#114
+        //oracle获取注释
         context.getJdbcConnectionConfiguration().addProperty("remarksReporting", "true");
     }
 
@@ -105,15 +107,16 @@ public class CrudSupportPlugin extends PluginAdapter {
      */
     @Override
     public boolean clientGenerated(Interface interfaze, TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
-        //获取实体类
-        FullyQualifiedJavaType entityType = new FullyQualifiedJavaType(introspectedTable.getBaseRecordType());
+        
         //主键
         FullyQualifiedJavaType idType = null;
         List<IntrospectedColumn> columns = introspectedTable.getBaseColumns();
+        
         for (IntrospectedColumn col : columns) {
-        	if(!col.isIdentity())continue;
-        	idType = javaTypeResolver.calculateJavaType(col);
-    		break;
+        	if(col.isIdentity()) {        		
+        		idType = javaTypeResolver.calculateJavaType(col);
+        		break;
+        	}
         }
         
         if(idType == null){
@@ -124,6 +127,10 @@ public class CrudSupportPlugin extends PluginAdapter {
             	}
             }
         }
+        
+      //获取实体类
+        FullyQualifiedJavaType entityType = new FullyQualifiedJavaType(introspectedTable.getBaseRecordType());
+        
         //import接口
         for (String mapper : mappers) {
             interfaze.addImportedType(new FullyQualifiedJavaType(mapper));
@@ -202,7 +209,6 @@ public class CrudSupportPlugin extends PluginAdapter {
         return false;
     }
 
-    //下面所有return false的方法都不生成。这些都是基础的CRUD方法，使用通用Mapper实现
     @Override
     public boolean clientDeleteByPrimaryKeyMethodGenerated(Method method, TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
         return false;
