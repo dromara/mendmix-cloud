@@ -16,6 +16,12 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
+			<groupId>com.jeesuite</groupId>
+			<artifactId>jeesuite-spring</artifactId>
+			<version>${project.parent.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
 			<version>${spring.version}</version>

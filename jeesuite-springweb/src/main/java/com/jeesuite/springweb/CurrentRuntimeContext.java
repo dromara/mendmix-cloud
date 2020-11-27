@@ -10,6 +10,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.model.AuthUser;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.exception.UnauthorizedException;
 
 /**
@@ -19,9 +20,27 @@ import com.jeesuite.springweb.exception.UnauthorizedException;
  *
  * @author jiangwei
  * @version 1.0.0
- * @date 2020年10月17日
+ * @date 2018年08月21日
  */
 public class CurrentRuntimeContext {
+	
+	public static final String SERVICE_NAME;
+	public static final String APPID;
+	public static final String ENV;
+	
+	static {
+		ENV = ResourceUtils.getAnyProperty("jeesuite.configcenter.profile","spring.profiles.active");
+		SERVICE_NAME = ResourceUtils.getAnyProperty("spring.application.name","jeesuite.configcenter.appName");
+		if(StringUtils.isBlank(SERVICE_NAME)){
+			throw new IllegalArgumentException("config Property[spring.application.name] is required");
+		}
+		String[] strings = StringUtils.split(SERVICE_NAME, "-");
+		if(strings.length == 3) {
+			APPID = SERVICE_NAME.replace("-svc", "");
+		} else {
+			APPID = strings[0];
+		}
+	}
 	
 	private static final String REQUEST_KEY = "_ctx_request_";
 	private static final String RESPONSE_KEY = "_ctx_response_";
