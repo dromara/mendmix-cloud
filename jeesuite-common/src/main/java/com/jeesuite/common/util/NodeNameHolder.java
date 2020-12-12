@@ -4,9 +4,8 @@
 package com.jeesuite.common.util;
 
 import java.net.InetAddress;
-import java.util.UUID;
 
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 
 /**
  * @description <br>
@@ -15,14 +14,15 @@ import org.apache.commons.lang3.RandomStringUtils;
  */
 public class NodeNameHolder {
 
+	public static int WORKER_ID = RandomUtils.nextInt(10, 99);
 	private static String nodeId;
 	
 	public static String getNodeId() {
 		if(nodeId != null)return nodeId;
 		try {
-			nodeId = InetAddress.getLocalHost().getHostAddress() + "_" + RandomStringUtils.random(3, true, true).toLowerCase();
+			nodeId = InetAddress.getLocalHost().getHostAddress() + "_" + WORKER_ID;
 		} catch (Exception e) {
-			nodeId = UUID.randomUUID().toString();
+			nodeId = String.valueOf(WORKER_ID);
 		}
 		return nodeId;
 	}

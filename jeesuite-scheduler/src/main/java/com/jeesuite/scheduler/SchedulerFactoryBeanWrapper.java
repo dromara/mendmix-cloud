@@ -34,6 +34,7 @@ import org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.util.ClassUtils;
 
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.scheduler.annotation.ScheduleConf;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
@@ -96,7 +97,10 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		
+		if(ResourceUtils.getBoolean("jeesuite.task.disabled", false)) {
+			logger.info("jeesuite.task.disabled = {},Skip!!!",ResourceUtils.getBoolean("jeesuite.task.disabled", false));
+			return;
+		}
 		Validate.notBlank(groupName);
 		
 		DefaultListableBeanFactory acf = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();

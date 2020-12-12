@@ -5,9 +5,20 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.jeesuite.common.json.JsonUtils;
 
-
+/**
+ * 
+ * 
+ * <br>
+ * Class Name   : WrapperResponse
+ *
+ * @author jiangwei
+ * @version 1.0.0
+ * @date Dec 16, 2016
+ */
 public class WrapperResponse<T> {
 
+	private static String ERROR_JSON_TEMPLATE = "{\"code\": %s,\"msg\":\"%s\"}";
+	
 	// 状态
 	private int code = 200;
 
@@ -69,5 +80,9 @@ public class WrapperResponse<T> {
 	@Override
 	public String toString() {
 		return JsonUtils.toJson(this);
+	}
+	
+	public static String buildErrorJSON(int code,String msg) {
+		return String.format(ERROR_JSON_TEMPLATE, code,msg);
 	}
 }

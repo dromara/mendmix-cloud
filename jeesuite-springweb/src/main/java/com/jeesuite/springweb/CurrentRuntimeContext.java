@@ -25,6 +25,8 @@ import com.jeesuite.springweb.exception.UnauthorizedException;
 public class CurrentRuntimeContext {
 	
 	public static final String SERVICE_NAME;
+	public static final String GROUP;
+	public static final String MODULE_NAME;
 	public static final String APPID;
 	public static final String ENV;
 	
@@ -36,9 +38,13 @@ public class CurrentRuntimeContext {
 		}
 		String[] strings = StringUtils.split(SERVICE_NAME, "-");
 		if(strings.length == 3) {
-			APPID = SERVICE_NAME.replace("-svc", "");
+			GROUP = strings[0];
+			MODULE_NAME = strings[1];
+			APPID = GROUP + "-" + MODULE_NAME;
 		} else {
 			APPID = strings[0];
+			GROUP = null;
+			MODULE_NAME = APPID;
 		}
 	}
 	

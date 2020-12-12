@@ -27,6 +27,7 @@ import org.apache.ibatis.plugin.Invocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.cache.CacheExpires;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.mybatis.MybatisConfigs;
@@ -65,7 +66,7 @@ public class CacheHandler implements InterceptorHandler {
 	public static final String NAME = "cache";
 	public final static long IN_1MINS = 60;
     public final static long IN_1HOUR = 60 * 60;
-	public static long defaultCacheExpire = IN_1HOUR;
+	public static long defaultCacheExpire = 0;
 	
 	private static final String STR_PARAM = "param";
 	protected static final String DOT = ".";
@@ -469,7 +470,7 @@ public class CacheHandler implements InterceptorHandler {
 		
 		nullValueCache = MybatisConfigs.getBoolean(context.getGroupName(), MybatisConfigs.CACHE_NULL_VALUE, false);
 		dynamicCacheTime = MybatisConfigs.getBoolean(context.getGroupName(), MybatisConfigs.CACHE_DYNAMIC_EXPIRE, false);
-		defaultCacheExpire = Long.parseLong(MybatisConfigs.getProperty(context.getGroupName(), MybatisConfigs.CACHE_EXPIRE_SECONDS, String.valueOf(IN_1HOUR)));
+		defaultCacheExpire = Long.parseLong(MybatisConfigs.getProperty(context.getGroupName(), MybatisConfigs.CACHE_EXPIRE_SECONDS, "0"));
 		logger.info("nullValueCache:{},defaultCacheExpireSeconds:{},dynamicCacheTime:{}",nullValueCache,defaultCacheExpire,dynamicCacheTime);
 
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
@@ -705,12 +706,11 @@ public class CacheHandler implements InterceptorHandler {
 		boolean concurrency = true;
 		String refKey;
 		public QueryMethodCache() {}
-		
-		public void setExpire(long expire) {
-			this.expire = expire > 0 ? expire : defaultCacheExpire;
-		}
 
 		public long getExpire() {
+			if(expire == 0 && defaultCacheExpire == 0) {
+				return CacheExpires.todayEndSeconds();
+			}
 			if(!dynamicCacheTime)return expire;
 			//缓存时间加上随机，防止造成缓存同时失效雪崩
 			long rnd = RandomUtils.nextLong(0, IN_1HOUR);

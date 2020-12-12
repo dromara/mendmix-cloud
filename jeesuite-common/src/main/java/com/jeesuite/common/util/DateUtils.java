@@ -20,6 +20,9 @@ import org.apache.commons.lang3.time.DateFormatUtils;
  * @date 2012年12月20日
  */
 public class DateUtils extends org.apache.commons.lang3.time.DateUtils{
+	
+	private static final String TIME_00_00_00 = " 00:00:00";
+	private static final String TIME_23_59_59 = " 23:59:59";
 	private static final String[] weekDays = { "sunday","monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
     public static final String DATE_PATTERN = "yyyy-MM-dd";
     public static final String TIMESTAMP_PATTERN = "yyyy-MM-dd HH:mm:ss";
@@ -107,7 +110,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils{
      */
     public static Date getDayBegin(Date date) {
         String format = DateFormatUtils.format(date, DATE_PATTERN);
-        return parseDate(format.concat(" 00:00:00"));
+        return parseDate(format.concat(TIME_00_00_00));
     }
     /**
      * 获取一天结束时间<br>
@@ -118,7 +121,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils{
      */
     public static Date getDayEnd(Date date) {
         String format = DateFormatUtils.format(date, DATE_PATTERN);
-        return parseDate(format.concat(" 23:59:59"));
+        return parseDate(format.concat(TIME_23_59_59));
     }
     /**
      * 时间戳格式转换为日期（年月日）格式<br>
@@ -309,7 +312,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils{
     
     
     public static Date firstDayOfWeek(Date date) {
-		ZoneId zoneId = ZoneId.of("Asia/Shanghai");
+		ZoneId zoneId = ZoneId.systemDefault();
     	long timeMills =  LocalDate.now(Clock.fixed(Instant.ofEpochMilli(date.getTime()),zoneId))
     	.with(DayOfWeek.MONDAY)
     	.atStartOfDay(zoneId)
@@ -319,7 +322,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils{
      }
     
     public static Date lastDayOfWeek(Date date) {
- 		ZoneId zoneId = ZoneId.of("Asia/Shanghai");
+ 		ZoneId zoneId = ZoneId.systemDefault();
  		long timeMills =  LocalDate.now(Clock.fixed(Instant.ofEpochMilli(date.getTime()),zoneId))
      	.with(DayOfWeek.SUNDAY)
      	.atStartOfDay(zoneId)
