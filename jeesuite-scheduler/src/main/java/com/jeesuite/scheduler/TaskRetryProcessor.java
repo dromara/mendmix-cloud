@@ -42,7 +42,7 @@ public class TaskRetryProcessor implements Closeable{
 
 	public TaskRetryProcessor(int poolSize) {
 		executor = Executors.newFixedThreadPool(poolSize);
-		executor.submit(new Runnable() {
+		executor.execute(new Runnable() {
 			@Override
 			public void run() {
 				while(!closed.get()){

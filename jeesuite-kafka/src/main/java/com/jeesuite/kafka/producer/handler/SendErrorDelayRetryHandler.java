@@ -17,8 +17,8 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.concurrent.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.kafka.message.DefaultMessage;
-import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
 
 /**
  * @description <br>
@@ -43,7 +43,7 @@ public class SendErrorDelayRetryHandler implements ProducerEventHandler{
 		this.topicProducer = topicProducer;
 		this.retries = retries;
 		executor = Executors.newFixedThreadPool(1, new StandardThreadFactory("ErrorMessageProcessor"));
-		executor.submit(new Runnable() {
+		executor.execute(new Runnable() {
 			@Override
 			public void run() {
 				long currentTimeMillis = System.currentTimeMillis();

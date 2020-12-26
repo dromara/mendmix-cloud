@@ -17,7 +17,7 @@ public class ZkDistributeLockTest {
 		ExecutorService threadPool = Executors.newFixedThreadPool(taskcount);
 
 		for (int i = 0; i < taskcount; i++) {
-			threadPool.submit(new LockWorker("worker-" + i));
+			threadPool.execute(new LockWorker("worker-" + i));
 		}
 
 		latch.await();

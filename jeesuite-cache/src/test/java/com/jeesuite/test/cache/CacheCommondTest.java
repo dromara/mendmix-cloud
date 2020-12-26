@@ -3,6 +3,7 @@
  */
 package com.jeesuite.test.cache;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -201,9 +202,12 @@ public class CacheCommondTest implements ApplicationContextAware{
 		sortSet.add(2020091012, "2020091012");
 		sortSet.add(2020091013, "2020091013");
 		
-		List<String> score = sortSet.rangeByScore(2020091010, 2020091012);
-		
-		System.out.println(score);
+		List<String> score = sortSet.rangeByScore(2020091010, 2020091013);
+		System.out.println(Arrays.toString(score.toArray()));
+		sortSet.removeByScore(2020091011, 2020091011);
+		System.out.println("-----------------------");
+		score = sortSet.rangeByScore(2020091010, 2020091013);
+		System.out.println(Arrays.toString(score.toArray()));
 	}
 	
 }

@@ -178,7 +178,7 @@ public class MapCacheProvider implements Closeable{
 		for (int i = 0; i < 500; i++) {
 			int expire = RandomUtils.nextInt(1, 30);
 			final String key = "key" + i + "_" + expire;
-			executorService.submit(new Runnable() {
+			executorService.execute(new Runnable() {
 				@Override
 				public void run() {
 					provider.set(key, key, expire);

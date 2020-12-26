@@ -22,6 +22,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.test.entity.UserEntity;
+import com.jeesuite.mybatis.test.mapper.SnsAccounyBindingEntityMapper;
 import com.jeesuite.mybatis.test.mapper.UserEntityMapper;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
@@ -33,6 +34,7 @@ import com.jeesuite.spring.SpringInstanceProvider;
 public class BaseMybatisTest implements ApplicationContextAware{
 	
 	@Autowired UserEntityMapper userMapper;
+	@Autowired SnsAccounyBindingEntityMapper snsAccounyBindingMapper;
 
 	@Override
 	public void setApplicationContext(ApplicationContext arg0) throws BeansException {	
@@ -96,14 +98,34 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
-	public void testSelectByExample(){
-		UserEntity example = new UserEntity();
-		example.setStatus((short)1);
-		example.setType((short)1);
-		List<UserEntity> list = userMapper.selectByExample(example);
+	public void testSelectByExample() throws InterruptedException{
 		
-		long count = userMapper.countByExample(example);
-		System.out.println(list.size() + " - " + count);
+		snsAccounyBindingMapper.findByUserId(6);
+		snsAccounyBindingMapper.findByUserId(7);
+		snsAccounyBindingMapper.findByUserId(8);
+		
+		userMapper.updateType((short)0,new int[] {6,7,5});
+		
+		userMapper.updateByIds(Arrays.asList(3,4,5));
+		
+		//Thread.sleep(5000);
+	}
+	
+	
+	@Test
+	public void testXXXX(){
+		UserEntity entity = userMapper.selectByPrimaryKey(8);
+		userMapper.findMobileByIds(Arrays.asList(4,5,6));
+		
+		userMapper.findByMobile(entity.getMobile());
+		userMapper.findByType((short)1);
+		
+		entity = userMapper.selectByPrimaryKey(8);
+		entity.setName(RandomStringUtils.random(5, true, true));
+		userMapper.updateByPrimaryKeySelective(entity);
+		
+//		userMapper.findMobileByIds(Arrays.asList(4,5,6));
+//		userMapper.findByType((short)1);
 	}
 
 	private UserEntity buildUserEntity() {

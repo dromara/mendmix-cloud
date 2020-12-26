@@ -62,6 +62,7 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Before
 	public void init(){
+		MybatisRuntimeContext.setTenantId("1000");
 		for (int i = 0; i <mobiles.length; i++) {
 			mobiles[i] = "13800"+RandomStringUtils.random(6, false, true);
 		}

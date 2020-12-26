@@ -21,7 +21,7 @@ public class RedisDistributeLockTest {
 		ExecutorService threadPool = Executors.newFixedThreadPool(taskcount);
 		
 		for (int i = 0; i < taskcount; i++) {
-			threadPool.submit(new LockWorker("worker-"+i));
+			threadPool.execute(new LockWorker("worker-"+i));
 		}
 		
 		latch.await();
@@ -47,7 +47,6 @@ public class RedisDistributeLockTest {
 				System.out.println("LockWorker[" + id + "] get lock error->"+e.getMessage());
 				return;
 			}
-			System.out.println("LockWorker[" + id + "] get lock,doing-----" + ShareResource.add());
 			try {Thread.sleep(RandomUtils.nextLong(100, 1000));} catch (Exception e) {}
 			lock.unlock();
 			latch.countDown();
