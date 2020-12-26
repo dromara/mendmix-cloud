@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
@@ -116,8 +115,6 @@ public class DataProfileHandler implements InterceptorHandler {
 			boundSql = (BoundSql) args[5];
 		}
 
-		CacheKey countKey = executor.createCacheKey(mappedStatement, parameter, RowBounds.DEFAULT, boundSql);
-
 		String orignSql = StringUtils.replace(boundSql.getSql(), ";$", StringUtils.EMPTY);
 
 		String newSql = buildDataProfileSql(orignSql,new ArrayList<>(dataProfileMappings.get(mapperClassName)),dataMappings);
@@ -125,7 +122,7 @@ public class DataProfileHandler implements InterceptorHandler {
 		BoundSql newBoundSql = new BoundSql(mappedStatement.getConfiguration(), newSql,
 				boundSql.getParameterMappings(), parameter);
 
-		List<?> resultList = executor.query(mappedStatement, parameter, RowBounds.DEFAULT, resultHandler, countKey,
+		List<?> resultList = executor.query(mappedStatement, parameter, RowBounds.DEFAULT, resultHandler, null,
 				newBoundSql);
 
 		return resultList;

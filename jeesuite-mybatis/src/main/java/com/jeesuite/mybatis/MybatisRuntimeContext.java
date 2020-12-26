@@ -36,6 +36,10 @@ public class MybatisRuntimeContext {
 		ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, tenantId);
 	}
 	
+	public static void unsetTenantId(){
+		ThreadLocalContext.remove(ThreadLocalContext.TENANT_ID_KEY);
+	}
+	
 	public static String getContextParam(String paramName){
 		if(StringUtils.isBlank(paramName))return null;
 		if(CacheHandler.CURRENT_USER_CONTEXT_NAME.equals(paramName)){

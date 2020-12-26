@@ -25,6 +25,7 @@
 		<property name="timeout" value="${redis.conn.timeout}" />
 		<!-- sentinel模式才需要该属性 -->
 		<property name="masterName" value="${redis.masterName}" />
+		<property name="tenantModeEnabled" value="${jeesuite.cache.tenantModeEnabled}" />
 	</bean>
 
 

@@ -187,7 +187,6 @@ public class PaginationHandler implements InterceptorHandler {
 	private List executeQuery(Executor executor, MappedStatement ms,
             Object parameter, BoundSql boundSql,
 			RowBounds rowBounds, ResultHandler resultHandler,PageParams pageParams) throws IllegalAccessException, SQLException {
-		CacheKey countKey = executor.createCacheKey(ms, parameter, RowBounds.DEFAULT, boundSql);
 		
 		String orignSql = StringUtils.replace(boundSql.getSql(), ";$", StringUtils.EMPTY);
 		
@@ -196,7 +195,7 @@ public class PaginationHandler implements InterceptorHandler {
 		BoundSql countBoundSql = new BoundSql(ms.getConfiguration(), pageSql, boundSql.getParameterMappings(),
 				parameter);
 		
-		List<?> resultList = executor.query(ms, parameter, RowBounds.DEFAULT, resultHandler, countKey,
+		List<?> resultList = executor.query(ms, parameter, RowBounds.DEFAULT, resultHandler, null,
 				countBoundSql);
 		return resultList;
 	}

@@ -47,7 +47,7 @@ public class EntityInfo {
 	
 	private String idColumn;
 	
-	private List<MapperMethod> mapperMethods = new ArrayList<>();
+	private Map<String,MapperMethod> mapperMethods = new HashMap<>();
 	
 	public String getErrorMsg() {
 		return errorMsg;
@@ -116,7 +116,7 @@ public class EntityInfo {
 					mapperSqls.put(fullName, sql);
 				}
 				//
-				mapperMethods.add(new MapperMethod(method, fullName, sqlType));
+				mapperMethods.put(method.getName(),new MapperMethod(method, fullName, sqlType));
 			}
 		} catch (ClassNotFoundException e) {
 			errorMsg = e.getMessage();
@@ -171,7 +171,7 @@ public class EntityInfo {
 	public void addSql(String method,String id,String sql){
 		String fullName = mapperClass.getName() + "." + id;
 		mapperSqls.put(fullName, sql);
-		for (MapperMethod mapperMethod : mapperMethods) {
+		for (MapperMethod mapperMethod : mapperMethods.values()) {
 			if(mapperMethod.getFullName().equals(fullName)){
 				mapperMethod.sqlType = SqlCommandType.valueOf(method.toUpperCase());
 				break;
@@ -195,10 +195,14 @@ public class EntityInfo {
 		return idColumn;
 	}
 	
-	public List<MapperMethod> getMapperMethods() {
+	public Map<String, MapperMethod> getMapperMethods() {
 		return mapperMethods;
 	}
-	
+
+	public void setMapperMethods(Map<String, MapperMethod> mapperMethods) {
+		this.mapperMethods = mapperMethods;
+	}
+
 	private static void parseAllMethod(Class<?> clazz,List<Method> methods) {
 		if(clazz.getDeclaredMethods() != null) {
 			for (Method method : clazz.getDeclaredMethods()) {

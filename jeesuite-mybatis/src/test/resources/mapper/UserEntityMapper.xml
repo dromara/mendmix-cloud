@@ -74,6 +74,13 @@
 	 </foreach>
   </update>
   
+  <update id="updateByIds" parameterType="list">
+     update users set status = 0 where id in
+     <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
+			#{id}
+	 </foreach>
+  </update>
+  
   <update id="updateType2" parameterType="com.jeesuite.mybatis.test.entity.UserEntity">
      update users set type = #{type} where 1=1
      <if test="name != null">  

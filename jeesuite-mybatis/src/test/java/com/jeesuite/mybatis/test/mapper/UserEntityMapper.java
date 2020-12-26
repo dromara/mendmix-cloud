@@ -15,17 +15,17 @@ import com.jeesuite.mybatis.plugin.pagination.PageParams;
 import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 
-@CacheIgnore
+//@CacheIgnore
 public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 
-	@Cache(evictOnMethods = "*")
+	@Cache
 	List<UserEntity> findByType(short type);
 
 	@Cache
 	@Pageable
 	List<UserEntity> findByStatus(short status);
 
-	@Cache
+	@Cache(uniqueIndex = true)
 	UserEntity findByMobile(@Param("mobile") String mobile);
 	
 	@Cache
@@ -39,9 +39,11 @@ public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 	@Select("SELECT count(*) FROM users where type=#{type}")
 	int countByType(@Param("type") int type);
 
-	int updateType(@Param("ids") int[] ids, @Param("type") int type);
+	int updateType(@Param("type") int type,@Param("ids") int[] ids);
 
 	void updateType2(UserEntity user);
+	
+	int updateByIds(List<Integer> ids);
 
 	@Cache(expire = 300)
 	public List<String> findMobileByIds(List<Integer> ids);

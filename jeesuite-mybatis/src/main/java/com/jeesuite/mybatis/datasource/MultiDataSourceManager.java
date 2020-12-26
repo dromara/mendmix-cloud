@@ -24,21 +24,21 @@ import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
  * @date 2016年2月2日
  * @Copyright (c) 2015, jwww
  */
-public class MuitDataSourceManager {
+public class MultiDataSourceManager {
 
-	private static final Logger logger = LoggerFactory.getLogger(MuitDataSourceManager.class);
+	private static final Logger logger = LoggerFactory.getLogger(MultiDataSourceManager.class);
 	
 	private static final String NON_TENANT_KEY = "_none";
 	private final static AtomicLong counter = new AtomicLong(10);
 	private static final Map<String, String> masters = new HashMap<>();
 	private static final Map<String, List<String>> slaves = new HashMap<>();
 	
-	private static volatile MuitDataSourceManager instance = new MuitDataSourceManager();
+	private static volatile MultiDataSourceManager instance = new MultiDataSourceManager();
 
-	private MuitDataSourceManager() {
+	private MultiDataSourceManager() {
 	}
 
-	public static MuitDataSourceManager get() {
+	public static MultiDataSourceManager get() {
 		return instance;
 	}
 
@@ -90,7 +90,10 @@ public class MuitDataSourceManager {
         if(dsKey == null){
         	throw new DataSourceRouteException("Not found any dsKey for ["+tenantId+"]");
         }
-		logger.debug("current route rule is:tenantId:[{}],userSlave[{}]|forceMaster[{}], use dataSource key is [{}]!",tenantId,vals.userSlave,vals.forceMaster,vals.dsKey);
+        
+        if(logger.isDebugEnabled() && !NON_TENANT_KEY.equals(tenantId)) {        	
+        	logger.debug("current route rule is:tenantId:[{}],userSlave[{}]|forceMaster[{}], use dataSource key is [{}]!",tenantId,vals.userSlave,vals.forceMaster,vals.dsKey);
+        }
 		
 		return dsKey;
 	}
@@ -103,7 +106,9 @@ public class MuitDataSourceManager {
 	private static String selectSlave(String tenantId) {
 		//  无从库则路由到主库
 		if (slaves.isEmpty()) {
-			logger.debug("current no slave found ,default use [{}]!",masters.get(tenantId));
+			if(logger.isDebugEnabled()) {				
+				logger.debug("current no slave found ,default use [{}]!",masters.get(tenantId));
+			}
 			return masters.get(tenantId);
 		}
 		if (slaves.size() == 1)

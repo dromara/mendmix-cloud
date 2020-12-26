@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.util.BeanUtils;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
-import com.jeesuite.mybatis.plugin.pagination.Page;
 
 /**
  * @description <br>
@@ -24,6 +23,7 @@ import com.jeesuite.mybatis.plugin.pagination.Page;
  */
 public class CacheKeyUtils {
 	
+	public final static List<String> MYBATIS_DEFAULT_LIST_NAMES = Arrays.asList("arg0","collection","list");
 	public final static String CONTACT_STR = "&";
 	public final static String EQUALS_STR = "=";
 	public final static String SPLIT_STR = ",";
@@ -70,6 +70,8 @@ public class CacheKeyUtils {
 		if(param == null || param.isEmpty())return null;
 		StringBuilder sb = new StringBuilder();
 		List<String> keys = new ArrayList<>(param.keySet());
+		
+		 boolean isMybatisDefaultList = keys.size() == 3 && keys.containsAll(MYBATIS_DEFAULT_LIST_NAMES);
 		Collections.sort(keys);
 		Object value;
 		for (String key : keys) {
@@ -105,6 +107,8 @@ public class CacheKeyUtils {
 			if(value != null){
 				sb.append(key).append(EQUALS_STR).append(value).append(CONTACT_STR);	
 			}
+			
+			if(isMybatisDefaultList)break;
 		}
 		sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();

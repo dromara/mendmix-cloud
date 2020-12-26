@@ -175,7 +175,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 	}
 
 	protected DataSource determineTargetDataSource() {
-		Object lookupKey =MuitDataSourceManager.get().getDataSourceKey();
+		Object lookupKey =MultiDataSourceManager.get().getDataSourceKey();
 		DataSource dataSource = targetDataSources.get(lookupKey);
 		if (dataSource == null) {
 			throw new IllegalStateException("Cannot determine target DataSource for lookup key [" + lookupKey + "]");
@@ -228,7 +228,7 @@ public class MutiRouteDataSource extends AbstractDataSource implements Applicati
 			}
 			logger.info("bean[" + dsKey + "] has initialized! lookupKey:" + dsKey);
 			//
-			MuitDataSourceManager.get().registerDataSourceKey(dsKey);
+			MultiDataSourceManager.get().registerDataSourceKey(dsKey);
 		} 
         
         addTargetDataSources(targetDataSources);
