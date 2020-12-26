@@ -1,8 +1,7 @@
 package com.jeesuite.common.json;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +48,14 @@ public class JsonUtils {
 		return jsonMapper.toList(jsonString, clazz);
 	}
 	
+	public static <K,V> Map<K, V> toHashMap(String jsonString, Class<K> keyType, Class<V> valueType) {
+		return jsonMapper.toHashMap(jsonString, keyType, valueType);
+	}
+	
+	public static <V> Map<String, V> toHashMap(String jsonString, Class<V> valueType) {
+		return jsonMapper.toHashMap(jsonString, String.class, valueType);
+	}
+	
 	public static JsonNode getNode(String jsonString,String nodeName){
 		try {
 			JsonNode node = jsonMapper.getMapper().readTree(jsonString);	
@@ -89,10 +96,4 @@ public class JsonUtils {
     }  
 	
 	
-	
-	public static void main(String[] args) {
-		List<Object> list = new ArrayList<>();
-		list.add(new Date());
-		System.out.println(toJson(list));
-	}
 }
