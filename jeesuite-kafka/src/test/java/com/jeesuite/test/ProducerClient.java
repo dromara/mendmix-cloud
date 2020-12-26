@@ -48,7 +48,7 @@ public class ProducerClient implements ApplicationContextAware{
 				}
 				for (int i = 0; i < 2; i++) {
 					
-					pool.submit(new Runnable() {			
+					pool.execute(new Runnable() {			
 						@Override
 						public void run() {
 							String topic = new Random().nextBoolean() ? "demo-topic1" : "demo-topic2";

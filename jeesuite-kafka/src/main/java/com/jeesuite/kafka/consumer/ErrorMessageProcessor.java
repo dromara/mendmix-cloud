@@ -13,11 +13,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.concurrent.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.kafka.consumer.hanlder.RetryErrorMessageHandler;
 import com.jeesuite.kafka.handler.MessageHandler;
 import com.jeesuite.kafka.message.DefaultMessage;
-import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
 
 /**
  * 消费者端处理错误消息重试处理器
@@ -50,7 +50,7 @@ public class ErrorMessageProcessor implements Closeable{
 		this.maxReties = maxReties;
 		this.retryErrorHandler = retryErrorHandler;
 		executor = Executors.newFixedThreadPool(poolSize, new StandardThreadFactory("ErrorMessageProcessor"));
-		executor.submit(new Runnable() {
+		executor.execute(new Runnable() {
 			@Override
 			public void run() {
 				while(!closed.get()){

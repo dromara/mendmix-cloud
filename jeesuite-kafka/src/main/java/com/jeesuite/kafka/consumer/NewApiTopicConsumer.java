@@ -79,7 +79,7 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 			   resetCorrectOffsets(worker);
 			}
 			consumerWorks.add(worker);
-			fetchExecutor.submit(worker);
+			fetchExecutor.execute(worker);
 		}
 	}
 	
@@ -300,7 +300,7 @@ public class NewApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 			//第一阶段处理
 			messageHandler.p1Process(message);
 			//第二阶段处理
-			(message.isConsumerAckRequired() ? highProcessExecutor : defaultProcessExecutor).submit(new Runnable() {
+			(message.isConsumerAckRequired() ? highProcessExecutor : defaultProcessExecutor).execute(new Runnable() {
 				@Override
 				public void run() {
 					try {									

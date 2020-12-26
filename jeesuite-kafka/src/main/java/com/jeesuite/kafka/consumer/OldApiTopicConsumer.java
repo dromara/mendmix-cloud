@@ -185,7 +185,7 @@ public class OldApiTopicConsumer extends AbstractTopicConsumer implements TopicC
 		 */
 		private void submitMessageToProcess(final String topicName,final MessageAndMetadata<String, Object> messageAndMeta,final DefaultMessage message) {
 			
-			(message.isConsumerAckRequired() ? highProcessExecutor : defaultProcessExecutor).submit(new Runnable() {
+			(message.isConsumerAckRequired() ? highProcessExecutor : defaultProcessExecutor).execute(new Runnable() {
 				@Override
 				public void run() {
 					try {	

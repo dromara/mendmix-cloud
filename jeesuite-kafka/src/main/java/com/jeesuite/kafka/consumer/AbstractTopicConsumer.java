@@ -11,8 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.kafka.thread.StandardThreadExecutor;
-import com.jeesuite.kafka.thread.StandardThreadExecutor.StandardThreadFactory;
+import com.jeesuite.common.concurrent.StandardThreadExecutor;
+import com.jeesuite.common.concurrent.StandardThreadExecutor.StandardThreadFactory;
 
 public abstract class AbstractTopicConsumer implements Closeable{
 	
