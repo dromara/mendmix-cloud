@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.cache.CacheExpires;
 import com.jeesuite.cache.command.RedisBase;
 import com.jeesuite.cache.command.RedisBatchCommand;
 import com.jeesuite.cache.command.RedisObject;
@@ -85,6 +86,10 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 		RedisStrList redisList = new RedisStrList(cacheGroupKey);
 		int keyCount = (int) redisList.length();
 		if(keyCount <= 0)return;
+	    //保护策略
+		if(keyCount > 1000) {
+			redisList.setExpire(CacheExpires.todayEndSeconds());
+		}
 		
 		boolean withPrefixs = prefixs != null && prefixs.length > 0 && prefixs[0] != null;
 		

@@ -65,7 +65,7 @@ public class MybatisSqlRewriteUtils {
 			}
             
 			int parameterNums = StringUtils.countMatches(rewriteSql, SQL_PARAMETER_PLACEHOLDER);
-			return new SqlMetadata(rewriteSql, parameterNums, startIndex);
+			return new SqlMetadata(rewriteSql, table.getName(),parameterNums, startIndex);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -74,11 +74,13 @@ public class MybatisSqlRewriteUtils {
 	
 	public static class SqlMetadata {
 		String sql;
+		String tableName;
 		int parameterNums;
 		int whereParameterIndex;
 		
-		public SqlMetadata(String sql, int parameterNums, int whereParameterIndex) {
+		public SqlMetadata(String sql,String tableName, int parameterNums, int whereParameterIndex) {
 			this.sql = sql;
+			this.tableName = tableName;
 			this.parameterNums = parameterNums;
 			this.whereParameterIndex = whereParameterIndex;
 		}
@@ -87,6 +89,13 @@ public class MybatisSqlRewriteUtils {
 		}
 		public void setSql(String sql) {
 			this.sql = sql;
+		}
+		
+		public String getTableName() {
+			return tableName;
+		}
+		public void setTableName(String tableName) {
+			this.tableName = tableName;
 		}
 		public int getParameterNums() {
 			return parameterNums;

@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -26,8 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.concurrent.RetryAsyncTaskExecutor;
 import com.jeesuite.common.concurrent.RetryTask;
-import com.jeesuite.common.concurrent.StandardThreadExecutor;
-import com.jeesuite.common.concurrent.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.ReflectUtils;
@@ -46,7 +43,6 @@ import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheIgnore;
 import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
-import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
 import com.jeesuite.spring.InstanceFactory;
 
 
@@ -178,10 +174,6 @@ public class CacheHandler implements InterceptorHandler {
 		boolean getLock = false;
 		String cacheKey = null;
 		if(mt.getSqlCommandType().equals(SqlCommandType.SELECT)){	
-			//分页查询
-			if(PageExecutor.getPageParams() != null && PageExecutor.getPageParams().getPageNo() > 1){
-				return null;
-			}
 			//事务方法内部的查询不走缓存
 			if(MybatisRuntimeContext.isTransactionalOn()){
 				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process skipCache[isTransactionalOn] -> mapperId:{}",mt.getId());
@@ -260,7 +252,7 @@ public class CacheHandler implements InterceptorHandler {
 			if(mt.getSqlCommandType().equals(SqlCommandType.SELECT)){	
 				if(result == null)return; 
 				if((metadata = getQueryMethodCache(mt.getId())) == null)return;
-				
+	
 				final String cacheKey = genarateQueryCacheKey(metadata.keyPattern, args[1]);
 				if(result instanceof List){
 					List list = (List)result;
@@ -298,24 +290,21 @@ public class CacheHandler implements InterceptorHandler {
 					}
 				}
 			}else{
-				if(!cacheEnableMappers.contains(mapperClassName))return;
+				if(!cacheEnableMappers.contains(mapperClassName) && !customUpdateCacheMapppings.containsKey(mt.getId()))return;
 				//返回0，未更新成功
 				if(result != null && ((int)result) == 0)return;
 				
 				boolean insertAction = mt.getSqlCommandType().equals(SqlCommandType.INSERT);
-				boolean updateAction = mt.getSqlCommandType().equals(SqlCommandType.UPDATE);
-				boolean deleteAcrion = mt.getSqlCommandType().equals(SqlCommandType.DELETE);
-				
 				if(updatePkCacheMethods.containsKey(mt.getId())){
 					String idCacheKey = null;
 					UpdateByPkCacheMethodMetadata updateMethodCache = updatePkCacheMethods.get(mt.getId());
-					if(deleteAcrion){
+					if(mt.getSqlCommandType().equals(SqlCommandType.DELETE)){
 						idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,args[1]);
 						getCacheProvider().remove(idCacheKey);
 						if(logger.isDebugEnabled())logger.debug(">>auto_cache_process removeCache -> mapperId:{},idCacheKey:{}",mt.getId(),idCacheKey);
 					}else{
 						idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,args[1]);
-						if(insertAction || updateAction){
+						if(insertAction || mt.getSqlCommandType().equals(SqlCommandType.UPDATE)){
 							if(result != null){
 								QueryCacheMethodMetadata queryByPkMethodCache = getQueryByPkMethodCache(mt.getId());
 								getCacheProvider().set(idCacheKey,args[1], queryByPkMethodCache.getExpire());
@@ -327,16 +316,17 @@ public class CacheHandler implements InterceptorHandler {
 							}
 						}
 					}	
-				}else {
-					/**EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperClassName);
-					//非按主键更新方法，按查询条件查询相关内容，然后清理缓存
-					final Object parameter = args[1];
-					BoundSql boundSql = mt.getBoundSql(parameter);
-					String orignSql = StringUtils.replace(boundSql.getSql(), ";$", StringUtils.EMPTY);
-					SqlMetadata selectIdsSql = MybatisSqlRewriteUtils.rewriteAsSelectPkField(orignSql, entityInfo.getIdColumn());
-					//
-					removeCacheByDyncQuery(selectIdsSql,parameter);
-					*/
+				}else if(!insertAction){
+					//针对按条件更新或者删除的方法，按查询条件查询相关内容，然后清理对应主键缓存内容
+//					EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperClassName);
+//					final Object parameter = args[1];
+//					BoundSql boundSql = mt.getBoundSql(parameter);
+//					String orignSql = StringUtils.replace(boundSql.getSql(), ";$", StringUtils.EMPTY);
+//					SqlMetadata sqlMetadata = MybatisSqlRewriteUtils.rewriteAsSelectPkField(orignSql, entityInfo.getIdColumn());
+//		
+//					if(entityInfo.getTableName().equalsIgnoreCase(sqlMetadata.getTableName())) {						
+//						removeCacheByDyncQuery(sqlMetadata,parameter);
+//					}
 				}
 				//删除同一cachegroup关联缓存
 				removeCacheByGroup(mt.getId(), mapperClassName);
@@ -398,28 +388,51 @@ public class CacheHandler implements InterceptorHandler {
 	
 	/**
 	 * 根据动态查询内容清理缓存
-	 * @param selectIdsSql 查询主键列表SQL语句信息
+	 * @param sqlMetadata 查询主键列表SQL语句信息
 	 * @param parameter 参数
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void removeCacheByDyncQuery(SqlMetadata selectIdsSql, Object parameter) {
-		List<Object> parameterList = new ArrayList<>(selectIdsSql.getParameterNums());
+	@SuppressWarnings({ "unchecked" })
+	private void removeCacheByDyncQuery(SqlMetadata sqlMetadata, Object parameter) {
+		if(parameter instanceof BaseEntity) {
+			//TODO 
+			//sqlSessionFactory.openSession().selectList("findByExample")
+		}
+		List<Object> parameterList = new ArrayList<>(sqlMetadata.getParameterNums());
 		if(parameter instanceof Map){
 			Map<String, Object> map = (Map<String, Object>) parameter;
 			Object value;
-			for (int i = selectIdsSql.getWhereParameterIndex(); i < 100; i++) {
+			for (int i = sqlMetadata.getWhereParameterIndex(); i < 100; i++) {
 				value = map.get(STR_PARAM + i);
 				if(value == null){
 					break;
 				}
-				
+				valueToParamList(parameterList, value);
 			}
-		}else if(parameter instanceof Collection) {
-			((Collection) parameter).addAll((Collection) parameter);
 		}else {
-			parameterList.add(parameter);
+			valueToParamList(parameterList, parameter);
 		}
 		
+		if(parameterList.size() != sqlMetadata.getParameterNums()) {
+			logger.warn(">>parameterNotMatch  -> sql:{},parameterList:{}",sqlMetadata.getSql());
+			return;
+		}
+		
+		
+		
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void valueToParamList(List<Object> result,Object value) {
+		if(value instanceof Map) {
+			Collection values = ((Map)value).values();
+			for (Object obj : values) {
+				valueToParamList(result, obj);
+			}
+		}else if(value instanceof Collection) {
+			result.addAll((Collection) value);
+		}else {
+			result.add(value);
+		}
 	}
 	
 	/**
@@ -683,6 +696,8 @@ public class CacheHandler implements InterceptorHandler {
 		for (String methodName : evictOnMethods) {
 			if("*".equals(methodName)){
 				methodName = mapperClassName + ".*";
+			}else if(!methodName.contains(DOT)) {
+				methodName = mapperClassName + DOT + methodName;
 			}
 			if(!methodName.startsWith(targetMethodFullNamePrefix)){
 				methodName = targetMethodFullNamePrefix + methodName;
@@ -715,11 +730,6 @@ public class CacheHandler implements InterceptorHandler {
 			 customUpdateCacheMapppings.put(updateMethodName, list);
 		 }
 		 list.add(queryMethodName);
-		 //放入cache方法列表，避免跳过
-		 String mapperId = updateMethodName.substring(0, updateMethodName.lastIndexOf(DOT));
-		 if(!cacheEnableMappers.contains(mapperId)) {
-			 cacheEnableMappers.add(mapperId);
-		 }
 	}
 	
 	private void addCurrentThreadCacheKey(String key){
@@ -751,6 +761,6 @@ public class CacheHandler implements InterceptorHandler {
 
 	@Override
 	public int interceptorOrder() {
-		return 1;
+		return 3;
 	}
 }

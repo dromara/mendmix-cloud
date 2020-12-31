@@ -16,17 +16,23 @@ public class PageExecutor {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <T> Page<T> pagination(PageParams pageParams,PageDataLoader<T> dataLoader ){
-		pageParamsHolder.set(pageParams);
-		List<T> list = dataLoader.load();
-		return (Page<T>) list.get(0);
+	private static <T> Page<T> doPagination(PageParams pageParams,PageDataLoader<T> dataLoader ){
+		try {			
+			pageParamsHolder.set(pageParams);
+			List<T> list = dataLoader.load();
+			return (Page<T>) list.get(0);
+		} finally {
+			pageParamsHolder.remove();
+		}
 	}
 	
-	@SuppressWarnings("unchecked")
+	public static <T> Page<T> pagination(PageParams pageParams,PageDataLoader<T> dataLoader ){
+		return doPagination(pageParams, dataLoader);
+	}
+	
 	public static <E,V> Page<V> pagination(PageParams pageParams,ConvertPageDataLoader<E,V> dataLoader ){
-		pageParamsHolder.set(pageParams);
-		List<E> list = dataLoader.load();
-		Page<E> page = (Page<E>) list.get(0);
+		
+		Page<E> page = doPagination(pageParams, dataLoader);
 		List<V> convertDatas = new ArrayList<>(page.getData().size());
 		for (E e : page.getData()) {
 			convertDatas.add(dataLoader.convert(e));

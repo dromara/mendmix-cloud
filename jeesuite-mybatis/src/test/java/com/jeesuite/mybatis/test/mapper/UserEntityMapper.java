@@ -9,20 +9,17 @@ import org.apache.ibatis.annotations.Select;
 
 import com.jeesuite.mybatis.core.BaseMapper;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
-import com.jeesuite.mybatis.plugin.cache.annotation.CacheIgnore;
 import com.jeesuite.mybatis.plugin.pagination.Page;
 import com.jeesuite.mybatis.plugin.pagination.PageParams;
-import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 
 //@CacheIgnore
 public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 
-	@Cache
+	@Cache(evictOnMethods = {"updateType","updateType2"})
 	List<UserEntity> findByType(short type);
 
 	@Cache
-	@Pageable
 	List<UserEntity> findByStatus(short status);
 
 	@Cache(uniqueIndex = true)
@@ -32,7 +29,6 @@ public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 	UserEntity findByLoginName(@Param("name") String name);
 
 	@Cache
-	@Pageable
 	List<UserEntity> queryByExample(UserEntity user);
 
 	@Cache
@@ -48,6 +44,7 @@ public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 	@Cache(expire = 300)
 	public List<String> findMobileByIds(List<Integer> ids);
 
+	@Cache
 	Page<UserEntity> pageQuery(@Param("pageParam") PageParams pageParam,@Param("example") Map<String, Object> example);
 
 	@Delete("delete from users where mobile = #{mobile}")

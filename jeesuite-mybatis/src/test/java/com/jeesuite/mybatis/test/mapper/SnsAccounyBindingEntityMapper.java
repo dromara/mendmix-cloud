@@ -19,7 +19,7 @@ public interface SnsAccounyBindingEntityMapper extends BaseMapper<SnsAccounyBind
 	@Cache
 	List<SnsAccounyBindingEntity> findByUnionId(@Param("unionId") String unionId);
 	
-	@Cache(evictOnMethods = {"UserEntityMapper.updateType"})
+	@Cache(evictOnMethods = {"UserEntityMapper.*"})
 	List<SnsAccounyBindingEntity> findByUserId(@Param("userId") int userId);
 	
 	@Cache

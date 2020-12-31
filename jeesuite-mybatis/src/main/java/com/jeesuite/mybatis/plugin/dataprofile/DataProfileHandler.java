@@ -207,7 +207,7 @@ public class DataProfileHandler implements InterceptorHandler {
 
 	@Override
 	public int interceptorOrder() {
-		return 2;
+		return 3;
 	}
 
 	@Override

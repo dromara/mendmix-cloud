@@ -30,7 +30,6 @@ import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.pagination.PageSqlUtils.DbType;
-import com.jeesuite.mybatis.plugin.pagination.annotation.Pageable;
 
 /**
  * 
@@ -93,9 +92,6 @@ public class PaginationHandler implements InterceptorHandler {
 						throw new MybatisHanlerInitException(String.format("method[%s] returnType is:Page,but not found Parameter[PageParams] in Parameters list", method.getName()));
 					}
 					pageMappedStatements.put(msId,true);
-				}else if(method.isAnnotationPresent(Pageable.class)){
-					String msId = ei.getMapperClass().getName() + "." + method.getName();
-					pageMappedStatements.put(msId,true);
 				}
 			}
 		}
@@ -104,57 +100,53 @@ public class PaginationHandler implements InterceptorHandler {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public Object onInterceptor(Invocation invocation) throws Throwable {
-		try {
-			final Executor executor = (Executor) invocation.getTarget();
-			final Object[] args = invocation.getArgs();
-			final MappedStatement orignMappedStatement = (MappedStatement)args[0];
-			
-			if(!orignMappedStatement.getSqlCommandType().equals(SqlCommandType.SELECT))return null;
-			
-			PageParams pageParams = PageExecutor.getPageParams();
-			if(pageParams == null && !pageMappedStatements.keySet().contains(orignMappedStatement.getId()))return null;
-			
-			final RowBounds rowBounds = (RowBounds) args[2];
-			final ResultHandler resultHandler = (ResultHandler) args[3];
-	        final Object parameter = args[1];
-	        
-	        BoundSql boundSql;
-	        if(args.length == 4){
-	            boundSql = orignMappedStatement.getBoundSql(parameter);
-	        } else {
-	            boundSql = (BoundSql) args[5];
-	        }
-	        
-	        if(pageParams == null && pageMappedStatements.get(orignMappedStatement.getId())){
-	        	if(parameter instanceof Map){
-	        		Collection parameterValues = ((Map)parameter).values();
-	        		for (Object val : parameterValues) {
-						if(val instanceof PageParams){
-							pageParams = (PageParams) val;
-							break;
-						}
+		final Executor executor = (Executor) invocation.getTarget();
+		final Object[] args = invocation.getArgs();
+		final MappedStatement orignMappedStatement = (MappedStatement)args[0];
+		
+		if(!orignMappedStatement.getSqlCommandType().equals(SqlCommandType.SELECT))return null;
+		
+		PageParams pageParams = PageExecutor.getPageParams();
+		if(pageParams == null && !pageMappedStatements.keySet().contains(orignMappedStatement.getId()))return null;
+		
+		final RowBounds rowBounds = (RowBounds) args[2];
+		final ResultHandler resultHandler = (ResultHandler) args[3];
+        final Object parameter = args[1];
+        
+        BoundSql boundSql;
+        if(args.length == 4){
+            boundSql = orignMappedStatement.getBoundSql(parameter);
+        } else {
+            boundSql = (BoundSql) args[5];
+        }
+        
+        if(pageParams == null && pageMappedStatements.get(orignMappedStatement.getId())){
+        	if(parameter instanceof Map){
+        		Collection parameterValues = ((Map)parameter).values();
+        		for (Object val : parameterValues) {
+					if(val instanceof PageParams){
+						pageParams = (PageParams) val;
+						break;
 					}
-	        	}else{
-	        		pageParams = (PageParams) parameter;
-	        	}
-	        }
-	        
-	        if(pageParams == null)return null;
-	        
-	        //查询总数
-	        MappedStatement countMappedStatement = getCountMappedStatement(orignMappedStatement);
-	        Long total = executeQueryCount(executor, countMappedStatement, parameter, boundSql, rowBounds, resultHandler);
-	        //查询分页数据
-	        List<?> datas = executeQuery(executor, orignMappedStatement, parameter, boundSql, rowBounds, resultHandler, pageParams);	        
+				}
+        	}else{
+        		pageParams = (PageParams) parameter;
+        	}
+        }
+        
+        if(pageParams == null)return null;
+        
+        //查询总数
+        MappedStatement countMappedStatement = getCountMappedStatement(orignMappedStatement);
+        Long total = executeQueryCount(executor, countMappedStatement, parameter, boundSql, rowBounds, resultHandler);
+        //查询分页数据
+        List<?> datas = executeQuery(executor, orignMappedStatement, parameter, boundSql, rowBounds, resultHandler, pageParams);	        
 
-	        Page<Object> page = new Page<Object>(pageParams,total,(List<Object>) datas);	
-			
-			List<Page<?>> list = new ArrayList<Page<?>>(1);
-			list.add(page);
-			return list;
-		} finally {
-			PageExecutor.clearPageParams();
-		}
+        Page<Object> page = new Page<Object>(pageParams,total,(List<Object>) datas);	
+		
+		List<Page<?>> list = new ArrayList<Page<?>>(1);
+		list.add(page);
+		return list;
 	}
 	
 	
@@ -266,7 +258,8 @@ public class PaginationHandler implements InterceptorHandler {
 
 	@Override
 	public int interceptorOrder() {
-		return 3;
+		//分页是在拦截器执行分页，按现在逻辑不会经过缓存处理逻辑，优先级要设置在缓存前
+		return 2;
 	}
 
 }
