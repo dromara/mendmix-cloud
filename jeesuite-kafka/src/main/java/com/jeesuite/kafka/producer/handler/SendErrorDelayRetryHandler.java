@@ -17,7 +17,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.common.concurrent.StandardThreadExecutor.StandardThreadFactory;
+import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.kafka.message.DefaultMessage;
 
 /**
