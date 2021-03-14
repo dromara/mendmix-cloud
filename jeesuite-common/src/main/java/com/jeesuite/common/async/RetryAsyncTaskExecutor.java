@@ -1,4 +1,4 @@
-package com.jeesuite.common.concurrent;
+package com.jeesuite.common.async;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.ThreadLocalContext;
-import com.jeesuite.common.concurrent.StandardThreadExecutor.StandardThreadFactory;
+import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 
 /**
  * 异步任务执行器

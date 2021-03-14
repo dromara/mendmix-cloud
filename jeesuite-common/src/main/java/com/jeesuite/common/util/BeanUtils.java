@@ -320,6 +320,7 @@ public class BeanUtils {
                 if(CLASS_PROP_NAME.equalsIgnoreCase(propertyName))continue;
                 if(!src.containsKey(propertyName))continue;
                 Object value = src.get(propertyName);
+                if(value == null)continue;
                 value = toValue(value.getClass(), value, descriptor.getPropertyType());
                 descriptor.getWriteMethod().invoke(dist, value);
             }

@@ -1,5 +1,7 @@
 package com.jeesuite.common.model;
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -23,8 +25,8 @@ public class AuthUser {
 	
 	private String id;
 	private String name;
-	private String platform; //业务平台
 	private String userType;//用户类型类型
+	private List<String> tenantScopes;
 
 	public String getId() {
 		return id;
@@ -38,25 +40,27 @@ public class AuthUser {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public String getPlatform() {
-		return platform;
-	}
-	public void setPlatform(String platform) {
-		this.platform = platform;
-	}
-	
-	
+
 	public String getUserType() {
 		return userType;
 	}
 	public void setUserType(String userType) {
 		this.userType = userType;
 	}
+	
+	
+	public List<String> getTenantScopes() {
+		return tenantScopes;
+	}
+	
+	public void setTenantScopes(List<String> tenantScopes) {
+		this.tenantScopes = tenantScopes;
+	}
+	
 	public String toEncodeString(){
 		StringBuilder builder = new StringBuilder();
 		builder.append(id).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(name)).append(CONTACT_CHAR);
-		builder.append(trimToPlaceHolder(platform)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(userType)).append(CONTACT_CHAR);
 		return SimpleCryptUtils.encrypt(builder.toString());
 	}
@@ -68,8 +72,7 @@ public class AuthUser {
 		AuthUser user = new AuthUser();
 		user.setId(placeHolderToNull(splits[0]));
 		user.setName(placeHolderToNull(splits[1]));
-		user.setPlatform(placeHolderToNull(splits[2]));
-		user.setUserType(placeHolderToNull(splits[3]));
+		user.setUserType(placeHolderToNull(splits[2]));
 		return user;
 	}
 	

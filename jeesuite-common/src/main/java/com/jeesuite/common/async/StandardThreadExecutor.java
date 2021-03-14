@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.jeesuite.common.concurrent;
+package com.jeesuite.common.async;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
