@@ -27,6 +27,8 @@ import com.jeesuite.security.Cache;
  */
 public class RedisCache implements Cache {
 
+	public static final String CACHE_GROUP_NAME = "security";
+	
 	private int timeToLiveSeconds;
 	private String keyPrefix;
 	
@@ -42,37 +44,37 @@ public class RedisCache implements Cache {
 
 	@Override
 	public void setString(String key, String value) {
-		new RedisString(buildKey(key)).set(value,timeToLiveSeconds);
+		new RedisString(buildKey(key),CACHE_GROUP_NAME).set(value,timeToLiveSeconds);
 	}
 
 	@Override
 	public String getString(String key) {
-		return new RedisString(buildKey(key)).get();
+		return new RedisString(buildKey(key),CACHE_GROUP_NAME).get();
 	}
 
 	@Override
 	public void setObject(String key, Object value) {
-		new RedisObject(buildKey(key)).set(value,timeToLiveSeconds);
+		new RedisObject(buildKey(key),CACHE_GROUP_NAME).set(value,timeToLiveSeconds);
 	}
 
 	@Override
 	public <T> T getObject(String key) {
-		return new RedisObject(buildKey(key)).get();
+		return new RedisObject(buildKey(key),CACHE_GROUP_NAME).get();
 	}
 
 	@Override
 	public void remove(String key) {
-		new RedisObject(buildKey(key)).remove();
+		new RedisObject(buildKey(key),CACHE_GROUP_NAME).remove();
 	}
 
 	@Override
 	public void removeAll() {
-		RedisBatchCommand.removeByKeyPrefix(keyPrefix);
+		RedisBatchCommand.removeByKeyPrefix(CACHE_GROUP_NAME,keyPrefix);
 	}
 
 	@Override
 	public boolean exists(String key) {
-		return new RedisObject(buildKey(key)).exists();
+		return new RedisObject(buildKey(key),CACHE_GROUP_NAME).exists();
 	}
 
 }
