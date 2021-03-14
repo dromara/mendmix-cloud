@@ -157,7 +157,7 @@ public class JedisProviderFactory {
 	public static synchronized void addGroupProvider(String groupName){
 		if(containsGroup(groupName))return;
 		String prefix =  groupName + ".cache." ;
-		String mode = ResourceUtils.getAndValidateProperty(prefix + "mode");
+		String mode = ResourceUtils.getProperty(prefix + "mode","standalone");
 		String server = ResourceUtils.getAndValidateProperty(prefix + "servers");
 		String datebase = ResourceUtils.getAndValidateProperty(prefix + "datebase");
 		String password = ResourceUtils.getProperty(prefix + "password");
