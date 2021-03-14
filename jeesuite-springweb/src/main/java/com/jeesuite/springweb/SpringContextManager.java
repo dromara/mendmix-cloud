@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import com.jeesuite.common.concurrent.RetryAsyncTaskExecutor;
+import com.jeesuite.common.async.RetryAsyncTaskExecutor;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 

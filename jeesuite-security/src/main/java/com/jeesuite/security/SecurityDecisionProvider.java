@@ -16,7 +16,6 @@
 package com.jeesuite.security;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,10 +31,10 @@ import com.jeesuite.security.model.UserSession;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月30日
  */
-public abstract class SecurityDecisionProvider {
+public abstract class SecurityDecisionProvider<T extends AuthUser> {
 
 	public String sessionIdName(){
-		return "JSESSION_ID";
+		return "JSESSIONID";
 	}
 	
 	public int sessionExpireIn(){
@@ -46,8 +45,8 @@ public abstract class SecurityDecisionProvider {
 		return null;
 	}
 	
-	public boolean multiPointEnable(){
-		return true;
+	public boolean ssoEnabled(){
+		return false;
 	}
 	
 	public boolean keepCookie(){
@@ -75,10 +74,9 @@ public abstract class SecurityDecisionProvider {
 	
 	public abstract String contextPath();
 	public abstract List<String> anonymousUrlPatterns();
-	public abstract List<String> protectedUrlPatterns();
-	public abstract AuthUser validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
+	public abstract T validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
 	public abstract List<String> findAllUriPermissionCodes();
-	public abstract Map<String, List<String>> getUserPermissionCodes(String userId);
+	public abstract List<String> getUserPermissionCodes(String userId);
 	public abstract void authorizedPostHandle(UserSession session);
 	public abstract String _401_Error_Page();
 	public abstract String _403_Error_Page();

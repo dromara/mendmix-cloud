@@ -1,16 +1,30 @@
 package com.jeesuite.mybatis.kit;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.mybatis.crud.helper.ColumnMapper;
+import com.jeesuite.mybatis.crud.helper.EntityHelper;
+
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
+import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
@@ -29,7 +43,7 @@ import net.sf.jsqlparser.statement.update.Update;
 public class MybatisSqlRewriteUtils {
 	
 	public static final String SQL_PARAMETER_PLACEHOLDER = "?";
-
+	
 	public static SqlMetadata rewriteAsSelectPkField(String sql,String idColumnName) {
 		try {
 			Statement statement = CCJSqlParserUtil.parse(sql);
@@ -71,6 +85,79 @@ public class MybatisSqlRewriteUtils {
 			return null;
 		}
 	} 
+	
+	
+	/**
+	 * @param orignSql
+	 * @param columnDefineList
+	 * @param dataMappings
+	 * @return
+	 */
+	public static String buildDataProfileSql(String orignSql, List<ColumnMapper> columnDefineList,Map<String, String[]> dataMapping) {
+		Select select = null;
+		try {
+			select = (Select) CCJSqlParserUtil.parse(orignSql);
+		} catch (JSQLParserException e) {
+			throw new RuntimeException("sql解析错误");
+		}
+		
+		PlainSelect selectBody = (PlainSelect) select.getSelectBody();
+		Table table = (Table) selectBody.getFromItem();
+		
+		Iterator<ColumnMapper> iterator = columnDefineList.iterator();
+		Expression newExpression = null;
+		ColumnMapper item;
+		while(iterator.hasNext()){
+			item =iterator.next();
+			if(!dataMapping.containsKey(item.getProperty()))continue;
+			newExpression = appendDataProfileCondition(table, selectBody.getWhere(), item.getColumn(),dataMapping.get(item.getProperty()));
+			selectBody.setWhere(newExpression);
+			//主表已经处理的条件，join表不在处理
+			iterator.remove();
+		}
+		
+		//JOIN 
+		List<Join> joins = selectBody.getJoins();
+		if(joins != null && !columnDefineList.isEmpty()){
+			List<ColumnMapper> columns;
+			for (Join join : joins) {
+				table = (Table) join.getRightItem();
+				columns = EntityHelper.getTableColumnMappers(table.getName());
+				if(columns == null)continue;
+				for (ColumnMapper defineColumn : columnDefineList) {
+					if(!columns.contains(defineColumn))continue;
+					if(!dataMapping.containsKey(defineColumn.getProperty()))continue;
+					newExpression = appendDataProfileCondition(table, join.getOnExpression(), defineColumn.getColumn(),dataMapping.get(defineColumn.getProperty()));
+					join.setOnExpression(newExpression);
+				}
+				
+			}
+		}
+		//
+		String newSql = selectBody.toString();
+		
+		return newSql;
+	}
+	
+	private static Expression appendDataProfileCondition(Table table,Expression orginExpression,String columnName,String[] values){
+		Expression newExpression = null;
+		Column column = new Column(table, columnName);
+		if (values.length == 1) {
+			EqualsTo equalsTo = new EqualsTo();
+			equalsTo.setLeftExpression(column);
+			equalsTo.setRightExpression(new StringValue(values[0]));
+			newExpression = orginExpression == null ? equalsTo : new AndExpression(orginExpression, equalsTo);
+		} else {
+			ExpressionList expressionList = new ExpressionList(new ArrayList<>(values.length));
+			for (String value : values) {
+				expressionList.getExpressions().add(new StringValue(value));
+			}
+			InExpression inExpression = new InExpression(column, expressionList);
+			newExpression = orginExpression == null ? inExpression : new AndExpression(orginExpression,inExpression);
+		}
+		
+		return newExpression;
+	}
 	
 	public static class SqlMetadata {
 		String sql;

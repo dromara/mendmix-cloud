@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 
 import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.mybatis.core.BaseEntity;
+import com.jeesuite.mybatis.plugin.InvocationVals;
 
 /**
  * 实体缓存辅助工具（关联自动缓存内容）
@@ -53,7 +54,7 @@ public class EntityCacheHelper {
 		}
 		
 		String entityClassName = entityClass.getSimpleName();
-		key = entityClassName + CacheHandler.DOT + key;
+		key = entityClassName + InvocationVals.DOT + key;
 		T result = CacheHandler.cacheProvider.get(key);
 		if(result == null){
 			try {				
@@ -76,7 +77,7 @@ public class EntityCacheHelper {
     public static void removeCache(Class<? extends BaseEntity> entityClass,String key){
     	if(CacheHandler.cacheProvider == null)return;
     	String entityClassName = entityClass.getSimpleName();
-		key = entityClassName + CacheHandler.DOT + key;
+		key = entityClassName + InvocationVals.DOT + key;
 		CacheHandler.cacheProvider.remove(key);
 	}
 	

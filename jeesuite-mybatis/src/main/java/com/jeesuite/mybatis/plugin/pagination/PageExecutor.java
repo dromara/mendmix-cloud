@@ -3,6 +3,9 @@ package com.jeesuite.mybatis.plugin.pagination;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.jeesuite.common.model.Page;
+import com.jeesuite.common.model.PageParams;
+
 public class PageExecutor {
 
 	private static ThreadLocal<PageParams> pageParamsHolder = new ThreadLocal<>();

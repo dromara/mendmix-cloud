@@ -23,6 +23,10 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.apache.ibatis.mapping.SqlCommandType;
 
+import com.jeesuite.common.model.Page;
+import com.jeesuite.common.model.PageParams;
+import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
+
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
@@ -198,9 +202,9 @@ public class EntityInfo {
 	public Map<String, MapperMethod> getMapperMethods() {
 		return mapperMethods;
 	}
-
-	public void setMapperMethods(Map<String, MapperMethod> mapperMethods) {
-		this.mapperMethods = mapperMethods;
+	
+	public MapperMethod getMapperMethod(String methodFullName) {
+		return mapperMethods.get(methodFullName);
 	}
 
 	private static void parseAllMethod(Class<?> clazz,List<Method> methods) {
@@ -219,12 +223,27 @@ public class EntityInfo {
 		Method method;
 		String fullName;
 		SqlCommandType sqlType;
+		boolean pageQuery;
 		
 		public MapperMethod(Method method, String fullName, SqlCommandType sqlType) {
 			super();
 			this.method = method;
 			this.fullName = fullName;
 			this.sqlType = sqlType;
+			if(method.getReturnType() == Page.class){
+				boolean withPageParams = false;
+				Class<?>[] parameterTypes = method.getParameterTypes();
+				self:for (Class<?> clazz : parameterTypes) {
+					if(withPageParams = (clazz == PageParams.class || clazz.getSuperclass() == PageParams.class)){
+						break self;
+					}
+				}
+				
+				if(!withPageParams){
+					throw new MybatisHanlerInitException(String.format("method[%s] returnType is:Page,but not found Parameter[PageParams] in Parameters list", method.getName()));
+				}
+				this.pageQuery = true;
+			}
 		}
 		
 		public Method getMethod() {
@@ -236,6 +255,11 @@ public class EntityInfo {
 		public SqlCommandType getSqlType() {
 			return sqlType;
 		}
+
+		public boolean isPageQuery() {
+			return pageQuery;
+		}
+		
 
 	}
 

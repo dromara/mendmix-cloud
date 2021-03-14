@@ -3,12 +3,12 @@ package com.jeesuite.mybatis.plugin.rwseparate;
 import org.apache.ibatis.executor.keygen.SelectKeyGenerator;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
-import org.apache.ibatis.plugin.Invocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
+import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 
@@ -26,10 +26,9 @@ public class RwRouteHandler implements InterceptorHandler {
 	public static final String NAME = "rwRoute";
 	
 	@Override
-	public Object onInterceptor(Invocation invocation) throws Throwable {
+	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		
-		Object[] objects = invocation.getArgs();
-		MappedStatement ms = (MappedStatement) objects[0];
+		MappedStatement ms = invocation.getMappedStatement();
 		//已指定强制使用
 		if(MybatisRuntimeContext.isForceUseMaster()){
 			logger.debug("Method[{}] force use Master..",ms.getId());
@@ -52,7 +51,7 @@ public class RwRouteHandler implements InterceptorHandler {
 	}
 
 	@Override
-	public void onFinished(Invocation invocation,Object result) {}
+	public void onFinished(InvocationVals invocation,Object result) {}
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {}

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.plugin.Invocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +11,7 @@ import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
+import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 /**
@@ -21,7 +21,7 @@ import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
  *
  * @author jiangwei
  * @version 1.0.0
- * @date 2019年10月28日
+ * @date 2019年10月26日
  */
 public class DataChangeLogHandler implements InterceptorHandler {
 
@@ -49,12 +49,12 @@ public class DataChangeLogHandler implements InterceptorHandler {
 	public void start(JeesuiteMybatisInterceptor context) {}
 
 	@Override
-	public Object onInterceptor(Invocation invocation) throws Throwable {
+	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		return null;
 	}
 
 	@Override
-	public void onFinished(Invocation invocation, Object result) {
+	public void onFinished(InvocationVals invocation, Object result) {
 		if(entityClassNameHolder.get() == null || entityClassNameHolder.get().isEmpty())return;
 		Object[] args = invocation.getArgs();
 		MappedStatement mt = (MappedStatement)args[0]; 

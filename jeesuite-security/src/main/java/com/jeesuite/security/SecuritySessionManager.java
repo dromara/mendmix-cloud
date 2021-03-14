@@ -32,12 +32,12 @@ public class SecuritySessionManager {
 
 	private Cache cache;
 	private volatile String cookieDomain;
-	private String sessionIdName = "JSESSION_ID";
+	private String sessionIdName = "JSESSIONID";
 	private boolean keepCookie;
-	private boolean multiPointEnable;
+	private boolean ssoEnabled;
 	private int cookieExpireIn = 0;
 	
-	public SecuritySessionManager(SecurityDecisionProvider decisionProvider) {
+	public SecuritySessionManager(SecurityDecisionProvider<?> decisionProvider) {
        if(CacheType.redis == decisionProvider.cacheType()){
     	   JedisProviderFactory.addGroupProvider("auth");
     	   this.cache = new RedisCache("security.session", decisionProvider.sessionExpireIn());
@@ -49,7 +49,7 @@ public class SecuritySessionManager {
 			this.sessionIdName = decisionProvider.sessionIdName();
 		}
 		this.keepCookie = decisionProvider.keepCookie();
-		this.multiPointEnable = decisionProvider.multiPointEnable();
+		this.ssoEnabled = decisionProvider.ssoEnabled();
 		this.cookieExpireIn = decisionProvider.sessionExpireIn();
 	}
 
@@ -89,7 +89,7 @@ public class SecuritySessionManager {
 	public void storageLoginSession(UserSession session){
 		String key = session.getSessionId();
 		cache.setObject(key,session);
-		if(!session.isAnonymous() && multiPointEnable){			
+		if(!session.isAnonymous() && !ssoEnabled){			
 			key = String.format(SESSION_UID_CACHE_KEY, session.getUserId());
 			cache.setString(key, session.getSessionId());
 		}
@@ -108,11 +108,12 @@ public class SecuritySessionManager {
 
     
 	private Cookie createSessionCookies(HttpServletRequest request,String sessionId,int expire){
-		if(cookieDomain == null){
-			cookieDomain = WebUtils.getRootDomain(request);
+		String domain = this.cookieDomain;
+		if(domain == null){
+			domain = WebUtils.getRootDomain(request);
 		}
 		Cookie cookie = new Cookie(sessionIdName,sessionId);  
-		cookie.setDomain(cookieDomain);
+		cookie.setDomain(domain);
 		cookie.setPath("/");
 		cookie.setHttpOnly(true);
 		if(expire == 0 || !keepCookie){			
@@ -169,9 +170,13 @@ public class SecuritySessionManager {
 	
 	public void setCurrentProfile(String profile){
 		if(StringUtils.isBlank(profile))return;
+		String domain = this.cookieDomain;
+		if(domain == null){
+			domain = WebUtils.getRootDomain(CurrentRuntimeContext.getRequest());
+		}
 		profile = SecurityCryptUtils.encrypt(profile);
 		Cookie cookie = new Cookie(SecurityConstants.HEADER_AUTH_PROFILE,profile);  
-		cookie.setDomain(cookieDomain);
+		cookie.setDomain(domain);
 		cookie.setPath("/");
 		cookie.setHttpOnly(true);
 		cookie.setMaxAge(3600);

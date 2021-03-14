@@ -10,10 +10,10 @@ import org.apache.ibatis.session.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.mybatis.crud.builder.InsertListBuilder;
 import com.jeesuite.mybatis.crud.builder.CountAllBuilder;
 import com.jeesuite.mybatis.crud.builder.DeleteByPrimaryKeyBuilder;
 import com.jeesuite.mybatis.crud.builder.InsertBuilder;
+import com.jeesuite.mybatis.crud.builder.InsertListBuilder;
 import com.jeesuite.mybatis.crud.builder.SelectAllBuilder;
 import com.jeesuite.mybatis.crud.builder.SelectByPrimaryKeyBuilder;
 import com.jeesuite.mybatis.crud.builder.SelectByPrimaryKeysBuilder;

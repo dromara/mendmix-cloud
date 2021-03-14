@@ -28,6 +28,7 @@ public class EntityHelper {
      */
     private final static Map<Class<?>, EntityMapper> tableMapperCache = new HashMap<Class<?>, EntityMapper>();
     private final static Map<String, Map<String, Field>> entityFieldMappings = new HashMap<>();
+    private final static Map<String, List<ColumnMapper>> tableColumnMappings = new HashMap<>();
 
     /**
      * 由传入的实体的class构建TableMapper对象，构建好的对象存入缓存中，以后使用时直接从缓存中获取
@@ -118,9 +119,14 @@ public class EntityHelper {
             entityMapper.setIdStrategy(idStrategy);
 
             tableMapperCache.put(entityClass, entityMapper);
-
+            //
+            tableColumnMappings.put(tableMapper.getName().toLowerCase(), new ArrayList<>(columnMapperSet));
             return entityMapper;
         }
+    }
+    
+    public static List<ColumnMapper> getTableColumnMappers(String tableName){
+    	return tableColumnMappings.get(tableName.toLowerCase());
     }
 
     /**

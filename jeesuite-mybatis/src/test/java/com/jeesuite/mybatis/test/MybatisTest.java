@@ -31,14 +31,14 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.jeesuite.cache.redis.JedisProviderFactory;
+import com.jeesuite.common.model.Page;
+import com.jeesuite.common.model.PageParams;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.plugin.cache.EntityCacheHelper;
-import com.jeesuite.mybatis.plugin.pagination.Page;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor.PageDataLoader;
-import com.jeesuite.mybatis.plugin.pagination.PageParams;
 import com.jeesuite.mybatis.test.entity.SnsAccounyBindingEntity;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 import com.jeesuite.mybatis.test.mapper.SnsAccounyBindingEntityMapper;
@@ -203,16 +203,22 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testPage(){
-		Page<UserEntity> pageInfo = PageExecutor.pagination(new PageParams(1,10), new PageDataLoader<UserEntity>() {
-			@Override
-			public List<UserEntity> load() {
-				UserEntity example = new UserEntity();
-				example.setType((short)1);
-				return userMapper.queryByExample(example);
-			}
-		});
+		Page<UserEntity> pageInfo;
+//		UserEntity example = new UserEntity();
+//		example.setType((short)1);
+//		pageInfo = PageExecutor.pagination(new PageParams(1,10), new PageDataLoader<UserEntity>() {
+//			@Override
+//			public List<UserEntity> load() {
+//				return userMapper.selectByExample(example);
+//			}
+//		});
+//		
 		
-		System.out.println(pageInfo);
+		HashMap<String, Object> param = new HashMap<>();
+		param.put("type", 1);
+		pageInfo = userMapper.pageQuery(new PageParams(1, 5), param);
+		
+		System.out.println(pageInfo.getData().size());
 	}
 	
 	@Test
@@ -291,13 +297,19 @@ public class MybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void test00(){
-		userMapper.findByType((short)1);
-		UserEntity entity = userMapper.selectByPrimaryKey(4);
-		entity.setName("张三");
-		userMapper.updateByPrimaryKeySelective(entity);
-		userMapper.findByType((short)1);
-		
-		System.out.println();
+		MybatisRuntimeContext.addDataProfileMappings("snsType", "weixin");
+		PageExecutor.pagination(new PageParams(1, 10),new PageDataLoader<SnsAccounyBindingEntity>() {
+			@Override
+			public List<SnsAccounyBindingEntity> load() {
+				return snsAccounyBindingMapper.findByUnionId("7945bd83237335e5376ff44d62e4f0ae");
+			}
+		});
+	}
+	
+	@Test
+	public void test001(){
+		MybatisRuntimeContext.addDataProfileMappings("snsType", "weixin");
+		snsAccounyBindingMapper.findByUnionId("7945bd83237335e5376ff44d62e4f0ae");;
 	}
 	
 	@Test

@@ -19,12 +19,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
-import org.apache.ibatis.plugin.Invocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.common.concurrent.RetryAsyncTaskExecutor;
-import com.jeesuite.common.concurrent.RetryTask;
+import com.jeesuite.common.async.RetryAsyncTaskExecutor;
+import com.jeesuite.common.async.RetryTask;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.ReflectUtils;
@@ -39,6 +38,7 @@ import com.jeesuite.mybatis.kit.MybatisSqlRewriteUtils.SqlMetadata;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.EntityInfo.MapperMethod;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
+import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheIgnore;
@@ -66,7 +66,6 @@ public class CacheHandler implements InterceptorHandler {
 	public static long defaultCacheExpire = 0;
 	
 	private static final String STR_PARAM = "param";
-	protected static final String DOT = ".";
 	
 	public static final String GROUPKEY_SUFFIX = "~keys";
 	private boolean dynamicCacheTime = false;
@@ -85,11 +84,6 @@ public class CacheHandler implements InterceptorHandler {
 	
 	//<更新方法msId,[关联查询方法列表]>
 	private static Map<String, List<String>> customUpdateCacheMapppings = new HashMap<>();
-
-	//记录当前线程写入的所有缓存key
-	private static ThreadLocal<List<String>>  transactionWriteCacheKeys = new ThreadLocal<>();
-	
-	private ThreadLocal<String>  concurrentLockKey = new ThreadLocal<>();
 	
 	protected static CacheProvider cacheProvider;
 	
@@ -164,13 +158,10 @@ public class CacheHandler implements InterceptorHandler {
 	}
 
 	@Override
-	public Object onInterceptor(Invocation invocation) throws Throwable {
+	public Object onInterceptor(InvocationVals invocationVal) throws Throwable {
 
-		Object[] args = invocation.getArgs();
-		MappedStatement mt = (MappedStatement)args[0]; 
+		MappedStatement mt = invocationVal.getMappedStatement(); 
 
-		concurrentLockKey.remove();
-		
 		boolean getLock = false;
 		String cacheKey = null;
 		if(mt.getSqlCommandType().equals(SqlCommandType.SELECT)){	
@@ -181,13 +172,18 @@ public class CacheHandler implements InterceptorHandler {
 			}
 			//按主键查询
 			QueryCacheMethodMetadata metadata = getQueryMethodCache(mt.getId());
-			if(metadata == null)return null;
+			if(metadata == null) {
+				return null;
+			}
+			
+			cacheKey = genarateQueryCacheKey(metadata.keyPattern, invocationVal.getParameter());
+			invocationVal.setQueryCacheMetadata(metadata,cacheKey);
 
-			cacheKey = genarateQueryCacheKey(metadata.keyPattern, args[1]);
 			//并发控制防止缓存穿透
 			if(!metadata.concurrency){
-				concurrentLockKey.set("concurrent:" + cacheKey);
-				getLock = getCacheProvider().setnx(concurrentLockKey.get(), "1", 30);
+				String concurrentLockKey = "concurrent:" + cacheKey;
+				invocationVal.setConcurrentLockKey(concurrentLockKey);
+				getLock = getCacheProvider().setnx(concurrentLockKey, "1", 30);
 				if(!getLock){
 					if(logger.isDebugEnabled())logger.debug(">>auto_cache_process notGetConcurrentLock -> mapperId:{}",mt.getId());
 					return BLOCK_ON_CONCURRENT_LOCK_RETURN;
@@ -240,20 +236,17 @@ public class CacheHandler implements InterceptorHandler {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void onFinished(Invocation invocation,Object result) {
+	public void onFinished(InvocationVals invocationVal,Object result) {
 		try {
 			if(BLOCK_ON_CONCURRENT_LOCK_RETURN.equals(result))return;
-			Object[] args = invocation.getArgs();
-			MappedStatement mt = (MappedStatement)args[0]; 
-			
-			String mapperClassName = mt.getId().substring(0, mt.getId().lastIndexOf(DOT));
+			MappedStatement mt = invocationVal.getMappedStatement(); 
 			
 			QueryCacheMethodMetadata metadata = null;
 			if(mt.getSqlCommandType().equals(SqlCommandType.SELECT)){	
 				if(result == null)return; 
-				if((metadata = getQueryMethodCache(mt.getId())) == null)return;
+				if((metadata = invocationVal.getQueryMethodMetadata()) == null)return;
 	
-				final String cacheKey = genarateQueryCacheKey(metadata.keyPattern, args[1]);
+				final String cacheKey = invocationVal.getCacheKey();
 				if(result instanceof List){
 					List list = (List)result;
 					if(list.isEmpty()){
@@ -290,33 +283,16 @@ public class CacheHandler implements InterceptorHandler {
 					}
 				}
 			}else{
+				String mapperClassName = invocationVal.getMapperNameSpace();
 				if(!cacheEnableMappers.contains(mapperClassName) && !customUpdateCacheMapppings.containsKey(mt.getId()))return;
 				//返回0，未更新成功
 				if(result != null && ((int)result) == 0)return;
-				
-				boolean insertAction = mt.getSqlCommandType().equals(SqlCommandType.INSERT);
-				if(updatePkCacheMethods.containsKey(mt.getId())){
-					String idCacheKey = null;
+				//更新方法移除缓存，避免事务回滚导致缓存不一致，所以更新方法直接移除缓存
+				if(updatePkCacheMethods.containsKey(mt.getId()) && !mt.getSqlCommandType().equals(SqlCommandType.INSERT)){
 					UpdateByPkCacheMethodMetadata updateMethodCache = updatePkCacheMethods.get(mt.getId());
-					if(mt.getSqlCommandType().equals(SqlCommandType.DELETE)){
-						idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,args[1]);
-						getCacheProvider().remove(idCacheKey);
-						if(logger.isDebugEnabled())logger.debug(">>auto_cache_process removeCache -> mapperId:{},idCacheKey:{}",mt.getId(),idCacheKey);
-					}else{
-						idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,args[1]);
-						if(insertAction || mt.getSqlCommandType().equals(SqlCommandType.UPDATE)){
-							if(result != null){
-								QueryCacheMethodMetadata queryByPkMethodCache = getQueryByPkMethodCache(mt.getId());
-								getCacheProvider().set(idCacheKey,args[1], queryByPkMethodCache.getExpire());
-								//插入其他唯一字段引用
-								if(insertAction)cacheUniqueSelectRef(args[1], mt, idCacheKey);
-								if(logger.isDebugEnabled())logger.debug(">>auto_cache_process addCache -> mapperId:{},idCacheKey:{}",mt.getId(),idCacheKey);
-								//
-								addCurrentThreadCacheKey(idCacheKey);
-							}
-						}
-					}	
-				}else if(!insertAction){
+					String idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,invocationVal.getParameter());
+					getCacheProvider().remove(idCacheKey);
+					
 					//针对按条件更新或者删除的方法，按查询条件查询相关内容，然后清理对应主键缓存内容
 //					EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperClassName);
 //					final Object parameter = args[1];
@@ -326,7 +302,7 @@ public class CacheHandler implements InterceptorHandler {
 //		
 //					if(entityInfo.getTableName().equalsIgnoreCase(sqlMetadata.getTableName())) {						
 //						removeCacheByDyncQuery(sqlMetadata,parameter);
-//					}
+//					}	
 				}
 				//删除同一cachegroup关联缓存
 				removeCacheByGroup(mt.getId(), mapperClassName);
@@ -337,10 +313,8 @@ public class CacheHandler implements InterceptorHandler {
 			}
 		} finally {
 			//清除并发控制锁
-			String lockKey = concurrentLockKey.get();
-			if(lockKey != null){
-				cacheProvider.remove(lockKey);
-				concurrentLockKey.remove();
+			if(invocationVal.getConcurrentLockKey() != null){
+				cacheProvider.remove(invocationVal.getConcurrentLockKey());
 			}
 		}
 	}
@@ -352,7 +326,7 @@ public class CacheHandler implements InterceptorHandler {
 	 * @param cacheKey
 	 */
 	private void cacheUniqueSelectRef(Object object, MappedStatement mt, String cacheKey) {
-		Collection<QueryCacheMethodMetadata> mcs = queryCacheMethods.get(mt.getId().substring(0, mt.getId().lastIndexOf(DOT))).values();
+		Collection<QueryCacheMethodMetadata> mcs = queryCacheMethods.get(mt.getId().substring(0, mt.getId().lastIndexOf(InvocationVals.DOT))).values();
 		outter:for (QueryCacheMethodMetadata methodCache : mcs) {
 			if(!methodCache.isSecondQueryById())continue;
 			try {	
@@ -534,7 +508,7 @@ public class CacheHandler implements InterceptorHandler {
 
 	
 	private QueryCacheMethodMetadata getQueryMethodCache(String mtId){
-		String key1 = mtId.substring(0, mtId.lastIndexOf(DOT));
+		String key1 = mtId.substring(0, mtId.lastIndexOf(InvocationVals.DOT));
 		if(queryCacheMethods.containsKey(key1)){
 			return queryCacheMethods.get(key1).get(mtId);
 		}
@@ -542,7 +516,7 @@ public class CacheHandler implements InterceptorHandler {
 	}
 	
 	private QueryCacheMethodMetadata getQueryByPkMethodCache(String mtId){
-		mtId = mtId.substring(0, mtId.lastIndexOf(DOT));
+		mtId = mtId.substring(0, mtId.lastIndexOf(InvocationVals.DOT));
 		if(queryCacheMethods.containsKey(mtId)){
 			return queryCacheMethods.get(mtId).get(mtId + "." + CrudMethods.selectByPrimaryKey.name());
 		}
@@ -609,7 +583,7 @@ public class CacheHandler implements InterceptorHandler {
 		Class<?> mapperClass = entityInfo.getMapperClass();
 		Class<?> entityClass = entityInfo.getEntityClass();
 		QueryCacheMethodMetadata methodCache = new QueryCacheMethodMetadata();
-		methodCache.methodName = mapperClass.getName() + DOT + method.getName();
+		methodCache.methodName = mapperClass.getName() + InvocationVals.DOT + method.getName();
 		methodCache.concurrency = cacheAnnotation.concurrency();
 		methodCache.uniqueIndex = cacheAnnotation.uniqueIndex();
 		methodCache.cacheGroupKey = entityClass.getSimpleName() + GROUPKEY_SUFFIX;
@@ -664,7 +638,7 @@ public class CacheHandler implements InterceptorHandler {
 			}
 			//
 		}
-		methodCache.keyPattern = new StringBuilder(entityClass.getSimpleName()).append(DOT).append(method.getName()).append(":%s").toString();
+		methodCache.keyPattern = new StringBuilder(entityClass.getSimpleName()).append(InvocationVals.DOT).append(method.getName()).append(":%s").toString();
 		
 		if(uniqueQuery){
 			for (String name : methodCache.fieldNames) {
@@ -696,8 +670,8 @@ public class CacheHandler implements InterceptorHandler {
 		for (String methodName : evictOnMethods) {
 			if("*".equals(methodName)){
 				methodName = mapperClassName + ".*";
-			}else if(!methodName.contains(DOT)) {
-				methodName = mapperClassName + DOT + methodName;
+			}else if(!methodName.contains(InvocationVals.DOT)) {
+				methodName = mapperClassName + InvocationVals.DOT + methodName;
 			}
 			if(!methodName.startsWith(targetMethodFullNamePrefix)){
 				methodName = targetMethodFullNamePrefix + methodName;
@@ -732,26 +706,6 @@ public class CacheHandler implements InterceptorHandler {
 		 list.add(queryMethodName);
 	}
 	
-	private void addCurrentThreadCacheKey(String key){
-		List<String> keys =  transactionWriteCacheKeys.get();
-		if(keys == null){
-			keys = new ArrayList<>();
-			 transactionWriteCacheKeys.set(keys);
-		}
-		keys.add(key);
-	}
-	
-	/**
-	 * 回滚当前事务写入的缓存
-	 */
-	public static void rollbackCache(){
-		List<String> keys =  transactionWriteCacheKeys.get();
-		if(keys == null)return;
-		for (String key : keys) {
-			getCacheProvider().remove(key);
-		}
-	}
-
 	@Override
 	public void close() {
 		try {			
@@ -761,6 +715,6 @@ public class CacheHandler implements InterceptorHandler {
 
 	@Override
 	public int interceptorOrder() {
-		return 3;
+		return 4;
 	}
 }

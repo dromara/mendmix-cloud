@@ -31,6 +31,7 @@ import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
+import com.jeesuite.security.model.UserSession;
 
 /**
  * 资源管理器
@@ -47,7 +48,6 @@ public class SecurityResourceManager {
 	private SecurityDecisionProvider decisionProvider;
 
 	private PathMatcher anonymousUrlMatcher;
-	private PathMatcher protectedUrlMatcher;
 	// 无通配符uri
 	private volatile Map<String, String> nonWildcardUriPerms = new HashMap<>();
 	private volatile Map<Pattern, String> wildcardUriPermPatterns = new HashMap<>();
@@ -69,9 +69,7 @@ public class SecurityResourceManager {
 			contextPath = contextPath.substring(0, contextPath.indexOf("/"));
 		}
 		
-		if(decisionProvider.protectedUrlPatterns() != null){
-			protectedUrlMatcher = new PathMatcher(contextPath, decisionProvider.protectedUrlPatterns());
-		}else if(decisionProvider.anonymousUrlPatterns() != null){
+		if(decisionProvider.anonymousUrlPatterns() != null){
 			anonymousUrlMatcher = new PathMatcher(contextPath, decisionProvider.anonymousUrlPatterns());
 		}
 		//
@@ -91,6 +89,7 @@ public class SecurityResourceManager {
 		Map<Pattern, String> wildcardUriPermPatterns = new HashMap<>();
 		Map<String, String> uriPrefixs = new HashMap<>();
 		List<String> permissionCodes = decisionProvider.findAllUriPermissionCodes();
+		if(permissionCodes == null || permissionCodes.isEmpty())return;
 		String fullUri = null;
 		for (String permCode : permissionCodes) {
 			fullUri = contextPath + permCode;
@@ -111,18 +110,19 @@ public class SecurityResourceManager {
 		refreshCallable = false;
 	}
 
-	public List<String> getUserPermissionCodes(String userId,String profile) {
+	public List<String> getUserPermissionCodes(UserSession session) {
 		
-		String cacheKey = String.format("%s_%s", profile,userId);
+		//TODO 考虑统一用户在不同租户，不同平台,逻辑要补充
+		String cacheKey = String.format("%s_%s",StringUtils.trimToEmpty(session.getTenantId()) ,session.getUserId());
 		List<String> permissionCodes = userPermCache.getObject(cacheKey);
 		if(permissionCodes != null)return permissionCodes;
 		
-		Map<String, List<String>> allPermissionCodes = decisionProvider.getUserPermissionCodes(userId);
+		permissionCodes = decisionProvider.getUserPermissionCodes(session.getUserId());
 		
-		for (String key : allPermissionCodes.keySet()) {
-			cacheKey = String.format("%s_%s", key,userId);
-			permissionCodes = allPermissionCodes.get(key);
-			
+		if(permissionCodes == null) {
+			permissionCodes = new ArrayList<>(0);
+		}else if(!permissionCodes.isEmpty()) {
+			permissionCodes = new ArrayList<>(permissionCodes);
 			List<String> removeWildcards = new ArrayList<>();
 			for (String perm : permissionCodes) {
 				if (perm.endsWith("*")) {
@@ -131,14 +131,15 @@ public class SecurityResourceManager {
 			}
 			if (!removeWildcards.isEmpty())
 				permissionCodes.addAll(removeWildcards);
-			
-			userPermCache.setObject(cacheKey, permissionCodes);
 		}
+		
+		userPermCache.setObject(cacheKey, permissionCodes);
 
 		return permissionCodes;
 	}
 
 	public String getPermssionCode(String uri) {
+		if(isAnonymous(uri))return null;
 		if (nonWildcardUriPerms.containsKey(uri))
 			return nonWildcardUriPerms.get(uri);
 
@@ -157,9 +158,6 @@ public class SecurityResourceManager {
 	}
 	
 	public boolean isAnonymous(String uri){
-		if(protectedUrlMatcher != null){
-			return !protectedUrlMatcher.match(uri);
-		}
        if(anonymousUrlMatcher != null){
 			return anonymousUrlMatcher.match(uri);
 		}

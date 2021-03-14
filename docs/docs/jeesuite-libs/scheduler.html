@@ -1,0 +1,624 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>scheduler模块 · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="filesystem.html" />
+    
+    
+    <link rel="prev" href="kafka.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    概要
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1.1" data-path="../architecture.html">
+            
+                <a href="../architecture.html">
+            
+                    
+                    总体架构
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../quick-start.html">
+            
+                <a href="../quick-start.html">
+            
+                    
+                    快速开始
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.1" data-path="../quickstart/confcenter.html">
+            
+                <a href="../quickstart/confcenter.html">
+            
+                    
+                    配置中心
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.2" data-path="../quickstart/oneplatform.html">
+            
+                <a href="../quickstart/oneplatform.html">
+            
+                    
+                    oneplatform企业级开发平台
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3" data-path="../quickstart/passport.html">
+            
+                <a href="../quickstart/passport.html">
+            
+                    
+                    统一认证平台
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../jeesuite-lib.html">
+            
+                <a href="../jeesuite-lib.html">
+            
+                    
+                    jeesuite-libs使用文档
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.3.1" data-path="common.html">
+            
+                <a href="common.html">
+            
+                    
+                    common模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.2" data-path="common2.html">
+            
+                <a href="common2.html">
+            
+                    
+                    common2模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.3" data-path="spring.html">
+            
+                <a href="spring.html">
+            
+                    
+                    Spring模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.4" data-path="mybatis.html">
+            
+                <a href="mybatis.html">
+            
+                    
+                    mybatis模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.5" data-path="cache.html">
+            
+                <a href="cache.html">
+            
+                    
+                    cache模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.6" data-path="kafka.html">
+            
+                <a href="kafka.html">
+            
+                    
+                    kafka模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.3.7" data-path="scheduler.html">
+            
+                <a href="scheduler.html">
+            
+                    
+                    scheduler模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.8" data-path="filesystem.html">
+            
+                <a href="filesystem.html">
+            
+                    
+                    filesystem模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.9" data-path="rest.html">
+            
+                <a href="rest.html">
+            
+                    
+                    restAPI模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.10" data-path="springboot-starter.html">
+            
+                <a href="springboot-starter.html">
+            
+                    
+                    springboot-starter模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="../integration.html">
+            
+                <a href="../integration.html">
+            
+                    
+                    系统集成
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.4.1" data-path="../integration/confcenter.html">
+            
+                <a href="../integration/confcenter.html">
+            
+                    
+                    集成配置中心
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.2" data-path="../integration/passport.html">
+            
+                <a href="../integration/passport.html">
+            
+                    
+                    集成认证中心
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="../base-env-install.html">
+            
+                <a href="../base-env-install.html">
+            
+                    
+                    附：基础环境搭建
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >scheduler模块</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h3 id="&#x529F;&#x80FD;&#x8BF4;&#x660E;">&#x529F;&#x80FD;&#x8BF4;&#x660E;</h3>
+<ul>
+<li>&#x652F;&#x6301;&#x5206;&#x5E03;&#x5F0F;&#x4FDD;&#x8BC1;&#x5355;&#x8282;&#x70B9;&#x6267;&#x884C;&#xFF08;&#x6309;&#x8282;&#x70B9;&#x5E73;&#x5747;&#x5206;&#x914D;job&#xFF09;</li>
+<li>&#x652F;&#x6301;failvoer&#xFF0C;&#x81EA;&#x52A8;&#x5207;&#x6362;&#x6545;&#x969C;&#x8282;&#x70B9;</li>
+<li>&#x652F;&#x6301;&#x591A;&#x8282;&#x70B9;&#x4E0B;&#x5E76;&#x884C;&#x8BA1;&#x7B97;</li>
+<li>&#x652F;&#x6301;&#x65E0;&#x6CE8;&#x518C;&#x4E2D;&#x5FC3;&#x5355;&#x673A;&#x6A21;&#x5F0F;</li>
+<li>&#x652F;&#x6301;&#x81EA;&#x5B9A;&#x4E49;&#x91CD;&#x8BD5;&#x7B56;&#x7565;</li>
+<li>&#x652F;&#x6301;&#x914D;&#x7F6E;&#x6301;&#x4E45;&#x5316;&#xFF08;&#x542F;&#x52A8;&#x52A0;&#x8F7D;&#x3001;&#x53D8;&#x66F4;&#x4FDD;&#x5B58;&#xFF09;</li>
+<li>&#x652F;&#x6301;&#x63A7;&#x5236;&#x53F0;&#xFF08;<a href="http://git.oschina.net/vakinge/jeesuite-admin" target="_blank">jeesuite-admin</a>&#xFF09;&#x4EFB;&#x52A1;&#x76D1;&#x63A7;&#x3001;&#x5F00;&#x505C;&#x3001;&#x52A8;&#x6001;&#x4FEE;&#x6539;&#x8C03;&#x5EA6;&#x65F6;&#x95F4;&#x7B56;&#x7565;&#x3001;&#x624B;&#x52A8;&#x89E6;&#x53D1;&#x6267;&#x884C;</li>
+</ul>
+<h3 id="&#x4F7F;&#x7528;&#x8BF4;&#x660E;">&#x4F7F;&#x7528;&#x8BF4;&#x660E;</h3>
+<h4 id="&#x6DFB;&#x52A0;&#x4F9D;&#x8D56;">&#x6DFB;&#x52A0;&#x4F9D;&#x8D56;</h4>
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.jeesuite&lt;/groupId&gt;
+    &lt;artifactId&gt;jeesuite-scheduler&lt;/artifactId&gt;
+    &lt;version&gt;[&#x6700;&#x65B0;&#x7248;&#x672C;]&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre><h4 id="&#x7F16;&#x5199;&#x4E00;&#x4E2A;&#x5B9A;&#x65F6;&#x4EFB;&#x52A1;">&#x7F16;&#x5199;&#x4E00;&#x4E2A;&#x5B9A;&#x65F6;&#x4EFB;&#x52A1;</h4>
+<pre><code>public class DemoTask extends AbstractJob{
+
+    int count = 1;
+    @Override
+    public void doJob(JobContext context) throws Exception {
+        System.out.println(&quot;\n=============\nDemoTask1=====&gt;&quot;+count+&quot;\n===============\n&quot;);
+        Thread.sleep(RandomUtils.nextLong(1000, 2000));
+        count++;
+    }
+
+    @Override
+    public boolean parallelEnabled() {
+        // &#x5206;&#x5E03;&#x5F0F;&#x4E0B;&#x5F00;&#x542F;&#x5E76;&#x884C;&#x8BA1;&#x7B97;&#x8FD4;&#x56DE;true
+        return false;
+    }
+
+}
+</code></pre><h4 id="&#x600E;&#x4E48;&#x5199;&#x4E00;&#x4E2A;&#x5E76;&#x884C;&#x8BA1;&#x7B97;&#x7684;&#x903B;&#x8F91;">&#x600E;&#x4E48;&#x5199;&#x4E00;&#x4E2A;&#x5E76;&#x884C;&#x8BA1;&#x7B97;&#x7684;&#x903B;&#x8F91;</h4>
+<pre><code>public class DemoParallelTask extends AbstractJob{
+
+    int count = 1;
+    @Override
+    public void doJob(JobContext context) throws Exception {
+        //&#x9996;&#x5148;&#x52A0;&#x8F7D;&#x6240;&#x6709;&#x8981;&#x5904;&#x7406;&#x7684;&#x6570;&#x636E;&#xFF0C;&#x8B6C;&#x5982;&#x6240;&#x6709;&#x9700;&#x8981;&#x5904;&#x7406;&#x7684;&#x7528;&#x6237;
+        List&lt;Long&gt; userids = new ArrayList&lt;Long&gt;(Arrays.asList(1001L,2001L,1002L,2002L,1003L,2003L));//load all
+        for (Long userId : userids) {
+            //&#x5224;&#x65AD;&#x662F;&#x5426;&#x5206;&#x914D;&#x5230;&#x5F53;&#x524D;&#x8282;&#x70B9;&#x6267;&#x884C;
+            if(!context.matchCurrentNode(userId)){
+                System.out.println(&quot;&gt;&gt;&gt;&gt;&gt;&gt;not matchCurrentNode --ignore&quot;);
+                continue;
+            }
+            // &#x5904;&#x7406;&#x5177;&#x4F53;&#x4E1A;&#x52A1;&#x903B;&#x8F91;
+            System.out.println(&quot;&lt;&lt;&lt;&lt;&lt;&lt;&lt;DemoTask2=====&gt;&quot;+count);
+        }
+        count++;
+    }
+
+    @Override
+    public boolean parallelEnabled() {
+        //&#x5F00;&#x542F;&#x5E76;&#x884C;&#x8BA1;&#x7B97;
+        return true;
+    }
+
+}
+</code></pre><h4 id="spring&#x914D;&#x7F6E;&#x6587;&#x4EF6;">spring&#x914D;&#x7F6E;&#x6587;&#x4EF6;</h4>
+<pre><code> &lt;!-- &#x6CE8;&#x518C;&#x4E2D;&#x5FC3;&#xFF08;&#x96C6;&#x7FA4;&#x7BA1;&#x7406;&#xFF09; --&gt;
+    &lt;bean id=&quot;jobRegistry&quot; class=&quot;com.jeesuite.scheduler.registry.ZkJobRegistry&quot;&gt;
+       &lt;property name=&quot;zkServers&quot; value=&quot;localhost:2181&quot; /&gt;
+    &lt;/bean&gt;
+
+    &lt;bean class=&quot;com.jeesuite.scheduler.SchedulerFactoryBeanWrapper&quot;&gt;
+        &lt;!-- &#x786E;&#x4FDD;&#x6BCF;&#x4E2A;&#x5E94;&#x7528;groupName&#x552F;&#x4E00; --&gt;
+        &lt;property name=&quot;groupName&quot; value=&quot;demo&quot; /&gt;
+        &lt;!--  --&gt;
+        &lt;property name=&quot;configPersistHandler&quot;&gt;
+           &lt;bean class=&quot;com.jeesuite.test.sch.DbConfigPersistHandler&quot; /&gt;
+        &lt;/property&gt;
+        &lt;property name=&quot;registry&quot; ref=&quot;jobRegistry&quot; /&gt;
+        &lt;property name=&quot;schedulers&quot;&gt;
+            &lt;list&gt;
+                &lt;!-- &#x4EE5;&#x4E0B;&#x914D;&#x7F6E;&#x6BCF;&#x4E2A;&#x4EFB;&#x52A1;&#x5217;&#x8868; --&gt;
+                &lt;bean class=&quot;com.jeesuite.test.sch.DemoTask&quot;&gt;
+                    &lt;property name=&quot;jobName&quot; value=&quot;demoTask&quot; /&gt;
+                    &lt;property name=&quot;retries&quot; value=&quot;1&quot; /&gt;
+                    &lt;property name=&quot;cronExpr&quot; value=&quot;0/30 * * * * ?&quot; /&gt;
+                    &lt;!-- &#x542F;&#x52A8;&#x5B8C;&#x6210;&#x7ACB;&#x5373;&#x6267;&#x884C;&#x4E00;&#x6B21; --&gt;
+                    &lt;property name=&quot;executeOnStarted&quot; value=&quot;false&quot; /&gt;
+                &lt;/bean&gt;
+
+                &lt;bean class=&quot;com.jeesuite.test.sch.DemoTask2&quot;&gt;
+                    &lt;property name=&quot;jobName&quot; value=&quot;demoTask2&quot; /&gt;
+                    &lt;property name=&quot;cronExpr&quot; value=&quot;0/15 * * * * ?&quot; /&gt;
+                &lt;/bean&gt;
+
+                &lt;!-- &lt;bean class=&quot;com.jeesuite.test.sch.DemoParallelTask&quot;&gt;
+                    &lt;property name=&quot;jobName&quot; value=&quot;demoParallelTask&quot; /&gt;
+                    &lt;property name=&quot;cronExpr&quot; value=&quot;0 0/15 * * * ?&quot; /&gt;
+                &lt;/bean&gt; --&gt;
+            &lt;/list&gt;
+        &lt;/property&gt;
+    &lt;/bean&gt;
+</code></pre><p>&#x5168;&#x5C40;&#x53C2;&#x6570;&#x8BF4;&#x660E;&#xFF1A;</p>
+<ul>
+<li><code>groupName</code> &#x4EFB;&#x52A1;&#x7EC4;&#xFF0C;&#x8981;&#x786E;&#x4FDD;&#x548C;&#x5176;&#x4ED6;&#x9879;&#x76EE;&#x552F;&#x4E00; &#xFF08;&#x5FC5;&#x586B;&#xFF09;</li>
+<li><code>registry</code> &#x6CE8;&#x518C;&#x4E2D;&#x5FC3;&#xFF0C;&#x4E0D;&#x914D;&#x7F6E;&#x5219;&#x4E3A;&#x5355;&#x673A;&#x6A21;&#x5F0F; &#xFF08;&#x9009;&#x586B;&#xFF09;</li>
+<li><code>configPersistHandler</code> &#x6301;&#x4E45;&#x5316;&#x914D;&#x7F6E;&#x652F;&#x6301;&#xFF0C;&#x542F;&#x52A8;&#x65F6;&#x5408;&#x5E76;&#x914D;&#x7F6E;&#x548C;&#x66F4;&#x65B0;&#x914D;&#x7F6E;&#x3002;&#xFF08;&#x9009;&#x586B;&#xFF09;</li>
+</ul>
+<p>job&#x53C2;&#x6570;&#x8BF4;&#x660E;&#xFF1A;</p>
+<ul>
+<li><code>jobName</code> &#x4EFB;&#x52A1;&#x540D;&#xFF0C;&#x786E;&#x4FDD;&#x540C;&#x4E00;groupName&#x4E0B;&#x552F;&#x4E00;</li>
+<li><code>retries</code> &#x91CD;&#x8BD5;&#x6B21;&#x6570;&#xFF0C;&#x9ED8;&#x8BA4;&#x4E0D;&#x91CD;&#x8BD5;</li>
+<li><code>cronExpr</code> &#x6267;&#x884C;&#x65F6;&#x95F4;&#x7B56;&#x7565;&#xFF0C;&#x5982;&#x679C;&#x914D;&#x7F6E;&#x4E86;<code>configPersistHandler</code>&#x4EE5;merge&#x540E;&#x7684;&#x4E3A;&#x51C6;&#x3002;</li>
+</ul>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="kafka.html" class="navigation navigation-prev " aria-label="Previous page: kafka模块">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="filesystem.html" class="navigation navigation-next " aria-label="Next page: filesystem模块">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"scheduler模块","level":"1.3.7","depth":2,"next":{"title":"filesystem模块","level":"1.3.8","depth":2,"path":"jeesuite-libs/filesystem.md","ref":"jeesuite-libs/filesystem.md","articles":[]},"previous":{"title":"kafka模块","level":"1.3.6","depth":2,"path":"jeesuite-libs/kafka.md","ref":"jeesuite-libs/kafka.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"jeesuite-libs/scheduler.md","mtime":"2017-09-11T10:17:48.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-05-04T10:30:11.187Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

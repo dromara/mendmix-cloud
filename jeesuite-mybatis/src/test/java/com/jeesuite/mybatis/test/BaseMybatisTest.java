@@ -124,8 +124,8 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		entity.setName(RandomStringUtils.random(5, true, true));
 		userMapper.updateByPrimaryKeySelective(entity);
 		
-//		userMapper.findMobileByIds(Arrays.asList(4,5,6));
-//		userMapper.findByType((short)1);
+		userMapper.findMobileByIds(Arrays.asList(4,5,6));
+		userMapper.findByType((short)1);
 	}
 
 	private UserEntity buildUserEntity() {

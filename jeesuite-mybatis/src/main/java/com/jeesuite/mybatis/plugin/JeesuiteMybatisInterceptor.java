@@ -77,7 +77,7 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 			}
 		}
 		
-		//排序
+		//排序 分页和数据权限会重写sql，所以不走缓存，所以放在缓存之前
 		Collections.sort(this.interceptorHandlers, new Comparator<InterceptorHandler>() {
 			@Override
 			public int compare(InterceptorHandler o1, InterceptorHandler o2) {
@@ -90,25 +90,31 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 	@Override
 	public Object intercept(Invocation invocation) throws Throwable {
 		
+		InvocationVals invocationVal = new InvocationVals(invocation);
+		
 		Object result = null;
 		boolean proceed = false;
-		for (InterceptorHandler handler : interceptorHandlers) {
-			result = handler.onInterceptor(invocation);
-			if(result != null)break;
-		}
-		
 		try {
+			for (InterceptorHandler handler : interceptorHandlers) {
+				result = handler.onInterceptor(invocationVal);
+				if(result != null)break;
+			}
+			
 			if(result == null){
 				result = invocation.proceed();
 				proceed = true;
 			}
+			return result;
 		} finally {
 			for (InterceptorHandler handler : interceptorHandlers) {
-				handler.onFinished(invocation,proceed ? result : null);
+				try {					
+					handler.onFinished(invocationVal,proceed ? result : null);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		
-		return result;
 	}
 
 	@Override

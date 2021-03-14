@@ -7,10 +7,10 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import com.jeesuite.common.model.Page;
+import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.core.BaseMapper;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
-import com.jeesuite.mybatis.plugin.pagination.Page;
-import com.jeesuite.mybatis.plugin.pagination.PageParams;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 
 //@CacheIgnore

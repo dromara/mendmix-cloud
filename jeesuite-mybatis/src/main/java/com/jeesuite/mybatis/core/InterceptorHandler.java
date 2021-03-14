@@ -1,7 +1,6 @@
 package com.jeesuite.mybatis.core;
 
-import org.apache.ibatis.plugin.Invocation;
-
+import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 /**
@@ -17,9 +16,9 @@ public interface InterceptorHandler {
 	
 	void close();
 
-	Object onInterceptor(Invocation invocation) throws Throwable;
+	Object onInterceptor(InvocationVals invocationVal) throws Throwable;
 	
-	void onFinished(Invocation invocation,Object result);
+	void onFinished(InvocationVals invocationVal,Object result);
 	
 	int interceptorOrder();
 	

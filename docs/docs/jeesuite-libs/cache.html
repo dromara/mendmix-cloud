@@ -1,0 +1,654 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>cache模块 · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="kafka.html" />
+    
+    
+    <link rel="prev" href="mybatis.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    概要
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1.1" data-path="../architecture.html">
+            
+                <a href="../architecture.html">
+            
+                    
+                    总体架构
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../quick-start.html">
+            
+                <a href="../quick-start.html">
+            
+                    
+                    快速开始
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.1" data-path="../quickstart/confcenter.html">
+            
+                <a href="../quickstart/confcenter.html">
+            
+                    
+                    配置中心
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.2" data-path="../quickstart/oneplatform.html">
+            
+                <a href="../quickstart/oneplatform.html">
+            
+                    
+                    oneplatform企业级开发平台
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.3" data-path="../quickstart/passport.html">
+            
+                <a href="../quickstart/passport.html">
+            
+                    
+                    统一认证平台
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../jeesuite-lib.html">
+            
+                <a href="../jeesuite-lib.html">
+            
+                    
+                    jeesuite-libs使用文档
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.3.1" data-path="common.html">
+            
+                <a href="common.html">
+            
+                    
+                    common模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.2" data-path="common2.html">
+            
+                <a href="common2.html">
+            
+                    
+                    common2模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.3" data-path="spring.html">
+            
+                <a href="spring.html">
+            
+                    
+                    Spring模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.4" data-path="mybatis.html">
+            
+                <a href="mybatis.html">
+            
+                    
+                    mybatis模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.3.5" data-path="cache.html">
+            
+                <a href="cache.html">
+            
+                    
+                    cache模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.6" data-path="kafka.html">
+            
+                <a href="kafka.html">
+            
+                    
+                    kafka模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.7" data-path="scheduler.html">
+            
+                <a href="scheduler.html">
+            
+                    
+                    scheduler模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.8" data-path="filesystem.html">
+            
+                <a href="filesystem.html">
+            
+                    
+                    filesystem模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.9" data-path="rest.html">
+            
+                <a href="rest.html">
+            
+                    
+                    restAPI模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3.10" data-path="springboot-starter.html">
+            
+                <a href="springboot-starter.html">
+            
+                    
+                    springboot-starter模块
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="../integration.html">
+            
+                <a href="../integration.html">
+            
+                    
+                    系统集成
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.4.1" data-path="../integration/confcenter.html">
+            
+                <a href="../integration/confcenter.html">
+            
+                    
+                    集成配置中心
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.2" data-path="../integration/passport.html">
+            
+                <a href="../integration/passport.html">
+            
+                    
+                    集成认证中心
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="../base-env-install.html">
+            
+                <a href="../base-env-install.html">
+            
+                    
+                    附：基础环境搭建
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >cache模块</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h3 id="&#x529F;&#x80FD;&#x8BF4;&#x660E;">&#x529F;&#x80FD;&#x8BF4;&#x660E;</h3>
+<ul>
+<li>&#x57FA;&#x4E8E;&#x914D;&#x7F6E;&#x652F;&#x6301;&#x5355;&#x673A;&#x3001;&#x54E8;&#x5175;&#x3001;&#x5206;&#x7247;&#x3001;&#x96C6;&#x7FA4;&#x6A21;&#x5F0F;&#x81EA;&#x7531;&#x5207;&#x6362;</li>
+<li>&#x66F4;&#x52A0;&#x7B80;&#x5355;&#x7684;&#x64CD;&#x4F5C;API&#x5C01;&#x88C5;&#xFF0C;&#x65E0;&#x9700;&#x6CE8;&#x5165;&#x3001;&#x65E0;&#x9700;&#x5173;&#x6CE8;redis&#x8FDE;&#x63A5;&#xFF0C;&#x9759;&#x6001;&#x65B9;&#x6CD5;&#x4E5F;&#x80FD;&#x968F;&#x62FF;&#x968F;&#x7528;&#x3002;</li>
+<li>&#x4E00;&#x7EA7;&#x7F13;&#x5B58;&#x652F;&#x6301;&#xFF08;ehcache &amp; guava cache&#xFF09;&#x3001;&#x5206;&#x5E03;&#x5F0F;&#x573A;&#x666F;&#x591A;&#x8282;&#x70B9;&#x81EA;&#x52A8;&#x5237;&#x65B0;&#x3002;</li>
+<li>&#x591A;&#x7EC4;&#x7F13;&#x5B58;&#x914D;&#x7F6E;&#x540C;&#x65F6;&#x652F;&#x6301; &#xFF08;&#x4E00;&#x4E2A;&#x5E94;&#x7528;&#x591A;&#x5957;&#x7F13;&#x5B58;&#x5B9E;&#x4F8B;&#xFF09;</li>
+<li>&#x57FA;&#x4E8E;map&#x672C;&#x5730;&#x7F13;&#x5B58;&#x5B9E;&#x73B0;MapCacheProvider(&#x65E0;&#x7B2C;&#x4E09;&#x65B9;&#x4F9D;&#x8D56;&#x7684;&#x60C5;&#x51B5;&#x53EF;&#x4F7F;&#x7528;)</li>
+</ul>
+<h3 id="&#x4F7F;&#x7528;&#x8BF4;&#x660E;">&#x4F7F;&#x7528;&#x8BF4;&#x660E;</h3>
+<h4 id="&#x6DFB;&#x52A0;&#x4F9D;&#x8D56;">&#x6DFB;&#x52A0;&#x4F9D;&#x8D56;</h4>
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.jeesuite&lt;/groupId&gt;
+    &lt;artifactId&gt;jeesuite-cache&lt;/artifactId&gt;
+    &lt;version&gt;[&#x6700;&#x65B0;&#x7248;&#x672C;]&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre><h4 id="spring&#x914D;&#x7F6E;&#x6587;&#x4EF6;">spring&#x914D;&#x7F6E;&#x6587;&#x4EF6;</h4>
+<pre><code>  &lt;bean id=&quot;jedisPoolConfig&quot; class=&quot;redis.clients.jedis.JedisPoolConfig&quot;&gt;
+        &lt;property name=&quot;maxTotal&quot; value=&quot;${redis.pool.maxTotal}&quot; /&gt;
+        &lt;property name=&quot;maxIdle&quot; value=&quot;${redis.pool.maxIdle}&quot; /&gt;
+        &lt;property name=&quot;minIdle&quot; value=&quot;${redis.pool.minIdle}&quot; /&gt;
+    &lt;/bean&gt;
+
+    &lt;!--&#x7B2C;&#x4E00;&#x7EC4;&#x7F13;&#x5B58;--&gt;
+    &lt;bean id=&quot;defaultCache&quot; class=&quot;com.jeesuite.cache.redis.JedisProviderFactoryBean&quot;&gt;
+        &lt;property name=&quot;jedisPoolConfig&quot; ref=&quot;jedisPoolConfig&quot; /&gt;
+        &lt;!-- mode(standalone:&#x5355;&#x673A;&#x6A21;&#x5F0F;&#xFF0C;sentinel&#xFF1A;&#x54E8;&#x5175;&#x6A21;&#x5F0F;(&#x4E3B;&#x4ECE;),cluster&#xFF1A;&#x96C6;&#x7FA4;&#x6A21;&#x5F0F;&#xFF0C;shard&#xFF1A;&#x5206;&#x7247;&#x6A21;&#x5F0F;) --&gt;
+        &lt;property name=&quot;mode&quot; value=&quot;standalone&quot; /&gt;
+        &lt;!-- &#x591A;&#x4E2A;&#x7528;&#x201C;,&#x201D;&#x9694;&#x5F00; --&gt;
+        &lt;property name=&quot;servers&quot; value=&quot;127.0.0.1:6379&quot; /&gt;
+        &lt;property name=&quot;timeout&quot; value=&quot;3000&quot; /&gt;
+        &lt;property name=&quot;password&quot; value=&quot;mypass&quot; /&gt;
+        &lt;property name=&quot;database&quot; value=&quot;1&quot; /&gt;
+        &lt;!-- sentinel&#x6A21;&#x5F0F;&#x624D;&#x9700;&#x8981;&#x8BE5;&#x5C5E;&#x6027;
+        &lt;property name=&quot;masterName&quot; value=&quot;${redis.masterName}&quot; /&gt;
+         --&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id=&quot;sessionCache&quot;
+        class=&quot;com.jeesuite.cache.redis.JedisProviderFactoryBean&quot;&gt;
+        &lt;property name=&quot;group&quot; value=&quot;session_cache&quot; /&gt;
+        &lt;property name=&quot;jedisPoolConfig&quot; ref=&quot;jedisPoolConfig&quot; /&gt;
+        &lt;property name=&quot;mode&quot; value=&quot;standalone&quot; /&gt;
+        &lt;property name=&quot;servers&quot; value=&quot;127.0.0.1:6380&quot; /&gt;
+        &lt;property name=&quot;timeout&quot; value=&quot;3000&quot; /&gt;
+    &lt;/bean&gt;
+</code></pre><p>&#x914D;&#x7F6E;&#x6587;&#x4EF6;&#x8BF4;&#x660E;</p>
+<ul>
+<li>mode:  standalone:&#x5355;&#x673A;&#x6A21;&#x5F0F;&#xFF0C;sentinel&#xFF1A;&#x54E8;&#x5175;&#x6A21;&#x5F0F;(&#x4E3B;&#x4ECE;),cluster&#xFF1A;&#x96C6;&#x7FA4;&#x6A21;&#x5F0F;&#xFF0C;shard&#xFF1A;&#x5206;&#x7247;&#x6A21;&#x5F0F;</li>
+<li>servers:redis server&#x5217;&#x8868;&#xFF0C;&#x591A;&#x4E2A;&apos;,&apos;&#x9694;&#x5F00;&#x3002;sentinel&#x6A21;&#x5F0F;&#x8981;&#x914D;&#x7F6E;&#x54E8;&#x5175;&#x5730;&#x5740;&#xFF08;&#x6572;&#x9ED1;&#x677F;&#xFF5E;&#xFF5E;&#xFF5E;&#xFF5E;&#xFF09;</li>
+<li>group: &#x5373;&#x591A;&#x5957;redis&#x914D;&#x7F6E;&#x7684;&#x652F;&#x6301;&#x3002;&#x5982;&#x679C;&#x4F60;&#x7684;&#x670D;&#x52A1;&#x91CC;&#x9762;&#x7528;&#x5230;&#x4E86;&#x591A;&#x7EC4;&#x7F13;&#x5B58;&#x5C31;&#x5FC5;&#x987B;&#x6307;&#x5B9A;&#x7EC4;&#x540D;&#xFF0C;&#x7EC4;&#x540D;&#x4E0D;&#x80FD;&#x91CD;&#x590D;&#xFF0C;&#x4E0D;&#x6307;&#x5B9A;&#x7F3A;&#x7701;&#x4E3A;[default]&#x3002;</li>
+<li>database&#xFF1A;&#x9ED8;&#x8BA4;&#x4E3A; 0</li>
+<li>password&#xFF1A; redis&#x8BBE;&#x7F6E;&#x4E86;&#x5BC6;&#x7801;&#x5C31;&#x914D;&#x7F6E;</li>
+</ul>
+<p>&#x5F00;&#x542F;&#x672C;&#x5730;&#x4E00;&#x7EA7;&#x7F13;&#x5B58;&#xFF08;&#x96C6;&#x7FA4;&#x4E0B;&#x4E00;&#x7EA7;&#x7F13;&#x5B58;&#x81EA;&#x52A8;&#x66F4;&#x65B0;&#xFF09;</p>
+<pre><code>    &lt;bean id=&quot;level1CacheSupport&quot; class=&quot;com.jeesuite.cache.local.Level1CacheSupport&quot;&gt;
+         &lt;property name=&quot;distributedMode&quot; value=&quot;true&quot; /&gt;
+         &lt;property name=&quot;bcastServer&quot; value=&quot;${redis.servers}&quot; /&gt;
+         &lt;property name=&quot;password&quot; value=&quot;mypass&quot; /&gt;
+         &lt;property name=&quot;bcastScope&quot; value=&quot;demo&quot; /&gt;
+         &lt;property name=&quot;cacheProvider&quot;&gt;
+            &lt;!-- &lt;bean class=&quot;com.jeesuite.cache.local.GuavaLevel1CacheProvider&quot;&gt;
+               &lt;property name=&quot;maxSize&quot; value=&quot;10000&quot; /&gt;
+               &lt;property name=&quot;timeToLiveSeconds&quot; value=&quot;300&quot; /&gt;
+            &lt;/bean&gt; --&gt;
+            &lt;bean class=&quot;com.jeesuite.cache.local.EhCacheLevel1CacheProvider&quot;&gt;
+               &lt;property name=&quot;ehcacheName&quot; value=&quot;level1Cache&quot; /&gt;
+            &lt;/bean&gt;
+         &lt;/property&gt;
+         &lt;!-- &#x9700;&#x8981;&#x672C;&#x5730;&#x7F13;&#x5B58;&#x7F13;&#x5B58;&#x7EC4;&#x540D;&#x3002;&#x591A;&#x4E2A;&#x7528;,&#x6216;;&#x9694;&#x5F00; --&gt;
+         &lt;property name=&quot;cacheNames&quot;&gt;
+            &lt;value&gt;UserEntity,CityEntity&lt;/value&gt;
+         &lt;/property&gt;
+    &lt;/bean&gt;
+</code></pre><p>&#x914D;&#x7F6E;&#x6587;&#x4EF6;&#x8BF4;&#x660E;</p>
+<ul>
+<li>distributedMode&#xFF1A;&#x662F;&#x5426;&#x5F00;&#x542F;&#x5206;&#x5E03;&#x5F0F;&#x6A21;&#x5F0F;&#x3001;&#x9ED8;&#x8BA4;&#xFF08;true&#xFF09;&#xFF0C;&#x4E0D;&#x5F00;&#x542F;&#x7684;&#x8BDD;&#x4E00;&#x7EA7;&#x7F13;&#x5B58;&#x66F4;&#x65B0;&#x5C31;&#x4E0D;&#x4F1A;&#x5E7F;&#x64AD;&#x901A;&#x77E5;&#x4E86;&#x3002;</li>
+<li>bcastServer&#xFF1A;&#x5E7F;&#x64AD;&#x670D;&#x52A1;&#x5668;&#x5730;&#x5740;&#xFF0C;&#x76EE;&#x524D;&#x4F7F;&#x7528;redis&#x8BA2;&#x9605;&#x53D1;&#x5E03;&#x673A;&#x5236;&#x5E7F;&#x64AD;&#x3001;&#x6240;&#x4EE5;&#x914D;&#x7F6E;redis&#x5730;&#x5740;&#x5373;&#x53EF;&#x3002;</li>
+<li>password&#xFF1A;bcastServer&#x7684;redis&#x6709;&#x5BC6;&#x7801;&#x5219;&#x914D;&#x7F6E;</li>
+<li>bcastScope&#xFF1A;&#x4E00;&#x822C;&#x914D;&#x7F6E;&#x4F60;&#x7684;&#x5E94;&#x7528;&#x540D;&#x5373;&#x53EF;&#x3002;&#x4E3B;&#x8981;&#x9632;&#x6B62;&#x591A;&#x4E2A;&#x5E94;&#x7528;&#x4F7F;&#x7528;&#x540C;&#x4E00;&#x4E2A;&#x7F13;&#x5B58;&#x7684;&#x60C5;&#x51B5;&#xFF0C;&#x51FA;&#x73B0;&#x4EA4;&#x53C9;&#x8BA2;&#x9605;&#x7F13;&#x5B58;&#x540C;&#x6B65;&#x66F4;&#x65B0;&#x60C5;&#x51B5;&#x3002;</li>
+<li>cacheProvider&#xFF1A;&#x672C;&#x5730;&#x7F13;&#x5B58;&#x5B9E;&#x73B0;&#x3002;&#x76EE;&#x524D;&#x652F;&#x6301;guava cache&#x548C;ehcache&#x3002;&#x9ED8;&#x8BA4;guava cache</li>
+<li>cacheNames&#xFF1A;&#x9700;&#x8981;&#x5F00;&#x542F;&#x4E00;&#x7EA7;&#x7F13;&#x5B58;&#x7F13;&#x5B58;&#x7EC4;&#xFF0C;&#x4E0D;&#x914D;&#x7F6E;&#x5B9E;&#x9645;&#x4E0A;&#x4E00;&#x7EA7;&#x7F13;&#x5B58;&#x5C31;&#x4E0D;&#x751F;&#x6548;&#x3002;&#x6309;&#x76EE;&#x524D;&#x81EA;&#x52A8;&#x7F13;&#x5B58;key&#x89C4;&#x5219;&#xFF08;namespace.key:value&#xFF09;,namespace&#x5373;&#x4E3A;cacheName</li>
+</ul>
+<h4 id="&#x4F7F;&#x7528;&#x548C;&#x57FA;&#x672C;&#x8BED;&#x6CD5;">&#x4F7F;&#x7528;&#x548C;&#x57FA;&#x672C;&#x8BED;&#x6CD5;</h4>
+<ul>
+<li>RedisString</li>
+<li>RedisObject</li>
+<li>RedisList</li>
+<li>RedisStrList</li>
+<li>RedisNumber</li>
+<li>RedisSet</li>
+<li>RedisStrSet</li>
+<li>RedisSortSet</li>
+<li>RedisStrSortSet</li>
+<li>RedisHashMap</li>
+<li>RedisStrHashMap</li>
+</ul>
+<pre><code class="lang-java"><span class="hljs-comment">//&#x5B57;&#x7B26;&#x4E32;</span>
+RedisString redisString = <span class="hljs-keyword">new</span> RedisString(<span class="hljs-string">&quot;User.id:1001&quot;</span>);
+redisString.set(<span class="hljs-string">&quot;user1001&quot;</span>, <span class="hljs-number">60</span>);
+String value = redisString.get();
+
+redisString.getTtl();
+redisString.exists();
+redisString.setExpire(<span class="hljs-number">300</span>);
+redisString.remove();
+
+<span class="hljs-comment">//&#x5BF9;&#x8C61;</span>
+RedisObject redisObject = <span class="hljs-keyword">new</span> RedisObject(<span class="hljs-string">&quot;User.id:1001&quot;</span>);
+redisObject.set(<span class="hljs-keyword">new</span> User(<span class="hljs-number">1001</span>, <span class="hljs-string">&quot;jack&quot;</span>));
+Object user = redisObject.get();
+redisObject.getTtl();
+redisObject.exists();
+redisObject.setExpire(<span class="hljs-number">300</span>);
+redisObject.remove();
+
+<span class="hljs-comment">//hash </span>
+RedisHashMap redisHashMap = <span class="hljs-keyword">new</span> RedisHashMap(<span class="hljs-string">&quot;User.all&quot;</span>);
+redisHashMap.set(<span class="hljs-string">&quot;1001&quot;</span>, <span class="hljs-keyword">new</span> User(<span class="hljs-number">1001</span>, <span class="hljs-string">&quot;jack&quot;</span>));
+redisHashMap.set(<span class="hljs-string">&quot;1002&quot;</span>, <span class="hljs-keyword">new</span> User(<span class="hljs-number">1002</span>, <span class="hljs-string">&quot;jack2&quot;</span>));
+
+Map &lt; String,
+User &gt; users = redisHashMap.get(<span class="hljs-string">&quot;1001&quot;</span>, <span class="hljs-string">&quot;1002&quot;</span>);
+users = redisHashMap.getAll();
+User one = redisHashMap.getOne(<span class="hljs-string">&quot;1001&quot;</span>);
+
+redisHashMap.containsKey(<span class="hljs-string">&quot;1001&quot;</span>);
+
+redisHashMap.remove();
+
+<span class="hljs-comment">//&#x6307;&#x5B9A;&#x7F13;&#x5B58;&#x670D;&#x52A1;&#x7EC4;&#x540D;</span>
+<span class="hljs-comment">//new RedisObject(key, groupName)</span>
+<span class="hljs-keyword">new</span> RedisObject(<span class="hljs-string">&quot;User.id:1001&quot;</span>, <span class="hljs-string">&quot;session_cache&quot;</span>);
+</code></pre>
+<p>&#x5982;&#x679C;&#x8FD9;&#x4E9B;&#x5C01;&#x88C5;&#x4E0D;&#x6EE1;&#x8DB3;&#x4F60;&#x7684;&#x9700;&#x6C42;&#x8FD9;&#x4E9B;&#x4F60;&#x9700;&#x8981;&#x7528;&#x5176;&#x4ED6;&#x7684;&#x53EF;&#x4EE5;&#x76F4;&#x63A5;&#x901A;&#x8FC7;&#x4E00;&#x4E0B;&#x65B9;&#x5F0F;&#x8C03;&#x7528;jedis&#x539F;&#x751F;API&#xFF1A;</p>
+<pre><code>JedisCommands commands = JedisProviderFactory.getJedisCommands(null);
+try {            
+    commands.zadd(cacheGroup, score, key);
+    commands.pexpire(cacheGroup, expireSeconds * 1000);
+} finally{
+    JedisProviderFactory.getJedisProvider(null).release();
+}
+</code></pre>
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="mybatis.html" class="navigation navigation-prev " aria-label="Previous page: mybatis模块">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="kafka.html" class="navigation navigation-next " aria-label="Next page: kafka模块">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"cache模块","level":"1.3.5","depth":2,"next":{"title":"kafka模块","level":"1.3.6","depth":2,"path":"jeesuite-libs/kafka.md","ref":"jeesuite-libs/kafka.md","articles":[]},"previous":{"title":"mybatis模块","level":"1.3.4","depth":2,"path":"jeesuite-libs/mybatis.md","ref":"jeesuite-libs/mybatis.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"jeesuite-libs/cache.md","mtime":"2017-09-11T01:54:10.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-05-04T10:30:11.187Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

@@ -1,0 +1,196 @@
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, textarea, p, blockquote, th, td, article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
+  margin: 0;
+  padding: 0;
+}
+body {
+  color: #333;
+  background: #fff;
+  font: 400 16px/1.5 "Helvetica Neue", "Marmelad", "Lucida Grande", "Hiragino Sans GB", Georgia, "Microsoft YaHei", sans-serif;
+  -webkit-user-select: inherit;
+}
+h1,h2,h3,h4,h5,h6 {
+	font-weight: 500;
+	font-size: 100%;
+}
+a {
+	text-decoration: none;
+  -webkit-touch-callout: none;
+  outline: 0;
+}
+li {
+	list-style-type: none;
+}
+
+/*
+* header
+*/
+.head-area {
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,.15);
+  position: absolute;
+  width: 100%;
+  z-index: 10;
+}
+.head-area a {
+  color: #fff;
+}
+.head-content {
+  max-width: 1140px;
+  margin: auto;
+  line-height: 50px;
+}
+.title-area {
+  position: absolute;
+}
+.title-area h1 a {
+  font-weight: 300;
+  font-size: 30px;
+}
+.nav-area {
+  font-size: 16px;
+  height: 50px;
+  text-align: center;
+  overflow: hidden;
+}
+.main-nav {
+  list-style-position: inside;
+  margin: auto 0;
+  padding: 0;
+  float: right;
+  font-size: 16px;
+}
+.main-nav li {
+  display: block;
+  float: left;
+}
+.main-nav li a {
+  display: block;
+  padding: 0 18px;
+}
+
+/*
+* normal page header
+*/
+.head-area.normal {
+	position: relative;
+	margin-bottom: -1px;
+}
+.head-area.normal a {
+	color: #0088cc;
+}
+.head-area.normal .main-nav li a:hover, .head-area.normal .main-nav li.active {
+	color: #0088cc;
+	background-color: #f5F5F5;
+}
+
+/*
+* footer 
+*/
+.fr-info {
+  background-color: #2e2e2e;
+}
+.info-item {
+  width: 1140px;
+  margin: 0 auto;
+  height: 60px;
+  line-height: 60px;
+  font-size: 14px;
+  color: #676767;
+  padding-left: 10px;
+  box-sizing: border-box;
+}
+.qq-logo {
+  background-image: url("../img/qq-logo.png");
+  background-repeat: no-repeat;
+  background-size: 78px 33px;
+  width: 78px;
+  height: 33px;
+  display: inline-block;
+  vertical-align: -9px;
+}
+
+.fr-introduce {
+  background-color: #232323;
+  color: #676767;
+}
+.introduce-content {
+  width: 1140px;
+  margin: 0 auto;
+}
+.introduce-content h3 {
+  line-height: 70px;
+  height: 70px;
+  font-size: 20px
+}
+.bottom-info, .bottom-info a {
+  color: #7f7f7f;
+  text-align: center;
+}
+.bottom-info {
+  padding: 60px 0 15px;
+}
+
+@media screen and (max-width: 980px) {
+	/* header */
+	.head-area {
+    position: relative;
+    background-color: #52b6ec;
+  }
+  .title-area {
+    padding-left: 10px;
+  }
+  .nav-area {
+    height: auto;
+  }
+  .nav-toggle {
+    display: block;
+    width: 20px;
+    height: 12px;
+    padding: 19px 15px;
+    float: right;
+  }
+  .nav-toggle:before {
+    content: '';
+    border-top: 2px #00a5e0 solid;
+    border-bottom: 2px #00a5e0 solid;
+    width: 20px;
+    height: 5px;
+    display: block;
+  }
+  .nav-toggle:after {
+    content: '';
+    border-top: 2px #00a5e0 solid;
+    width: 20px;
+    display: block;
+    margin-top: 5px;
+  }
+  .main-nav {
+    height: 0;
+    float: none;
+    padding-left: 15px;
+    margin-top: 50px;
+    line-height: 36px;
+  }
+  .main-nav li {
+    display: block;
+    margin: 0;
+    text-align: left;
+  }
+  .slideDown {
+    height: auto;
+    -webkit-animation: 1s slideDown;
+  }
+
+
+	/* footer */
+  .introduce-content,.info-item  {
+    width: 100%;
+  }
+  .introduce-content h3, .introduce-content p {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+
+}
+

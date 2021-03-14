@@ -75,7 +75,7 @@ public class SecurityDelegating {
 
 		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
 		
-		if(!getInstance().decisionProvider.multiPointEnable()){
+		if(getInstance().decisionProvider.ssoEnabled()){
 			UserSession otherSession = getInstance().sessionManager.getLoginSessionByUserId(userInfo.getId());
 			if(otherSession != null && !otherSession.getSessionId().equals(session.getSessionId())){
 				getInstance().sessionManager.removeLoginSession(otherSession.getSessionId());
@@ -103,7 +103,7 @@ public class SecurityDelegating {
 		UserSession session = getCurrentSession();
 		session.update(userInfo, getInstance().decisionProvider.sessionExpireIn());
 		
-		if(!getInstance().decisionProvider.multiPointEnable()){
+		if(getInstance().decisionProvider.ssoEnabled()){
 			UserSession otherSession = getInstance().sessionManager.getLoginSessionByUserId(userInfo.getId());
 			if(otherSession != null && !otherSession.getSessionId().equals(session.getSessionId())){
 				getInstance().sessionManager.removeLoginSession(otherSession.getSessionId());
@@ -124,14 +124,15 @@ public class SecurityDelegating {
 		UserSession session = getCurrentSession();
 		String uri = CurrentRuntimeContext.getRequest().getRequestURI();
 		
-		boolean isSuperAdmin = getInstance().decisionProvider.superAdminName().equals(session.getUserInfo().getName());
+		boolean isSuperAdmin = session != null && session.getUserInfo() != null 
+				&& getInstance().decisionProvider.superAdminName().equals(session.getUserInfo().getName());
 		if(!isSuperAdmin && !getInstance().resourceManager.isAnonymous(uri)){
 			if(session == null || session.isAnonymous()){
 				throw new UnauthorizedException();
 			}
 			String permssionCode = getInstance().resourceManager.getPermssionCode(uri);
 			if(StringUtils.isNotBlank(permssionCode) 
-					&& !getInstance().resourceManager.getUserPermissionCodes(session.getUserId(),session.getProfile()).contains(permssionCode)){
+					&& !getInstance().resourceManager.getUserPermissionCodes(session).contains(permssionCode)){
 				throw new ForbiddenAccessException();
 			}
 		}
@@ -141,6 +142,10 @@ public class SecurityDelegating {
 		}
 		//
 		CurrentRuntimeContext.setAuthUser(session.getUserInfo());
+		
+		if(StringUtils.isNotBlank(session.getTenantId())) {
+			CurrentRuntimeContext.setTenantId(session.getTenantId());
+		}
 		
 		return session;
 	}

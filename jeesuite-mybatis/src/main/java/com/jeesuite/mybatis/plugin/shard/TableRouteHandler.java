@@ -1,11 +1,11 @@
 package com.jeesuite.mybatis.plugin.shard;
 
-import org.apache.ibatis.plugin.Invocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
+import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 /**
@@ -29,13 +29,13 @@ public class TableRouteHandler implements InterceptorHandler,InitializingBean {
 	}
 
 	@Override
-	public Object onInterceptor(Invocation invocation) throws Throwable {
+	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public void onFinished(Invocation invocation, Object result) {
+	public void onFinished(InvocationVals invocation, Object result) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -20,6 +20,7 @@ public class UserSession {
 	private Integer expiresIn;
 	private Long expiresAt;
 	private String profile;
+	private String tenantId;
 	
 	
 	public UserSession() {}
@@ -32,6 +33,9 @@ public class UserSession {
 	
 	public void update(AuthUser userInfo ,Integer expiresIn){
 		this.userInfo = userInfo;
+		if(userInfo.getTenantScopes() != null && !userInfo.getTenantScopes().isEmpty()) {
+			setTenantId(userInfo.getTenantScopes().get(0));
+		}
 		setExpiresIn(expiresIn);
 	}
 
@@ -72,12 +76,21 @@ public class UserSession {
 		this.userInfo = userInfo;
 	}
 
+
 	public String getProfile() {
 		return profile;
 	}
 
 	public void setProfile(String profile) {
 		this.profile = profile;
+	}
+
+	public String getTenantId() {
+		return tenantId;
+	}
+
+	public void setTenantId(String tenantId) {
+		this.tenantId = tenantId;
 	}
 
 	public String getUserId(){

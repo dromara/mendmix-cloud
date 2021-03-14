@@ -41,6 +41,13 @@ public class SecurityDelegatingFilter implements Filter {
 	private static final String MSG_401_UNAUTHORIZED = "{\"code\": 401,\"msg\":\"401 Unauthorized\"}";
 	private static String MSG_403_FORBIDDEN = "{\"code\": 403,\"msg\":\"403 Forbidden\"}";
 	
+	private AuthAdditionHandler additionHandler;
+	
+	
+	public void setAdditionHandler(AuthAdditionHandler additionHandler) {
+		this.additionHandler = additionHandler;
+	}
+
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {}
 
@@ -50,6 +57,10 @@ public class SecurityDelegatingFilter implements Filter {
 		
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
+		
+		if(additionHandler != null) {
+			additionHandler.beforeAuthorization(request, response);
+		}
 		
 		CurrentRuntimeContext.init(request, response);
 
@@ -79,6 +90,10 @@ public class SecurityDelegatingFilter implements Filter {
 				}
 			}
 			return;
+		}
+		//
+		if(additionHandler != null) {
+			additionHandler.afterAuthorization(request, response);
 		}
 		
 		chain.doFilter(req, res);

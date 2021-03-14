@@ -17,10 +17,10 @@ package com.jeesuite.mybatis.plugin.security;
 
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
-import org.apache.ibatis.plugin.Invocation;
 
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.mybatis.core.InterceptorHandler;
+import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 /**
@@ -37,7 +37,7 @@ public class SensitiveOperProtectHandler implements InterceptorHandler{
 	public void close() {}
 
 	@Override
-	public Object onInterceptor(Invocation invocation) throws Throwable {
+	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		Object[] objects = invocation.getArgs();
 		MappedStatement ms = (MappedStatement) objects[0];
 		if(ms.getSqlCommandType().equals(SqlCommandType.DELETE)){
@@ -47,7 +47,7 @@ public class SensitiveOperProtectHandler implements InterceptorHandler{
 	}
 
 	@Override
-	public void onFinished(Invocation invocation, Object result) {
+	public void onFinished(InvocationVals invocation, Object result) {
 		
 	}
 

@@ -2,6 +2,8 @@ package com.jeesuite.mybatis.plugin.pagination;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.model.PageParams;
+
 public class PageSqlUtils {
 	
 	private static final String REGEX_N_T_S = "\\n+|\\t+\\s{2,}";

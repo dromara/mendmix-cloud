@@ -3,8 +3,6 @@
  */
 package com.jeesuite.mybatis.crud.builder;
 
-import java.util.Set;
-
 import org.apache.ibatis.jdbc.SQL;
 
 import com.jeesuite.mybatis.crud.CrudMethods;

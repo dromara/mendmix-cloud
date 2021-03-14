@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jeesuite.mybatis.MybatisRuntimeContext;
-import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.UseMaster;
 import com.jeesuite.spring.InterceptorHanlder;
 
@@ -35,9 +34,7 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 	}
 
 	@Override
-	public void postHandler(Method method, Object[] args, Exception ex) {
-		CacheHandler.rollbackCache();
-	}
+	public void postHandler(Method method, Object[] args, Exception ex) {}
 
 	@Override
 	public void destory() {
