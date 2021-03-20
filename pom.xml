@@ -224,7 +224,7 @@
 		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
 		<snapshotRepository>
 			<id>snapshots</id>
-			<url>http://nexus.zy.com/nexus/content/repositories/snapshots</url> 
+			<url>http://nexus.z.com/nexus/content/repositories/snapshots</url> 
 		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>
