@@ -159,7 +159,7 @@ public class JedisProviderFactory {
 		String prefix =  groupName + ".cache." ;
 		String mode = ResourceUtils.getProperty(prefix + "mode","standalone");
 		String server = ResourceUtils.getAndValidateProperty(prefix + "servers");
-		String datebase = ResourceUtils.getAndValidateProperty(prefix + "datebase");
+		String datebase = ResourceUtils.getAndValidateProperty(prefix + "database");
 		String password = ResourceUtils.getProperty(prefix + "password");
 		String maxPoolSize = ResourceUtils.getProperty(prefix + "maxPoolSize","50");
 		

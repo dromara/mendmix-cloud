@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <title>mybatis增强模块 | jeesuite</title>
+    <meta name="description" content="">
+    <meta name="generator" content="VuePress 1.8.2">
+    <link rel="icon" href="/assets/logo.png">
+    <meta name="description" content="一站式分布式开发架构开源解决方案,快速开发平台">
+    <link rel="preload" href="/assets/css/0.styles.5fd099f9.css" as="style"><link rel="preload" href="/assets/js/app.4d260b06.js" as="script"><link rel="preload" href="/assets/js/2.1cc60117.js" as="script"><link rel="preload" href="/assets/js/14.dd99e7ba.js" as="script"><link rel="prefetch" href="/assets/js/10.3028897f.js"><link rel="prefetch" href="/assets/js/11.576aeaf9.js"><link rel="prefetch" href="/assets/js/12.461242c2.js"><link rel="prefetch" href="/assets/js/13.310a5cd7.js"><link rel="prefetch" href="/assets/js/15.e50b5961.js"><link rel="prefetch" href="/assets/js/16.b8355a6d.js"><link rel="prefetch" href="/assets/js/17.f4c14363.js"><link rel="prefetch" href="/assets/js/18.d9bc9f29.js"><link rel="prefetch" href="/assets/js/19.419fbb4e.js"><link rel="prefetch" href="/assets/js/20.748d646e.js"><link rel="prefetch" href="/assets/js/21.7aa46189.js"><link rel="prefetch" href="/assets/js/22.e9b237a8.js"><link rel="prefetch" href="/assets/js/3.582866db.js"><link rel="prefetch" href="/assets/js/4.09e00e34.js"><link rel="prefetch" href="/assets/js/5.d61c01c1.js"><link rel="prefetch" href="/assets/js/6.adeef84d.js"><link rel="prefetch" href="/assets/js/7.2c8eef8e.js"><link rel="prefetch" href="/assets/js/8.6e267969.js"><link rel="prefetch" href="/assets/js/9.dfd563f0.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.5fd099f9.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="ant-row"><div class="sidebar-button"><i aria-label="icon: bars" class="anticon anticon-bars"><svg viewBox="0 0 1024 1024" focusable="false" data-icon="bars" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M912 192H328c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 284H328c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 284H328c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM104 228a56 56 0 1 0 112 0 56 56 0 1 0-112 0zm0 284a56 56 0 1 0 112 0 56 56 0 1 0-112 0zm0 284a56 56 0 1 0 112 0 56 56 0 1 0-112 0z"></path></svg></i> <span></span></div> <div class="ant-col ant-col-xs-24 ant-col-sm-24 ant-col-md-6 ant-col-lg-5 ant-col-xl-5 ant-col-xxl-4"><a href="/" class="router-link-active no-logo home-link"><!----> <span class="site-name">jeesuite</span></a> <div class="search-box mobile-search"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div></div> <div class="ant-col ant-col-xs-0 ant-col-sm-0 ant-col-md-18 ant-col-lg-19 ant-col-xl-19 ant-col-xxl-20"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><ul role="menu" id="nav" class="ant-menu ant-menu-horizontal ant-menu-root ant-menu-light"><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="display:none;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li><li role="menuitem" class="ant-menu-item"><a href="/" class="router-link-active">
+          首页
+        </a></li><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="display:none;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li><li role="menuitem" class="ant-menu-item"><a href="/guide/">
+          指南
+        </a></li><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="display:none;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li><li role="menuitem" class="ant-menu-item ant-menu-item-selected"><a href="/docments/" class="router-link-active">
+          文档
+        </a></li><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="display:none;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li><li role="menuitem" class="ant-menu-item"><a href="/course/">
+          教程
+        </a></li><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="visibility:hidden;position:absolute;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li></ul> <a href="https://github.com/vakinge" target="_blank" rel="noopener noreferrer" class="repo-link"><i aria-label="icon: github" class="anticon anticon-github"><svg viewBox="64 64 896 896" focusable="false" data-icon="github" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M511.6 76.3C264.3 76.2 64 276.4 64 523.5 64 718.9 189.3 885 363.8 946c23.5 5.9 19.9-10.8 19.9-22.2v-77.5c-135.7 15.9-141.2-73.9-150.3-88.9C215 726 171.5 718 184.5 703c30.9-15.9 62.4 4 98.9 57.9 26.4 39.1 77.9 32.5 104 26 5.7-23.5 17.9-44.5 34.7-60.8-140.6-25.2-199.2-111-199.2-213 0-49.5 16.3-95 48.3-131.7-20.4-60.5 1.9-112.3 4.9-120 58.1-5.2 118.5 41.6 123.2 45.3 33-8.9 70.7-13.6 112.9-13.6 42.4 0 80.2 4.9 113.5 13.9 11.3-8.6 67.3-48.8 121.3-43.9 2.9 7.7 24.7 58.3 5.5 118 32.4 36.8 48.9 82.7 48.9 132.3 0 102.2-59 188.1-200 212.9a127.5 127.5 0 0 1 38.1 91v112.5c.8 9 0 17.9 15 17.9 177.1-59.7 304.6-227 304.6-424.1 0-247.2-200.4-447.3-447.5-447.3z"></path></svg></i></a></nav></div></div> <!----></header> <aside class="sidebar"><div><div class="ads"><div id="ads_2"><div class="ant-carousel"><div class="slick-slider slick-initialized"><div class="slick-list"><div class="slick-track"><div tabIndex="-1" data-index="-1" aria-hidden="true" class="slick-slide slick-cloned" style="width:null;"><div><div tabIndex="-1" style="width:100%;display:inline-block;"><a href="https://vuepress.vuejs.org/" target="_blank" rel="noopener noreferrer"><img src="https://cn.bing.com/th?id=OHR.KeichitsuCrocuse_ZH-CN1061292366_1920x1080.jpg" title="Ads details here"></a></div></div></div><div tabIndex="-1" data-index="0" class="slick-slide slick-active slick-current" style="outline:none;width:null;"><div><div tabIndex="-1" style="width:100%;display:inline-block;"><a href="https://vuepress.vuejs.org/" target="_blank" rel="noopener noreferrer"><img src="https://cn.bing.com/th?id=OHR.LoughriggTarn_ZH-CN1404327665_1920x1080.jpg" title="Ads details here"></a></div></div></div><div tabIndex="-1" data-index="1" aria-hidden="true" class="slick-slide" style="outline:none;width:null;"><div><div tabIndex="-1" style="width:100%;display:inline-block;"><a href="https://vuepress.vuejs.org/" target="_blank" rel="noopener noreferrer"><img src="https://cn.bing.com/th?id=OHR.MetamorphicRocks_ZH-CN9753251368_1920x1080.jpg" title="Ads details here"></a></div></div></div><div tabIndex="-1" data-index="2" aria-hidden="true" class="slick-slide" style="outline:none;width:null;"><div><div tabIndex="-1" style="width:100%;display:inline-block;"><a href="https://vuepress.vuejs.org/" target="_blank" rel="noopener noreferrer"><img src="https://cn.bing.com/th?id=OHR.KeichitsuCrocuse_ZH-CN1061292366_1920x1080.jpg" title="Ads details here"></a></div></div></div><div tabIndex="-1" data-index="3" aria-hidden="true" class="slick-slide slick-cloned" style="width:null;"><div><div tabIndex="-1" style="width:100%;display:inline-block;"><a href="https://vuepress.vuejs.org/" target="_blank" rel="noopener noreferrer"><img src="https://cn.bing.com/th?id=OHR.LoughriggTarn_ZH-CN1404327665_1920x1080.jpg" title="Ads details here"></a></div></div></div><div tabIndex="-1" data-index="4" aria-hidden="true" class="slick-slide slick-cloned" style="width:null;"><div><div tabIndex="-1" style="width:100%;display:inline-block;"><a href="https://vuepress.vuejs.org/" target="_blank" rel="noopener noreferrer"><img src="https://cn.bing.com/th?id=OHR.MetamorphicRocks_ZH-CN9753251368_1920x1080.jpg" title="Ads details here"></a></div></div></div><div tabIndex="-1" data-index="5" aria-hidden="true" class="slick-slide slick-cloned" style="width:null;"><div><div tabIndex="-1" style="width:100%;display:inline-block;"><a href="https://vuepress.vuejs.org/" target="_blank" rel="noopener noreferrer"><img src="https://cn.bing.com/th?id=OHR.KeichitsuCrocuse_ZH-CN1061292366_1920x1080.jpg" title="Ads details here"></a></div></div></div></div></div><ul class="slick-dots slick-dots-bottom" style="display:block;"><li class="slick-active"><button>1</button></li><li><button>2</button></li><li><button>3</button></li></ul></div></div></div></div> <div role="separator" id="reset-margin" class="ant-divider ant-divider-horizontal ant-divider-dashed"></div></div> <ul class="sidebar-links"><li><a href="/docments/" aria-current="page" title="使用指南" class="sidebar-link">使用指南</a></li><li><a href="/docments/jeesuite-common.html" title="通用模块" class="sidebar-link">通用模块</a></li><li><a href="/docments/jeesuite-spring.html" title="spring增强模块" class="sidebar-link">spring增强模块</a></li><li><a href="/docments/jeesuite-mybatis.html" aria-current="page" title="mybatis增强模块" class="active sidebar-link">mybatis增强模块</a><ul class="sidebar-sub-headers"></ul></li><li><a href="/docments/jeesuite-cache.html" title="缓存模块" class="sidebar-link">缓存模块</a></li><li><a href="/docments/jeesuite-scheduler.html" title="定时任务模块" class="sidebar-link">定时任务模块</a></li><li><a href="/docments/jeesuite-security.html" title="安全认证模块" class="sidebar-link">安全认证模块</a></li><li><a href="/docments/jeesuite-springweb.html" title="springweb增强模块" class="sidebar-link">springweb增强模块</a></li><li><a href="/docments/jeesuite-amqp-adapter.html" title="消息中间件适配器" class="sidebar-link">消息中间件适配器</a></li><li><a href="/docments/jeesuite-cos-adapter.html" title="云存储适配模块" class="sidebar-link">云存储适配模块</a></li><li><a href="/docments/config-center.html" title="配置中心" class="sidebar-link">配置中心</a></li><li><a href="/docments/auth-center.html" title="统一认证平台" class="sidebar-link">统一认证平台</a></li></ul></aside> <main class="page"> <div class="theme-antdocs-content content__default"><h3 id="功能说明"><a href="#功能说明" class="header-anchor">#</a> 功能说明</h3> <ul><li>代码生成、自动CRUD、可无缝对接mybaits增强框架<code>Mapper</code></li> <li>基于properties配置多数据源支持，无需修改XML</li> <li>读写分离，事务内操作强制读主库</li> <li>基于注解自动缓存管理（所有查询方法结果自动缓存、自动更新，事务回滚缓存同步回滚机制）</li> <li>自动缓存实现基于<code>jeesuite-cache</code>和<code>spring-data-redis</code></li> <li>分页组件</li> <li>敏感操作保护</li></ul> <h3 id="使用说明"><a href="#使用说明" class="header-anchor">#</a> 使用说明</h3> <h4 id="添加依赖"><a href="#添加依赖" class="header-anchor">#</a> 添加依赖</h4> <div class="language- extra-class"><pre class="language-text"><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.jeesuite&lt;/groupId&gt;
+    &lt;artifactId&gt;jeesuite-mybatis&lt;/artifactId&gt;
+    &lt;version&gt;[最新版本]&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre></div><hr> <h5 id="其他功能说明"><a href="#其他功能说明" class="header-anchor">#</a> 其他功能说明</h5> <ul><li>读写分离
+<ol><li>根据执行sql类型自动路由master/slave库</li> <li>支持基于properties文件动态扩展slave节点</li> <li>支持@Transactional强制使用master库查询</li></ol></li> <li>自动缓存
+<ol><li>支持所有mapper自定义查询方法自动缓存管理（自动缓存、自动更新）</li> <li>支持通过@CacheEvictCascade注解，级联缓存更新</li> <li>支持通过EntityCacheHelper手动写入/更新缓存并自动纳入自动管理体系</li> <li>防止缓存穿透，可配置缓存null值并自动更新</li></ol></li> <li>分页
+<ol><li>支持通过标注或者定义page方法实现物理分页</li></ol></li></ul> <h4 id="配置"><a href="#配置" class="header-anchor">#</a> 配置</h4> <p>基础配置</p> <div class="language- extra-class"><pre class="language-text"><code># CRUD增强（默认：default，可选:mapper3）
+jeesuite.mybatis.crudDriver=default
+jeesuite.mybatis.dbType=Mysql
+jeesuite.mybatis.cacheEnabled=true
+jeesuite.mybatis.nullValueCache=false
+jeesuite.mybatis.cacheExpireSeconds=300
+jeesuite.mybatis.dynamicExpire=false
+jeesuite.mybatis.rwRouteEnabled=false
+jeesuite.mybatis.paginationEnabled=true
+</code></pre></div><p>数据源配置</p> <div class="language- extra-class"><pre class="language-text"><code>#mysql global config
+db.driverClass=com.mysql.jdbc.Driver
+db.initialSize=2
+db.minIdle=1
+db.maxActive=10
+db.maxWait=60000
+db.timeBetweenEvictionRunsMillis=60000
+db.minEvictableIdleTimeMillis=300000
+db.testOnBorrow=false
+db.testOnReturn=false
+
+#master
+master.db.url=jdbc:mysql://localhost:3306/demo_db?seUnicode=true&amp;amp;characterEncoding=UTF-8
+master.db.username=root
+master.db.password=123456
+master.db.initialSize=2
+master.db.minIdle=2
+master.db.maxActive=20
+
+#slave ....
+slave1.db.url=jdbc:mysql://localhost:3306/demo_db2?seUnicode=true&amp;amp;characterEncoding=UTF-8
+slave1.db.username=root
+slave1.db.password=123456
+
+#slave2 ....
+slave2.db.url=jdbc:mysql://localhost:3306/demo_db3?seUnicode=true&amp;amp;characterEncoding=UTF-8
+slave2.db.username=root
+slave2.db.password=123456
+</code></pre></div><p>说明</p> <ul><li><code>slave</code>序列从1开始</li> <li>每个数据源的配置会覆盖全局配置</li></ul> <h5 id="mybais模块aop"><a href="#mybais模块aop" class="header-anchor">#</a> mybais模块AOP</h5> <p>如果使用了自动cache和读写分离插件，需要通过AOP做缓存回滚，和强制使用master生效。</p> <div class="language-java extra-class"><pre class="language-java"><code><span class="token keyword">package</span> $<span class="token punctuation">{</span>project<span class="token punctuation">.</span>base<span class="token punctuation">.</span><span class="token keyword">package</span><span class="token punctuation">}</span><span class="token punctuation">.</span>interceptor<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>aspectj<span class="token punctuation">.</span>lang<span class="token punctuation">.</span>annotation<span class="token punctuation">.</span></span><span class="token class-name">Aspect</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>aspectj<span class="token punctuation">.</span>lang<span class="token punctuation">.</span>annotation<span class="token punctuation">.</span></span><span class="token class-name">Pointcut</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>core<span class="token punctuation">.</span></span><span class="token class-name">Ordered</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>core<span class="token punctuation">.</span>annotation<span class="token punctuation">.</span></span><span class="token class-name">Order</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token namespace">org<span class="token punctuation">.</span>springframework<span class="token punctuation">.</span>stereotype<span class="token punctuation">.</span></span><span class="token class-name">Component</span><span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> <span class="token namespace">com<span class="token punctuation">.</span>jeesuite<span class="token punctuation">.</span>mybatis<span class="token punctuation">.</span>spring<span class="token punctuation">.</span></span><span class="token class-name">MybatisPluginBaseSpringInterceptor</span><span class="token punctuation">;</span>
+
+
+<span class="token annotation punctuation">@Aspect</span>
+<span class="token annotation punctuation">@Component</span>
+<span class="token annotation punctuation">@Order</span><span class="token punctuation">(</span><span class="token class-name">Ordered</span><span class="token punctuation">.</span>HIGHEST_PRECEDENCE <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">MybatisPluginSpringInterceptor</span> <span class="token keyword">extends</span> <span class="token class-name">MybatisPluginBaseSpringInterceptor</span> <span class="token punctuation">{</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token annotation punctuation">@Pointcut</span><span class="token punctuation">(</span><span class="token string">&quot;execution(* ${project.base.package}.service.*.*(..))&quot;</span><span class="token punctuation">)</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">pointcut</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span>
+</code></pre></div><h5 id="spring配置"><a href="#spring配置" class="header-anchor">#</a> spring配置</h5> <div class="language- extra-class"><pre class="language-text"><code>    &lt;!--除了datasource配置外，其他都与原生配置一样--&gt;
+    &lt;bean id=&quot;routeDataSource&quot; class=&quot;com.jeesuite.mybatis.datasource.MutiRouteDataSource&quot;&gt;
+       &lt;!-- 
+       如果你的数据库配置文件内容自定义了加解密规则，请自行重写ConfigReader
+       &lt;property name=&quot;configReader&quot;&gt;
+           &lt;bean class=&quot;com.jeesuite.mybatis.datasource.MyConfigReader&quot; /&gt;
+       &lt;/property&gt;
+        --&gt;
+    &lt;/bean&gt;
+
+
+    &lt;bean id=&quot;routeSqlSessionFactory&quot; class=&quot;com.jeesuite.mybatis.spring.SqlSessionFactoryBean&quot;&gt;
+      &lt;!-- 如果包含多个数据源则需要指定groupName，默认为：default --&gt;
+      &lt;property name=&quot;groupName&quot; value=&quot;default&quot; /&gt;
+    &lt;property name=&quot;configLocation&quot; value=&quot;classpath:mybatis-configuration.xml&quot; /&gt;
+    &lt;property name=&quot;mapperLocations&quot; value=&quot;classpath:mapper/*Mapper.xml&quot; /&gt;
+    &lt;property name=&quot;typeAliasesPackage&quot; value=&quot;com.jeesuite.mybatis.test.entity&quot; /&gt;
+    &lt;property name=&quot;dataSource&quot; ref=&quot;routeDataSource&quot; /&gt;
+  &lt;/bean&gt;
+
+  &lt;bean class=&quot;org.mybatis.spring.mapper.MapperScannerConfigurer&quot;&gt;
+    &lt;property name=&quot;sqlSessionFactoryBeanName&quot; value=&quot;routeSqlSessionFactory&quot; /&gt;
+    &lt;property name=&quot;basePackage&quot; value=&quot;com.jeesuite.mybatis.test.mapper&quot; /&gt;
+  &lt;/bean&gt;
+</code></pre></div><p>默认使用jeesuite-cache模块作为自动缓存支持，如果你需要使用<code>spring-data-redis</code>或者自定义，可以按如下配置</p> <div class="language- extra-class"><pre class="language-text"><code>&lt;bean id=&quot;redisTemplate&quot; class=&quot;org.springframework.data.redis.core.RedisTemplate&quot;&gt;
+    &lt;property name=&quot;connectionFactory&quot; ref=&quot;jedisConnectionFactory&quot; /&gt;
+    ....
+&lt;/bean&gt;
+
+&lt;bean id=&quot;stringRedisTemplate&quot; class=&quot;org.springframework.data.redis.core.StringRedisTemplate&quot;&gt;
+  &lt;property name=&quot;connectionFactory&quot; ref=&quot;jedisConnectionFactory&quot; /&gt;
+&lt;/bean&gt;
+
+&lt;!-- 使用spring-data-redis作为mybatis自动缓存提供者 --&gt;
+&lt;bean class=&quot;com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider&quot;&gt;
+    &lt;property name=&quot;redisTemplate&quot;  ref=&quot;redisTemplate&quot;/&gt;
+    &lt;property name=&quot;stringRedisTemplate&quot; ref=&quot;stringRedisTemplate&quot; /&gt;
+&lt;/bean&gt;
+</code></pre></div><h4 id="springboot集成"><a href="#springboot集成" class="header-anchor">#</a> springboot集成</h4> <h5 id="添加依赖-2"><a href="#添加依赖-2" class="header-anchor">#</a> 添加依赖</h5> <div class="language- extra-class"><pre class="language-text"><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.jeesuite&lt;/groupId&gt;
+    &lt;artifactId&gt;jeesuite-springboot-starter&lt;/artifactId&gt;
+    &lt;version&gt;[最新版本]&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre></div><h5 id="启动注解"><a href="#启动注解" class="header-anchor">#</a> 启动注解</h5> <div class="language- extra-class"><pre class="language-text"><code>@EnableJeesuiteMybatis
+</code></pre></div><h5 id="配置说明"><a href="#配置说明" class="header-anchor">#</a> 配置说明</h5> <div class="language- extra-class"><pre class="language-text"><code>jeesuite.mybatis.dbType=MySQL
+jeesuite.mybatis.crudDriver=mapper3
+jeesuite.mybatis.cacheEnabled=false
+jeesuite.mybatis.rwRouteEnabled=false
+jeesuite.mybatis.dbShardEnabled=false
+jeesuite.mybatis.paginationEnabled=true
+</code></pre></div><hr> <p>另外需要在自己项目加入spring-data-redis依赖</p> <h4 id="如何使用自动缓存"><a href="#如何使用自动缓存" class="header-anchor">#</a> 如何使用自动缓存</h4> <p>只需要在mapper接口增加**@com.jeesuite.mybatis.plugin.cache.annotation.Cache**标注</p> <div class="language-java extra-class"><pre class="language-java"><code><span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">UserEntityMapper</span> <span class="token keyword">extends</span> <span class="token class-name">BaseMapper</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span></span> <span class="token punctuation">{</span>
+
+    <span class="token annotation punctuation">@Cache</span>
+    <span class="token keyword">public</span> <span class="token class-name">UserEntity</span> <span class="token function">findByMobile</span><span class="token punctuation">(</span><span class="token annotation punctuation">@Param</span><span class="token punctuation">(</span><span class="token string">&quot;mobile&quot;</span><span class="token punctuation">)</span> <span class="token class-name">String</span> mobile<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token annotation punctuation">@Cache</span>
+    <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">String</span><span class="token punctuation">&gt;</span></span> <span class="token function">findByType</span><span class="token punctuation">(</span><span class="token annotation punctuation">@Param</span><span class="token punctuation">(</span><span class="token string">&quot;type&quot;</span><span class="token punctuation">)</span> <span class="token keyword">int</span> type<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>配置完成即可，查询会自动缓存、更新会自动更新。</p> <h4 id="一些其他说明"><a href="#一些其他说明" class="header-anchor">#</a> 一些其他说明</h4> <h5 id="开启了自动缓存数据库事务失败写入缓存如何处理"><a href="#开启了自动缓存数据库事务失败写入缓存如何处理" class="header-anchor">#</a> 开启了自动缓存数据库事务失败写入缓存如何处理？</h5> <ul><li>在事务失败后调用**CacheHandler.rollbackCache(),**通常在业务的拦截器统一处理
+<h5 id="自动缓存的实体如何更新"><a href="#自动缓存的实体如何更新" class="header-anchor">#</a> 自动缓存的实体如何更新？</h5></li> <li>首先查询出实体对象，UserEntity entity = mapper.get...(id);</li> <li>然后通过mapper.updateSelective(entity);</li></ul> <p>如果不全量更新会导致缓存的内容是有部分字段，因为update后会那最新的entity更新缓存。</p> <h5 id="如果手动更新或写入实体缓存"><a href="#如果手动更新或写入实体缓存" class="header-anchor">#</a> 如果手动更新或写入实体缓存？</h5> <p>提供EntityCacheHelper方法，在代码中手动写入缓存也将纳入自动缓存管理，无需担心缓存更新问题。</p> <p>/**</p> <div class="language- extra-class"><pre><code> \* 查询并缓存结果
+
+ \* @param entityClass 实体类class \(用户组装实际的缓存key\)
+
+ \* @param key 缓存的key（和entityClass一起组成真实的缓存key。&amp;lt;br&amp;gt;如entityClass=UserEntity.class,key=findlist，实际的key为：UserEntity.findlist）
+
+ \* @param expireSeconds 过期时间，单位：秒
+
+ \* @param dataCaller 缓存不存在数据加载源
+
+ \* @return
+
+ \*/
+
+public static &amp;lt;T&amp;gt; T queryTryCache\(Class&amp;lt;? extends BaseEntity&amp;gt; entityClass,String key,long expireSeconds,Callable&amp;lt;T&amp;gt; dataCaller\)
+</code></pre></div><div class="language-java extra-class"><pre class="language-java"><code><span class="token comment">//生成的缓存key为：UserEntity.findByStatus:2</span>
+<span class="token class-name">EntityCacheHelper</span><span class="token punctuation">.</span><span class="token function">queryTryCache</span><span class="token punctuation">(</span><span class="token class-name">UserEntity</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span> <span class="token string">&quot;findByStatus:2&quot;</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">Callable</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">List</span><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span><span class="token punctuation">&gt;</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span></span> <span class="token function">call</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">throws</span> <span class="token class-name">Exception</span> <span class="token punctuation">{</span>
+      <span class="token comment">//查询语句</span>
+      <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span></span> entitys <span class="token operator">=</span> mapper<span class="token punctuation">.</span><span class="token function">findByStatus</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">short</span><span class="token punctuation">)</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> entitys<span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre></div><h4 id="如何使用分页"><a href="#如何使用分页" class="header-anchor">#</a> 如何使用分页</h4> <h5 id="_1-标注方式-pageable"><a href="#_1-标注方式-pageable" class="header-anchor">#</a> 1.标注方式(<code>@Pageable</code>)</h5> <div class="language-java extra-class"><pre class="language-java"><code><span class="token comment">//mapper接口</span>
+<span class="token annotation punctuation">@Pageable</span>
+<span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span></span> <span class="token function">findByStatus</span><span class="token punctuation">(</span><span class="token keyword">short</span> status<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">//调用</span>
+<span class="token class-name">Page</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span></span> pageInfo <span class="token operator">=</span> mapper<span class="token punctuation">.</span><span class="token function">pageQuery</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">PageParams</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre></div><h5 id="_2-page方法定义方式"><a href="#_2-page方法定义方式" class="header-anchor">#</a> 2.page方法定义方式</h5> <div class="language-java extra-class"><pre class="language-java"><code><span class="token comment">//mapper接口</span>
+<span class="token annotation punctuation">@Select</span><span class="token punctuation">(</span><span class="token string">&quot;SELECT * FROM users where 1=1&quot;</span><span class="token punctuation">)</span>
+<span class="token class-name">Page</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span></span> <span class="token function">pageQuery</span><span class="token punctuation">(</span><span class="token annotation punctuation">@Param</span><span class="token punctuation">(</span><span class="token string">&quot;pageParam&quot;</span><span class="token punctuation">)</span> <span class="token class-name">PageParams</span> pageParam<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">//调用</span>
+<span class="token class-name">Page</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span></span> pageInfo <span class="token operator">=</span> <span class="token class-name">PageExecutor</span><span class="token punctuation">.</span><span class="token function">pagination</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">PageParams</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">PageDataLoader</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> <span class="token class-name">List</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserEntity</span><span class="token punctuation">&gt;</span></span> <span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+       <span class="token keyword">return</span> mapper<span class="token punctuation">.</span><span class="token function">findByStatus</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">short</span><span class="token punctuation">)</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre></div><p>@EnableJeesuiteMybatis</p> <div class="language- extra-class"><pre class="language-text"><code>jeesuite.mybatis.dbType=MySQL
+jeesuite.mybatis.crudDriver=mapper3
+jeesuite.mybatis.cacheEnabled=false
+jeesuite.mybatis.rwRouteEnabled=false
+jeesuite.mybatis.dbShardEnabled=false
+jeesuite.mybatis.paginationEnabled=true
+</code></pre></div></div> <footer class="page-edit"><!----> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">2/24/2021, 10:16:36 PM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev"><a href="/docments/jeesuite-spring.html" class="prev"><i aria-label="icon: left" class="anticon anticon-left"><svg viewBox="64 64 896 896" focusable="false" data-icon="left" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 0 0 0 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z"></path></svg></i>
+        spring增强模块
+      </a></span> <span class="next"><a href="/docments/jeesuite-cache.html">
+        缓存模块
+        <i aria-label="icon: right" class="anticon anticon-right"><svg viewBox="64 64 896 896" focusable="false" data-icon="right" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M765.7 486.8L314.9 134.7A7.97 7.97 0 0 0 302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 0 0 0-50.4z"></path></svg></i></a></span></p></div> </main> <!----></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.4d260b06.js" defer></script><script src="/assets/js/2.1cc60117.js" defer></script><script src="/assets/js/14.dd99e7ba.js" defer></script>
+  </body>
+</html>
