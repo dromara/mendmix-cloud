@@ -55,5 +55,7 @@ public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 
 	@Cache(expire=300)
 	String findWxUnionIdByUserId(@Param("userId") int userId);
+	
+	UserEntity findByWxOpenId(String openId);
 
 }

@@ -298,6 +298,10 @@ public class MybatisTest implements ApplicationContextAware{
 	@Test
 	public void test00(){
 		MybatisRuntimeContext.addDataProfileMappings("snsType", "weixin");
+		MybatisRuntimeContext.addDataProfileMappings("type", "1");
+		//
+		userMapper.findByWxOpenId("openid000");
+		//
 		PageExecutor.pagination(new PageParams(1, 10),new PageDataLoader<SnsAccounyBindingEntity>() {
 			@Override
 			public List<SnsAccounyBindingEntity> load() {
