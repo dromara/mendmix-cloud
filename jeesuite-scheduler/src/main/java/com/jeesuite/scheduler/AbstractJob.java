@@ -38,6 +38,9 @@ import com.jeesuite.spring.InstanceFactory;
 public abstract class AbstractJob implements DisposableBean{
     private static final Logger logger = LoggerFactory.getLogger("com.jeesuite.scheduler");
 
+  //默认允许多个节点时间误差
+    private static final long DEFAULT_ALLOW_DEVIATION = 1000 * 60 * 15;
+    
     protected String group;
     protected String jobName;
     protected String cronExpr;
@@ -48,8 +51,6 @@ public abstract class AbstractJob implements DisposableBean{
     private TriggerKey triggerKey;
     private long jobFireInterval = 0;//任务执行间隔（毫秒）
     
-    //默认允许多个节点时间误差
-    private static final long DEFAULT_ALLOW_DEVIATION = 1000 * 60 * 15;
     
     private boolean executeOnStarted;//启动是否立即执行
     
@@ -133,33 +134,20 @@ public abstract class AbstractJob implements DisposableBean{
 			Date nextFireTime = getTrigger().getNextFireTime();
 			JobContext.getContext().getRegistry().setStoping(jobName, nextFireTime,exception);
 			//运行日志持久化
-			doJobLogPersist(schConf, exception, nextFireTime);
+			if(JobContext.getContext().getPersistHandler() != null){
+				try {
+					JobContext.getContext().getPersistHandler().saveLog(schConf, exception);
+				} catch (Exception e2) {
+					logger.warn("JobLogPersistHandler run error",e2);
+				}
+			}
 			// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
 			cronTrigger = null;
 		}
 	}
 
-	/**
-	 * @param schConf
-	 * @param exception
-	 * @param nextFireTime
-	 */
-	private void doJobLogPersist(JobConfig schConf, Exception exception, Date nextFireTime) {
-		if(JobContext.getContext().getJobLogPersistHandler() != null){
-			try {				
-				if(exception == null){				
-					JobContext.getContext().getJobLogPersistHandler().onSucess(schConf, nextFireTime);
-				}else{
-					JobContext.getContext().getJobLogPersistHandler().onError(schConf, nextFireTime, exception);
-				}
-			} catch (Exception e) {
-				logger.warn("JobLogPersistHandler run error",e);
-			}
-		}
-	}
-
     
-    private Date getPreviousFireTime(){
+	protected Date getPreviousFireTime(){
     	return getTrigger().getPreviousFireTime() == null ? new Date() : getTrigger().getPreviousFireTime();
     }
   
@@ -281,8 +269,13 @@ public abstract class AbstractJob implements DisposableBean{
 		JobConfig jobConfg = new JobConfig(group,jobName,cronExpr);
 		
 		//从持久化配置合并
-		if(JobContext.getContext().getConfigPersistHandler() != null){
-			JobContext.getContext().getConfigPersistHandler().merge(jobConfg);
+		if(JobContext.getContext().getPersistHandler() != null){
+			JobConfig persistConfig = null;
+			try {persistConfig = JobContext.getContext().getPersistHandler().get(jobConfg.getJobName());} catch (Exception e) {}
+			if(persistConfig != null) {
+				jobConfg.setActive(persistConfig.isActive());
+				jobConfg.setCronExpr(persistConfig.getCronExpr());
+			}
 		}
     	
         JobContext.getContext().getRegistry().register(jobConfg);

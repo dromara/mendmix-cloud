@@ -77,16 +77,12 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		this.threadPoolSize = threadPoolSize;
 	}
 
-	public void setConfigPersistHandler(ConfigPersistHandler configPersistHandler) {
-		JobContext.getContext().setConfigPersistHandler(configPersistHandler);
+	public void setPersistHandler(PersistHandler persistHandler) {
+		JobContext.getContext().setPersistHandler(persistHandler);
 	}
 	
 	public void setRegistry(JobRegistry registry) {
 		JobContext.getContext().setRegistry(registry);
-	}
-	
-	public void setJobLogPersistHandler(JobLogPersistHandler jobLogPersistHandler) {
-		JobContext.getContext().setJobLogPersistHandler(jobLogPersistHandler);
 	}
 
 	@Override
@@ -162,6 +158,11 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			logger.info(">>>>>>> Job[{}][{}]-Class[{}]  initialized finish ",job.group,job.jobName,job.getClass().getName());
 		}
 		
+		//
+		if(JobContext.getContext().getPersistHandler() == null) {
+			PersistHandler persistHandler = InstanceFactory.getInstance(PersistHandler.class);
+			JobContext.getContext().setPersistHandler(persistHandler);
+		}
 		//
 		JobContext.getContext().getRegistry().onRegistered();
 	}

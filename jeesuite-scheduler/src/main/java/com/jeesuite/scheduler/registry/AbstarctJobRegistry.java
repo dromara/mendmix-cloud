@@ -81,8 +81,8 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 					
 				}
 				updateJobConfig(config);
-				if(JobContext.getContext().getConfigPersistHandler() != null){
-					JobContext.getContext().getConfigPersistHandler().persist(config);
+				if(JobContext.getContext().getPersistHandler() != null){
+					JobContext.getContext().getPersistHandler().persist(config);
 				}
 			}
 		}

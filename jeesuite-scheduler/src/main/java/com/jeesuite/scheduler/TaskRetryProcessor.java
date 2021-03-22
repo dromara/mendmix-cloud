@@ -3,7 +3,6 @@
  */
 package com.jeesuite.scheduler;
 
-import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -21,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年12月16日
  */
-public class TaskRetryProcessor implements Closeable{
+public class TaskRetryProcessor {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TaskRetryProcessor.class);
 	

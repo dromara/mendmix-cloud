@@ -34,12 +34,10 @@ public class JobContext {
 	
 	private Map<String, AbstractJob> allJobs = new HashMap<>();
 	
-	private ConfigPersistHandler configPersistHandler;
+	private PersistHandler persistHandler;
 	
 	private TaskRetryProcessor retryProcessor;
-	
-	private JobLogPersistHandler jobLogPersistHandler;
-	
+		
 	private JobRegistry registry;
 	
 	private ExecutorService syncExecutor = Executors.newFixedThreadPool(1);
@@ -69,20 +67,12 @@ public class JobContext {
 		return NodeNameHolder.getNodeId();
 	}
 	
-	public ConfigPersistHandler getConfigPersistHandler() {
-		return configPersistHandler;
+	public PersistHandler getPersistHandler() {
+		return persistHandler;
 	}
 
-	public void setConfigPersistHandler(ConfigPersistHandler configPersistHandler) {
-		this.configPersistHandler = configPersistHandler;
-	}
-
-	public JobLogPersistHandler getJobLogPersistHandler() {
-		return jobLogPersistHandler;
-	}
-
-	public void setJobLogPersistHandler(JobLogPersistHandler jobLogPersistHandler) {
-		this.jobLogPersistHandler = jobLogPersistHandler;
+	public void setPersistHandler(PersistHandler persistHandler) {
+		this.persistHandler = persistHandler;
 	}
 
 	public JobRegistry getRegistry() {
@@ -151,6 +141,9 @@ public class JobContext {
 	public void close(){
 		if(retryProcessor != null){
 			retryProcessor.close();
+		}
+		if(persistHandler != null){
+			persistHandler.close();
 		}
 		syncExecutor.shutdown();
 	}
