@@ -30,10 +30,9 @@
 	<bean class="com.jeesuite.scheduler.SchedulerFactoryBeanWrapper" >
 	    <!-- 确保每个应用groupName唯一 -->
 	    <property name="groupName" value="demo" />
-	    <!--  -->
-	    <property name="configPersistHandler">
+	    <!-- <property name="persistHandler">
 	       <bean class="com.jeesuite.test.sch.DbConfigPersistHandler" />
-	    </property>
+	    </property> -->
 	   <property name="registry" ref="jobRegistry" /> 
 	    <!-- 
 	     scanPackages 和 schedulers 必配置一个
