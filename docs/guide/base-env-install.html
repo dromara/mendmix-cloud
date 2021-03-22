@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <title>附：开发环境安装(CentOS) | jeesuite</title>
+    <meta name="description" content="">
+    <meta name="generator" content="VuePress 1.8.2">
+    <link rel="icon" href="/assets/logo.png">
+    <meta name="description" content="一站式分布式开发架构开源解决方案,快速开发平台">
+    <link rel="preload" href="/assets/css/0.styles.5fd099f9.css" as="style"><link rel="preload" href="/assets/js/app.fdf43ec5.js" as="script"><link rel="preload" href="/assets/js/2.1cc60117.js" as="script"><link rel="preload" href="/assets/js/20.231b8fcc.js" as="script"><link rel="prefetch" href="/assets/js/10.629f5c78.js"><link rel="prefetch" href="/assets/js/11.82a78bee.js"><link rel="prefetch" href="/assets/js/12.322bf195.js"><link rel="prefetch" href="/assets/js/13.310a5cd7.js"><link rel="prefetch" href="/assets/js/14.693cbeca.js"><link rel="prefetch" href="/assets/js/15.e50b5961.js"><link rel="prefetch" href="/assets/js/16.b8355a6d.js"><link rel="prefetch" href="/assets/js/17.ef6a31e5.js"><link rel="prefetch" href="/assets/js/18.29ec7f3c.js"><link rel="prefetch" href="/assets/js/19.e452bece.js"><link rel="prefetch" href="/assets/js/21.6a1b4f08.js"><link rel="prefetch" href="/assets/js/22.e727a972.js"><link rel="prefetch" href="/assets/js/23.0e966072.js"><link rel="prefetch" href="/assets/js/3.bb0738cb.js"><link rel="prefetch" href="/assets/js/4.09e00e34.js"><link rel="prefetch" href="/assets/js/5.d61c01c1.js"><link rel="prefetch" href="/assets/js/6.b0f0cbf9.js"><link rel="prefetch" href="/assets/js/7.86a8d026.js"><link rel="prefetch" href="/assets/js/8.6e267969.js"><link rel="prefetch" href="/assets/js/9.28a60a15.js">
+    <link rel="stylesheet" href="/assets/css/0.styles.5fd099f9.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="ant-row"><div class="sidebar-button"><i aria-label="icon: bars" class="anticon anticon-bars"><svg viewBox="0 0 1024 1024" focusable="false" data-icon="bars" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M912 192H328c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 284H328c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 284H328c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM104 228a56 56 0 1 0 112 0 56 56 0 1 0-112 0zm0 284a56 56 0 1 0 112 0 56 56 0 1 0-112 0zm0 284a56 56 0 1 0 112 0 56 56 0 1 0-112 0z"></path></svg></i> <span></span></div> <div class="ant-col ant-col-xs-24 ant-col-sm-24 ant-col-md-6 ant-col-lg-5 ant-col-xl-5 ant-col-xxl-4"><a href="/" class="router-link-active no-logo home-link"><!----> <span class="site-name">jeesuite</span></a> <div class="search-box mobile-search"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div></div> <div class="ant-col ant-col-xs-0 ant-col-sm-0 ant-col-md-18 ant-col-lg-19 ant-col-xl-19 ant-col-xxl-20"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><ul role="menu" id="nav" class="ant-menu ant-menu-horizontal ant-menu-root ant-menu-light"><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="display:none;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li><li role="menuitem" class="ant-menu-item"><a href="/" class="router-link-active">
+          首页
+        </a></li><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="display:none;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li><li role="menuitem" class="ant-menu-item ant-menu-item-selected"><a href="/guide/" class="router-link-active">
+          指南
+        </a></li><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="display:none;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li><li role="menuitem" class="ant-menu-item"><a href="/docments/">
+          文档
+        </a></li><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="display:none;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li><li role="menuitem" class="ant-menu-item"><a href="/course/">
+          教程
+        </a></li><li role="menuitem" class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu" style="visibility:hidden;position:absolute;"><div aria-haspopup="true" class="ant-menu-submenu-title"><span>···</span><i class="ant-menu-submenu-arrow"></i></div></li></ul> <a href="https://github.com/vakinge" target="_blank" rel="noopener noreferrer" class="repo-link"><i aria-label="icon: github" class="anticon anticon-github"><svg viewBox="64 64 896 896" focusable="false" data-icon="github" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M511.6 76.3C264.3 76.2 64 276.4 64 523.5 64 718.9 189.3 885 363.8 946c23.5 5.9 19.9-10.8 19.9-22.2v-77.5c-135.7 15.9-141.2-73.9-150.3-88.9C215 726 171.5 718 184.5 703c30.9-15.9 62.4 4 98.9 57.9 26.4 39.1 77.9 32.5 104 26 5.7-23.5 17.9-44.5 34.7-60.8-140.6-25.2-199.2-111-199.2-213 0-49.5 16.3-95 48.3-131.7-20.4-60.5 1.9-112.3 4.9-120 58.1-5.2 118.5 41.6 123.2 45.3 33-8.9 70.7-13.6 112.9-13.6 42.4 0 80.2 4.9 113.5 13.9 11.3-8.6 67.3-48.8 121.3-43.9 2.9 7.7 24.7 58.3 5.5 118 32.4 36.8 48.9 82.7 48.9 132.3 0 102.2-59 188.1-200 212.9a127.5 127.5 0 0 1 38.1 91v112.5c.8 9 0 17.9 15 17.9 177.1-59.7 304.6-227 304.6-424.1 0-247.2-200.4-447.3-447.5-447.3z"></path></svg></i></a></nav></div></div> <!----></header> <aside class="sidebar"><!----> <ul class="sidebar-links"><li><a href="/guide/" aria-current="page" title="导航" class="sidebar-link">导航</a></li><li><a href="/guide/getting-started.html" title="快速开始" class="sidebar-link">快速开始</a></li><li><a href="/guide/best-practices.html" title="最佳实践" class="sidebar-link">最佳实践</a></li><li><a href="/guide/change-log.html" title="更新日志" class="sidebar-link">更新日志</a></li><li><a href="/guide/base-env-install.html" aria-current="page" title="附：开发环境安装(CentOS)" class="active sidebar-link">附：开发环境安装(CentOS)</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/guide/base-env-install.html#安装jdk" title="安装JDK" class="sidebar-link">安装JDK</a></li><li class="sidebar-sub-header"><a href="/guide/base-env-install.html#安装mysql5-7" title="安装mysql5.7" class="sidebar-link">安装mysql5.7</a></li><li class="sidebar-sub-header"><a href="/guide/base-env-install.html#安装redis" title="安装redis" class="sidebar-link">安装redis</a></li><li class="sidebar-sub-header"><a href="/guide/base-env-install.html#安装zookeeper" title="安装zookeeper" class="sidebar-link">安装zookeeper</a></li></ul></li></ul></aside> <main class="page"> <div class="theme-antdocs-content content__default"><h2 id="安装jdk"><a href="#安装jdk" class="header-anchor">#</a> 安装JDK</h2> <div class="language- extra-class"><pre class="language-text"><code>1.下载jdk rpm包
+2.chmod +x  jdk-xxx.rpm
+3.rpm -ivh jdk-xxx.rpm
+4.配置环境变量
+vi /etc/profile
+-----------
+export JAVA_HOME=/usr/java/jdk1.8.0_121
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+export PATH=$JAVA_HOME/bin:$PATH
+-----------
+source /etc/profile
+</code></pre></div><h2 id="安装mysql5-7"><a href="#安装mysql5-7" class="header-anchor">#</a> 安装mysql5.7</h2> <div class="language- extra-class"><pre class="language-text"><code># 下载mysql源安装包
+wget https://dev.mysql.com/get/mysql57-community-release-el6-11.noarch.rpm
+# 安装mysql源
+yum localinstall mysql57-community-release-el7-8.noarch.rpm
+
+以上两步可以直接：rpm -Uvh https://dev.mysql.com/get/mysql57-community-release-el6-11.noarch.rpm
+
+
+#安装mysql-server
+yum install mysql-community-server
+</code></pre></div><p>验证安装是否成功</p> <div class="language- extra-class"><pre class="language-text"><code>mysql -V
+</code></pre></div><p>启动（第一次启动比较慢会初始化）</p> <div class="language- extra-class"><pre class="language-text"><code>service mysqld start 
+-- 如果启动失败，提示“MySQL Daemon failed to start”，可以尝试先初始化mysql，输入命令：mysqld --initialize
+</code></pre></div><p>初始化root密码</p> <div class="language-ruby extra-class"><pre class="language-ruby"><code><span class="token comment">#获取安装的临时密码</span>
+grep <span class="token string">'temporary password'</span> <span class="token operator">/</span>var<span class="token operator">/</span>log<span class="token operator">/</span>mysqld<span class="token punctuation">.</span>log
+<span class="token comment">#登录mysql</span>
+mysql <span class="token operator">-</span>uroot <span class="token operator">-</span>p
+<span class="token comment">#更新密码</span>
+<span class="token constant">ALTER</span> <span class="token constant">USER</span> <span class="token string">'root'</span>@<span class="token string">'localhost'</span> <span class="token constant">IDENTIFIED</span> <span class="token constant">BY</span> <span class="token string">'新的密码'</span><span class="token punctuation">;</span>
+</code></pre></div><p>配置</p> <div class="language- extra-class"><pre class="language-text"><code>[mysqld]
+character_set_server=utf8
+init_connect='SET NAMES utf8'
+</code></pre></div><h2 id="安装redis"><a href="#安装redis" class="header-anchor">#</a> 安装redis</h2> <div class="language- extra-class"><pre class="language-text"><code>wget http://download.redis.io/releases/redis-3.2.10.tar.gz
+tar -xzvf redis-3.2.10.tar.gz
+cd redis-3.2.10
+make
+cd src
+make install PREFIX=/usr/local/redis
+cp ../redis.conf /etc/redis.conf
+</code></pre></div><p>参考配置</p> <div class="language- extra-class"><pre class="language-text"><code>daemonize yes
+#protected-mode no
+pidfile /var/run/redis/redis.pid
+
+port 6379
+#bind 120.0.0.1
+timeout 0
+loglevel warning
+
+logfile /datas/logs/redis/redis.log
+databases 16
+
+
+save 900 1
+save 300 10
+save 60 10000
+
+rdbcompression yes
+dbfilename dump.rdb
+dir /datas/redis/
+
+requirepass 123456
+</code></pre></div><p>启动</p> <div class="language- extra-class"><pre class="language-text"><code>/usr/local/redis/bin/redis-server /etc/redis.conf
+</code></pre></div><h2 id="安装zookeeper"><a href="#安装zookeeper" class="header-anchor">#</a> 安装zookeeper</h2> <div class="language- extra-class"><pre class="language-text"><code>wget http://mirror.bit.edu.cn/apache/zookeeper/zookeeper-3.4.10/zookeeper-3.4.10.tar.gz
+tar -xzvf zookeeper-3.4.10.tar.gz
+cp zookeeper-3.4.10
+mv conf/zoo_sample.cfg conf/zookeeper.properties
+</code></pre></div><p>启动</p> <div class="language- extra-class"><pre class="language-text"><code>./bin/zkServer.sh conf/zookeeper.properties &amp;
+</code></pre></div></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev"><a href="/guide/change-log.html" class="prev"><i aria-label="icon: left" class="anticon anticon-left"><svg viewBox="64 64 896 896" focusable="false" data-icon="left" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 0 0 0 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z"></path></svg></i>
+        更新日志
+      </a></span> <!----></p></div> </main> <!----></div><div class="global-ui"></div></div>
+    <script src="/assets/js/app.fdf43ec5.js" defer></script><script src="/assets/js/2.1cc60117.js" defer></script><script src="/assets/js/20.231b8fcc.js" defer></script>
+  </body>
+</html>
