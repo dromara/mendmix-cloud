@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
@@ -18,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import com.jeesuite.common.model.Page;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
@@ -90,6 +93,10 @@ public class DataProfileHandler implements InterceptorHandler {
 	@Override
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		if(!invocation.isSelect())return null;
+		//
+		if(MybatisRuntimeContext.isTransactionalOn())return null;
+		if(MybatisRuntimeContext.isDataProfileIgnore())return null;
+		
 		final Executor executor = invocation.getExecutor();
 		final Object[] args = invocation.getArgs();
 		final MappedStatement mappedStatement = invocation.getMappedStatement();
@@ -102,6 +109,22 @@ public class DataProfileHandler implements InterceptorHandler {
 		
 		BoundSql boundSql = invocation.getBoundSql();
 		String newSql = buildDataProfileSql(mappedStatement.getId(),invocation.getSql(),dataMappings);
+		//直接返回
+		if(newSql == null) {
+			List<Object> list = new ArrayList<>(1);
+			//
+			EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(invocation.getMapperNameSpace());
+			String methodName = mappedStatement.getId().replace(invocation.getMapperNameSpace(), StringUtils.EMPTY).substring(1);
+			Class<?> returnType = entityInfo.getMapperMethod(methodName).getMethod().getReturnType();
+			
+			if(returnType == int.class || returnType == Integer.class|| returnType == long.class|| returnType == Long.class) {
+				list.add(0);
+			}else if(invocation.getPageParam() != null) {
+				list.add(new Page<Object>(invocation.getPageParam(),0,null));
+			}
+			
+			return list;
+		}
 		//如果是分页查询，直接返回重写后的sql，有分页查询处理查询逻辑
 		if(invocation.getPageParam() != null) {
 			invocation.setSql(newSql);
@@ -109,11 +132,10 @@ public class DataProfileHandler implements InterceptorHandler {
 		}
 		
 		final ResultHandler<?> resultHandler = (ResultHandler<?>) args[3];
-		BoundSql newBoundSql = new BoundSql(mappedStatement.getConfiguration(), newSql,
-				boundSql.getParameterMappings(), invocation.getParameter());
+		CacheKey cacheKey = executor.createCacheKey(mappedStatement, invocation.getParameter(), RowBounds.DEFAULT, boundSql);
+		BoundSql newBoundSql = new BoundSql(mappedStatement.getConfiguration(), newSql,boundSql.getParameterMappings(), invocation.getParameter());
 
-		List<?> resultList = executor.query(mappedStatement, invocation.getParameter(), RowBounds.DEFAULT, resultHandler, null,
-				newBoundSql);
+		List<?> resultList = executor.query(mappedStatement, invocation.getParameter(), RowBounds.DEFAULT, resultHandler, cacheKey,newBoundSql);
 
 		return resultList;
 	}
@@ -139,12 +161,18 @@ public class DataProfileHandler implements InterceptorHandler {
 		Map<String, String> columnMapping;
 		Set<String> fieldNames;
 		Expression newExpression = null;
+		String[] values;
 		if(dataProfileMappings.containsKey(table.getName())) {
 			columnMapping = dataProfileMappings.get(table.getName());
 			fieldNames = columnMapping.keySet();
 			for (String fieldName : fieldNames) {
 				if(!dataMapping.containsKey(fieldName))continue;
-				newExpression = appendDataProfileCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),dataMapping.get(fieldName));
+				values = dataMapping.get(fieldName);
+				//如果某个匹配字段为空直接返回null，不在查询数据库
+				if(values == null || values.length == 0) {
+					return null;
+				}
+				newExpression = appendDataProfileCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),values);
 				selectBody.setWhere(newExpression);
 				//TODO 主表已经处理的条件，join表不在处理
 			}
@@ -160,8 +188,16 @@ public class DataProfileHandler implements InterceptorHandler {
 					fieldNames = columnMapping.keySet();
 					for (String fieldName : fieldNames) {
 						if(!dataMapping.containsKey(fieldName))continue;
-						newExpression = appendDataProfileCondition(table, join.getOnExpression(), columnMapping.get(fieldName),dataMapping.get(fieldName));
-						join.setOnExpression(newExpression);
+						values = dataMapping.get(fieldName);
+						//如果某个匹配字段为空直接返回null，不在查询数据库
+						if(values == null || values.length == 0) {
+							return null;
+						}
+						//左右连接加在ON 无法过滤
+						//newExpression = appendDataProfileCondition(table, join.getOnExpression(), columnMapping.get(fieldName),dataMapping.get(fieldName));
+						//join.setOnExpression(newExpression);
+						newExpression = appendDataProfileCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),values);
+						selectBody.setWhere(newExpression);
 					}
 				}
 			}

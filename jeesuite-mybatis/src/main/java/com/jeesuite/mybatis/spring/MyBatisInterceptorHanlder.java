@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jeesuite.mybatis.MybatisRuntimeContext;
+import com.jeesuite.mybatis.plugin.dataprofile.annotation.DataProfileIgnore;
 import com.jeesuite.mybatis.plugin.rwseparate.UseMaster;
 import com.jeesuite.spring.InterceptorHanlder;
 
@@ -30,6 +31,10 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 			if(method.isAnnotationPresent(UseMaster.class)){				
 				MybatisRuntimeContext.forceMaster();
 			}
+			
+			if(method.isAnnotationPresent(DataProfileIgnore.class)){				
+				MybatisRuntimeContext.dataProfileIgnore();
+			}
 		}
 	}
 
@@ -38,7 +43,7 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 
 	@Override
 	public void destory() {
-		MybatisRuntimeContext.unset();
+		MybatisRuntimeContext.unsetInner();
 	}
 
 }

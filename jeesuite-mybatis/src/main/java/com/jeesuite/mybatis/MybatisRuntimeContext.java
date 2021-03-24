@@ -26,7 +26,7 @@ public class MybatisRuntimeContext {
 	private static final String CONTEXT_TRANS_ON_KEY = "_ctx_trans_on_";
 	private static final String CONTEXT_DATASOURCE_KEY = "_ctx_ds_";
 	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
-	private static final String CONTEXT_PLUGIN_DATA_KEY = "_ctx_plugin_data_";
+	private static final String CONTEXT_DATA_PROFILE_OFF_KEY = "_ctx_dataprofile_off_";
 	
 	public static void setCurrentUserId(Serializable userId){
 		ThreadLocalContext.set(CONTEXT_USER_ID_KEY, userId);
@@ -51,6 +51,14 @@ public class MybatisRuntimeContext {
 	
 	public static void setContextParam(String name,String value){
 		ThreadLocalContext.set(name, value);
+	}
+	
+	public static void dataProfileIgnore(){
+		ThreadLocalContext.set(CONTEXT_DATA_PROFILE_OFF_KEY, String.valueOf(true));
+	}
+	
+	public static boolean isDataProfileIgnore(){
+		return ThreadLocalContext.exists(CONTEXT_DATA_PROFILE_OFF_KEY);
 	}
 	
 	public static void setTransactionalMode(boolean on){
@@ -129,7 +137,10 @@ public class MybatisRuntimeContext {
 		return ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
 	}
 
-	public static void unset(){
+	/**
+	 * 清理每一次数据库操作的上下文
+	 */
+	public static void unsetInner(){
 		ThreadLocalContext.remove(CONTEXT_TRANS_ON_KEY,CONTEXT_DATASOURCE_KEY);
 	}
 	

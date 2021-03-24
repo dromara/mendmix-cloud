@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jeesuite</groupId>
 	<artifactId>jeesuite-libs</artifactId>
-	<version>1.3.7-SNAPSHOT</version>
+	<version>1.3.7</version>
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
 	<name>jeesuite-libs</name>
@@ -44,28 +44,29 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<output.encoding>utf-8</output.encoding>
-		<spring.version>5.0.5.RELEASE</spring.version>
-		<spring-boot.version>2.0.1.RELEASE</spring-boot.version>
-		<kafka.version>0.10.2.0</kafka.version>
+		<spring.version>5.2.9.RELEASE</spring.version>
+		<spring-boot.version>2.3.4.RELEASE</spring-boot.version>
+		<kafka.version>2.3.1</kafka.version>
 		<zkclient.version>0.10</zkclient.version>
 		<zookeeper.version>3.4.14</zookeeper.version>
 		<jedis.version>2.9.0</jedis.version>
 		<mybatis.version>3.5.6</mybatis.version>
 		<mybatis-spring.version>2.0.5</mybatis-spring.version>
 		<druid.version>1.2.5</druid.version>
-		<junit.version>4.12</junit.version>
+		<guava.version>30.1.1-jre</guava.version>
+		<junit.version>[4.13.1,)</junit.version>
 	</properties>
 
 	<modules>
 		<module>jeesuite-common</module>
-		<module>jeesuite-kafka</module>
+		<!-- <module>jeesuite-kafka</module> -->
 		<module>jeesuite-spring</module>
 		<module>jeesuite-cache</module>
 		<module>jeesuite-scheduler</module>
 		<module>jeesuite-mybatis</module>
-		<module>jeesuite-rest</module>
+		<!-- <module>jeesuite-rest</module> -->
 		<module>jeesuite-common2</module>
-		<module>jeesuite-filesystem</module>
+		<!-- <module>jeesuite-filesystem</module> -->
 		<module>jeesuite-springboot-starter</module>
 		<module>jeesuite-springweb</module>
 		<!-- <module>jeesuite-search</module> -->
@@ -99,7 +100,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -211,9 +212,9 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<configuration>
-					<!-- <additionalJOptions>
+					<additionalJOptions>
 						<additionalJOption>-Xdoclint:none</additionalJOption>
-					</additionalJOptions> -->
+					</additionalJOptions> 
 					<!-- <javadocExecutable>/Library/Java/JavaVirtualMachines/jdk1.8.0_121.jdk/Contents/Home/bin/javadoc</javadocExecutable> -->
 				</configuration>
 			</plugin>

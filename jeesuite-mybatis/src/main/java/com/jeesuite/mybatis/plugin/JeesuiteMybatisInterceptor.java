@@ -97,13 +97,16 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 		try {
 			for (InterceptorHandler handler : interceptorHandlers) {
 				result = handler.onInterceptor(invocationVal);
-				if(result != null)break;
+				if(result != null) {
+					break;
+				}
 			}
 			
 			if(result == null){
 				result = invocation.proceed();
 				proceed = true;
 			}
+
 			return result;
 		} finally {
 			for (InterceptorHandler handler : interceptorHandlers) {

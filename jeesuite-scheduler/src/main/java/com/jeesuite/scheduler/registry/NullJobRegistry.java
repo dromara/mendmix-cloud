@@ -4,6 +4,7 @@
 package com.jeesuite.scheduler.registry;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -43,6 +44,8 @@ public class NullJobRegistry extends AbstarctJobRegistry {
 		JobConfig config = schedulerConfgs.get(jobName);
 		config.setRunning(false);
 		config.setNextFireTime(nextFireTime);
+		config.setModifyTime(Calendar.getInstance().getTimeInMillis());
+		config.setErrorMsg(e == null ? null : e.getMessage());
 	}
 
 	@Override
