@@ -1,11 +1,10 @@
-#### 集成实践项目：[https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
-
- **由于现在很少用QQ，有问题请加作者微信** 
-
-![作者微信](https://images.gitee.com/uploads/images/2020/0806/200339_a26c1597_12388.jpeg "wechat.jpeg")
-
+## 资源索引
+ - [快速开始](http://docs.jeesuite.com/guide/getting-started.html)
+ - [文档列表](http://docs.jeesuite.com/docments/)
+ - [集成项目](https://gitee.com/vakinge/oneplatform)，[github](https://github.com/vakinge/oneplatform)
+ 
 ## 简介
-**jeesuite-libs**分布式架构开发套件。包括缓存(一二级缓存、自动缓存管理)、队列、分布式定时任务、文件服务(七牛、阿里云OSS、fastDFS)、日志、搜索、代码生成、API网关、配置中心、统一认证平台、分布式锁、分布式事务、集成dubbo、spring boot支持、统一监控等。所有release版都经过严格测试并在生产环境稳定运行4年+。
+Jeesuite寓意为java企业级应用开发套件，定位是一站式分布式开发架构开源解决方案及快速开发平台。Jeesuite-libs为整体开发架构提供底层库支持。提供了数据库、缓存、消息中间件、分布式定时任务、SSO、文件服务、云存储等基础模块以及集成Dubbo、Spring Cloud底层支持。全部基于主流框架只做增强不做任何底层定制修改，每个组件可以独立使用。
 
 ## 为什么有jeesuite-libs
  - 一些框架使用起来比较复杂(譬如各种配置，各种资源管理，容错等)，针对这种情况我们做了大量二次封装旨在简化使用难度。
@@ -13,13 +12,6 @@
  
 ## 重要的事情说三遍
 本项目底层框架库，直接跑不起来！所以不要问我怎么直接跑起来~所以不要问我怎么直接跑起来~所以不要问我怎么直接跑起来~。要运行可以关注集成演示项目：[https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
-
-##官网
-[http://www.jeesuite.com/](http://www.jeesuite.com/) 
-
-## 文档
-[http://www.jeesuite.com/docs](http://www.jeesuite.com/docs/index.html) 
-
 
 ## 愿景
 服务中小企业、减低架构成本、整体方案开箱即用。
@@ -37,84 +29,9 @@
 
 ## 关联项目
  - 配置中心
-  - [http://git.oschina.net/vakinge/jeesuite-config](http://git.oschina.net/vakinge/jeesuite-config)
+  - [https://gitee.com/vakinge/jeesuite-config](https://gitee.com/vakinge/jeesuite-config)
   - [https://github.com/vakinge/jeesuite-config](https://github.com/vakinge/jeesuite-config)
  - 应用开发平台
   - [https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
   - [https://github.com/vakinge/oneplatform](https://github.com/vakinge/oneplatform)
-
----
-
-## 功能列表
-#### cache模块
-- 基于配置支持单机、哨兵、分片、集群模式自由切换
-- 更加简单的操作API封装
-- 一级缓存支持（ehcache & guava cache）、分布式场景多节点自动通知
-- 多组缓存配置同时支持 （一个应用多个redis server）
-- 分布式模式开关
-
-#### kafka模块 
-- 基于spring封装简化配置和调用方式
-- 基于配置新旧两版Consumer API兼容支持
-- 支持二阶段处理，即：fetch线程同步处理和process线程异步处理
-- 消费成功业务处理失败自动重试或自定义重试支持
-- process线程池采用`LinkedTransferQueue`，支持线程回收和队列大小限制，确保系统崩溃等不会有数据丢失。
-- 支持特殊场景发送有状态的消息（如：同一个用户的消息全部由某一个消费节点处理）
-- producer、consumer端监控数据采集，由（[jeesuite-admin](http://git.oschina.net/vakinge/jeesuite-admin)）输出
-- 兼容遗留kafka系统、支持发送和接收无封装的消息
-
-
-#### mybatis模块
-- 代码生成、自动CRUD、可无缝对接mybaits增强框架Mapper
-- 基于properties配置多数据源支持，无需修改XML
-- 读写分离，事务内操作强制读主库
-- 基于注解自动缓存管理（所有查询方法结果自动缓存、自动更新，事务回滚缓存同步回滚机制）
-- 自动缓存实现基于`jeesuite-cache`和`spring-data-redis`
-- 分页组件
-- 敏感操作拦截
-
-#### scheduler模块
-- 支持分布式保证单节点执行（按节点平均分配job）
-- 支持failvoer，自动切换故障节点
-- 支持多节点下并行计算
-- 支持无注册中心单机模式
-- 支持自定义重试策略
-- 支持配置持久化（启动加载、变更保存）
-- 支持控制台（[jeesuite-admin](http://git.oschina.net/vakinge/jeesuite-admin)）任务监控、开停、动态修改调度时间策略、手动触发执行
-
-#### jeesuite-security
-- 配置简单(初始化一个类即可)
-- 满足认证授权基本需求
-- 更加贴近日常使用业务场景
-- 可选本地session和共享session
-- 可选是否支持多端同时登录
-- dubbo、springboot跨服务登录状态传递支持
- 
-#### rest模块
-- 自动resonse封装（xml、json）
-- i18n
-- request、response日志记录
-- 自动友好错误
-- 校验框架
-
-#### filesystem模块
-- 七牛文件服务支持
-- 阿里云OSS文件服务支持
-- fastDFS文件系统支持
-- 支持spring集成
-- 配置式切换服务提供商
-
-
-#### common模块
-- 一些常用工具类
-
-#### common2模块（需要依赖一些组件或者基础设置）
-- 分布式锁
-- 分布式全局ID生成器
-- excel导入导出
-
-#### jeesuite-springboot-starter模块
-- springboot集成支持
-
-
 
