@@ -42,6 +42,13 @@ public class RetryAsyncTaskExecutor {
 		return defaultExecutor;
 	}
 	
+	/**
+	 * 
+	 * @param taskName 执行器名
+	 * @param threads 执行最大线程数（空闲会回收）
+	 * @param queueSize 任务队列
+	 * @param maxRetry 最大重试次数
+	 */
 	public RetryAsyncTaskExecutor(String taskName, int threads, int queueSize,int maxRetry) {
 		this.maxRetry = maxRetry;
 		executor = new StandardThreadExecutor(1, threads, 300, TimeUnit.SECONDS, queueSize, new StandardThreadFactory(taskName + "-asyncTask"));

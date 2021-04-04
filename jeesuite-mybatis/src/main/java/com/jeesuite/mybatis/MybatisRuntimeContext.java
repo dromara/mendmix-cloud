@@ -140,8 +140,8 @@ public class MybatisRuntimeContext {
 	/**
 	 * 清理每一次数据库操作的上下文
 	 */
-	public static void unsetInner(){
-		ThreadLocalContext.remove(CONTEXT_TRANS_ON_KEY,CONTEXT_DATASOURCE_KEY);
+	public static void unsetEveryTime(){
+		ThreadLocalContext.remove(CONTEXT_DATASOURCE_KEY);
 	}
 	
 }

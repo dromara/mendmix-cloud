@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.jeesuite.common.async;
 
 import java.util.concurrent.CancellationException;

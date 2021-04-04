@@ -131,9 +131,9 @@ public class KryoPoolSerializer implements Serializer{
 			throw new RuntimeException("obj can not be null");
 		try {
 			kryoHolder = KryoPoolImpl.getInstance().get();
-			kryoHolder.output.clear(); // clear Output -->每次调用的时候 重置
+			kryoHolder.output.reset();//重置
 			kryoHolder.kryo.writeClassAndObject(kryoHolder.output, obj);
-			return kryoHolder.output.toBytes();// 无法避免拷贝 ~~~
+			return kryoHolder.output.toBytes();
 		} catch (RuntimeException e) {
 			throw new RuntimeException(e);
 		} finally {

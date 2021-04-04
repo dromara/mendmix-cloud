@@ -23,18 +23,17 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 
 	@Override
 	public void preHandler(Method method, Object[] args) {
-		boolean first = MybatisRuntimeContext.isEmpty();
-		if(first){				
-			if(method.isAnnotationPresent(Transactional.class)){
-				MybatisRuntimeContext.setTransactionalMode(true);
-			}
-			if(method.isAnnotationPresent(UseMaster.class)){				
-				MybatisRuntimeContext.forceMaster();
-			}
-			
-			if(method.isAnnotationPresent(DataProfileIgnore.class)){				
-				MybatisRuntimeContext.dataProfileIgnore();
-			}
+		//多个方法层级调用 ，以最外层方法定义为准
+		if(!MybatisRuntimeContext.isTransactionalOn() && method.isAnnotationPresent(Transactional.class)) {
+			MybatisRuntimeContext.setTransactionalMode(true);
+		}
+		
+		if(!MybatisRuntimeContext.isForceUseMaster() && method.isAnnotationPresent(UseMaster.class)){				
+			MybatisRuntimeContext.forceMaster();
+		}
+		
+		if(!MybatisRuntimeContext.isDataProfileIgnore() && method.isAnnotationPresent(DataProfileIgnore.class)){				
+			MybatisRuntimeContext.dataProfileIgnore();
 		}
 	}
 
@@ -43,7 +42,7 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 
 	@Override
 	public void destory() {
-		MybatisRuntimeContext.unsetInner();
+		MybatisRuntimeContext.unsetEveryTime();
 	}
 
 }
