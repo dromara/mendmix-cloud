@@ -1,4 +1,4 @@
-package com.jeesuite.springweb.interceptor;
+package com.jeesuite.spring.interceptor;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -13,13 +13,13 @@ import com.jeesuite.spring.InterceptorHanlder;
 /**
  * 
  * <br>
- * Class Name   : GlobalContextBaseInterceptor
+ * Class Name   : JeesuiteSpringBaseInterceptor
  *
  * @author jiangwei
  * @version 1.0.0
  * @date 2018年10月31日
  */
-public abstract class GlobalContextBaseInterceptor {
+public abstract class JeesuiteSpringBaseInterceptor {
 	
 	private static List<InterceptorHanlder> handlers  =  new ArrayList<>();
 	static {
