@@ -35,3 +35,8 @@ Jeesuite寓意为java企业级应用开发套件，定位是一站式分布式�
   - [https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
   - [https://github.com/vakinge/oneplatform](https://github.com/vakinge/oneplatform)
 
+
+## 交流微信群
+![微信交流群](https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_group_qrcode.jpg)
+## 作者微信
+![作者微信](https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_qrcode.jpeg)
