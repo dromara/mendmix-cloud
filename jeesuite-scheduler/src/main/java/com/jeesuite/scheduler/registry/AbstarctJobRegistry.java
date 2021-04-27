@@ -39,7 +39,7 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 	
 	protected Map<String, JobConfig> schedulerConfgs = new ConcurrentHashMap<>();
 
-	protected void execCommond(MonitorCommond cmd){
+	public void execCommond(MonitorCommond cmd){
 		if(cmd == null)return;
 		JobConfig config = schedulerConfgs.get(cmd.getJobName());
 		String key = cmd.getJobGroup() + ":" + cmd.getJobName();
