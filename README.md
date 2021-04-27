@@ -27,16 +27,6 @@ Jeesuite寓意为java企业级应用开发套件，定位是一站式分布式�
 * [sonatype](https://oss.sonatype.org/content/repositories/releases/com/jeesuite/) 
 * [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
 
-## 关联项目
- - 配置中心
-  - [https://gitee.com/vakinge/jeesuite-config](https://gitee.com/vakinge/jeesuite-config)
-  - [https://github.com/vakinge/jeesuite-config](https://github.com/vakinge/jeesuite-config)
- - 应用开发平台
-  - [https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
-  - [https://github.com/vakinge/oneplatform](https://github.com/vakinge/oneplatform)
-
-
-## 交流微信群
-![微信交流群](https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_group_qrcode.jpg)
-## 作者微信
-![作者微信](https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_qrcode.jpeg)
+## 微信交流群(如果群二维码过期，请先加作者微信[图2])
+<img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_group_qrcode.jpg" width="180" height="180" />
+<img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_qrcode.jpeg" width="180" height="180" />

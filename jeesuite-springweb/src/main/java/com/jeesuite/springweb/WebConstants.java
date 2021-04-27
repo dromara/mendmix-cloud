@@ -11,6 +11,7 @@ public class WebConstants {
 	public static final String HEADER_FORWARDED_BASE_URL = "x-forwarded-base-url";
 	public static final String HEADER_FORWARDED_PROTO = "x-forwarded-proto";
 	public static final String HEADER_FORWARDED_ORIGN_PROTO = "x-forwarded-orign-proto";
+	public static final String HEADER_FORWARDED_GATEWAY = "x-forwarded-gateway";
 	public static final String HEADER_FORWARDED_HOST = "x-forwarded-host";
 	public static final String HEADER_FORWARDED_PORT = "x-forwarded-port";
 	public static final String HEADER_FORWARDED_PRIFIX = "x-forwarded-prefix";
@@ -22,6 +23,7 @@ public class WebConstants {
     public static final String HEADER_INVOKER_APP_ID = "x-invoker-appid";
     public static final String HEADER_REQUEST_ID = "x-request-id";
 	public static final String HEADER_PLATFORM_ID = "x-platform-id";
-	
 	public static final String HEADER_RESP_KEEP = "x-resp-keep";
+	
+	public static final String PARAM_RETURN_URL = "returnUrl";
 }

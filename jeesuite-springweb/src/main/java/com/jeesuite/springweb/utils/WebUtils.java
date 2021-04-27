@@ -13,11 +13,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 
 import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.WebConstants;
@@ -28,6 +28,8 @@ public class WebUtils {
 	private static final String XML_HTTP_REQUEST = "XMLHttpRequest";
 	private static final String MULTIPART = "multipart/";
 	private static List<String> doubleDomainSuffixs = Arrays.asList(".com.cn",".org.cn",".net.cn");
+	//内网解析域名
+	private static List<String> internalDomains  = ResourceUtils.getList("internal.dns.domains");
 	
 	
 	public static boolean isAjax(HttpServletRequest request){
@@ -217,23 +219,37 @@ public class WebUtils {
 	 */
 	public static boolean isInternalRequest(HttpServletRequest request){
 		//
-		if(Boolean.parseBoolean(request.getHeader(WebConstants.HEADER_INTERNAL_REQUEST))){
+		String headerValue = request.getHeader(WebConstants.HEADER_INTERNAL_REQUEST);
+		if(StringUtils.isNotBlank(headerValue)){
+			try {
+				TokenGenerator.validate(headerValue, true);
+			} catch (Exception e) {
+				headerValue = null;
+			}
+		}
+		
+		if(headerValue != null && Boolean.parseBoolean(headerValue)){
 			return true;
 		}
 
-		boolean isInner = IpUtils.isInnerIp(request.getServerName());
-		String forwardHost = request.getHeader(WebConstants.HEADER_FORWARDED_HOST);
-		//来源于网关
-		if(StringUtils.isNotBlank(forwardHost)){
-			isInner = IpUtils.isInnerIp(StringUtils.split(forwardHost, ":")[0]);
-		}else{			
-			if(!isInner){
-				String referer = request.getHeader(HttpHeaders.REFERER);
-				if(StringUtils.isBlank(referer)){					
-					isInner = IpUtils.isInnerIp(IpUtils.getinvokerIpAddr(request));
-				}
+		//从网关转发
+		headerValue = request.getHeader(WebConstants.HEADER_FORWARDED_GATEWAY);
+		if(StringUtils.isNotBlank(headerValue)){
+			try {
+				TokenGenerator.validate(headerValue, true);
+			} catch (Exception e) {
+				headerValue = null;
 			}
 		}
+		if(StringUtils.isNotBlank(headerValue)){
+			return false;
+		}
+		
+		boolean isInner = IpUtils.isInnerIp(request.getServerName());
+		if(!isInner && !internalDomains.isEmpty()){
+			isInner = internalDomains.stream().anyMatch(domain -> request.getServerName().endsWith(domain));
+		}
+		
 		return isInner;
 	}
 }

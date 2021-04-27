@@ -54,7 +54,10 @@
 		<mybatis-spring.version>2.0.5</mybatis-spring.version>
 		<druid.version>1.2.5</druid.version>
 		<guava.version>30.1.1-jre</guava.version>
+		<mysql.version>8.0.16</mysql.version>
 		<junit.version>[4.13.1,)</junit.version>
+		<fastjson.version>1.2.76</fastjson.version>
+		<okhttp3.version>4.9.1</okhttp3.version>
 	</properties>
 
 	<modules>
@@ -112,6 +115,43 @@
 		</dependency>
 
 	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>mysql</groupId>
+				<artifactId>mysql-connector-java</artifactId>
+				<version>${mysql.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.alibaba</groupId>
+				<artifactId>druid</artifactId>
+				<version>${druid.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.alibaba</groupId>
+				<artifactId>fastjson</artifactId>
+				<version>${fastjson.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.squareup.okhttp3</groupId>
+				<artifactId>okhttp</artifactId>
+				<version>${okhttp3.version}</version>
+			</dependency>
+
+
+			<dependency>
+				<groupId>javax.servlet</groupId>
+				<artifactId>javax.servlet-api</artifactId>
+				<version>4.0.1</version>
+				<scope>provided</scope>
+			</dependency>
+
+		</dependencies>
+	</dependencyManagement>
 
 	<profiles>
 		<profile>
@@ -214,7 +254,7 @@
 				<configuration>
 					<additionalJOptions>
 						<additionalJOption>-Xdoclint:none</additionalJOption>
-					</additionalJOptions> 
+					</additionalJOptions>
 					<!-- <javadocExecutable>/Library/Java/JavaVirtualMachines/jdk1.8.0_121.jdk/Contents/Home/bin/javadoc</javadocExecutable> -->
 				</configuration>
 			</plugin>
@@ -225,7 +265,7 @@
 		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
 		<snapshotRepository>
 			<id>snapshots</id>
-			<url>http://nexus.z.com/nexus/content/repositories/snapshots</url> 
+			<url>http://nexus.z.com/nexus/content/repositories/snapshots</url>
 		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>
