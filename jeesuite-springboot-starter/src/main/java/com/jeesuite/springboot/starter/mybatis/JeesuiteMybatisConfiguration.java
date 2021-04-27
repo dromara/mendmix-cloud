@@ -14,13 +14,13 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternUtils;
 
 import com.jeesuite.mybatis.MybatisConfigs;
-import com.jeesuite.mybatis.datasource.MutiRouteDataSource;
+import com.jeesuite.mybatis.datasource.MultiRouteDataSource;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.spring.JeesuiteMybatisRegistry;
 
 @Configuration
 @EnableConfigurationProperties(MybatisPluginProperties.class)
-@ConditionalOnClass(MutiRouteDataSource.class)
+@ConditionalOnClass(MultiRouteDataSource.class)
 @AutoConfigureAfter(MybatisAutoConfiguration.class)
 public class JeesuiteMybatisConfiguration implements InitializingBean {
 

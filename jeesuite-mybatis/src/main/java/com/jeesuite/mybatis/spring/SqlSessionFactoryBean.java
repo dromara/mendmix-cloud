@@ -46,7 +46,7 @@ public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryB
 	}
 
 	@Override
-	public void setMapperLocations(Resource[] mapperLocations) {
+	public void setMapperLocations(Resource... mapperLocations) {
 		super.setMapperLocations(mapperLocations);
 		this.mapperLocations = mapperLocations;
 	}

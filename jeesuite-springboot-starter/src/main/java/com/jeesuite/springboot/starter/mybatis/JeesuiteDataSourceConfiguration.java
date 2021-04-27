@@ -8,16 +8,16 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.jeesuite.mybatis.datasource.MutiRouteDataSource;
+import com.jeesuite.mybatis.datasource.MultiRouteDataSource;
 
 
 @Configuration
-@ConditionalOnClass(MutiRouteDataSource.class)
+@ConditionalOnClass(MultiRouteDataSource.class)
 @AutoConfigureBefore(DataSourceAutoConfiguration.class)
 public class JeesuiteDataSourceConfiguration {
 
 	@Bean("dataSource")
     public DataSource dataSourceBean(){
-    	return new MutiRouteDataSource();
+    	return new MultiRouteDataSource();
     }
 }

@@ -46,9 +46,9 @@ import com.jeesuite.spring.SpringInstanceProvider;
  * @date 2015年11月18日
  * @Copyright (c) 2015, jwww
  */
-public class MutiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean{  
+public class MultiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean{  
 
-	private static final Logger logger = LoggerFactory.getLogger(MutiRouteDataSource.class);
+	private static final Logger logger = LoggerFactory.getLogger(MultiRouteDataSource.class);
 	
 	private static final String MASTER_KEY = "master";
 	

@@ -300,14 +300,11 @@ public class MybatisTest implements ApplicationContextAware{
 		MybatisRuntimeContext.addDataProfileMappings("snsType", "weixin");
 		MybatisRuntimeContext.addDataProfileMappings("type", "1");
 		//
-		userMapper.findByWxOpenId("openid000");
-		//
-		PageExecutor.pagination(new PageParams(1, 10),new PageDataLoader<SnsAccounyBindingEntity>() {
-			@Override
-			public List<SnsAccounyBindingEntity> load() {
-				return snsAccounyBindingMapper.findByUnionId("7945bd83237335e5376ff44d62e4f0ae");
-			}
-		});
+		UserEntity user = new UserEntity();
+		user.setMobile("13800138000");
+		//userMapper.queryByExample(user);
+		
+		userMapper.pageQuery(new PageParams(1, 5), new HashMap<>());
 	}
 	
 	@Test

@@ -1,12 +1,16 @@
 package com.jeesuite.mybatis.plugin.dataprofile.annotation;
 
-import static java.lang.annotation.ElementType.METHOD;
-
 import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
 @Documented
-@Target(METHOD)
 public @interface DataProfileIgnore {
 
 }

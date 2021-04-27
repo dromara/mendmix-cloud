@@ -1,7 +1,7 @@
 package com.jeesuite.mybatis.plugin.dataprofile;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,16 +18,18 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ConfigurableApplicationContext;
 
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.parser.EntityInfo;
+import com.jeesuite.mybatis.parser.EntityInfo.MapperMethod;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.jeesuite.mybatis.plugin.dataprofile.annotation.DataProfileIgnore;
+import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -58,34 +60,59 @@ public class DataProfileHandler implements InterceptorHandler {
 	public static final String NAME = "dataProfile";
 	
 	private Set<String> includeMapperIds = new HashSet<>();
-	private List<String> excludeMapperIds;
+	private List<String> excludeMapperIds = new ArrayList<>();
 	private Map<String, Map<String,String>> dataProfileMappings = new HashMap<>();
+	private boolean pageScope;
 	
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
-		
+
 		Properties properties = ResourceUtils.getAllProperties("jeesuite.mybatis.dataProfile.mappings");
 		properties.forEach( (k,v) -> {
 			String tableName = k.toString().substring(k.toString().indexOf("[") + 1).replace("]", "").trim();
 			buildTableDataProfileMapping(tableName, v.toString());
 		} );
 		
-        //
-		Set<String> tableNames = dataProfileMappings.keySet();
-		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
-		for (EntityInfo entityInfo : entityInfos) {
-			entityInfo.getMapperSqls().forEach( (k,v) -> {
-				for (String tableName : tableNames) {
-					if(v.contains(tableName)) {
-						//entityInfo.getMapperMethod(k)
-						includeMapperIds.add(k);
-					}
-				}
-			} );
+		if(dataProfileMappings.isEmpty()) {
+			logger.warn("[jeesuite.mybatis.dataProfile.mappings] NOT FOUND");
+			return;
 		}
 		
-		String[] excludeMapperIdArray = org.springframework.util.StringUtils.tokenizeToStringArray(ResourceUtils.getProperty("jeesuite.mybatis.dataProfile.excludeMapperIds",""), ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-		excludeMapperIds = Arrays.asList(excludeMapperIdArray);
+		pageScope = ResourceUtils.getBoolean("jeesuite.mybatis.dataProfile.pageScope");
+		
+		Set<String> tableNames = dataProfileMappings.keySet();
+		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
+		
+		includeMapperIds = new HashSet<>(ResourceUtils.getList("jeesuite.mybatis.dataProfile.includeMapperIds"));
+		//未指定就解析sql
+		if(includeMapperIds.isEmpty()) {
+			for (EntityInfo entityInfo : entityInfos) {
+				
+				entityInfo.getMapperSqls().forEach( (k,v) -> {
+					for (String tableName : tableNames) {
+						if(v.contains(tableName)) {
+							includeMapperIds.add(k);
+						}
+					}
+				} );
+			}
+		}
+		//
+		Collection<MapperMethod> mapperMethods;
+		for (EntityInfo entityInfo : entityInfos) {
+			mapperMethods = entityInfo.getMapperMethods().values();
+			for (MapperMethod mapperMethod : mapperMethods) {
+				if(mapperMethod.getMethod().isAnnotationPresent(DataProfileIgnore.class)){
+					excludeMapperIds.add(mapperMethod.getFullName());
+				}
+			}
+			
+		}
+		
+		List<String> list = ResourceUtils.getList("jeesuite.mybatis.dataProfile.excludeMapperIds");
+		if(!list.isEmpty()) {
+			excludeMapperIds.addAll(list);
+		}
 				
 		logger.info("dataProfileMappings >> {}",dataProfileMappings);
 	}
@@ -94,12 +121,14 @@ public class DataProfileHandler implements InterceptorHandler {
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		if(!invocation.isSelect())return null;
 		//
+		final MappedStatement mappedStatement = invocation.getMappedStatement();
+		
 		if(MybatisRuntimeContext.isTransactionalOn())return null;
 		if(MybatisRuntimeContext.isDataProfileIgnore())return null;
 		
-		final Executor executor = invocation.getExecutor();
-		final Object[] args = invocation.getArgs();
-		final MappedStatement mappedStatement = invocation.getMappedStatement();
+		boolean isPageQuery = invocation.getPageParam() != null || PaginationHandler.pageMappedStatements.containsKey(mappedStatement.getId());
+		if(pageScope && !isPageQuery) return null;
+		
 		
 		if(!includeMapperIds.contains(mappedStatement.getId()))return null;
 		if(excludeMapperIds.contains(mappedStatement.getId()))return null;
@@ -107,6 +136,8 @@ public class DataProfileHandler implements InterceptorHandler {
 		Map<String, String[]> dataMappings = MybatisRuntimeContext.getDataProfileMappings();
 		if(dataMappings == null)return null;
 		
+		final Executor executor = invocation.getExecutor();
+		final Object[] args = invocation.getArgs();
 		BoundSql boundSql = invocation.getBoundSql();
 		String newSql = buildDataProfileSql(mappedStatement.getId(),invocation.getSql(),dataMappings);
 		//直接返回
@@ -125,15 +156,20 @@ public class DataProfileHandler implements InterceptorHandler {
 			
 			return list;
 		}
+		//
+//		if(invocation.getParameter() instanceof UserContextQueryParam) {
+//			((UserContextQueryParam)invocation.getParameter()).setDataProfileValues(dataMappings);
+//		}
 		//如果是分页查询，直接返回重写后的sql，有分页查询处理查询逻辑
-		if(invocation.getPageParam() != null) {
+		if(isPageQuery) {
 			invocation.setSql(newSql);
 			return null;
 		}
 		
 		final ResultHandler<?> resultHandler = (ResultHandler<?>) args[3];
-		CacheKey cacheKey = executor.createCacheKey(mappedStatement, invocation.getParameter(), RowBounds.DEFAULT, boundSql);
 		BoundSql newBoundSql = new BoundSql(mappedStatement.getConfiguration(), newSql,boundSql.getParameterMappings(), invocation.getParameter());
+		//newBoundSql.setAdditionalParameter("dataProfileValues", dataMappings);
+		CacheKey cacheKey = executor.createCacheKey(mappedStatement, invocation.getParameter(), RowBounds.DEFAULT, newBoundSql);
 
 		List<?> resultList = executor.query(mappedStatement, invocation.getParameter(), RowBounds.DEFAULT, resultHandler, cacheKey,newBoundSql);
 
@@ -194,8 +230,6 @@ public class DataProfileHandler implements InterceptorHandler {
 							return null;
 						}
 						//左右连接加在ON 无法过滤
-						//newExpression = appendDataProfileCondition(table, join.getOnExpression(), columnMapping.get(fieldName),dataMapping.get(fieldName));
-						//join.setOnExpression(newExpression);
 						newExpression = appendDataProfileCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),values);
 						selectBody.setWhere(newExpression);
 					}
