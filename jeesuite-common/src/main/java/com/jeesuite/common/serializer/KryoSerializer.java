@@ -18,7 +18,12 @@ import java.io.IOException;
  */
 public class KryoSerializer implements Serializer {
 
-	private final static Kryo kryo = new Kryo();
+	private final static Kryo kryo;
+	static {
+		kryo = new Kryo();
+		kryo.setRegistrationRequired(false);
+		kryo.setWarnUnregisteredClasses(false);
+	}
 
 
     @Override

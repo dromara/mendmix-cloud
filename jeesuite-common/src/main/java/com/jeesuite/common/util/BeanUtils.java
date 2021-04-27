@@ -267,7 +267,9 @@ public class BeanUtils {
         		if(map.containsKey(propertyName)){
         			Object object = map.get(propertyName);
 					if(object == null)continue;
-					if(descriptor.getPropertyType() != object.getClass()){						
+					System.out.println(">>" + descriptor.getName());
+					if(descriptor.getPropertyType() != object.getClass() 
+							&& !descriptor.getPropertyType().isAssignableFrom(object.getClass())){						
 						object = stringConvertTo(object.toString(),descriptor.getPropertyType());
 					}
         			descriptor.getWriteMethod().invoke(bean, object);

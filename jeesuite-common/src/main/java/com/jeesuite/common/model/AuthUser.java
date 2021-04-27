@@ -26,6 +26,7 @@ public class AuthUser {
 	private String id;
 	private String name;
 	private String userType;//用户类型类型
+	private List<String> systemScopes;
 	private List<String> tenantScopes;
 
 	public String getId() {
@@ -48,7 +49,12 @@ public class AuthUser {
 		this.userType = userType;
 	}
 	
-	
+	public List<String> getSystemScopes() {
+		return systemScopes;
+	}
+	public void setSystemScopes(List<String> systemScopes) {
+		this.systemScopes = systemScopes;
+	}
 	public List<String> getTenantScopes() {
 		return tenantScopes;
 	}

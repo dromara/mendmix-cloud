@@ -1,13 +1,12 @@
 package com.jeesuite.common.util;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.crypt.Base58;
 import com.jeesuite.common.crypt.DES;
 
 /**
@@ -24,9 +23,9 @@ public class TokenGenerator {
 	public static String generate(String...prefixs){
 		String str = StringUtils.replace(UUID.randomUUID().toString(), LINE_THROUGH, StringUtils.EMPTY);
 		if(prefixs != null && prefixs.length > 0 &&  StringUtils.isNotBlank(prefixs[0])){
-			return prefixs[0].concat(str);
+			str = DigestUtils.md5Short(prefixs[0]).concat(str);
 		}
-		return str;
+		return new String(Base58.encode(str.getBytes()));
 	}
 	
 	public static String generateWithSign(){
@@ -37,13 +36,13 @@ public class TokenGenerator {
 	 * @return
 	 */
 	public static String generateWithSign(String tokenType){
-		Date date = new Date();
-		String str = DigestUtils.md5Short(generate()).concat(String.valueOf(date.getTime()));	
+		String timeString = String.valueOf(System.currentTimeMillis());
+		String str = DigestUtils.md5Short(timeString).concat(timeString);	
 		if(tokenType == null){
 			return SimpleCryptUtils.encrypt(str);
 		}
-		String cryptKey = getCryptKey(tokenType,date);
-		return DES.encrypt(cryptKey, str).toLowerCase();
+		String cryptKey = getCryptKey(tokenType);
+		return DES.encrypt(cryptKey, str);
 	}
 	
 	
@@ -60,8 +59,8 @@ public class TokenGenerator {
 		try {
 			if(tokenType == null){
 				timestamp = Long.parseLong(SimpleCryptUtils.decrypt(token).substring(6));
-			}else{
-				String cryptKey = getCryptKey(tokenType,date);
+			}else{ 
+				String cryptKey = getCryptKey(tokenType);
 				timestamp = Long.parseLong(DES.decrypt(cryptKey,token).substring(6));
 			}
 		} catch (Exception e) {
@@ -72,23 +71,19 @@ public class TokenGenerator {
 		}
 	}
 	
-	private static String getCryptKey(String tokenType,Date date){
+	private static String getCryptKey(String tokenType){
 		String key = StringUtils.EMPTY;
 		if(StringUtils.isNotBlank(tokenType)){
 			key = ResourceUtils.getAndValidateProperty(tokenType + ".cryptKey");
+		}else {			
+			key  = SimpleCryptUtils.GLOBAL_CRYPT_KEY;
 		}
-		SimpleDateFormat format = new SimpleDateFormat("ddMMMyy", Locale.ENGLISH);
-        key = key + format.format(date).toUpperCase();
-        key  = DigestUtils.md5(key).substring(0,8);
 		return key;
 	}
 	
 	public static void main(String[] args) {
-		System.setProperty("jeesuite.configcenter.cryptKey", "sdf2333333333");
-		String generateWithSign = TokenGenerator.generateWithSign("jeesuite.configcenter");
-		System.out.println(generateWithSign);
-		
-		TokenGenerator.validate("jeesuite.configcenter",generateWithSign, true);
-		
+		String token  = generateWithSign();
+		System.out.println(token);
+		validate(token, true);
 	}
 }

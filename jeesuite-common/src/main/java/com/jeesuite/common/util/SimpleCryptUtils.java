@@ -7,12 +7,13 @@ import com.jeesuite.common.crypt.DES;
 
 public class SimpleCryptUtils {
 
-	private static String cryptKey = ResourceUtils.getProperty("global.crypt.secretKey",SimpleCryptUtils.class.getName());
+	public static final String GLOBAL_CRYPT_KEY;
 	static{
-		cryptKey = DigestUtils.md5Short(cryptKey) + DigestUtils.md5(cryptKey).substring(0, 2);
+		String base = ResourceUtils.getProperty("global.crypt.secretKey",SimpleCryptUtils.class.getName());
+		GLOBAL_CRYPT_KEY = DigestUtils.md5Short(base) + DigestUtils.md5(base).substring(0, 2);
 	}
 	public static String encrypt(String data) {
-		 String encode = DES.encrypt(cryptKey, data);
+		 String encode = DES.encrypt(GLOBAL_CRYPT_KEY, data);
 		 byte[] bytes = Base64.encodeToByte(encode.getBytes(StandardCharsets.UTF_8), false);
 		 return new String(bytes, StandardCharsets.UTF_8);
 	 }
@@ -20,7 +21,7 @@ public class SimpleCryptUtils {
 	 public static String decrypt(String data) {
 		 byte[] bytes = Base64.decode(data);
 		 data = new String(bytes, StandardCharsets.UTF_8);
-		 return DES.decrypt(cryptKey, data);
+		 return DES.decrypt(GLOBAL_CRYPT_KEY, data);
 	 }
 	 
 	 

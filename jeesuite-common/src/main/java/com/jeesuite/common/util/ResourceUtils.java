@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -32,6 +33,7 @@ import org.yaml.snakeyaml.Yaml;
  */
 public final class ResourceUtils {
 	
+	public static String CONFIG_DELIMITERS = ",; \t\n";
 	public static final String NULL_VALUE_PLACEHOLDER = "_NULL_PLACEHOLDER_";
 	public static final String PLACEHOLDER_PREFIX = "${";
 	public static final String PLACEHOLDER_SUFFIX = "}";
@@ -345,6 +347,20 @@ public final class ResourceUtils {
 	
 	public static boolean getBoolean(String key,boolean defalutValue){
 		return containsProperty(key) ? Boolean.parseBoolean(getProperty(key)) : defalutValue;
+	}
+	
+	public static List<String> getList(String key){
+		String value = getProperty(key);
+		if(StringUtils.isBlank(value))return new ArrayList<>(0);
+		StringTokenizer st = new StringTokenizer(value, CONFIG_DELIMITERS);
+		List<String> tokens = new ArrayList<>();
+		while (st.hasMoreTokens()) {
+			String token = st.nextToken();
+			if(StringUtils.isNotBlank(token)) {
+				tokens.add(token);
+			}
+		}
+		return tokens;
 	}
 	
 	public synchronized static void merge(Properties properties){
