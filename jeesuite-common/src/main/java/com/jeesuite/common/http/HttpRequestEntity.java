@@ -9,27 +9,45 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.jeesuite.common.crypt.Base64;
 
+/**
+ * 
+ * 
+ * <br>
+ * Class Name   : HttpRequestEntity
+ *
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2017年8月24日
+ */
 public class HttpRequestEntity {
 
-	private static final String DEFAULT_CHARSET = "utf-8";
-	private String charset = DEFAULT_CHARSET;
-	private int connectTimeout = 5000;
-	private int readTimeout = 10000;
-	private Map<String, String> headers = new HashMap<>();
-	private Map<String, String> textParams = new HashMap<>();
-	private Map<String, FileItem> fileParams = new HashMap<>();
+	private HttpMethod method;
+	private String charset;
+	private String contentType;
+	private Map<String, String> headers;
+	private Map<String, Object> queryParams;
+	private Map<String, Object> formParams;
+	private String body;
 	private BasicAuthParams basicAuth;
 	
+	private boolean  multipart;
+	private String boundary;
 	
 	private HttpRequestEntity() {}
 
-	public static HttpRequestEntity create(){
-		return new HttpRequestEntity();
+	public static HttpRequestEntity create(HttpMethod method){
+		return new HttpRequestEntity().method(method);
 	}
 	
+	
+
 	public String getCharset() {
+		if(charset == null) {
+			charset = parseContentTypeCharset(contentType);
+		}
 		return charset;
 	}
 
@@ -38,22 +56,29 @@ public class HttpRequestEntity {
 		return this;
 	}
 
-	public int getConnectTimeout() {
-		return connectTimeout;
+	public HttpMethod getMethod() {
+		return method;
 	}
 
-	public HttpRequestEntity connectTimeout(int connectTimeout) {
-		this.connectTimeout = connectTimeout;
+	public HttpRequestEntity method(HttpMethod method) {
+		this.method = method;
 		return this;
 	}
 
-	public int getReadTimeout() {
-		return readTimeout;
+	public String getContentType() {
+		if(StringUtils.isBlank(contentType)) {
+			return HttpClientProvider.CONTENT_TYPE_JSON_UTF8;
+		}
+		return contentType;
 	}
 
-	public HttpRequestEntity readTimeout(int readTimeout) {
-		this.readTimeout = readTimeout;
+	public HttpRequestEntity contentType(String contentType) {
+		this.contentType = contentType;
 		return this;
+	}
+	
+	public boolean isMultipart() {
+		return multipart;
 	}
 
 	public Map<String, String> getHeaders() {
@@ -64,23 +89,70 @@ public class HttpRequestEntity {
 		this.headers = headers;
 		return this;
 	}
-
-	public Map<String, String> getTextParams() {
-		return textParams;
-	}
-
-	public HttpRequestEntity textParams(Map<String, String> textParams) {
-		this.textParams = textParams;
+	
+	public HttpRequestEntity header(String name,String value) {
+		if(this.headers == null)this.headers = new HashMap<>(3);
+		this.headers.put(name, value);
 		return this;
 	}
 
-	public Map<String, FileItem> getFileParams() {
-		return fileParams;
+	public Map<String, Object> getQueryParams() {
+		return queryParams;
 	}
 
-	public HttpRequestEntity fileParams(Map<String, FileItem> fileParams) {
-		this.fileParams = fileParams;
+	public HttpRequestEntity queryParams(Map<String, Object> queryParams) {
+		this.queryParams = queryParams;
 		return this;
+	}
+	
+	public HttpRequestEntity queryParam(String name,Object value) {
+		if(this.queryParams == null)this.queryParams = new HashMap<>(3);
+		this.queryParams.put(name, value);
+		return this;
+	}
+
+	
+	public Map<String, Object> getFormParams() {
+		return formParams;
+	}
+	
+	public HttpRequestEntity fileParam(String name,File file) {
+		if(this.formParams == null)this.formParams = new HashMap<>();
+		this.formParams.put(name, new FileItem(file));
+		if(contentType == null) {
+			contentType = HttpClientProvider.CONTENT_TYPE_FROM_MULTIPART_UTF8;
+		}
+		if(!multipart) {
+			multipart = true;
+			boundary = String.valueOf(System.nanoTime()); // 随机分隔线
+			contentType = contentType + ";boundary=" + boundary;
+		}
+		return this;
+	}
+
+	public HttpRequestEntity formParam(String name,String value) {
+		if(this.formParams == null)this.formParams = new HashMap<>();
+		this.formParams.put(name, value);
+		if(contentType == null) {
+			contentType = HttpClientProvider.CONTENT_TYPE_FROM_URLENCODED_UTF8;
+		}
+		return this;
+	}
+	
+	public String getBody() {
+		return body;
+	}
+
+	public HttpRequestEntity body(String body) {
+        if(method != HttpMethod.POST) {
+			return null;
+		}
+		this.body = body;
+		return this;
+	}
+	
+	public String getBoundary() {
+		return boundary;
 	}
 
 	public BasicAuthParams getBasicAuth() {
@@ -92,19 +164,25 @@ public class HttpRequestEntity {
 		return this;
 	}
 	
-	public HttpRequestEntity addHeader(String name,String value) {
-		this.headers.put(name, value);
-		return this;
-	}
 	
-	public HttpRequestEntity addTextParam(String name,String value) {
-		this.textParams.put(name, value);
-		return this;
-	}
-	
-	public HttpRequestEntity addFileParam(String name,FileItem value) {
-		this.fileParams.put(name, value);
-		return this;
+	public static String parseContentTypeCharset(String contentType) {
+		String charset = HttpClientProvider.CHARSET_UTF8;
+		if(StringUtils.isBlank(contentType))return charset;
+		String[] params = StringUtils.split(contentType, ";");
+		for (String param : params) {
+			param = param.trim();
+			if (param.toLowerCase().startsWith("charset")) {
+				String[] pair = param.split("=", 2);
+				if (pair.length == 2) {
+					if (!StringUtils.isEmpty(pair[1])) {
+						charset = pair[1].trim();
+					}
+				}
+				break;
+			}
+		}
+
+		return charset;
 	}
 
 	public static class BasicAuthParams{

@@ -2,11 +2,23 @@ package com.jeesuite.common.http;
 
 import java.net.HttpURLConnection;
 
+import com.jeesuite.common.json.JsonUtils;
+
+/**
+ * 
+ * 
+ * <br>
+ * Class Name   : HttpResponseEntity
+ *
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @version 1.0.0
+ * @date Apr 29, 2021
+ */
 public class HttpResponseEntity {
 
 	private int statusCode;
 	private String body;
-	private Exception exception;
+	private String message;
 	
 	
 	
@@ -17,11 +29,7 @@ public class HttpResponseEntity {
 		this.statusCode = statusCode;
 		this.body = body;
 	}
-	
-	public HttpResponseEntity(int statusCode, Exception exception) {
-		this.statusCode = statusCode;
-		this.exception = exception;
-	}
+
 
 	public int getStatusCode() {
 		return statusCode;
@@ -37,22 +45,22 @@ public class HttpResponseEntity {
 	}
 	
 	public boolean isSuccessed(){
-		return statusCode == HttpURLConnection.HTTP_OK;
+		return statusCode == HttpURLConnection.HTTP_OK || (statusCode >= 200 && statusCode <= 210);
 	}
 	
-	public Exception getException() {
-		return exception;
+
+	public String getMessage() {
+		return message;
 	}
 
-	public void setException(Exception exception) {
-		this.exception = exception;
+	public void setMessage(String message) {
+		this.message = message;
 	}
 
 	@Override
 	public String toString() {
-		return "HttpResponseEntity [statusCode=" + statusCode + ", body=" + body + "]";
+		return "[statusCode=" + statusCode + ", body=" + body + ", message=" + message + "]";
 	}
-	
-	
+
 	
 }
