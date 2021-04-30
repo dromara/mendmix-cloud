@@ -240,7 +240,11 @@ public class JdkHttpClient implements HttpClientProvider {
 		conn.setDoInput(true);
 		conn.setDoOutput(true);
 		conn.setRequestProperty("Accept", "*/*");
-		conn.setRequestProperty("Content-Type", requestEntity.getContentType());
+		
+		String contentType = requestEntity.getContentType();
+		if(contentType != null) {
+			conn.setRequestProperty("Content-Type", requestEntity.getContentType());
+		}
 		conn.setConnectTimeout(connectTimeout);
 		conn.setReadTimeout(readTimeout);
 		if (requestEntity.getHeaders() != null) {

@@ -20,7 +20,7 @@ public class HttpUtilsTest {
 		entity = HttpUtils.postJson("http://openapi.mytest.com/api/commonlog/custom_log/list?_logType=mq_produce_logs", json);
 		System.out.println(entity);
 		
-		HttpRequestEntity requestEntity = HttpRequestEntity.create(HttpMethod.GET).basicAuth("zyadmin", "zyadmin");
+		HttpRequestEntity requestEntity = HttpRequestEntity.create(HttpMethod.GET).basicAuth("admin", "123456");
 		entity = HttpUtils.execute("http://10.2.3.163:8761/", requestEntity);
 		System.out.println(entity);
 	}

@@ -47,12 +47,8 @@ public class HttpUtils {
 	private HttpUtils() {}
 	
 	public static HttpResponseEntity get(String url) {
-		return get(url, HttpRequestEntity.create(HttpMethod.GET));
-	}
-	
-	public static HttpResponseEntity get(String url,HttpRequestEntity requestEntity){
 		try {
-			return provider.execute(url, requestEntity);
+			return provider.execute(url, HttpRequestEntity.create(HttpMethod.GET));
 		} catch (IOException e) {
 			return new HttpResponseEntity(400, e.getMessage());
 		}
@@ -146,14 +142,5 @@ public class HttpUtils {
         
        
     }
-	
-	public static HttpResponseEntity post(String url,HttpRequestEntity requestEntity) {
-		try {
-			return provider.execute(url, requestEntity);
-		} catch (IOException e) {
-			return new HttpResponseEntity(400, e.getMessage());
-		}
-	}
-	
 
 }

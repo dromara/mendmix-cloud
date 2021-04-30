@@ -80,5 +80,9 @@ public class NetworkUtils {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	public static void main(String[] args) {
+		System.out.println(telnet("micro-zookeeper-svc:2181", 2000));
+	}
 
 }
