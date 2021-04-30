@@ -17,7 +17,7 @@ public class SecurityOauth2Manager {
 	private Cache cache;
 	private Cache tokenCache;
 	
-	public SecurityOauth2Manager(SecurityDecisionProvider decisionProvider) {
+	public SecurityOauth2Manager(SecurityConfigurerProvider decisionProvider) {
 	       if(CacheType.redis == decisionProvider.cacheType()){
 	    	   JedisProviderFactory.addGroupProvider("auth");
 	    	   this.cache = new RedisCache("security.oauth2.authCode", 180);

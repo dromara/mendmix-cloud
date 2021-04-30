@@ -31,7 +31,7 @@ import com.jeesuite.security.model.UserSession;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月30日
  */
-public abstract class SecurityDecisionProvider<T extends AuthUser> {
+public abstract class SecurityConfigurerProvider<T extends AuthUser> {
 
 	public String sessionIdName(){
 		return "JSESSIONID";

@@ -36,7 +36,7 @@ import com.jeesuite.springweb.exception.UnauthorizedException;
  */
 public class SecurityDelegating {
 	
-	private SecurityDecisionProvider<? extends AuthUser> decisionProvider;
+	private SecurityConfigurerProvider<? extends AuthUser> decisionProvider;
 	private SecuritySessionManager sessionManager;
 	private SecurityResourceManager resourceManager;
 	private SecurityTicketManager ticketManager;
@@ -46,7 +46,7 @@ public class SecurityDelegating {
 
 	@SuppressWarnings("unchecked")
 	private SecurityDelegating() {
-		decisionProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
+		decisionProvider = InstanceFactory.getInstance(SecurityConfigurerProvider.class);
 		sessionManager = new SecuritySessionManager(decisionProvider);
 		ticketManager = new SecurityTicketManager(decisionProvider);
 		resourceManager = new SecurityResourceManager(decisionProvider);
@@ -196,7 +196,7 @@ public class SecurityDelegating {
 		}
 	}
 	
-	public static SecurityDecisionProvider<? extends AuthUser> getSecurityDecision(){
+	public static SecurityConfigurerProvider<? extends AuthUser> getSecurityDecision(){
 		return getInstance().decisionProvider;
 	}
 	

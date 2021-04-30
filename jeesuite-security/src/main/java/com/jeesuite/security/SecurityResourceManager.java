@@ -45,7 +45,7 @@ public class SecurityResourceManager {
 
 	private Cache userPermCache;
 	private String contextPath;
-	private SecurityDecisionProvider decisionProvider;
+	private SecurityConfigurerProvider decisionProvider;
 
 	private PathMatcher anonymousUrlMatcher;
 	// 无通配符uri
@@ -56,7 +56,7 @@ public class SecurityResourceManager {
 	private volatile boolean refreshCallable = true;
 	private ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1);
 
-	public SecurityResourceManager(SecurityDecisionProvider decisionProvider) {
+	public SecurityResourceManager(SecurityConfigurerProvider decisionProvider) {
 		this.decisionProvider = decisionProvider;
 		if(CacheType.redis == decisionProvider.cacheType()){
 	       this.userPermCache = new RedisCache("security:userperms", decisionProvider.sessionExpireIn());

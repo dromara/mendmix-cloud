@@ -37,7 +37,7 @@ public class SecuritySessionManager {
 	private boolean ssoEnabled;
 	private int cookieExpireIn = 0;
 	
-	public SecuritySessionManager(SecurityDecisionProvider<?> decisionProvider) {
+	public SecuritySessionManager(SecurityConfigurerProvider<?> decisionProvider) {
        if(CacheType.redis == decisionProvider.cacheType()){
     	   JedisProviderFactory.addGroupProvider(RedisCache.CACHE_GROUP_NAME);
     	   this.cache = new RedisCache("security.session", decisionProvider.sessionExpireIn());
