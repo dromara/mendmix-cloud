@@ -26,6 +26,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.jeesuite.common.http.HttpMethod;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
 import com.jeesuite.springweb.exception.UnauthorizedException;
@@ -38,8 +40,11 @@ import com.jeesuite.springweb.utils.WebUtils;
  */
 public class SecurityDelegatingFilter implements Filter {
 
+	private static final String DOT = ".";
 	private static final String MSG_401_UNAUTHORIZED = "{\"code\": 401,\"msg\":\"401 Unauthorized\"}";
 	private static String MSG_403_FORBIDDEN = "{\"code\": 403,\"msg\":\"403 Forbidden\"}";
+	
+	private static String apiUriSuffix = ResourceUtils.getProperty("api.uri.suffix");
 	
 	private AuthAdditionHandler additionHandler;
 	
@@ -58,6 +63,17 @@ public class SecurityDelegatingFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
 		
+		//忽略静态资源
+		if(request.getRequestURI().contains(DOT) && (apiUriSuffix == null || !request.getRequestURI().endsWith(apiUriSuffix))) {
+			chain.doFilter(req, res);
+			return;
+		}
+		
+		if(request.getMethod().equals(HttpMethod.OPTIONS.name())) {
+			chain.doFilter(req, res);
+			return;
+		}
+		
 		if(additionHandler != null) {
 			additionHandler.beforeAuthorization(request, response);
 		}
@@ -70,10 +86,10 @@ public class SecurityDelegatingFilter implements Filter {
 			if(WebUtils.isAjax(request)){				
 				WebUtils.responseOutJson(response, MSG_401_UNAUTHORIZED);
 			}else{
-				if(SecurityDelegating.getSecurityDecision()._401_Error_Page() == null){
+				if(SecurityDelegating.getConfigurerProvider().error401Page() == null){
 					WebUtils.responseOutHtml(response, "401 Unauthorized");
 				}else{					
-					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.getSecurityDecision()._401_Error_Page();
+					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.getConfigurerProvider().error401Page();
 					response.sendRedirect(loginPage);
 				}
 			}
@@ -82,10 +98,10 @@ public class SecurityDelegatingFilter implements Filter {
 			if(WebUtils.isAjax(request)){				
 				WebUtils.responseOutJson(response, MSG_403_FORBIDDEN);
 			}else{
-				if(SecurityDelegating.getSecurityDecision()._403_Error_Page() == null){
+				if(SecurityDelegating.getConfigurerProvider().error403Page() == null){
 					WebUtils.responseOutHtml(response, "403 Forbidden");
 				}else{					
-					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.getSecurityDecision()._403_Error_Page();
+					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.getConfigurerProvider().error403Page();
 					response.sendRedirect(loginPage);
 				}
 			}

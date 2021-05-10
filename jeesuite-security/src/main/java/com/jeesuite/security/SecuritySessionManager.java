@@ -1,6 +1,8 @@
 package com.jeesuite.security;
 
 import java.io.Serializable;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -8,10 +10,16 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.google.common.cache.CacheBuilder;
+import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.cache.redis.JedisProviderFactory;
+import com.jeesuite.common.crypt.Base58;
+import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
+import com.jeesuite.security.model.ExpireableObject;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.security.util.SecurityCryptUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
@@ -25,31 +33,40 @@ import com.jeesuite.springweb.utils.WebUtils;
  */
 public class SecuritySessionManager {
 	
-	private ThreadLocal<UserSession> sessionThreadHistory = new ThreadLocal<>();
+	private ThreadLocal<UserSession> createSessionHolder = new ThreadLocal<>();
 	private static final String NULL = "null";
-	private static final String ACCESSTOKEN = "accessToken";
+	private static final String HEADER_TOKEN_NAME = ResourceUtils.getProperty("security.token.headerName", "x-user-token");
 	private final static String SESSION_UID_CACHE_KEY = "uid:%s";
 
 	private Cache cache;
 	private volatile String cookieDomain;
 	private String sessionIdName = "JSESSIONID";
 	private boolean keepCookie;
-	private boolean ssoEnabled;
+	private boolean kickOff;
 	private int cookieExpireIn = 0;
+	//是否共享session
+	private boolean sharingSession;
+	private com.google.common.cache.Cache<String,Object> localTmpCache;
 	
 	public SecuritySessionManager(SecurityConfigurerProvider<?> decisionProvider) {
-       if(CacheType.redis == decisionProvider.cacheType()){
+       if(sharingSession = CacheType.redis == decisionProvider.cacheType()){
     	   JedisProviderFactory.addGroupProvider(RedisCache.CACHE_GROUP_NAME);
     	   this.cache = new RedisCache("security.session", decisionProvider.sessionExpireIn());
 		}else{
 			this.cache = new LocalCache(decisionProvider.sessionExpireIn());
+			//
+			this.localTmpCache = CacheBuilder
+					.newBuilder()
+					.maximumSize(5000)
+					.expireAfterWrite(15, TimeUnit.MINUTES)
+					.build();
 		}
 		this.cookieDomain = decisionProvider.cookieDomain();
 		if(StringUtils.isNotBlank(decisionProvider.sessionIdName())){
 			this.sessionIdName = decisionProvider.sessionIdName();
 		}
 		this.keepCookie = decisionProvider.keepCookie();
-		this.ssoEnabled = decisionProvider.ssoEnabled();
+		this.kickOff = decisionProvider.kickOff();
 		this.cookieExpireIn = decisionProvider.sessionExpireIn();
 	}
 
@@ -59,23 +76,26 @@ public class SecuritySessionManager {
 	}
 	
 	
-	public UserSession getSessionIfNotCreateAnonymous(HttpServletRequest request,HttpServletResponse response,boolean first){
-		UserSession session = first ? null : sessionThreadHistory.get();
-		if(session == null){			
-			String sessionId = getSessionId(request);
-			if(StringUtils.isNotBlank(sessionId)){
-				session = getLoginSession(sessionId);
+	public UserSession getSessionIfNotCreateAnonymous(HttpServletRequest request,HttpServletResponse response){
+		UserSession session = null;
+		String sessionId = getSessionId(request);
+		if(StringUtils.isNotBlank(sessionId)){
+			session = getLoginSession(sessionId);
+		}
+		if(session == null){
+			//避免一次请求调用多次
+			session = createSessionHolder.get();
+			if(session == null) {
+				session = UserSession.create();
+				if(response != null){				
+					Cookie cookie = createSessionCookies(request,session.getSessionId(), cookieExpireIn);
+					response.addCookie(cookie);
+				}
+				//
+				storageLoginSession(session);
+				createSessionHolder.set(session);
 			}
 		}
-		if(session == null){			
-			session = UserSession.create();
-			if(response != null){				
-				Cookie cookie = createSessionCookies(request,session.getSessionId(), cookieExpireIn);
-				response.addCookie(cookie);
-			}
-		}
-		if(session != null)sessionThreadHistory.set(session);
-
 		return session;
 	}
 	
@@ -89,7 +109,7 @@ public class SecuritySessionManager {
 	public void storageLoginSession(UserSession session){
 		String key = session.getSessionId();
 		cache.setObject(key,session);
-		if(!session.isAnonymous() && !ssoEnabled){			
+		if(!session.isAnonymous() && !kickOff){			
 			key = String.format(SESSION_UID_CACHE_KEY, session.getUserId());
 			cache.setString(key, session.getSessionId());
 		}
@@ -110,7 +130,7 @@ public class SecuritySessionManager {
 	private Cookie createSessionCookies(HttpServletRequest request,String sessionId,int expire){
 		String domain = this.cookieDomain;
 		if(domain == null){
-			domain = WebUtils.getRootDomain(request);
+			domain = request.getServerName();
 		}
 		Cookie cookie = new Cookie(sessionIdName,sessionId);  
 		cookie.setDomain(domain);
@@ -129,10 +149,7 @@ public class SecuritySessionManager {
 	 * @return
 	 */
 	public String getSessionId(HttpServletRequest request) {
-		String sessionId = request.getParameter(ACCESSTOKEN);
-		if(isBlank(sessionId)){
-			sessionId = request.getHeader(ACCESSTOKEN);
-		}
+		String sessionId = request.getHeader(HEADER_TOKEN_NAME);
 		if(isBlank(sessionId)){
 			Cookie[] cookies = request.getCookies();
 			if(cookies == null)return null;
@@ -147,25 +164,21 @@ public class SecuritySessionManager {
 	}
 	
 	public String getCurrentProfile(HttpServletRequest request) {
-		String sessionId = request.getParameter(SecurityConstants.HEADER_AUTH_PROFILE);
-		if(isBlank(sessionId)){
-			sessionId = request.getHeader(SecurityConstants.HEADER_AUTH_PROFILE);
+		String profile = request.getParameter(SecurityConstants.HEADER_AUTH_PROFILE);
+		if(isBlank(profile)){
+			profile = request.getHeader(SecurityConstants.HEADER_AUTH_PROFILE);
 		}
-		if(isBlank(sessionId)){
+		if(isBlank(profile)){
 			Cookie[] cookies = request.getCookies();
 			if(cookies == null)return null;
 			for (Cookie cookie : cookies) {
 				if(SecurityConstants.HEADER_AUTH_PROFILE.equals(cookie.getName())){
-					sessionId = cookie.getValue();
+					profile = cookie.getValue();
 					break;
 				}
 			}
 		}
-		
-		if(StringUtils.isNotBlank(sessionId)){
-			sessionId = SecurityCryptUtils.decrypt(sessionId);
-		}
-		return sessionId;
+		return profile;
 	}
 	
 	public void setCurrentProfile(String profile){
@@ -179,7 +192,7 @@ public class SecuritySessionManager {
 		cookie.setDomain(domain);
 		cookie.setPath("/");
 		cookie.setHttpOnly(true);
-		cookie.setMaxAge(3600);
+		cookie.setMaxAge(cookieExpireIn);
 		
 		CurrentRuntimeContext.getResponse().addCookie(cookie);
 	}
@@ -197,6 +210,43 @@ public class SecuritySessionManager {
 			response.addCookie(createSessionCookies(request,StringUtils.EMPTY, 0));
 		}
 		return sessionId;
+	}
+	
+	public String setTemporaryObject(String name,Object object,int expireInSeconds) {
+		String sessionId = getSessionId(CurrentRuntimeContext.getRequest());
+		String cacheKey = sessionId == null ? name : String.format("%s:%s", sessionId,name);
+		if(sharingSession) {
+			new RedisObject(cacheKey,RedisCache.CACHE_GROUP_NAME).set(object, expireInSeconds);
+		}else {
+			ExpireableObject expireableObject = new ExpireableObject(object, System.currentTimeMillis() + expireInSeconds * 1000);
+			localTmpCache.put(cacheKey, expireableObject);
+		}
+		return Base58.encode(cacheKey.getBytes());
+	}
+	
+	public <T> T getTemporaryObject(String name) {
+		String sessionId = getSessionId(CurrentRuntimeContext.getRequest());
+		String cacheKey = String.format("%s:%s", sessionId,name);
+		return getTemporaryObjectByKey(cacheKey);
+	}
+	
+	public <T> T getTemporaryObjectByEncodeKey(String cacheKey) {
+		cacheKey = new String(Base58.decode(cacheKey));
+		return  getTemporaryObjectByKey(cacheKey);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getTemporaryObjectByKey(String cacheKey) {
+		Object obj = null;
+		if(sharingSession) {
+			obj = new RedisObject(cacheKey,RedisCache.CACHE_GROUP_NAME).get();
+		}else {
+			ExpireableObject expireableObject = (ExpireableObject) localTmpCache.getIfPresent(cacheKey);
+			if(expireableObject != null && expireableObject.getExpireAt() >= System.currentTimeMillis()) {
+				obj = expireableObject.getTarget();
+			}
+		}
+		return (T) obj;
 	}
 
 }

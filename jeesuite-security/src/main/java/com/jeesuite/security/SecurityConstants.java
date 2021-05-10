@@ -30,13 +30,16 @@ public class SecurityConstants {
 	// parameter
 	public static final String PARAM_CLIENT_ID = "client_id";
 	public static final String PARAM_RETURN_URL = "return_url";
-	public static final String PARAM_SESSION_ID = "session_id";
 	public static final String PARAM_LOGIN_TYPE = "login_type";
+	public static final String PARAM_TICKET = "ticket";
 	public static final String PARAM_CODE = "code";
 	public static final String PARAM_EXPIRE_IN = "expires_in";
-	public static final String PARAM_TICKET = "ticket";
 	public static final String PARAM_ACT = "act";
-
+	public static final String PARAM_TIMESTAMP = "timestamp";
+	
+	
+	public static final String AUTHN_HANDLE = "authnHandle";
+	
 	// header
 	public static final String HEADER_AUTH_USER = "x-auth-user";
 	public static final String HEADER_AUTH_PROFILE = "x-auth-profile";

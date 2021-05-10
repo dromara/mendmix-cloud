@@ -45,8 +45,8 @@ public abstract class SecurityConfigurerProvider<T extends AuthUser> {
 		return null;
 	}
 	
-	public boolean ssoEnabled(){
-		return false;
+	public boolean kickOff(){
+		return true;
 	}
 	
 	public boolean keepCookie(){
@@ -78,6 +78,6 @@ public abstract class SecurityConfigurerProvider<T extends AuthUser> {
 	public abstract List<String> findAllUriPermissionCodes();
 	public abstract List<String> getUserPermissionCodes(String userId);
 	public abstract void authorizedPostHandle(UserSession session);
-	public abstract String _401_Error_Page();
-	public abstract String _403_Error_Page();
+	public abstract String error401Page();
+	public abstract String error403Page();
 }

@@ -1,5 +1,8 @@
 package com.jeesuite.security.model;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.TokenGenerator;
 
@@ -95,6 +98,12 @@ public class UserSession {
 
 	public String getUserId(){
 		return userInfo == null ? null : userInfo.getId();
+	}
+	
+	public String encodeBaseUser() {
+		if(userInfo == null)return  null;
+		String info = String.format("%s#%s", userInfo.getId(),userInfo.getUsername());
+		return Base64.getEncoder().encodeToString(info.getBytes(StandardCharsets.UTF_8));
 	}
 	
 }
