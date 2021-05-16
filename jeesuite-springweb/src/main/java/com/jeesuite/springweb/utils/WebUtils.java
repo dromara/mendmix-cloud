@@ -252,4 +252,14 @@ public class WebUtils {
 		
 		return isInner;
 	}
+	
+	public static void printHeaders(HttpServletRequest request) {
+		Enumeration<String> headerNames = request.getHeaderNames();
+		String headerName;
+		System.out.println("============Request Headers==============");
+		while(headerNames.hasMoreElements()) {
+			headerName = headerNames.nextElement();
+			System.out.println(String.format("%s = %s", headerName,request.getHeader(headerName)));
+		}
+	}
 }

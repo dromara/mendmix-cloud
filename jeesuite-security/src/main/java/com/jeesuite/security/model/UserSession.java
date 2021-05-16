@@ -106,4 +106,11 @@ public class UserSession {
 		return Base64.getEncoder().encodeToString(info.getBytes(StandardCharsets.UTF_8));
 	}
 	
+	public AccessToken asAccessToken() {
+		AccessToken token = new AccessToken();
+		token.setAccess_token(sessionId);
+		token.setExpires_in(expiresIn);
+		return token;
+	}
+	
 }

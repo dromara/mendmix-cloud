@@ -19,6 +19,7 @@ import org.mybatis.generator.api.dom.java.TopLevelClass;
 import org.mybatis.generator.api.dom.xml.XmlElement;
 import org.mybatis.generator.config.CommentGeneratorConfiguration;
 import org.mybatis.generator.config.Context;
+import org.mybatis.generator.internal.types.JavaTypeResolverDefaultImpl;
 import org.mybatis.generator.internal.util.StringUtility;
 
 
@@ -34,6 +35,7 @@ public class CrudSupportPlugin extends PluginAdapter {
     private String schema;
     //注释生成器
     private CommentGeneratorConfiguration commentCfg;
+    private JavaTypeResolverDefaultImpl javaTypeResolver = new JavaTypeResolverDefaultImpl();
 
     @Override
     public void setContext(Context context) {
@@ -105,17 +107,38 @@ public class CrudSupportPlugin extends PluginAdapter {
     @Override
     public boolean clientGenerated(Interface interfaze, TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
         
+    	FullyQualifiedJavaType idType = null;
     	if(!introspectedTable.hasPrimaryKeyColumns()) {
-    		System.out.println(String.format(">>>>>table[%s]无主键,skip...", introspectedTable.getFullyQualifiedTable().getIntrospectedTableName()));
-    		return false;
+    		//主键
+            List<IntrospectedColumn> columns = introspectedTable.getBaseColumns();
+            for (IntrospectedColumn col : columns) {
+            	if(!col.isIdentity())continue;
+            	idType = javaTypeResolver.calculateJavaType(col);
+        		break;
+            }
+            
+            if(idType == null){
+            	for (IntrospectedColumn col : columns) {
+                	if("id".equalsIgnoreCase(col.getActualColumnName())){
+                		idType = javaTypeResolver.calculateJavaType(col);
+                		break;
+                	}
+                }
+            }
+            if(idType == null) {            	
+            	System.out.println(String.format(">>>>>table[%s]无主键,skip...", introspectedTable.getFullyQualifiedTable().getIntrospectedTableName()));
+            	return false;
+            }
+    	}else {
+    		 //主键
+            List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
+            if(primaryKeyColumns.size() > 1) {
+            	System.out.println(String.format(">>>>>table[%s]包含多个主键,skip...", introspectedTable.getFullyQualifiedTable().getIntrospectedTableName()));
+        		return false;
+            }
+            idType = primaryKeyColumns.get(0).getFullyQualifiedJavaType();
     	}
-        //主键
-        List<IntrospectedColumn> primaryKeyColumns = introspectedTable.getPrimaryKeyColumns();
-        if(primaryKeyColumns.size() > 1) {
-        	System.out.println(String.format(">>>>>table[%s]包含多个主键,skip...", introspectedTable.getFullyQualifiedTable().getIntrospectedTableName()));
-    		return false;
-        }
-        FullyQualifiedJavaType idType = primaryKeyColumns.get(0).getFullyQualifiedJavaType();
+       
       //获取实体类
         FullyQualifiedJavaType entityType = new FullyQualifiedJavaType(introspectedTable.getBaseRecordType());
         

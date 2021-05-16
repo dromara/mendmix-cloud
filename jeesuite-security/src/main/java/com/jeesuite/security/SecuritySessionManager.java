@@ -15,7 +15,6 @@ import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common.crypt.Base58;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
@@ -75,6 +74,12 @@ public class SecuritySessionManager {
 		return cache.getObject(sessionId);
 	}
 	
+	public UserSession getSession(){
+		return getSession(true);
+	}
+	public UserSession getSession(boolean create){
+		return getSessionIfNotCreateAnonymous(CurrentRuntimeContext.getRequest(), CurrentRuntimeContext.getResponse());
+	}
 	
 	public UserSession getSessionIfNotCreateAnonymous(HttpServletRequest request,HttpServletResponse response){
 		UserSession session = null;
@@ -212,9 +217,9 @@ public class SecuritySessionManager {
 		return sessionId;
 	}
 	
-	public String setTemporaryObject(String name,Object object,int expireInSeconds) {
-		String sessionId = getSessionId(CurrentRuntimeContext.getRequest());
-		String cacheKey = sessionId == null ? name : String.format("%s:%s", sessionId,name);
+	public String setAttribute(String name,Object object,int expireInSeconds) {
+		String sessionId = getSession().getSessionId();
+		String cacheKey = String.format("%s:%s", sessionId,name);
 		if(sharingSession) {
 			new RedisObject(cacheKey,RedisCache.CACHE_GROUP_NAME).set(object, expireInSeconds);
 		}else {
@@ -224,19 +229,20 @@ public class SecuritySessionManager {
 		return Base58.encode(cacheKey.getBytes());
 	}
 	
-	public <T> T getTemporaryObject(String name) {
-		String sessionId = getSessionId(CurrentRuntimeContext.getRequest());
+	public <T> T getAttribute(String name) {
+		String sessionId = getSession().getSessionId();
 		String cacheKey = String.format("%s:%s", sessionId,name);
-		return getTemporaryObjectByKey(cacheKey);
+		return getAttributeByCacheKey(cacheKey);
 	}
 	
-	public <T> T getTemporaryObjectByEncodeKey(String cacheKey) {
+	public <T> T getAttributeByKey(String cacheKey) {
+		if(StringUtils.isBlank(cacheKey))return null;
 		cacheKey = new String(Base58.decode(cacheKey));
-		return  getTemporaryObjectByKey(cacheKey);
+		return  getAttributeByCacheKey(cacheKey);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> T getTemporaryObjectByKey(String cacheKey) {
+	private <T> T getAttributeByCacheKey(String cacheKey) {
 		Object obj = null;
 		if(sharingSession) {
 			obj = new RedisObject(cacheKey,RedisCache.CACHE_GROUP_NAME).get();

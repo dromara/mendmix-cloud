@@ -259,15 +259,15 @@ public class BeanUtils {
             return null;
         }
         
+        String propertyName = null;
         try {	   	
         	T bean = clazz.newInstance();
         	Map<String, PropertyDescriptor> descriptors = getCachePropertyDescriptors(clazz);
         	for (PropertyDescriptor descriptor : descriptors.values()) {
-        		String propertyName = descriptor.getName();
+        		propertyName = descriptor.getName();
         		if(map.containsKey(propertyName)){
         			Object object = map.get(propertyName);
 					if(object == null)continue;
-					System.out.println(">>" + descriptor.getName());
 					if(descriptor.getPropertyType() != object.getClass() 
 							&& !descriptor.getPropertyType().isAssignableFrom(object.getClass())){						
 						object = stringConvertTo(object.toString(),descriptor.getPropertyType());
@@ -277,6 +277,7 @@ public class BeanUtils {
         	}
         	return bean;
 		} catch (Exception e) {
+			System.err.println("error property:" + propertyName);
 			throw new BeanConverterException(e);
 		}
     }

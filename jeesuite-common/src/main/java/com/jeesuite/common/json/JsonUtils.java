@@ -3,6 +3,8 @@ package com.jeesuite.common.json;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -42,6 +44,15 @@ public class JsonUtils {
 	
 	public static <T> T toObject(String jsonString, Class<T> clazz) {
 		return  jsonMapper.toObject(jsonString, clazz);
+	}
+	
+	public static <T> T toObject(String jsonString, TypeReference<T> valueTypeRef) {
+		try {
+		  JsonParser parser = jsonMapper.getMapper().createParser(jsonString);
+		  return  jsonMapper.getMapper().readValue(parser, valueTypeRef);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public static <T> List<T> toList(String jsonString, Class<T> clazz) {

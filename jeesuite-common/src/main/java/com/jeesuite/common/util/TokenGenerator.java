@@ -19,6 +19,11 @@ public class TokenGenerator {
 
 	private static final String LINE_THROUGH = "-";
 	private static final int EXPIRE = 1000*60*3;
+	
+	public static String generateFrom(String base){
+		String str = DigestUtils.md5(base);
+		return new String(Base58.encode(str.getBytes())); 
+	}
 
 	public static String generate(String...prefixs){
 		String str = StringUtils.replace(UUID.randomUUID().toString(), LINE_THROUGH, StringUtils.EMPTY);

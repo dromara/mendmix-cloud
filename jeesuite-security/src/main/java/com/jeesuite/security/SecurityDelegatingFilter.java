@@ -26,6 +26,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.http.HttpStatus;
+
 import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
@@ -83,6 +85,7 @@ public class SecurityDelegatingFilter implements Filter {
 		try {
 			SecurityDelegating.doAuthorization();
 		} catch (UnauthorizedException e) {
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			if(WebUtils.isAjax(request)){				
 				WebUtils.responseOutJson(response, MSG_401_UNAUTHORIZED);
 			}else{

@@ -24,7 +24,7 @@ public class AuthUser {
 	private static final String PLACEHOLDER_CHAR = "{-}";
 	
 	private String id;
-	private String name;
+	private String username;
 	private String userType;//用户类型类型
 	private List<String> systemScopes;
 	private List<String> tenantScopes;
@@ -35,13 +35,13 @@ public class AuthUser {
 	public void setId(String id) {
 		this.id = id;
 	}
-	public String getName() {
-		return name;
+	
+	public String getUsername() {
+		return username;
 	}
-	public void setName(String name) {
-		this.name = name;
+	public void setUsername(String username) {
+		this.username = username;
 	}
-
 	public String getUserType() {
 		return userType;
 	}
@@ -66,7 +66,7 @@ public class AuthUser {
 	public String toEncodeString(){
 		StringBuilder builder = new StringBuilder();
 		builder.append(id).append(CONTACT_CHAR);
-		builder.append(trimToPlaceHolder(name)).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(username)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(userType)).append(CONTACT_CHAR);
 		return SimpleCryptUtils.encrypt(builder.toString());
 	}
@@ -77,7 +77,7 @@ public class AuthUser {
 		String[] splits = encodeString.split(CONTACT_CHAR);
 		AuthUser user = new AuthUser();
 		user.setId(placeHolderToNull(splits[0]));
-		user.setName(placeHolderToNull(splits[1]));
+		user.setUsername(placeHolderToNull(splits[1]));
 		user.setUserType(placeHolderToNull(splits[2]));
 		return user;
 	}

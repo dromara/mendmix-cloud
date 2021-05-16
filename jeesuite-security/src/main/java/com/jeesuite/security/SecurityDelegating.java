@@ -103,12 +103,12 @@ public class SecurityDelegating {
 	
 	public static String doAuthenticationForOauth2(String name,String password){
 		AuthUser userInfo = getInstance().configurerProvider.validateUser(name, password);
-		String authCode = getInstance().sessionManager.setTemporaryObject(userInfo.getId(), userInfo, 60);
+		String authCode = setSessionAttribute(userInfo.getId(), userInfo, 60);
 		return authCode;
 	}
 	
 	public static String oauth2AuthCode2UserId(String authCode){
-		AuthUser userInfo = getInstance().sessionManager.getTemporaryObjectByEncodeKey(authCode);
+		AuthUser userInfo = getSessionAttributeByKey(authCode);
 		return userInfo == null ? null : userInfo.getId();
 	}
 	
@@ -220,5 +220,18 @@ public class SecurityDelegating {
     public static void doLogout(){
     	getInstance().sessionManager.destroySessionAndCookies(CurrentRuntimeContext.getRequest(), CurrentRuntimeContext.getResponse());
 	}
+    
+    
+    public static String setSessionAttribute(String name,Object object,int expireInSeconds) {
+    	return getInstance().sessionManager.setAttribute(name, object, expireInSeconds);
+    }
+    
+    public static <T> T getSessionAttribute(String name) {
+    	return getInstance().sessionManager.getAttribute(name);
+    }
+    
+    public static <T> T getSessionAttributeByKey(String cacheKey) {
+    	return getInstance().sessionManager.getAttributeByKey(cacheKey);
+    }
 
 }
