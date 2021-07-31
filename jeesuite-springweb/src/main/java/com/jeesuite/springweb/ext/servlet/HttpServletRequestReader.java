@@ -16,8 +16,8 @@ import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.constants.SpecCharacters;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.DigestUtils;
-import com.jeesuite.springweb.utils.ParameterUtils;
-import com.jeesuite.springweb.utils.WebUtils;
+import com.jeesuite.common.util.ParameterUtils;
+import com.jeesuite.common.util.WebUtils;
 
 /**
  * 

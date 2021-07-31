@@ -21,6 +21,8 @@ public class ThreadLocalContext {
 	private static ThreadLocal<Map<String, Object>> context = new ThreadLocal<>();
 	
 	private static final String _ID = "_thread_id_";
+	public static final String REQUEST_KEY = "_ctx_request_";
+	public static final String RESPONSE_KEY = "_ctx_response_";
 	public static final String CURRENT_USER_KEY = "_ctx_current_user_";
 	public static final String TENANT_ID_KEY = "_ctx_tenantId_";
 	

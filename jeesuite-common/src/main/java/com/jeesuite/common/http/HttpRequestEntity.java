@@ -67,7 +67,7 @@ public class HttpRequestEntity {
 	}
 
 	public String getContentType() {
-		if(StringUtils.isBlank(contentType) && method != HttpMethod.GET) {
+		if(StringUtils.isBlank(contentType)) {
 			return HttpClientProvider.CONTENT_TYPE_JSON_UTF8;
 		}
 		return contentType;

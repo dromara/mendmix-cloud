@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jeesuite.springweb.utils;
+package com.jeesuite.common.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -94,7 +94,7 @@ public class ParameterUtils {
 		return map;
 	}
 	
-	private static String objectToQueryParams(Object param){
+	public static String objectToQueryParams(Object param){
 		Map<String, Object> map = BeanUtils.beanToMap(param);
 		return mapToQueryParams(map);
 	}

@@ -1,4 +1,4 @@
-package com.jeesuite.springweb.utils;
+package com.jeesuite.common.util;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -14,10 +14,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.http.HttpUtils;
 import com.jeesuite.common.json.JsonUtils;
-import com.jeesuite.springweb.WebConstants;
 
 public class IpUtils {
 
+	public static final String HEADER_FROWARDED_FOR = "x-forwarded-for";
 	public static final String LOCAL_BACK_IP = "127.0.0.1";
 	public static final String LOCAL_HOST = "localhost";
 	private static final String UNKNOWN = "unknown";
@@ -61,7 +61,7 @@ public class IpUtils {
      */
     public static String getIpAddr(HttpServletRequest request) {
   
-        String ip = request.getHeader(WebConstants.HEADER_FROWARDED_FOR);
+        String ip = request.getHeader(HEADER_FROWARDED_FOR);
         if (StringUtils.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
             ip = request.getHeader("Proxy-Client-IP");
         }
@@ -125,14 +125,7 @@ public class IpUtils {
 		}
 	    return localIp;  
 	} 
-    
-    public static String getinvokerIpAddr(HttpServletRequest request)  { 
-    	String ip = request.getHeader(WebConstants.HEADER_INVOKER_IP);
-    	if(StringUtils.isBlank(ip)){
-    		ip = getIpAddr(request);
-    	}
-    	return ip;
-    }
+
     
     @SuppressWarnings("rawtypes")
 	public static String ipToLocation(String ip) {

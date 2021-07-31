@@ -8,7 +8,7 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 
-import com.jeesuite.springweb.utils.WebUtils;
+import com.jeesuite.common.util.WebUtils;
 
 public class RestTemplateAutoHeaderInterceptor implements ClientHttpRequestInterceptor {
 

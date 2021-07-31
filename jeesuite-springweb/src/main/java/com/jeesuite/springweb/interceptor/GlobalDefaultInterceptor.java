@@ -1,25 +1,29 @@
 package com.jeesuite.springweb.interceptor;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
+import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
-import com.jeesuite.springweb.WebConstants;
 import com.jeesuite.springweb.annotation.ApiMetadata;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
-import com.jeesuite.springweb.utils.IpUtils;
-import com.jeesuite.springweb.utils.WebUtils;
+import com.jeesuite.springweb.logging.BehaviorLogCollector;
 
 /**
  * 
@@ -35,11 +39,11 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 
 	private static Logger log = LoggerFactory.getLogger("com.jeesuite.springweb");
 	
-	private static final String INTERNAL_LIMIT_EXECLUDE_IPS_PROP_NAME = "internalLimit.exclude-ips";
-	private String env = ResourceUtils.getProperty("jeesuite.configcenter.profile","dev");
-	private boolean isDevEnv = "dev|local".contains(env);
-	private boolean authTokenCheckDisabled = ResourceUtils.getBoolean("authtoken.check.disabled", isDevEnv);
-	
+	private boolean isLocalEnv = "local".equals(CurrentRuntimeContext.ENV);
+	private boolean authTokenCheckDisabled = ResourceUtils.getBoolean("authtoken.check.disabled", isLocalEnv);
+	private static boolean behaviorlogEnabled = ResourceUtils.getBoolean("behaviorlog.collector.enabled", false);
+	private static List<String> actionLogMethoads = Arrays.asList(HttpMethod.POST.name(),HttpMethod.DELETE.name(),HttpMethod.PUT.name());
+
 	private PathMatcher authtokenCheckIgnoreUriMather = new PathMatcher(StringUtils.EMPTY,ResourceUtils.getProperty("authtoken.check.ignore.uris"));
 	
 	@Override
@@ -61,8 +65,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			ApiMetadata  config = method.getMethod().getAnnotation(ApiMetadata.class);
 			if(config != null){
 
-				if(!isDevEnv && config.IntranetAccessOnly() && !WebUtils.isInternalRequest(request) 
-						&& !ResourceUtils.getProperty(INTERNAL_LIMIT_EXECLUDE_IPS_PROP_NAME,StringUtils.EMPTY).contains(IpUtils.getinvokerIpAddr(request))){
+				if(!isLocalEnv && config.IntranetAccessOnly() && !WebUtils.isInternalRequest(request)){
 					response.setStatus(403);
 					throw new ForbiddenAccessException();
 				}
@@ -70,6 +73,13 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 				//@ResponseBody and ResponseEntity的接口在postHandle addHeader不生效，因为会经过HttpMessageConverter
 				if(config.responseKeep()){
 					response.addHeader(WebConstants.HEADER_RESP_KEEP, Boolean.TRUE.toString());
+				}
+				//行为日志
+				if(behaviorlogEnabled){
+					if((config == null && (actionLogMethoads.contains(request.getMethod()))) 
+							|| (config != null && config.actionLog())){
+						BehaviorLogCollector.onRequestStart(request);
+					}
 				}
 			}
 		}
@@ -86,6 +96,9 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
+		if(behaviorlogEnabled){			
+			BehaviorLogCollector.onResponseEnd(response, ex);
+		}
 		ThreadLocalContext.unset();
 	}
 	

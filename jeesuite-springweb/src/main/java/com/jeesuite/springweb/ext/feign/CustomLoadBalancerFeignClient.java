@@ -22,11 +22,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
+import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.model.AuthUser;
+import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
-import com.jeesuite.springweb.WebConstants;
 import com.jeesuite.springweb.client.CustomRequestHostHolder;
-import com.jeesuite.springweb.utils.WebUtils;
 
 import feign.Client;
 import feign.Request;

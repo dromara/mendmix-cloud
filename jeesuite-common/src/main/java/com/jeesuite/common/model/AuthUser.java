@@ -1,7 +1,5 @@
 package com.jeesuite.common.model;
 
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -26,8 +24,6 @@ public class AuthUser {
 	private String id;
 	private String username;
 	private String userType;//用户类型类型
-	private List<String> systemScopes;
-	private List<String> tenantScopes;
 
 	public String getId() {
 		return id;
@@ -47,20 +43,6 @@ public class AuthUser {
 	}
 	public void setUserType(String userType) {
 		this.userType = userType;
-	}
-	
-	public List<String> getSystemScopes() {
-		return systemScopes;
-	}
-	public void setSystemScopes(List<String> systemScopes) {
-		this.systemScopes = systemScopes;
-	}
-	public List<String> getTenantScopes() {
-		return tenantScopes;
-	}
-	
-	public void setTenantScopes(List<String> tenantScopes) {
-		this.tenantScopes = tenantScopes;
 	}
 	
 	public String toEncodeString(){

@@ -19,10 +19,6 @@ public class BaseQueryParam {
 	private String currentTenantId;
 	@JsonIgnore
 	private String currentUserId;
-	@JsonIgnore
-	private String columns;//查询列
-	
-	
 
 	/**
 	 * @return the currentTenantId
@@ -48,14 +44,6 @@ public class BaseQueryParam {
 	 */
 	public void setCurrentUserId(String currentUserId) {
 		this.currentUserId = currentUserId;
-	}
-	
-	public String getColumns() {
-		return columns;
-	}
-
-	public void setColumns(String columns) {
-		this.columns = columns;
 	}
 
 	public void initLoginContext(){

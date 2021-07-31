@@ -24,7 +24,7 @@ import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
  */
 public class RetryAsyncTaskExecutor {
 
-	private static Logger logger = LoggerFactory.getLogger("com.zyframework.core.async");
+	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.core.async");
 	
 	private static ThreadLocal<String> traceIdHolder = new ThreadLocal<>();
 	

@@ -1,5 +1,7 @@
 package com.jeesuite.springweb.model;
 
+import com.jeesuite.common.model.PageParams;
+
 /**
  * 
  * <br>
@@ -9,7 +11,7 @@ package com.jeesuite.springweb.model;
  * @version 1.0.0
  * @date 2017年3月23日
  */
-public class PageQueryRequest<T extends BaseQueryParam> {
+public class PageQueryRequest<T> {
 
 	private int pageNo = 1;
 	private int pageSize = 15;
@@ -56,6 +58,10 @@ public class PageQueryRequest<T extends BaseQueryParam> {
 	}
 	public void setOrderBy(OrderBy orderBy) {
 		this.orderBy = orderBy;
+	}
+	
+	public PageParams asPageParam() {
+		return new PageParams(pageNo <= 0 ? 1 : pageNo, pageSize);
 	}
 
 }

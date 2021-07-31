@@ -1,4 +1,4 @@
-package com.jeesuite.springweb;
+package com.jeesuite.springweb.exception;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -15,8 +15,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.util.WebUtils;
+import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.model.WrapperResponseEntity;
-import com.jeesuite.springweb.utils.WebUtils;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {

@@ -17,7 +17,7 @@ import feign.codec.ErrorDecoder;
 
 public class CustomErrorDecoder implements ErrorDecoder {
 
-	private static Logger logger = LoggerFactory.getLogger("com.zyframework.core.rpc");
+	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.core.rpc");
 	
 	@Override
 	public Exception decode(String methodKey, Response response) {

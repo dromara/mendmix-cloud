@@ -1,4 +1,4 @@
-package com.jeesuite.springweb.utils;
+package com.jeesuite.common.util;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -13,17 +13,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 
+import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.json.JsonUtils;
-import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.common.util.TokenGenerator;
-import com.jeesuite.springweb.CurrentRuntimeContext;
-import com.jeesuite.springweb.WebConstants;
+
 
 public class WebUtils {
-
+	
 	private static final String POINT = ".";
 	private static final String XML_HTTP_REQUEST = "XMLHttpRequest";
 	private static final String MULTIPART = "multipart/";
@@ -176,7 +174,7 @@ public class WebUtils {
 	
 	public static Map<String, String> getCustomHeaders(){
 		Map<String, String> headers = new HashMap<>();
-		 HttpServletRequest request = CurrentRuntimeContext.getRequest();
+		HttpServletRequest request = ThreadLocalContext.get(ThreadLocalContext.REQUEST_KEY);
 		Enumeration<String> headerNames = request.getHeaderNames();
 		 while(headerNames.hasMoreElements()){
 			 String headerName = headerNames.nextElement().toLowerCase();
@@ -206,7 +204,7 @@ public class WebUtils {
 		}
 		contentType = contentType.toLowerCase(Locale.ENGLISH);
 		if (contentType.startsWith(MULTIPART) 
-				|| MediaType.APPLICATION_OCTET_STREAM.equals(contentType)) {
+				|| "application/octet-stream".equals(contentType)) {
 			return true;
 		}
 		return false;
@@ -233,7 +231,7 @@ public class WebUtils {
 		}
 
 		//从网关转发
-		headerValue = request.getHeader(WebConstants.HEADER_FORWARDED_GATEWAY);
+		headerValue = request.getHeader(WebConstants.HEADER_GATEWAY_TOKEN);
 		if(StringUtils.isNotBlank(headerValue)){
 			try {
 				TokenGenerator.validate(headerValue, true);

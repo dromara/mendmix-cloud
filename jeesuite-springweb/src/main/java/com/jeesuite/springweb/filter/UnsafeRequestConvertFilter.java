@@ -18,9 +18,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.io.CharStreams;
+import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.springweb.ext.servlet.CustomHttpServletRequestWrapper;
 import com.jeesuite.springweb.utils.UnsafeCharCheckUtils;
-import com.jeesuite.springweb.utils.WebUtils;
 
 public class UnsafeRequestConvertFilter implements Filter {
 

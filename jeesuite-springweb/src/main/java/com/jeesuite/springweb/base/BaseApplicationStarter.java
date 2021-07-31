@@ -8,14 +8,16 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
+import com.jeesuite.common.async.AsyncInitializer;
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.spring.ApplicationStartedListener;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
 import com.jeesuite.springweb.ext.feign.CustomErrorDecoder;
 import com.jeesuite.springweb.ext.feign.CustomLoadBalancerFeignClient;
-import com.jeesuite.springweb.utils.WebUtils;
+import com.jeesuite.springweb.logging.LogProfileManager;
 
 import feign.Client;
 import feign.Feign;
@@ -33,7 +35,7 @@ public class BaseApplicationStarter{
 	}
 	
 	@Bean
-	@ConditionalOnProperty(value = "jeesuite.configcenter.profile",havingValue = "local")
+	@ConditionalOnProperty(value = "feign.custom-loadbalance-mapping.enabled",havingValue = "true")
 	public Client feignClient(LoadBalancerClient loadBalancer) {
 		return new CustomLoadBalancerFeignClient(loadBalancer);
 	}
@@ -52,12 +54,15 @@ public class BaseApplicationStarter{
 	}
 
 	protected static long before() {
+		LogProfileManager.initialize();
 		System.setProperty("client.nodeId", NodeNameHolder.getNodeId());
 		return System.currentTimeMillis();
 	}
 
 	protected static void after(long starTime) {
-
+        //
+		LogProfileManager.reload();
+		
 		long endTime = System.currentTimeMillis();
 		long time = endTime - starTime;
 		System.out.println("\nStart Time: " + time / 1000 + " s");
@@ -72,6 +77,15 @@ public class BaseApplicationStarter{
 				System.out.println(">>>begin to execute listener:" + listener.getClass().getName());
 				listener.onApplicationStarted(InstanceFactory.getContext());
 				System.out.println("<<<<finish execute listener:" + listener.getClass().getName());
+			}
+		}
+		
+		//执行异步初始化
+		Map<String, AsyncInitializer> asyncInitializers = InstanceFactory.getInstanceProvider().getInterfaces(AsyncInitializer.class);
+			if(asyncInitializers != null){
+			for (AsyncInitializer initializer : asyncInitializers.values()) {
+				System.out.println(">>>begin to execute AsyncInitializer:" + initializer.getClass().getName());
+				initializer.process();
 			}
 		}
 	}

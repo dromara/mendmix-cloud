@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,7 +51,6 @@ public final class ResourceUtils {
 		if(inited)return;
 		try {
 			URL url = Thread.currentThread().getContextClassLoader().getResource("");
-			 System.setProperty("framework.website", "www.jeesuite.com");
 			if(url == null)url = ResourceUtils.class.getResource("");
 			
 			Map<String, List<String>> allFileMap = new HashMap<>();
@@ -363,6 +363,16 @@ public final class ResourceUtils {
 		return tokens;
 	}
 	
+	public static Map<String, String> getMappingValues(String prefix){
+		Properties properties = getAllProperties(prefix);
+		Map<String, String> result = new HashMap<>(properties.size());
+		properties.forEach( (k,v) -> {
+			String[] arr = k.toString().split("[|]");
+			result.put(arr[1], v.toString());
+		} );
+		return result;
+	}
+	
 	public synchronized static void merge(Properties properties){
 		if(properties == null || properties.isEmpty())return;
 		
@@ -397,6 +407,35 @@ public final class ResourceUtils {
 		if(System.getProperties().containsKey(key))return true;
 		if(System.getenv().containsKey(key))return true;
 		return allProperties.containsKey(key);
+	}
+	
+	public static <T> T getBean(String prefix,Class<T> clazz) {
+		try {
+			T config = clazz.newInstance();
+			Field[] fields = clazz.getDeclaredFields();
+			String configKey;
+			Object configValue;
+			for (Field field : fields) {
+				field.setAccessible(true);
+				configKey = prefix + field.getName();
+				if(containsProperty(configKey)){
+					if(field.getType() == int.class || field.getType() == Integer.class){
+						configValue = Integer.parseInt(getProperty(configKey));
+					}else if(field.getType() == long.class || field.getType() == Long.class){
+						configValue = Long.parseLong(getProperty(configKey));
+					}else if(field.getType() == boolean.class || field.getType() == Boolean.class){
+						configValue = Boolean.parseBoolean(getProperty(configKey));
+					}else{
+						configValue = getProperty(configKey);
+					}
+					try {field.set(config, configValue);} catch (Exception e) {}
+				}
+			}
+			return config;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		
 	}
 	
 	/**

@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.util.DateUtils;
 import com.jeesuite.common.util.NodeNameHolder;
@@ -21,7 +20,7 @@ import com.jeesuite.common.util.NodeNameHolder;
  */
 public class TimestampGUIDGenarator {
 
-	private static final String TIME_PATTERN = "yyMMddHHmmss";
+	private static final String TIME_PATTERN = "yyyyMMddHHmmss";
 	private static String[] paddingzeros = new String[]{"","0","00","000","0000","00000","000000","0000000","00000000","000000000"};
 	private static final int WORKER_ID =  NodeNameHolder.WORKER_ID;
 

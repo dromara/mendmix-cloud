@@ -9,6 +9,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.exception.UnauthorizedException;
@@ -24,46 +25,60 @@ import com.jeesuite.springweb.exception.UnauthorizedException;
  */
 public class CurrentRuntimeContext {
 	
-	public static final String SERVICE_NAME;
-	public static final String GROUP;
+	public static final String SYSTEM_ID;
 	public static final String MODULE_NAME;
+	public static final String EXPORT_SERVICE_NAME;
 	public static final String APPID;
 	public static final String ENV;
 	
+	private static String contextPath;
+	
 	static {
-		ENV = ResourceUtils.getAnyProperty("jeesuite.configcenter.profile","spring.profiles.active");
-		SERVICE_NAME = ResourceUtils.getAnyProperty("spring.application.name","jeesuite.configcenter.appName");
-		if(StringUtils.isBlank(SERVICE_NAME)){
+		String env = ResourceUtils.getAnyProperty("jeesuite.configcenter.profile","spring.profiles.active","env");
+		ENV = StringUtils.isBlank(env) ? "local" : env;
+		EXPORT_SERVICE_NAME = ResourceUtils.getProperty("spring.application.name");
+		if(StringUtils.isBlank(EXPORT_SERVICE_NAME)){
 			throw new IllegalArgumentException("config Property[spring.application.name] is required");
 		}
-		String[] strings = StringUtils.split(SERVICE_NAME, "-");
-		if(strings.length == 3) {
-			GROUP = strings[0];
-			MODULE_NAME = strings[1];
-			APPID = GROUP + "-" + MODULE_NAME;
-		} else {
-			APPID = strings[0];
-			GROUP = null;
-			MODULE_NAME = APPID;
+		
+		String[] strings = StringUtils.split(EXPORT_SERVICE_NAME, "-");
+		MODULE_NAME = strings[1];
+		if(ResourceUtils.containsProperty("system.id")) {
+			SYSTEM_ID = ResourceUtils.getProperty("system.id");
+		}else {
+			SYSTEM_ID = strings[0];
 		}
+		if(ResourceUtils.containsProperty("app.id")) {
+			APPID = ResourceUtils.getProperty("app.id");
+		}else {
+			APPID = SYSTEM_ID + "-" + MODULE_NAME;
+		}
+		//
+		contextPath = ResourceUtils.getProperty("server.servlet.context-path","");
+		if (StringUtils.isNotBlank(contextPath) && contextPath.endsWith("/")) {
+			contextPath = contextPath.substring(0, contextPath.length() - 1);
+		}
+		//
+		System.getProperty("env", ENV);
 	}
-	
-	private static final String REQUEST_KEY = "_ctx_request_";
-	private static final String RESPONSE_KEY = "_ctx_response_";
-	
+
+	public static String getContextPath() {
+		return contextPath;
+	}
+
 	public static void init(HttpServletRequest request, HttpServletResponse response){
 		
 		ThreadLocalContext.unset();
 		
-		ThreadLocalContext.set(REQUEST_KEY, request);
-		ThreadLocalContext.set(RESPONSE_KEY, response);
+		ThreadLocalContext.set(ThreadLocalContext.REQUEST_KEY, request);
+		ThreadLocalContext.set(ThreadLocalContext.RESPONSE_KEY, response);
 		String tenantId = request.getHeader(WebConstants.HEADER_TENANT_ID);
 		if(tenantId != null)setTenantId(tenantId);
 	}
 	
 	public static HttpServletRequest getRequest() {
-		if(ThreadLocalContext.exists(REQUEST_KEY)){
-			return ThreadLocalContext.get(REQUEST_KEY);
+		if(ThreadLocalContext.exists(ThreadLocalContext.REQUEST_KEY)){
+			return ThreadLocalContext.get(ThreadLocalContext.REQUEST_KEY);
 		}
 		if(RequestContextHolder.getRequestAttributes() != null){
 			return ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
@@ -72,7 +87,7 @@ public class CurrentRuntimeContext {
 	}
 	
 	public static HttpServletResponse getResponse() {
-		return ThreadLocalContext.get(RESPONSE_KEY);
+		return ThreadLocalContext.get(ThreadLocalContext.RESPONSE_KEY);
 	}
 	
 	public static void setTenantId(String tenantId){
@@ -133,7 +148,8 @@ public class CurrentRuntimeContext {
 	public static String getTenantId(boolean validate){
 		String tenantId = ThreadLocalContext.getStringValue(ThreadLocalContext.TENANT_ID_KEY);
 		if(tenantId == null){
-			tenantId = getRequest().getHeader(WebConstants.HEADER_REQUEST_ID);
+			HttpServletRequest request = getRequest();
+			if(request != null)tenantId = getRequest().getHeader(WebConstants.HEADER_TENANT_ID);
 		}
 		if(validate && StringUtils.isBlank(tenantId)){
 			throw new JeesuiteBaseException(500,"无法识别租户信息");

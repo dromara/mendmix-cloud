@@ -18,7 +18,6 @@ package com.jeesuite.springweb;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,10 +174,7 @@ public class AppMetadataHolder {
 			//
 			metadata = new AppMetadata();
 			metadata.setAppId(CurrentRuntimeContext.APPID);
-			metadata.setServiceId(CurrentRuntimeContext.SERVICE_NAME);
-			if(ResourceUtils.containsProperty("dependency.services")){				
-				metadata.setDependencyServices(Arrays.asList(ResourceUtils.getProperty("dependency.services")));
-			}
+			metadata.setServiceId(CurrentRuntimeContext.EXPORT_SERVICE_NAME);
 			
 			String basePackage = ResourceUtils.getProperty("application.base-package");
 			if(basePackage == null)return metadata;
@@ -187,7 +183,7 @@ public class AppMetadataHolder {
 			scanApiInfos(metadata,classNameList);
 			
 			if(ResourceUtils.containsProperty("dependency.services")){				
-				metadata.setDependencyServices(Arrays.asList(ResourceUtils.getProperty("application.dependency.services")));
+				metadata.setDependencyServices(ResourceUtils.getList("dependency.services"));
 			}else{
 				try {
 					Class.forName("org.springframework.cloud.openfeign.FeignClient");
