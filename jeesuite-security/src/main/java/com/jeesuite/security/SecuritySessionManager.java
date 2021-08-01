@@ -1,7 +1,6 @@
 package com.jeesuite.security;
 
 import java.io.Serializable;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.Cookie;
@@ -15,6 +14,7 @@ import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common.crypt.Base58;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.cache.LocalCache;
 import com.jeesuite.security.cache.RedisCache;
@@ -22,7 +22,6 @@ import com.jeesuite.security.model.ExpireableObject;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.security.util.SecurityCryptUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
-import com.jeesuite.springweb.utils.WebUtils;
 
 /**
  * session管理器

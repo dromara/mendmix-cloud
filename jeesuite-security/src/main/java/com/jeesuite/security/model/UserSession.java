@@ -36,9 +36,6 @@ public class UserSession {
 	
 	public void update(AuthUser userInfo ,Integer expiresIn){
 		this.userInfo = userInfo;
-		if(userInfo.getTenantScopes() != null && !userInfo.getTenantScopes().isEmpty()) {
-			setTenantId(userInfo.getTenantScopes().get(0));
-		}
 		setExpiresIn(expiresIn);
 	}
 

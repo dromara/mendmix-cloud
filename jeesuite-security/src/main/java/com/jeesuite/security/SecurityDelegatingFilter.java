@@ -30,10 +30,10 @@ import org.springframework.http.HttpStatus;
 
 import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
 import com.jeesuite.springweb.exception.UnauthorizedException;
-import com.jeesuite.springweb.utils.WebUtils;
 
 /**
  * @description <br>
