@@ -16,6 +16,7 @@ public class Menu {
     private String name;
     private String uri;
     private String icon;
+    private Integer sort;
 	/**
 	 * @return the id
 	 */
@@ -76,6 +77,13 @@ public class Menu {
 	public void setIcon(String icon) {
 		this.icon = icon;
 	}
+	public Integer getSort() {
+		return sort;
+	}
+	public void setSort(Integer sort) {
+		this.sort = sort;
+	}
     
+	
     
 }

@@ -43,12 +43,13 @@ public final class ResourceUtils {
 	private static String profileFileBaseName = null;
 	private static String activeProfileFile = null;
 	
-	private static boolean inited;
-	
 	private final static Properties allProperties = new Properties();
 	
-	private synchronized static void load() {
-		if(inited)return;
+	static {
+		loadLocalConfg();
+	}
+	
+	private static void loadLocalConfg() {
 		try {
 			URL url = Thread.currentThread().getContextClassLoader().getResource("");
 			if(url == null)url = ResourceUtils.class.getResource("");
@@ -93,7 +94,6 @@ public final class ResourceUtils {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		inited = true;
 	}
 
 	private static void loadPropertiesFromJarFile(URL url,Map<String, List<String>> allFileMap) throws UnsupportedEncodingException, IOException {
@@ -256,9 +256,6 @@ public final class ResourceUtils {
 	 * 按key模糊匹配配置列表
 	 */
 	public static Properties getAllProperties(String keyPattern,boolean matchPrefix) {
-		if(!inited){
-			load();
-		}
 
 		Properties properties = new Properties();
 		Set<Entry<Object, Object>> entrySet = allProperties.entrySet();
@@ -302,9 +299,6 @@ public final class ResourceUtils {
 	}
 
 	public static String getProperty(String key, String defaultValue) {
-		if(!inited){
-			load();
-		}
 		//优先环境变量
 		String value = System.getProperty(key);
 		if(StringUtils.isNotBlank(value))return value;

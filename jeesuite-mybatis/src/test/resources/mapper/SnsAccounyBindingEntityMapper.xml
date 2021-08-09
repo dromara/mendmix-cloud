@@ -12,7 +12,9 @@
     <result column="open_id" property="openId" jdbcType="VARCHAR" />
     <result column="enabled" property="enabled" jdbcType="BIT" />
     <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" />
-    <result column="updated_at" property="updatedAt" jdbcType="BIGINT" />
+    <result column="created_by" property="createdBy" jdbcType="VARCHAR" />
+    <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" />
+    <result column="updated_by" property="updatedBy" jdbcType="VARCHAR" />
   </resultMap>
   
   <select id="findBySnsOpenId" resultMap="BaseResultMap">

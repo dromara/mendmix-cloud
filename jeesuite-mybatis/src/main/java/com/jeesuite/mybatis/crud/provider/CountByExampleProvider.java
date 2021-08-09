@@ -28,7 +28,7 @@ public class CountByExampleProvider extends AbstractExampleProvider{
 		for (ColumnMapper column : columns) {
 			value = EntityHelper.getEntityField(entityMapper.getTableMapper().getName(),column.getProperty()).get(example);
 			if(value == null)continue;
-			appendWhere(whereBuilder,column,value);
+			appendWhere(whereBuilder,column);
 		}
 		if(whereBuilder.length() == 0)throw new IllegalArgumentException("至少包含一个查询条件");
 		

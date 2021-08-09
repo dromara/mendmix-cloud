@@ -47,10 +47,16 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
-	public void testInsert(){
-		UserEntity entity = buildUserEntity();
-		userMapper.insert(entity);
-		userMapper.deleteByPrimaryKey(entity.getId());
+	public void testUpdateVersion(){
+		UserEntity entity = userMapper.selectByPrimaryKey(4);
+		//userMapper.insert(entity);
+		//userMapper.deleteByPrimaryKey(entity.getId());
+		entity.setName(RandomStringUtils.random(5, true, false));
+		entity.setStatus((short) 1);
+		entity.setVersion(4);
+		int result = userMapper.updateByPrimaryKeyWithVersion(entity);
+		System.out.println(result);
+
 	}
 	
 	@Test
@@ -61,11 +67,12 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
-	public void testInsertList(){
+	public void testInsertList() throws InterruptedException{
 		List<UserEntity> entities = new ArrayList<>(2);
 		entities.add(buildUserEntity());
 		entities.add(buildUserEntity());
 		userMapper.insertList(entities);
+		Thread.sleep(10000);
 	}
 	
 	@Test
@@ -99,16 +106,20 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	
 	@Test
 	public void testSelectByExample() throws InterruptedException{
-		
-		snsAccounyBindingMapper.findByUserId(6);
-		snsAccounyBindingMapper.findByUserId(7);
-		snsAccounyBindingMapper.findByUserId(8);
-		
-		userMapper.updateType((short)0,new int[] {6,7,5});
-		
-		userMapper.updateByIds(Arrays.asList(3,4,5));
-		
-		//Thread.sleep(5000);
+		UserEntity example = new UserEntity();
+		example.setName("嘎子");
+		example.setType((short) 1);
+		example.setCreatedAt(new Date());
+		userMapper.selectByExample(example);
+	}
+	
+	@Test
+	public void testCountByExample() throws InterruptedException{
+		UserEntity example = new UserEntity();
+		example.setName("嘎子");
+		example.setType((short) 1);
+		example.setCreatedAt(new Date());
+		userMapper.countByExample(example);
 	}
 	
 	
@@ -131,7 +142,6 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	private UserEntity buildUserEntity() {
 		String mobile = "13800"+RandomStringUtils.random(6, false, true);
 		UserEntity entity = new UserEntity();
-		entity.setCreatedAt(new Date());
 		entity.setEmail(mobile + "@163.com");
 		entity.setMobile(mobile);
 		entity.setType((short)1);

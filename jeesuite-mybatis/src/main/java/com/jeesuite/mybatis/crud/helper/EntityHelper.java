@@ -18,8 +18,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.Version;
 
 import com.jeesuite.mybatis.core.BaseEntity;
+import com.jeesuite.mybatis.plugin.auditfield.annotation.CreatedAt;
+import com.jeesuite.mybatis.plugin.auditfield.annotation.CreatedBy;
+import com.jeesuite.mybatis.plugin.auditfield.annotation.UpdatedAt;
+import com.jeesuite.mybatis.plugin.auditfield.annotation.UpdatedBy;
 
 public class EntityHelper {
 
@@ -76,6 +81,17 @@ public class EntityHelper {
                     columnName = column.name();
                     columnMapper.setInsertable(column.insertable());
                     columnMapper.setUpdatable(column.updatable());
+                }
+               //乐观锁
+                columnMapper.setVersionField(field.isAnnotationPresent(Version.class));
+                //审计字段
+                columnMapper.setCreatedByField(field.isAnnotationPresent(CreatedBy.class));
+                columnMapper.setCreatedAtField(field.isAnnotationPresent(CreatedAt.class));
+                columnMapper.setUpdatedAtField(field.isAnnotationPresent(UpdatedAt.class));
+                columnMapper.setUpdatedByField(field.isAnnotationPresent(UpdatedBy.class));
+                //创建字段不能修改
+                if(columnMapper.isUpdatable() && (columnMapper.isCreatedAtField() || columnMapper.isCreatedByField())) {
+                	columnMapper.setUpdatable(false);
                 }
                 // 如果为空，使用属性名并替换为下划线风格
                 if (columnName == null || columnName.equals("")) {

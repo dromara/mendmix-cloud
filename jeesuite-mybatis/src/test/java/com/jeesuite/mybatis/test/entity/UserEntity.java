@@ -1,19 +1,16 @@
 package com.jeesuite.mybatis.test.entity;
 
-import java.util.Date;
 import java.util.Map;
 
-import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-
-import com.jeesuite.mybatis.core.BaseEntity;
+import javax.persistence.Version;
 
 @Table(name = "users")
-public class UserEntity extends BaseEntity {
+public class UserEntity extends StandardBaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -29,13 +26,11 @@ public class UserEntity extends BaseEntity {
     private Short type;
     
     private Short status;
-
-    @Column(name = "created_at")
-    private Date createdAt;
-
-    @Column(name = "updated_at")
-    private Date updatedAt;
     
+    @Version
+    private int version;
+    
+
     @Transient
     Map<String, String[]> dataProfileValues;
 
@@ -132,40 +127,20 @@ public class UserEntity extends BaseEntity {
 		this.status = status;
 	}
 
-	/**
-     * @return created_at
-     */
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    /**
-     * @param createdAt
-     */
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    /**
-     * @return updated_at
-     */
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    /**
-     * @param updatedAt
-     */
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
 	public Map<String, String[]> getDataProfileValues() {
 		return dataProfileValues;
 	}
 
 	public void setDataProfileValues(Map<String, String[]> dataProfileValues) {
 		this.dataProfileValues = dataProfileValues;
+	}
+
+	public int getVersion() {
+		return version;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
 	}
     
     

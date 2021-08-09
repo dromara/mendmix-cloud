@@ -9,9 +9,11 @@ import java.util.List;
 import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.ResultType;
 import org.apache.ibatis.annotations.SelectProvider;
+import org.apache.ibatis.annotations.UpdateProvider;
 
 import com.jeesuite.mybatis.crud.provider.CountByExampleProvider;
 import com.jeesuite.mybatis.crud.provider.SelectByExampleProvider;
+import com.jeesuite.mybatis.crud.provider.UpdateWithVersionProvider;
 
 /**
  * @description <br>
@@ -32,12 +34,20 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
 	/**
 	  * @param entity
 	*/
-	void updateByPrimaryKey(T entity);
+	int updateByPrimaryKey(T entity);
 
 	/**
 	  * @param entity
 	*/
-	void updateByPrimaryKeySelective(T entity);
+	int updateByPrimaryKeySelective(T entity);
+	
+	/**
+	 * 带乐观锁更新
+	 * @param entity
+	*/
+	@UpdateProvider(type = UpdateWithVersionProvider.class, method = "updateByPrimaryKeyWithVersion")
+	@ResultType(int.class)
+	int updateByPrimaryKeyWithVersion(T entity);
 	
 
     /**

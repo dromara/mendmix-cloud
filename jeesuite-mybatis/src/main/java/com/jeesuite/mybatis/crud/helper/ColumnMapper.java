@@ -13,6 +13,11 @@ public class ColumnMapper {
 	private boolean id = false;
 	private boolean insertable = true;
 	private boolean updatable = true;
+	private boolean versionField = false;
+	private boolean createdByField = false;
+	private boolean createdAtField = false;
+	private boolean updatedByField = false;
+	private boolean updatedAtField = false;
 
 	public String getProperty() {
 		return property;
@@ -76,6 +81,48 @@ public class ColumnMapper {
 
 	public void setTypeHandler(Class<? extends TypeHandler<?>> typeHandler) {
 		this.typeHandler = typeHandler;
+	}
+	
+
+	public boolean isVersionField() {
+		return versionField;
+	}
+
+	public void setVersionField(boolean versionField) {
+		this.versionField = versionField;
+	}
+	
+
+	public boolean isCreatedByField() {
+		return createdByField;
+	}
+
+	public void setCreatedByField(boolean createdByField) {
+		this.createdByField = createdByField;
+	}
+
+	public boolean isCreatedAtField() {
+		return createdAtField;
+	}
+
+	public void setCreatedAtField(boolean createdAtField) {
+		this.createdAtField = createdAtField;
+	}
+
+	public boolean isUpdatedByField() {
+		return updatedByField;
+	}
+
+	public void setUpdatedByField(boolean updatedByField) {
+		this.updatedByField = updatedByField;
+	}
+
+	public boolean isUpdatedAtField() {
+		return updatedAtField;
+	}
+
+	public void setUpdatedAtField(boolean updatedAtField) {
+		this.updatedAtField = updatedAtField;
 	}
 
 	@Override

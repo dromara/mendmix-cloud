@@ -67,6 +67,8 @@ public class AuthCheckHandler implements FilterHandler {
 		if(session != null) {
 			//
 			CurrentRuntimeContext.setAuthUser(session.getUser());
+			//
+			CurrentRuntimeContext.setTenantId(session.getTenantId());
 			return session.getUser();
 		}
 		return null;

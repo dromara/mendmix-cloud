@@ -12,8 +12,11 @@
     <result column="email" jdbcType="VARCHAR" property="email" />
     <result column="type" jdbcType="SMALLINT" property="type" />
     <result column="status" jdbcType="SMALLINT" property="status" />
-    <result column="created_at" jdbcType="TIMESTAMP" property="createdAt" />
-    <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
+   <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" />
+    <result column="created_by" property="createdBy" jdbcType="VARCHAR" />
+    <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" />
+    <result column="updated_by" property="updatedBy" jdbcType="VARCHAR" />
+    <result column="version" property="version" jdbcType="INTEGER" />
   </resultMap>
   
   <select id="findByType" resultMap="BaseResultMap">

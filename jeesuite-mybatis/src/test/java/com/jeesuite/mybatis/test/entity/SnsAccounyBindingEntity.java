@@ -1,17 +1,13 @@
 package com.jeesuite.mybatis.test.entity;
 
-import java.util.Date;
-
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import com.jeesuite.mybatis.core.BaseEntity;
-
 @Table(name = "sns_account_binding")
-public class SnsAccounyBindingEntity extends BaseEntity {
+public class SnsAccounyBindingEntity extends StandardBaseEntity {
 	
 	public static enum SnsType{
 		weixin,weibo,qq
@@ -34,12 +30,6 @@ public class SnsAccounyBindingEntity extends BaseEntity {
     private String openId;
 
     private Boolean enabled = true;
-
-    @Column(name = "created_at",updatable = false)
-    private Date createdAt;
-
-    @Column(name = "updated_at")
-    private Long updatedAt;
     
     /**
      * @return id
@@ -125,33 +115,4 @@ public class SnsAccounyBindingEntity extends BaseEntity {
         this.enabled = enabled;
     }
 
-    /**
-     * @return created_at
-     */
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    /**
-     * @param createdAt
-     */
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    /**
-     * @return updated_at
-     */
-    public Long getUpdatedAt() {
-        return updatedAt;
-    }
-
-    /**
-     * @param updatedAt
-     */
-    public void setUpdatedAt(Long updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    
 }

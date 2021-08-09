@@ -20,8 +20,7 @@ public class UserSession {
 	private AuthUser user;
 	private long expiredAt;
 
-	@JsonIgnore
-	private List<String> tenantScopes;
+	private String tenantId;
 	@JsonIgnore
 	private List<String> permissions;
 
@@ -51,12 +50,13 @@ public class UserSession {
 		this.sessionId = sessionId;
 	}
 
-	public List<String> getTenantScopes() {
-		return tenantScopes;
+
+	public String getTenantId() {
+		return tenantId;
 	}
 
-	public void setTenantScopes(List<String> tenantScopes) {
-		this.tenantScopes = tenantScopes;
+	public void setTenantId(String tenantId) {
+		this.tenantId = tenantId;
 	}
 
 	public void setUser(AuthUser user) {

@@ -26,6 +26,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.StringUtils;
 
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.mybatis.plugin.auditfield.AuditFieldFillHandler;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.dataprofile.DataProfileHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
@@ -48,6 +49,7 @@ public class MybatisConfigs {
 	public static final String PAGINATION_ENABLED = "jeesuite.mybatis.paginationEnabled";
 	public static final String TENANT_MODE_ENABLED = "jeesuite.mybatis.tenantModeEnabled";
 	public static final String DATA_PROFILE_ENABLED = "jeesuite.mybatis.dataProfileEnabled";
+	public static final String AUDIT_FIELD_FILL_ENABLED = "jeesuite.mybatis.auditFieldFillEnabled";
 	public static final String PAGINATION_MAX_LIMIT = "jeesuite.mybatis.pagination.maxLimit";
 	public static final String INTERCEPTOR_HANDLERCLASS = "jeesuite.mybatis.interceptorHandlerClass";
 	
@@ -101,6 +103,10 @@ public class MybatisConfigs {
 		return ResourceUtils.getInt(PAGINATION_MAX_LIMIT, 0);
 	}
 	
+	public static boolean isAuditFieldFillEnabled() {
+		return ResourceUtils.getBoolean(AUDIT_FIELD_FILL_ENABLED, true);
+	}
+	
 	public static String[] getHandlerNames(String group){
         List<String> hanlders = new ArrayList<>();
 		if(ResourceUtils.containsProperty(INTERCEPTOR_HANDLERCLASS)){
@@ -123,6 +129,11 @@ public class MybatisConfigs {
 		if (isDataProfileEnabled()) {
 			hanlders.add(DataProfileHandler.NAME);
 		}
+		
+		if(isAuditFieldFillEnabled()) {
+			hanlders.add(AuditFieldFillHandler.NAME);
+		}
+		
 		
 		return hanlders.toArray(new String[0]);
 	}

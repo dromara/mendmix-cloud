@@ -166,12 +166,6 @@ public class UserSessionManager{
 		return session;
 	}
 	
-	private static String getSessionId() {
-		HttpServletRequest request = CurrentRuntimeContext.getRequest();
-		HttpServletResponse response = CurrentRuntimeContext.getResponse();
-		
-		return SessionCookieUtil.getSessionId(request, response);
-	}
 
 	public static UserSession getUserSession(){
 		
@@ -185,19 +179,9 @@ public class UserSessionManager{
 		return session;
 	}
 	
-	public static void destorySeesion(String sessionId){
-		UserSession session = getSessionCache().getObject(sessionId);
-		if(session == null)return;
-		getSessionCache().remove(session.getSessionId());
-		getSessionCache().remove(sessionId);
-		getPermCache().remove(sessionId);
-		log.debug("logout -> sessionId:{}",sessionId);
-		
-	}
-	
+
 	public static void destorySeesion(){
-		HttpServletRequest request = CurrentRuntimeContext.getRequest();
-		String sessionId = SessionCookieUtil.getSessionId(request, null);
+		String sessionId = getSessionId();
 		if(sessionId == null)return;
 		destorySeesion(sessionId);
 	}
@@ -205,11 +189,8 @@ public class UserSessionManager{
 	public static AuthUser getAuthUser(){
 		AuthUser authUser = CurrentRuntimeContext.getCurrentUser();
 		if(authUser != null)return authUser;
-		
-		String sessionId = getSessionId();
-		
-		if(StringUtils.isBlank(sessionId))return null;
-		UserSession loginSession = getSessionCache().getObject(sessionId);
+
+		UserSession loginSession = getUserSession();
 		if(loginSession == null)return null;
 		
 		authUser = loginSession.getUser();
@@ -230,6 +211,22 @@ public class UserSessionManager{
 		String sessionId = getSessionId();
 		return cache.getMapValue(sessionId, name);
     } 
+    
+    private static String getSessionId() {
+		HttpServletRequest request = CurrentRuntimeContext.getRequest();
+		HttpServletResponse response = CurrentRuntimeContext.getResponse();
+		
+		return SessionCookieUtil.getSessionId(request, response);
+	}
+    
+    private static void destorySeesion(String sessionId){
+		UserSession session = getSessionCache().getObject(sessionId);
+		if(session == null)return;
+		getSessionCache().remove(session.getSessionId());
+		getSessionCache().remove(sessionId);
+		getPermCache().remove(sessionId);
+		log.debug("logout -> sessionId:{}",sessionId);
+	}
 	
 	private static List<String> getPermissions(UserSession session){
 		List<String> permissions = getPermCache().getObject(session.getSessionId());

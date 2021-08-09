@@ -2,12 +2,19 @@ package com.jeesuite.zuul.model;
 
 public class Button {
 
+	private Integer id;
 	private String code;
 	private String name;
 	private Integer menuId;
 	private String menuUri;
 	
 	
+	public Integer getId() {
+		return id;
+	}
+	public void setId(Integer id) {
+		this.id = id;
+	}
 	public String getCode() {
 		return code;
 	}
