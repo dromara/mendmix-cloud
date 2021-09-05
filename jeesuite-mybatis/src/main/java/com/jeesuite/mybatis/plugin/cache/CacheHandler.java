@@ -68,8 +68,7 @@ public class CacheHandler implements InterceptorHandler {
 	private static final String STR_PARAM = "param";
 	
 	public static final String GROUPKEY_SUFFIX = "~keys";
-	private boolean dynamicCacheTime = false;
-	private boolean nullValueCache = false;
+	private boolean nullValueCache = true;
 	//null缓存占位符（避免频繁查询不存在对象造成缓存穿透导致频繁查询db）
 	public static final String NULL_PLACEHOLDER = "~null";
 	
@@ -110,10 +109,8 @@ public class CacheHandler implements InterceptorHandler {
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
 		
-		nullValueCache = MybatisConfigs.getBoolean(context.getGroupName(), MybatisConfigs.CACHE_NULL_VALUE, false);
-		dynamicCacheTime = MybatisConfigs.getBoolean(context.getGroupName(), MybatisConfigs.CACHE_DYNAMIC_EXPIRE, false);
 		defaultCacheExpire = Long.parseLong(MybatisConfigs.getProperty(context.getGroupName(), MybatisConfigs.CACHE_EXPIRE_SECONDS, "0"));
-		logger.info("nullValueCache:{},defaultCacheExpireSeconds:{},dynamicCacheTime:{}",nullValueCache,defaultCacheExpire,dynamicCacheTime);
+		logger.info("nullValueCache:{},defaultCacheExpireSeconds:{}",nullValueCache,defaultCacheExpire);
 
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
 		

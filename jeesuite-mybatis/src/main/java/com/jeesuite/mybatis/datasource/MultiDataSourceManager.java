@@ -66,7 +66,7 @@ public class MultiDataSourceManager {
 	 */
 	protected String getDataSourceKey() {
 		String tenantId = MybatisRuntimeContext.getTenantId();
-		if(tenantId == null || !MybatisConfigs.isTenantModeEnabled()){
+		if(tenantId == null || !MybatisConfigs.isSchameSharddingTenant()){
 			tenantId = NON_TENANT_KEY;
 		}
 		

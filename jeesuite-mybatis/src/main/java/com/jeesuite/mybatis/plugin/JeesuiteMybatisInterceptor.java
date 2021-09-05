@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.plugin.auditfield.AuditFieldFillHandler;
+import com.jeesuite.mybatis.plugin.autofield.AutoFieldFillHandler;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.dataprofile.DataProfileHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
@@ -65,8 +65,8 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 				this.interceptorHandlers.add(new PaginationHandler());
 			}else if(DataProfileHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new DataProfileHandler());
-			}else if(AuditFieldFillHandler.NAME.equals(name)){
-				this.interceptorHandlers.add(new AuditFieldFillHandler());
+			}else if(AutoFieldFillHandler.NAME.equals(name)){
+				this.interceptorHandlers.add(new AutoFieldFillHandler());
 			}else{
 				//自定义的拦截器
 				try {

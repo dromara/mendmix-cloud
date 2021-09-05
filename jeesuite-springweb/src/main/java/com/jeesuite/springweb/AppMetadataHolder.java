@@ -18,12 +18,19 @@ package com.jeesuite.springweb;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
+import org.springframework.core.type.classreading.MetadataReader;
+import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.ClassUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,7 +38,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jeesuite.common.constants.PermissionLevel;
-import com.jeesuite.common.util.ClassScanner;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.annotation.ApiMetadata;
 import com.jeesuite.springweb.ext.feign.FeignApiDependencyScanner;
@@ -178,7 +184,7 @@ public class AppMetadataHolder {
 			
 			String basePackage = ResourceUtils.getProperty("application.base-package");
 			if(basePackage == null)return metadata;
-			List<String> classNameList = ClassScanner.scan(basePackage);
+			List<String> classNameList = scanControllerClassNames(basePackage);
 			//
 			scanApiInfos(metadata,classNameList);
 			
@@ -194,5 +200,32 @@ public class AppMetadataHolder {
 		}
 		return metadata;
 	}
+	
+private static List<String> scanControllerClassNames(String basePackage){
+		
+		List<String> result = new ArrayList<>();
+		
+    	String RESOURCE_PATTERN = "/**/*.class";
+    	
+    	ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
+    	try {
+            String pattern = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + ClassUtils.convertClassNameToResourcePath(basePackage) + RESOURCE_PATTERN;
+            org.springframework.core.io.Resource[] resources = resourcePatternResolver.getResources(pattern);
+            MetadataReaderFactory readerFactory = new CachingMetadataReaderFactory(resourcePatternResolver);
+            for (org.springframework.core.io.Resource resource : resources) {
+                if (resource.isReadable()) {
+                    MetadataReader reader = readerFactory.getMetadataReader(resource);
+                    String className = reader.getClassMetadata().getClassName();
+                    Class<?> clazz = Class.forName(className);
+                    if(clazz.isAnnotationPresent(Controller.class) || clazz.isAnnotationPresent(RestController.class)){
+                    	result.add(clazz.getName());
+                    }
+                }
+            }
+        } catch (Exception e) {}
+    
+    	return result;
+    	
+	}  
 
 }

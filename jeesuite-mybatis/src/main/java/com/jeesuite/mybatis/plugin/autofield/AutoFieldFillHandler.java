@@ -1,4 +1,4 @@
-package com.jeesuite.mybatis.plugin.auditfield;
+package com.jeesuite.mybatis.plugin.autofield;
 
 import java.lang.reflect.Field;
 import java.util.Date;
@@ -14,25 +14,26 @@ import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
-import com.jeesuite.mybatis.plugin.auditfield.annotation.CreatedAt;
-import com.jeesuite.mybatis.plugin.auditfield.annotation.CreatedBy;
-import com.jeesuite.mybatis.plugin.auditfield.annotation.UpdatedAt;
-import com.jeesuite.mybatis.plugin.auditfield.annotation.UpdatedBy;
+import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedAt;
+import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedBy;
+import com.jeesuite.mybatis.plugin.autofield.annotation.TenantShardding;
+import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedAt;
+import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedBy;
 import com.jeesuite.spring.InstanceFactory;
 
 /**
- * 审计字段自动填充
+ * 字段自动填充
  * 
  * <br>
- * Class Name   : AuditFieldFillHandler
+ * Class Name   : AutoFieldFillHandler
  *
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @version 1.0.0
  * @date Aug 8, 2021
  */
-public class AuditFieldFillHandler implements InterceptorHandler {
+public class AutoFieldFillHandler implements InterceptorHandler {
 
-	public static final String NAME = "auditFieldFill";
+	public static final String NAME = "autoField";
 	
 	private static final String INSERT_LIST_METHOD_NAME = "insertList";
 
@@ -43,7 +44,7 @@ public class AuditFieldFillHandler implements InterceptorHandler {
 	
 	public static CurrentUserProvider getCurrentUserProvider() {
 		if(currentUserProvider == null && !methodFieldMappings.isEmpty()) {
-			synchronized (AuditFieldFillHandler.class) {
+			synchronized (AutoFieldFillHandler.class) {
 				currentUserProvider = InstanceFactory.getInstance(CurrentUserProvider.class);
 				if(currentUserProvider == null) {
 					methodFieldMappings.clear();
@@ -58,7 +59,7 @@ public class AuditFieldFillHandler implements InterceptorHandler {
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
 		
 		for (EntityInfo ei : entityInfos) {
-			Field[] createdFields = new Field[2];
+			Field[] createdFields = new Field[3];
 			Field[] updatedFields = new Field[2];
 			Field[] fields = FieldUtils.getAllFields(ei.getEntityClass());
 			for (Field field : fields) {
@@ -74,6 +75,9 @@ public class AuditFieldFillHandler implements InterceptorHandler {
 				}else if(field.isAnnotationPresent(UpdatedAt.class)) {
 					field.setAccessible(true);
 					updatedFields[1] = field;
+				}else if(field.isAnnotationPresent(TenantShardding.class)) {
+					field.setAccessible(true);
+					createdFields[2] = field;
 				}
 			}
 	

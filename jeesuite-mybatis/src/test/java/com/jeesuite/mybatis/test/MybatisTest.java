@@ -37,8 +37,6 @@ import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.plugin.cache.EntityCacheHelper;
-import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
-import com.jeesuite.mybatis.plugin.pagination.PageExecutor.PageDataLoader;
 import com.jeesuite.mybatis.test.entity.SnsAccounyBindingEntity;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 import com.jeesuite.mybatis.test.mapper.SnsAccounyBindingEntityMapper;

@@ -89,7 +89,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 			throw new IllegalArgumentException("Property 'db.dataSourceType' expect:" + Arrays.toString(DataSourceType.values()));
 		}
 		
-		boolean tenantMode = MybatisConfigs.isTenantModeEnabled();
+		boolean schameTenantMode = MybatisConfigs.isSchameSharddingTenant();
 		 // 属性文件  
         Map<String, Properties> map = new HashMap<String,Properties>(); 
         if(dataSourceConfigLoader != null){
@@ -99,10 +99,10 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
         		if(!config.isMaster()){
         			config.setIndex(++slaveIndex);
         		}
-        		buildDataSourceProperties(tenantMode,config,map);
+        		buildDataSourceProperties(schameTenantMode,config,map);
 			}
         }else{
-        	if(tenantMode){
+        	if(schameTenantMode){
         		Properties properties = ResourceUtils.getAllProperties("tenant\\[.*\\]\\.master.*", false);
         		if(properties.isEmpty())throw new RuntimeException("tenant support Db config Like tenant[xxx].master.db.xxx");
         		
@@ -120,13 +120,13 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
         }
 		
 		if(map.isEmpty())throw new RuntimeException("Db config Not found..");
-		registerDataSources(tenantMode,map);
+		registerDataSources(schameTenantMode,map);
 		
 		if (this.targetDataSources == null || targetDataSources.isEmpty()) {
 			throw new IllegalArgumentException("Property 'targetDataSources' is required");
 		}
 		
-		if (this.defaultDataSource == null && !tenantMode) {
+		if (this.defaultDataSource == null && !schameTenantMode) {
 			throw new IllegalArgumentException("Property 'defaultDataSource' is required");
 		}
 	}
@@ -196,7 +196,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 	 * @param mapCustom
 	 * @param isLatestGroup
 	 */
-    private void registerDataSources(boolean tenantMode,Map<String, Properties> mapCustom) {  
+    private void registerDataSources(boolean schameTenantMode,Map<String, Properties> mapCustom) {  
     	
         DefaultListableBeanFactory acf = (DefaultListableBeanFactory) this.context.getAutowireCapableBeanFactory();  
         Iterator<String> iter = mapCustom.keySet().iterator();  
@@ -280,12 +280,12 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
     }
     
   
-	private void buildDataSourceProperties(boolean tenantMode,DataSourceConfig config, Map<String, Properties> map) {
-		if(tenantMode && StringUtils.isBlank(config.getTenantId())){
-			throw new IllegalArgumentException("On tenantMode tenantId required ");
+	private void buildDataSourceProperties(boolean schameTenantMode,DataSourceConfig config, Map<String, Properties> map) {
+		if(schameTenantMode && StringUtils.isBlank(config.getTenantId())){
+			throw new IllegalArgumentException("On schameTenantMode tenantId required ");
 		}
 		String dsKey = config.isMaster() ? MASTER_KEY : "slave" + config.getIndex();
-		if(tenantMode)dsKey = "tenant["+config.getTenantId()+"]." + dsKey;
+		if(schameTenantMode)dsKey = "tenant["+config.getTenantId()+"]." + dsKey;
 		Properties properties = new Properties();
 		properties.setProperty("url", config.getUrl());
 		properties.setProperty("username", config.getUsername());

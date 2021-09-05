@@ -77,6 +77,7 @@
 		<module>jeesuite-security</module>
 		<module>jeesuite-log</module>
 		<module>jeesuite-zuul-support</module>
+		<!-- <module>jeesuite-mongodb</module> -->
 	</modules>
 
 	<dependencies>

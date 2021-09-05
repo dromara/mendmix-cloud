@@ -26,7 +26,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.StringUtils;
 
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.mybatis.plugin.auditfield.AuditFieldFillHandler;
+import com.jeesuite.mybatis.plugin.autofield.AutoFieldFillHandler;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 import com.jeesuite.mybatis.plugin.dataprofile.DataProfileHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
@@ -41,16 +41,12 @@ public class MybatisConfigs {
 	
 	public static final String CRUD_DRIVER = "jeesuite.mybatis.crudDriver";
 	public static final String DB_TYPE = "jeesuite.mybatis.dbType";
-	public static final String CACHE_ENABLED = "jeesuite.mybatis.cacheEnabled";
-	public static final String CACHE_NULL_VALUE = "jeesuite.mybatis.nullValueCache";
-	public static final String CACHE_EXPIRE_SECONDS = "jeesuite.mybatis.cacheExpireSeconds";
-	public static final String CACHE_DYNAMIC_EXPIRE = "jeesuite.mybatis.dynamicExpire";
-	public static final String RW_ROUTE_ENABLED = "jeesuite.mybatis.rwRouteEnabled";
-	public static final String PAGINATION_ENABLED = "jeesuite.mybatis.paginationEnabled";
-	public static final String TENANT_MODE_ENABLED = "jeesuite.mybatis.tenantModeEnabled";
-	public static final String DATA_PROFILE_ENABLED = "jeesuite.mybatis.dataProfileEnabled";
-	public static final String AUDIT_FIELD_FILL_ENABLED = "jeesuite.mybatis.auditFieldFillEnabled";
-	public static final String PAGINATION_MAX_LIMIT = "jeesuite.mybatis.pagination.maxLimit";
+	public static final String CACHE_ENABLED = "jeesuite.mybatis.cache.enabled";
+	public static final String CACHE_EXPIRE_SECONDS = "jeesuite.mybatis.cache.expireSeconds";
+	public static final String RW_ROUTE_ENABLED = "jeesuite.mybatis.rwRoute.enabled";
+	public static final String TENANT_ENABLED = "jeesuite.mybatis.tenant.enabled";
+	public static final String TENANT_SHARDDING_FIELD = "jeesuite.mybatis.tenant.sharddingField";
+	public static final String DATA_PROFILE_ENABLED = "jeesuite.mybatis.dataProfile.enabled";
 	public static final String INTERCEPTOR_HANDLERCLASS = "jeesuite.mybatis.interceptorHandlerClass";
 	
 	private static Map<String, Properties> groupProperties = new HashMap<>();
@@ -87,24 +83,24 @@ public class MybatisConfigs {
 		return getBoolean(group,RW_ROUTE_ENABLED, false);
 	}
 	
-	public static boolean isPaginationEnabled(String group) {
-		return getBoolean(group,PAGINATION_ENABLED, true);
+	public static boolean isTenantEnabled() {
+		return ResourceUtils.getBoolean(TENANT_ENABLED, false);
 	}
 	
-	public static boolean isTenantModeEnabled() {
-		return ResourceUtils.getBoolean(TENANT_MODE_ENABLED, false);
+	public static String getTenantSharddingField() {
+		return ResourceUtils.getProperty(TENANT_SHARDDING_FIELD);
+	}
+	
+	public static boolean isFieldSharddingTenant() {
+		return isTenantEnabled() && getTenantSharddingField() != null;
+	}
+	
+	public static boolean isSchameSharddingTenant() {
+		return isTenantEnabled() && getTenantSharddingField() == null;
 	}
 	
 	public static boolean isDataProfileEnabled() {
 		return ResourceUtils.getBoolean(DATA_PROFILE_ENABLED, false);
-	}
-	
-	public static int getPaginationMaxLimit(){
-		return ResourceUtils.getInt(PAGINATION_MAX_LIMIT, 0);
-	}
-	
-	public static boolean isAuditFieldFillEnabled() {
-		return ResourceUtils.getBoolean(AUDIT_FIELD_FILL_ENABLED, true);
 	}
 	
 	public static String[] getHandlerNames(String group){
@@ -114,6 +110,9 @@ public class MybatisConfigs {
 			hanlders.addAll(Arrays.asList(customHanlderClass));
 		}
 		
+		hanlders.add(PaginationHandler.NAME);
+		hanlders.add(AutoFieldFillHandler.NAME);
+		
 		if (isCacheEnabled(group)) {
 			hanlders.add(CacheHandler.NAME);
 		}
@@ -122,18 +121,9 @@ public class MybatisConfigs {
 			hanlders.add(RwRouteHandler.NAME);
 		}
 		
-		if (isPaginationEnabled(group)) {
-			hanlders.add(PaginationHandler.NAME);
-		}
-		
 		if (isDataProfileEnabled()) {
 			hanlders.add(DataProfileHandler.NAME);
 		}
-		
-		if(isAuditFieldFillEnabled()) {
-			hanlders.add(AuditFieldFillHandler.NAME);
-		}
-		
 		
 		return hanlders.toArray(new String[0]);
 	}

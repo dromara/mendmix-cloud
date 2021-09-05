@@ -1,4 +1,4 @@
-package com.jeesuite.springweb.model;
+package com.jeesuite.common.model;
 
 /**
  * 

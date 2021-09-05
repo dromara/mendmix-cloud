@@ -1,5 +1,6 @@
 package com.jeesuite.springweb.model;
 
+import com.jeesuite.common.model.OrderBy;
 import com.jeesuite.common.model.PageParams;
 
 /**

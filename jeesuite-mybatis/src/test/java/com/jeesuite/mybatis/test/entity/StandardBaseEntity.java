@@ -1,12 +1,12 @@
 package com.jeesuite.mybatis.test.entity;
 
-import com.jeesuite.mybatis.core.BaseEntity;
-import com.jeesuite.mybatis.plugin.auditfield.annotation.CreatedAt;
-import com.jeesuite.mybatis.plugin.auditfield.annotation.CreatedBy;
-import com.jeesuite.mybatis.plugin.auditfield.annotation.UpdatedAt;
-import com.jeesuite.mybatis.plugin.auditfield.annotation.UpdatedBy;
+import javax.persistence.Column;
 
-import javax.persistence.*;
+import com.jeesuite.mybatis.core.BaseEntity;
+import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedAt;
+import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedBy;
+import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedAt;
+import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedBy;
 
 /**
  * 
