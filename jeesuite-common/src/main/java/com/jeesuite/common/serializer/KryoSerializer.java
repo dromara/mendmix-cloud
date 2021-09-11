@@ -6,6 +6,7 @@ package com.jeesuite.common.serializer;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.jeesuite.common.ThreadLocalContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,17 +19,22 @@ import java.io.IOException;
  */
 public class KryoSerializer implements Serializer {
 
-	private final static Kryo kryo;
-	static {
-		kryo = new Kryo();
-		kryo.setRegistrationRequired(false);
-		kryo.setWarnUnregisteredClasses(false);
+    private static final String KRYO_INSTANCE_ID = "kryo";
+
+	public static Kryo getKryo() {
+    	Kryo kryo = ThreadLocalContext.get(KRYO_INSTANCE_ID);
+    	if(kryo == null) {
+    		kryo = new Kryo();
+    		kryo.setRegistrationRequired(false);
+    		kryo.setWarnUnregisteredClasses(false);
+    		ThreadLocalContext.set(KRYO_INSTANCE_ID, kryo);
+    	}
+		return kryo;
 	}
 
-
-    @Override
+	@Override
 	public String name() {
-		return "kryo";
+		return KRYO_INSTANCE_ID;
 	}
 
 	@Override
@@ -37,7 +43,7 @@ public class KryoSerializer implements Serializer {
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			output = new Output(baos);
-			kryo.writeClassAndObject(output, obj);
+			getKryo().writeClassAndObject(output, obj);
 			output.flush();
 			return baos.toByteArray();
 		}finally{
@@ -54,7 +60,7 @@ public class KryoSerializer implements Serializer {
 		try {
 			ByteArrayInputStream bais = new ByteArrayInputStream(bits);
 			ois = new Input(bais);
-			return kryo.readClassAndObject(ois);
+			return getKryo().readClassAndObject(ois);
 		} finally {
 			if(ois != null)
 				ois.close();

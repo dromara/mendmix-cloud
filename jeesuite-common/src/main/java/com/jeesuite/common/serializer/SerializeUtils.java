@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 public class SerializeUtils {
 
-	static KryoSerializer serializer = new KryoSerializer();
+	static KryoPoolSerializer serializer = new KryoPoolSerializer();
     /**
      * 序列化
      *

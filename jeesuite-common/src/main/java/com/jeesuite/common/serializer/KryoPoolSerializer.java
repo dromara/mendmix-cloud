@@ -92,6 +92,8 @@ public class KryoPoolSerializer implements Serializer{
         public KryoHolder creatInstnce() {
             Kryo kryo = new Kryo();
             kryo.setReferences(false);//
+            kryo.setRegistrationRequired(false);
+    		kryo.setWarnUnregisteredClasses(false);
             return new KryoHolder(kryo);
         }
 
