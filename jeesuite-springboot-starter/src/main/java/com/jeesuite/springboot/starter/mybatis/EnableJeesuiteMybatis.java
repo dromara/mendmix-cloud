@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Import;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import({JeesuiteMybatisConfiguration.class,JeesuiteDataSourceConfiguration.class})
+@Import({DefaultMybatisConfiguration.class,DefaultDataSourceConfiguration.class,CustomDataSourceMybatisConfiguration.class})
 public @interface EnableJeesuiteMybatis {
 
 }

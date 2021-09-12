@@ -1,7 +1,6 @@
-/**
- * Confidential and Proprietary Copyright 2019 By 卓越里程教育科技有限公司 All Rights Reserved
- */
 package com.jeesuite.mybatis.datasource;
+
+import com.jeesuite.mybatis.MybatisRuntimeContext;
 
 /**
  * 
@@ -13,7 +12,6 @@ package com.jeesuite.mybatis.datasource;
  * @date 2020年4月20日
  */
 public class DataSourceContextVals {
-	public boolean userSlave; //
-	public boolean forceMaster;
-	public String dsKey;
+	public String tenantId = MybatisRuntimeContext.getTenantId();
+	public Boolean master; //
 }

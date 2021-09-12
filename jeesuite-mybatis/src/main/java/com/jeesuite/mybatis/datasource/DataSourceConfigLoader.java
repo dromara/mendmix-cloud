@@ -16,5 +16,5 @@ import java.util.List;
  */
 public interface DataSourceConfigLoader {
 	
-	List<DataSourceConfig> load();
+	List<DataSourceConfig> load(String group);
 }

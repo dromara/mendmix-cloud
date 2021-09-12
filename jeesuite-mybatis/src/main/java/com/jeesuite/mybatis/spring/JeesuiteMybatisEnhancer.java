@@ -19,6 +19,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import org.apache.ibatis.session.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.crud.GeneralSqlGenerator;
@@ -31,12 +33,12 @@ import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月22日
  */
-public class JeesuiteMybatisRegistry {
+public class JeesuiteMybatisEnhancer {
 
-	public static void register(String group,Configuration configuration)  throws Exception{
-		if("default".equals(MybatisConfigs.getCrudDriver(group))){
-			new GeneralSqlGenerator(group,configuration).generate();
-		}else if("mapper3".equals(MybatisConfigs.getCrudDriver(group))){
+	private static final Logger logger = LoggerFactory.getLogger(JeesuiteMybatisEnhancer.class);
+
+	public static void handle(String group, Configuration configuration) throws Exception {
+		if ("tkMapper".equals(MybatisConfigs.getCrudDriver(group))) {
 			Class<?> helperClazz = Class.forName("tk.mybatis.mapper.mapperhelper.MapperHelper");
 			Object helper = helperClazz.newInstance();
 			Class<?> configClazz = Class.forName("tk.mybatis.mapper.entity.Config");
@@ -45,25 +47,27 @@ public class JeesuiteMybatisRegistry {
 			method.invoke(config, false);
 			method = helperClazz.getDeclaredMethod("setConfig", configClazz);
 			method.invoke(helper, config);
-			
+
 			method = helperClazz.getDeclaredMethod("registerMapper", Class.class);
 			List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(group);
 			for (EntityInfo entityInfo : entityInfos) {
 				method.invoke(helper, entityInfo.getMapperClass());
 			}
-			
+
 			method = helperClazz.getDeclaredMethod("processConfiguration", Configuration.class);
-			method.invoke(helper,configuration);
-		}else{
-			new GeneralSqlGenerator(group,configuration).generate();
+			method.invoke(helper, configuration);
+		} else {
+			new GeneralSqlGenerator(group, configuration).generate();
 		}
-		//注册拦截器
+		// 注册拦截器
 		String[] hanlderNames = MybatisConfigs.getHandlerNames(group);
-		if(hanlderNames.length > 0){
-			JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor(group,hanlderNames);
+		if (hanlderNames.length > 0) {
+			JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor(group, hanlderNames);
 			configuration.addInterceptor(interceptor);
 			interceptor.afterRegister();
 		}
 		
+		logger.info(">> JeesuiteMybatisEnhancer finshed -> group:{},hanlderNames:{}",group,hanlderNames);
+
 	}
 }

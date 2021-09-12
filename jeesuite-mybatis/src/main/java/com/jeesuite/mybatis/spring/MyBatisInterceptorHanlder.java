@@ -28,8 +28,8 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 			MybatisRuntimeContext.setTransactionalMode(true);
 		}
 		
-		if(!MybatisRuntimeContext.isForceUseMaster() && method.isAnnotationPresent(UseMaster.class)){				
-			MybatisRuntimeContext.forceMaster();
+		if(!MybatisRuntimeContext.isRwRouteAssigned() && method.isAnnotationPresent(UseMaster.class)){				
+			MybatisRuntimeContext.userMaster();
 		}
 		
 		if(!MybatisRuntimeContext.isDataProfileIgnore() && method.isAnnotationPresent(DataProfileIgnore.class)){				

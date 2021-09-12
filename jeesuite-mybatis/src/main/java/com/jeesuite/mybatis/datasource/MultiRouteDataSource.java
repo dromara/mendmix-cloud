@@ -3,44 +3,40 @@
  */
 package com.jeesuite.mybatis.datasource;
 
-import java.io.IOException;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.AbstractDataSource;
-import org.springframework.jdbc.datasource.lookup.DataSourceLookup;
-import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
+import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisConfigs;
+import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.datasource.builder.DruidDataSourceBuilder;
 import com.jeesuite.mybatis.datasource.builder.HikariCPDataSourceBuilder;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
- * 自动路由多数据源（读写分离）
+ * 自动路由多数据源（读写分离/多租户）
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2015年11月18日
@@ -49,106 +45,65 @@ import com.jeesuite.spring.SpringInstanceProvider;
 public class MultiRouteDataSource extends AbstractDataSource implements ApplicationContextAware,InitializingBean{  
 
 	private static final Logger logger = LoggerFactory.getLogger(MultiRouteDataSource.class);
-	
-	private static final String MASTER_KEY = "master";
-	
-	private DataSourceType dataSourceType = DataSourceType.Druid;
+
+	private DataSourceType dataSourceType = DataSourceType.druid;
 	
 	private ApplicationContext context;
 	
-	private Map<Object, DataSource> targetDataSources;
-	
-	private DataSource defaultDataSource;
-	
-	@Autowired
-	private Environment environment;
-	@Autowired(required = false)
-	private DataSourceConfigLoader dataSourceConfigLoader;
+	private Map<String, DataSource> targetDataSources = new HashMap<>();
 
-	private DataSourceLookup dataSourceLookup = new JndiDataSourceLookup();
+	private String group;
+	private boolean dsKeyWithTenant = false;
+	//每个master对应slave数
+	private Map<String, Integer> slaveNumsMap = new HashMap<>();
 
-	public void addTargetDataSources(Map<Object, DataSource> targetDataSources) {
-		if(this.targetDataSources == null){			
-			this.targetDataSources = targetDataSources;
-		}else{
-			this.targetDataSources.putAll(targetDataSources);
-		}
+	public MultiRouteDataSource(String group) {
+		this.group = group;
+		dsKeyWithTenant = MybatisConfigs.isSchameSharddingTenant(group);
 	}
-
-	public void setDataSourceLookup(DataSourceLookup dataSourceLookup) {
-		this.dataSourceLookup = (dataSourceLookup != null ? dataSourceLookup : new JndiDataSourceLookup());
-	}
-
 
 	@Override
 	public void afterPropertiesSet() {
-		
-		try {	
-			dataSourceType = DataSourceType.valueOf(ResourceUtils.getProperty("db.dataSourceType", DataSourceType.Druid.name()));
-		} catch (Exception e) {
-			throw new IllegalArgumentException("Property 'db.dataSourceType' expect:" + Arrays.toString(DataSourceType.values()));
+		List<DataSourceConfig> dsConfigs = DataSoureConfigHolder.getConfigs(group);
+
+		for (DataSourceConfig dataSourceConfig : dsConfigs) {			
+			registerRealDataSource(dataSourceConfig);
 		}
-		
-		boolean schameTenantMode = MybatisConfigs.isSchameSharddingTenant();
-		 // 属性文件  
-        Map<String, Properties> map = new HashMap<String,Properties>(); 
-        if(dataSourceConfigLoader != null){
-        	List<DataSourceConfig> configs = dataSourceConfigLoader.load();
-        	int slaveIndex = 0;
-        	for (DataSourceConfig config : configs) {
-        		if(!config.isMaster()){
-        			config.setIndex(++slaveIndex);
-        		}
-        		buildDataSourceProperties(schameTenantMode,config,map);
-			}
-        }else{
-        	if(schameTenantMode){
-        		Properties properties = ResourceUtils.getAllProperties("tenant\\[.*\\]\\.master.*", false);
-        		if(properties.isEmpty())throw new RuntimeException("tenant support Db config Like tenant[xxx].master.db.xxx");
-        		
-        		List<String> tenantIds = properties.keySet().stream().map(s -> {
-        			return s.toString().split("\\[|\\]")[1];
-        		}).distinct().collect(Collectors.toList());
-        		
-        		for (String tenantId : tenantIds) {
-        			parseDataSourceConfig(tenantId,map);
-        			logger.info("Load tenant config finish, -> tenantId:{}",tenantId);
-    			}
-        	}else{    		
-        		parseDataSourceConfig(null,map);
-        	}
-        }
-		
-		if(map.isEmpty())throw new RuntimeException("Db config Not found..");
-		registerDataSources(schameTenantMode,map);
+	
 		
 		if (this.targetDataSources == null || targetDataSources.isEmpty()) {
 			throw new IllegalArgumentException("Property 'targetDataSources' is required");
 		}
 		
-		if (this.defaultDataSource == null && !schameTenantMode) {
-			throw new IllegalArgumentException("Property 'defaultDataSource' is required");
-		}
+		logger.info("init multiRouteDataSource[{}] finished -> slaveNums:{},dsKeyWithTenant:{}",group,slaveNumsMap,dsKeyWithTenant);
 	}
 
-
-	protected Object resolveSpecifiedLookupKey(Object lookupKey) {
-		return lookupKey;
+	private String currentDataSourceKey() {
+		DataSourceContextVals context = MybatisRuntimeContext.getDataSourceContextVals();
+		boolean useMaster = context.master == null ? true : context.master;
+		int index = 0;
+		String tenantId = dsKeyWithTenant ? context.tenantId : null;
+		if(dsKeyWithTenant && StringUtils.isBlank(tenantId)) {
+			throw new JeesuiteBaseException("Can't get [tentantId] from currentContext");
+		}
+		if(!useMaster) {
+			if(slaveNumsMap.isEmpty()) {
+				useMaster = true;
+			}else {
+				String subGroup = dsKeyWithTenant ? group + WebConstants.UNDER_LINE + tenantId : group;
+				if(!slaveNumsMap.containsKey(subGroup)) {
+					useMaster = true;
+				}else {
+					Integer slaveNums = slaveNumsMap.get(subGroup);
+					//
+					if(slaveNums > 1) {
+						index = RandomUtils.nextInt(0, slaveNums);
+					}
+				}
+			}
+		}
+		return DataSourceConfig.buildDataSourceKey(group, tenantId, useMaster, index);
 	}
-
-	protected DataSource resolveSpecifiedDataSource(Object dataSource) throws IllegalArgumentException {
-		if (dataSource instanceof DataSource) {
-			return (DataSource) dataSource;
-		}
-		else if (dataSource instanceof String) {
-			return this.dataSourceLookup.getDataSource((String) dataSource);
-		}
-		else {
-			throw new IllegalArgumentException(
-					"Illegal data source value - only [javax.sql.DataSource] and String supported: " + dataSource);
-		}
-	}
-
 
 	@Override
 	public Connection getConnection() throws SQLException {
@@ -175,10 +130,10 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 	}
 
 	protected DataSource determineTargetDataSource() {
-		Object lookupKey =MultiDataSourceManager.get().getDataSourceKey();
+		String lookupKey = currentDataSourceKey();
 		DataSource dataSource = targetDataSources.get(lookupKey);
-		if (dataSource == null) {
-			throw new IllegalStateException("Cannot determine target DataSource for lookup key [" + lookupKey + "]");
+	    if (dataSource == null) {
+			throw new JeesuiteBaseException("Cannot determine target DataSource for lookup key [" + lookupKey + "]");
 		}
 		return dataSource;
 	}
@@ -193,109 +148,64 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 
 	/**
 	 * 功能说明：根据DataSource创建bean并注册到容器中
-	 * @param mapCustom
-	 * @param isLatestGroup
+	 * @param config
 	 */
-    private void registerDataSources(boolean schameTenantMode,Map<String, Properties> mapCustom) {  
-    	
-        DefaultListableBeanFactory acf = (DefaultListableBeanFactory) this.context.getAutowireCapableBeanFactory();  
-        Iterator<String> iter = mapCustom.keySet().iterator();  
-        
-       Map<Object, DataSource> targetDataSources = new HashMap<>();
-       
-       BeanDefinitionBuilder beanDefinitionBuilder = null;
-		while (iter.hasNext()) {
-			String dsKey = iter.next(); //
-			Properties nodeProps = mapCustom.get(dsKey);
-			// 如果当前库为最新一组数据库，注册beanName为master
-			logger.info(">>>>>begin to initialize datasource：" + dsKey + "\n================\n"
-			        + String.format("url:%s,username:%s", nodeProps.getProperty("url"),nodeProps.getProperty("username"))
-					+ "\n==============");
-			if (DataSourceType.Druid == dataSourceType) {
-				beanDefinitionBuilder = DruidDataSourceBuilder.builder(nodeProps);
-			} else if (DataSourceType.HikariCP == dataSourceType) {
-				beanDefinitionBuilder = HikariCPDataSourceBuilder.builder(nodeProps);
-			}
+	private void registerRealDataSource(DataSourceConfig config) {
+		
+		config.validate();
+		
+		Properties props = convertProperties(config);
 
-			String beanName = dsKey.replaceAll("\\[|\\]|\\.", "") + "DataSource";
-			acf.registerBeanDefinition(beanName, beanDefinitionBuilder.getRawBeanDefinition());
+		DefaultListableBeanFactory acf = (DefaultListableBeanFactory) this.context.getAutowireCapableBeanFactory();
 
-			DataSource ds = (DataSource) this.context.getBean(beanName);
-			targetDataSources.put(dsKey, ds);
-			//  设置默认数据源
-			if (dsKey.equals(MASTER_KEY)) {
-				defaultDataSource = ds;
+		BeanDefinitionBuilder beanDefinitionBuilder = null;
+		if (DataSourceType.druid == dataSourceType) {
+			beanDefinitionBuilder = DruidDataSourceBuilder.builder(props);
+		} else if (DataSourceType.hikariCP == dataSourceType) {
+			beanDefinitionBuilder = HikariCPDataSourceBuilder.builder(props);
+		}
+
+		String dsKey = config.dataSourceKey();
+		String beanName = config.getGroup() + "DataSource";
+		acf.registerBeanDefinition(beanName, beanDefinitionBuilder.getRawBeanDefinition());
+
+		DataSource ds = (DataSource) this.context.getBean(beanName);
+		targetDataSources.put(dsKey, ds);
+		//保存slave节点数
+		if(dsKey.contains(DataSourceConfig.SLAVE_KEY)) {
+			String subGroup = StringUtils.splitByWholeSeparator(dsKey, "_slave")[0];
+			if(slaveNumsMap.containsKey(subGroup)) {
+				slaveNumsMap.put(subGroup, slaveNumsMap.get(subGroup) + 1);
+			}else {
+				slaveNumsMap.put(subGroup, 1);
 			}
-			logger.info("bean[" + dsKey + "] has initialized! lookupKey:" + dsKey);
-			//
-			MultiDataSourceManager.get().registerDataSourceKey(dsKey);
-		} 
-        
-        addTargetDataSources(targetDataSources);
-    }  
-	
-	/** 
-     * 功能说明：解析配置，得到数据源Map 
-     * @return 
-     * @throws IOException 
-     */  
-    private void parseDataSourceConfig(String tenantId,Map<String, Properties> mapDataSource){  
-    	String tenantPrefix = tenantId == null ? "" : "tenant["+tenantId+"].";
-		String datasourceKey = tenantPrefix + MASTER_KEY;
-		parseEachConfig(datasourceKey,mapDataSource); 
-		
-		//解析同组下面的slave
-		int index = 1;
-		while(true){
-			datasourceKey = tenantPrefix + "slave" + index;
-			if(!ResourceUtils.containsProperty(datasourceKey + ".db.url") && !ResourceUtils.containsProperty(datasourceKey + ".db.jdbcUrl"))break;
-			parseEachConfig(datasourceKey,mapDataSource); 
-			index++;
 		}
-    }  
-    
-    
-    private void parseEachConfig(String keyPrefix,Map<String, Properties> mapDataSource){
-    	
-    	Properties properties = new Properties();
-    	String prefix = "db.";
-    	Properties tmpProps = ResourceUtils.getAllProperties(prefix);
-    	
-    	String value;
-    	for (Entry<Object, Object> entry : tmpProps.entrySet()) {
-    		value = environment.getProperty(entry.getKey().toString());
-    		if(value == null)value = entry.getValue().toString();
-    		properties.setProperty(entry.getKey().toString().replace(prefix, ""), value);
-    	}
-    	//
-    	prefix = keyPrefix + ".db.";
-    	tmpProps = ResourceUtils.getAllProperties(prefix);
-    	for (Entry<Object, Object> entry : tmpProps.entrySet()) {
-    		value = environment.getProperty(entry.getKey().toString());
-    		if(value == null)value = entry.getValue().toString();
-    		properties.setProperty(entry.getKey().toString().replace(prefix, ""), value);
-    	}
-    	
-    	mapDataSource.put(keyPrefix, properties);
-    }
-    
-  
-	private void buildDataSourceProperties(boolean schameTenantMode,DataSourceConfig config, Map<String, Properties> map) {
-		if(schameTenantMode && StringUtils.isBlank(config.getTenantId())){
-			throw new IllegalArgumentException("On schameTenantMode tenantId required ");
-		}
-		String dsKey = config.isMaster() ? MASTER_KEY : "slave" + config.getIndex();
-		if(schameTenantMode)dsKey = "tenant["+config.getTenantId()+"]." + dsKey;
-		Properties properties = new Properties();
-		properties.setProperty("url", config.getUrl());
-		properties.setProperty("username", config.getUsername());
-		properties.setProperty("password", config.getPassword());
 		
-		String prefix = "db.";
-    	Properties tmpProps = ResourceUtils.getAllProperties(prefix);
-    	properties.putAll(tmpProps);
 		
-		map.put(dsKey, properties);
+		logger.info(">>register realDataSource[{}] finished! -> config:{}",config.dataSourceKey(),config.toString());
+
 	}
+
+	private Properties convertProperties(DataSourceConfig config) {
+		
+		Properties properties = new Properties();
+		Field[] fields = config.getClass().getDeclaredFields();
+		String value;
+		for (Field field : fields) {
+			if("class".equals(field.getName()))continue;
+			field.setAccessible(true);
+			try {
+				value = field.get(config).toString();
+			} catch (Exception e) {
+				value = ResourceUtils.getProperty("db." + field.getName());
+			}
+			
+			if(value != null) {
+				properties.setProperty(field.getName(), value);
+			}
+		}
+		return properties;
+	}  
+
     
 } 

@@ -71,6 +71,18 @@ public class MybatisMapperParser {
 		}
 		return null;
 	}
+	
+	public static String property2ColumnName(String mapperClassName,String propName){
+		EntityInfo entityInfo = mapperRalateEntitys.get(mapperClassName);
+		if(entityInfo == null)return null;
+		Map<String, String> map = caches.get(entityInfo.getEntityClass().getName());
+		if(map != null){
+			for (String columnName : map.keySet()) {
+				if(propName.equals(map.get(columnName)))return columnName;
+			}
+		}
+		return null;
+	}
 
 	private synchronized static void doParse(String group,Resource[] mapperLocations){
 		try {

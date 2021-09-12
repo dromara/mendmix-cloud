@@ -64,7 +64,7 @@ public class MybatisRuntimeContext {
 	public static void setTransactionalMode(boolean on){
 		ThreadLocalContext.set(CONTEXT_TRANS_ON_KEY, String.valueOf(on));
 		if(on){
-			forceMaster();
+			userMaster();
 		}
 	}
 	
@@ -93,26 +93,26 @@ public class MybatisRuntimeContext {
 	 * 
 	 * @param useSlave
 	 */
-	public static void useSlave(boolean useSlave) {
+	public static void useSlave() {
 		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
-		vals.userSlave = useSlave;
+		vals.master = false;
 	}
 	
 	/**
 	 * 设置强制使用master库
 	 */
-	public static void forceMaster(){
+	public static void userMaster(){
 		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
-		vals.forceMaster = true;
+		vals.master = true;
 	}
 	
-	/**
-	 * 判断是否强制使用一种方式
-	 * 
-	 * @return
-	 */
-	public static boolean isForceUseMaster() {
-		return MybatisRuntimeContext.getDataSourceContextVals().forceMaster;
+	public static boolean isRwRouteAssigned() {
+		return MybatisRuntimeContext.getDataSourceContextVals().master != null;
+	}
+	
+	public static boolean isUseMaster() {
+		Boolean master = MybatisRuntimeContext.getDataSourceContextVals().master;
+		return master == null ? true : master;
 	}
 	
 	public static DataSourceContextVals getDataSourceContextVals(){
@@ -136,6 +136,7 @@ public class MybatisRuntimeContext {
 	public static Map<String, String[]> getDataProfileMappings(){
 		return ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
 	}
+	
 
 	/**
 	 * 清理每一次数据库操作的上下文

@@ -1,6 +1,8 @@
 package com.jeesuite.mybatis.plugin;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.executor.Executor;
@@ -9,6 +11,7 @@ import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
 
+import com.jeesuite.common.model.OrderBy;
 import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.plugin.cache.QueryCacheMethodMetadata;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
@@ -31,8 +34,9 @@ public class InvocationVals {
 	private QueryCacheMethodMetadata queryMethodMetadata;
 	private String cacheKey;
 	private PageParams pageParam;
-	
-	
+	//补充查询条件<table,<column,[values]>>
+	private Map<String, Map<String, String[]>> tableAddtionalConditions;
+	private Map<String, List<OrderBy>> tableOrderBys;
 	
 	public InvocationVals(Invocation invocation) {
 		args = invocation.getArgs();
@@ -134,6 +138,10 @@ public class InvocationVals {
 		return pageParam;
 	}
 	
-	
+	public void addWhere(String tableName,String column,String[] values) {
+		if(tableAddtionalConditions == null) {
+			tableAddtionalConditions = new HashMap<>();
+		}
+	}
 
 }

@@ -21,8 +21,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
 
-import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
@@ -55,10 +53,9 @@ public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryB
 	public void afterPropertiesSet() throws Exception {
 		super.afterPropertiesSet();
 		MybatisMapperParser.addMapperLocations(groupName, mapperLocations);
-		String prefix = "default".equals(groupName) ? "jeesuite.mybatis" : groupName + ".jeesuite.mybatis";
-		MybatisConfigs.addProperties(groupName, ResourceUtils.getAllProperties(prefix));
 		Configuration configuration = getObject().getConfiguration();
-		JeesuiteMybatisRegistry.register(groupName,configuration);
+		//
+		JeesuiteMybatisEnhancer.handle(groupName,configuration);
 	}
 	
 	@Override

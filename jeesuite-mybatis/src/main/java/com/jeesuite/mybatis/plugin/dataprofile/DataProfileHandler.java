@@ -249,7 +249,7 @@ public class DataProfileHandler implements InterceptorHandler {
 			EqualsTo equalsTo = new EqualsTo();
 			equalsTo.setLeftExpression(column);
 			equalsTo.setRightExpression(new StringValue(values[0]));
-			newExpression = orginExpression == null ? equalsTo : new AndExpression(orginExpression, equalsTo);
+			newExpression = orginExpression == null ? equalsTo : new AndExpression(equalsTo,orginExpression);
 		} else {
 			ExpressionList expressionList = new ExpressionList(new ArrayList<>(values.length));
 			for (String value : values) {

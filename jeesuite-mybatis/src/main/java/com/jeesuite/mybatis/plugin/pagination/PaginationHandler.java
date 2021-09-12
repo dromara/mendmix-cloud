@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.BoundSql;
@@ -21,16 +20,26 @@ import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.model.OrderBy;
+import com.jeesuite.common.model.OrderBy.OrderType;
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.core.InterceptorHandler;
+import com.jeesuite.mybatis.datasource.DatabaseType;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
-import com.jeesuite.mybatis.plugin.pagination.PageSqlUtils.DbType;
+
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.OrderByElement;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
 
 /**
  * 
@@ -52,23 +61,12 @@ public class PaginationHandler implements InterceptorHandler {
 	
 	public static  Map<String,Boolean> pageMappedStatements = new HashMap<>();
 	
-	private DbType dbType = DbType.MYSQL;
-	
-	public void setDbType(String dbType){
-		if(StringUtils.isBlank(dbType))return;
-		DbType[] dbTypes = DbType.values();
-		for (DbType dt : dbTypes) {
-			if(dt.name().equalsIgnoreCase(dbType)){
-				this.dbType = dt;
-				break;
-			}
-		}
-	}
+	private DatabaseType dbType = DatabaseType.mysql;
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
 
-		setDbType(MybatisConfigs.getDbType(context.getGroupName()));
+		this.dbType = DatabaseType.valueOf(MybatisConfigs.getDbType(context.getGroupName()));
 		
 		logger.info("dbType:{}",dbType.name());
 		
@@ -120,7 +118,7 @@ public class PaginationHandler implements InterceptorHandler {
         //
         Long total = executeQueryCount(executor, countMappedStatement, orignSql,parameter, boundSql, resultHandler);
         //查询分页数据
-        List<?> datas = executeQuery(executor, orignMappedStatement,orignSql, parameter, boundSql, resultHandler, pageParams);	        
+        List<?> datas = executeQuery(executor, orignMappedStatement,invocation.getMapperNameSpace(),orignSql, parameter, boundSql, resultHandler, pageParams);	        
 
         Page<Object> page = new Page<Object>(pageParams,total,(List<Object>) datas);	
 		
@@ -154,10 +152,10 @@ public class PaginationHandler implements InterceptorHandler {
 	}
 	
 	@SuppressWarnings("rawtypes")
-	private List executeQuery(Executor executor, MappedStatement ms,String orignSql,
+	private List executeQuery(Executor executor, MappedStatement ms,String mapperNamespace,String orignSql,
             Object parameter, BoundSql boundSql, ResultHandler resultHandler,PageParams pageParams) throws IllegalAccessException, SQLException {
 		
-		String pageSql = PageSqlUtils.getLimitSQL(dbType,orignSql,pageParams);
+		String pageSql = buildPaginationSql(mapperNamespace, orignSql, pageParams);
 		
 		BoundSql countBoundSql = new BoundSql(ms.getConfiguration(), pageSql, boundSql.getParameterMappings(),
 				parameter);
@@ -222,6 +220,43 @@ public class PaginationHandler implements InterceptorHandler {
     	}
     	
     }
+    
+private String buildPaginationSql(String mapperNamespace,String orignSql, PageParams pageParam) {
+		
+		if(pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty()) {
+			return PageSqlUtils.getLimitSQL(dbType,orignSql,pageParam);
+		}
+		Select select = null;
+		try {
+			select = (Select) CCJSqlParserUtil.parse(orignSql);
+		} catch (JSQLParserException e) {
+			logger.error("buildPaginationSql_ERROR",e);
+			throw new RuntimeException("sql解析错误");
+		}
+		
+		PlainSelect selectBody = (PlainSelect) select.getSelectBody();
+		Table table = (Table) selectBody.getFromItem();
+		
+		List<OrderByElement> orderByElements = new ArrayList<>(pageParam.getOrderBys().size());
+		
+		OrderByElement orderByElement;
+		for (OrderBy orderBy : pageParam.getOrderBys()) {
+			if(orderBy == null)continue;
+    		String columnName = MybatisMapperParser.property2ColumnName(mapperNamespace, orderBy.getField());
+    		if(columnName == null)continue;
+    		orderByElement = new OrderByElement();
+    		orderByElement.setAsc(OrderType.ASC.name().equals(orderBy.getSortType()));
+    		orderByElement.setExpression(new Column(table, orderBy.getField()));
+    		orderByElements.add(orderByElement);
+		}
+		
+		selectBody.setOrderByElements(orderByElements);
+		
+		String limitSQL = PageSqlUtils.getLimitSQL(dbType,selectBody.toString(),pageParam);
+		
+		return limitSQL;
+		
+	}
 
 	@Override
 	public void onFinished(InvocationVals invocation, Object result) {
