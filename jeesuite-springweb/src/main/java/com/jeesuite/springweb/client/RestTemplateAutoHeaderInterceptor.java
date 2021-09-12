@@ -8,8 +8,6 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 
-import com.jeesuite.common.util.WebUtils;
-
 public class RestTemplateAutoHeaderInterceptor implements ClientHttpRequestInterceptor {
 
 	
@@ -17,7 +15,7 @@ public class RestTemplateAutoHeaderInterceptor implements ClientHttpRequestInter
 	public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
 			throws IOException {
 		try {
-			Map<String, String> customHeaders = WebUtils.getCustomHeaders();
+			Map<String, String> customHeaders = RequestHeaderBuilder.getHeaders();
 			request.getHeaders().setAll(customHeaders);
 		} catch (Exception e) {}
 		return execution.execute(request, body);

@@ -120,42 +120,13 @@ public class GenericApiRequest {
 		}
 
 		okhttp3.Headers.Builder headerBuilder = new Headers.Builder();
-		headerBuilder.add(WebConstants.HEADER_INVOKER_IP, IpUtils.getLocalIpAddr());
-		headerBuilder.add(WebConstants.HEADER_AUTH_TOKEN, TokenGenerator.generateWithSign());
-
-		String requestId = null;
-		String invokerAppId = null;
-		try {
-			HttpServletRequest request = CurrentRuntimeContext.getRequest();
-			invokerAppId = request.getHeader(WebConstants.HEADER_INVOKER_APP_ID);
-			requestId = request.getHeader(WebConstants.HEADER_REQUEST_ID);
-		} catch (Exception e) {
-		}
-
-		if (requestId == null)
-			requestId = TokenGenerator.generate();
-		if (invokerAppId == null)
-			invokerAppId = CurrentRuntimeContext.APPID;
-
-		headerBuilder.add(WebConstants.HEADER_REQUEST_ID, requestId);
-		if (invokerAppId != null)
-			headerBuilder.add(WebConstants.HEADER_INVOKER_APP_ID, invokerAppId);
-		// 登录用户
-		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
-		if(currentUser != null) {
-			headerBuilder.add(WebConstants.HEADER_AUTH_USER, currentUser.toEncodeString());
-		}
-        //
-		String tenantId = CurrentRuntimeContext.getTenantId(false);
-		if (tenantId != null) {
-			headerBuilder.add(WebConstants.HEADER_TENANT_ID, tenantId);
-		}
-
+		Map<String, String> customHeaders = RequestHeaderBuilder.getHeaders();
 		if(headers != null) {
-			headers.forEach( (name,value) -> {
-				headerBuilder.add(name, value);
-			});
+			customHeaders.putAll(headers);
 		}
+		customHeaders.forEach( (name,value) -> {
+			headerBuilder.add(name, value);
+		});
 
 		okhttp3.Request.Builder requestBuilder = new Request.Builder().headers(headerBuilder.build())
 				.url(urlBuilder.build());
@@ -186,8 +157,6 @@ public class GenericApiRequest {
 		if (logger.isDebugEnabled()) {
 			StringBuilder logData = new StringBuilder();
 			logData.append("------call_remote_api_begin------\n");
-			if (tenantId != null)
-				logData.append("tenantId:").append(tenantId).append("\n");
 			logData.append("url:").append(url).append("\n");
 			logData.append("method:").append(requestMethod.name()).append("\n");
 			if (postJson != null)
@@ -232,8 +201,6 @@ public class GenericApiRequest {
 		} catch (Exception e) {
 			StringBuilder errorMessage = new StringBuilder();
 			errorMessage.append("------call_remote_api_error------\n");
-			if (tenantId != null)
-				errorMessage.append("tenantId:").append(tenantId).append("\n");
 			errorMessage.append("url:").append(url).append("\n");
 			errorMessage.append("method:").append(requestMethod.name()).append("\n");
 			if (responseString != null)

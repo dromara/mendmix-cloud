@@ -71,6 +71,7 @@ public class ThreadLocalContext {
 	
 	public static void unset(){
 		if(context.get() != null){
+			context.get().clear();
 			context.remove();
 		}
 	}

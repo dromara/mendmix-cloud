@@ -11,9 +11,9 @@ import org.springframework.web.client.RestTemplate;
 import com.jeesuite.common.async.AsyncInitializer;
 import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.spring.ApplicationStartedListener;
 import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.springweb.client.RequestHeaderBuilder;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
 import com.jeesuite.springweb.ext.feign.CustomErrorDecoder;
 import com.jeesuite.springweb.ext.feign.CustomLoadBalancerFeignClient;
@@ -45,7 +45,7 @@ public class BaseApplicationStarter{
 		return Feign.builder().requestInterceptor(new RequestInterceptor() {
 			@Override
 			public void apply(RequestTemplate requestTemplate) {
-				Map<String, String> customHeaders = WebUtils.getCustomHeaders();
+				Map<String, String> customHeaders = RequestHeaderBuilder.getHeaders();
 				customHeaders.forEach((k,v)->{					
 					requestTemplate.header(k, v);
 				});  

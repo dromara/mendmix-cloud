@@ -25,7 +25,7 @@ import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @Configuration
-@ConditionalOnProperty(name = "swagger.scan.package")
+@ConditionalOnProperty(name = "application.base-package")
 @ConditionalOnClass(springfox.documentation.spring.web.plugins.Docket.class)
 @EnableSwagger2
 public class Swagger2 {
@@ -35,7 +35,7 @@ public class Swagger2 {
 		
 		boolean enable = CurrentRuntimeContext.ENV.equals("dev") || CurrentRuntimeContext.ENV.equals("local");
 		String applicationName = ResourceUtils.getProperty("spring.application.name");
-		String basePackage = ResourceUtils.getProperty("swagger.scan.package");
+		String basePackage = ResourceUtils.getProperty("application.base-package");
 		Docket docket = new Docket(DocumentationType.SWAGGER_2)
 				.apiInfo(apiInfo(applicationName)) //
 				.enable(enable)  //

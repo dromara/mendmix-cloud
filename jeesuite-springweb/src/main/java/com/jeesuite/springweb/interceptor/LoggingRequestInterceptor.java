@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +14,8 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.util.StreamUtils;
+
+import com.jeesuite.springweb.logging.RequestLogBuilder;
 
 public class LoggingRequestInterceptor implements ClientHttpRequestInterceptor {
 
@@ -31,30 +32,16 @@ public class LoggingRequestInterceptor implements ClientHttpRequestInterceptor {
 
     private void traceRequest(HttpRequest request, byte[] body) throws IOException {
         if(log.isTraceEnabled()){
-        	StringBuilder builder = new StringBuilder();
-        	builder.append("\n-----------request-----------\n");
-        	builder.append("URI      :").append(request.getURI()).append("\n");
-        	builder.append("Method   :").append(request.getMethod()).append("\n");
-        	builder.append("Headers  :").append(request.getHeaders()).append("\n");
-        	if(body != null && body.length > 0){
-        		if(body.length > 1024)body = Arrays.copyOf(body, 1024);
-        		builder.append("body     :").append(new String(body)).append("\n");
-        	}
-        	builder.append("-----------request end-----------\n");
-            log.trace(builder.toString());
+        	String requestLog = RequestLogBuilder.requestLogMessage(request.getURI().toString(), request.getMethod().name(), request.getHeaders(), request.getMethodValue(), body);
+            log.trace(requestLog);
         }
     }
 
     private ClientHttpResponse traceResponse(ClientHttpResponse response) throws IOException {
-        if(log.isTraceEnabled()){
-           
+        if(log.isTraceEnabled()){         
         	CloneHttpResponse cloneResponse = new CloneHttpResponse(response);
-        	StringBuilder builder = new StringBuilder();
-        	builder.append("\n-----------response:-----------\n");
-        	builder.append("Status code      :").append(cloneResponse.getStatusCode()).append("\n");
-        	builder.append("Headers  :").append(cloneResponse.getHeaders()).append("\n");
-        	builder.append("body     :").append(cloneResponse.bodyString()).append("\n-----------response end-----------\n");
-            log.trace(builder.toString());
+        	String responseLog = RequestLogBuilder.responseLogMessage(cloneResponse.getStatusCode().value(), cloneResponse.getHeaders(), cloneResponse.bodyString());
+        	log.trace(responseLog);
             return cloneResponse;
         }
         

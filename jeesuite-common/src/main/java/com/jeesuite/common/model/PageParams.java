@@ -1,5 +1,8 @@
 package com.jeesuite.common.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PageParams {
 
 	//当前页
@@ -7,6 +10,7 @@ public class PageParams {
     //每页的数量
     private int pageSize = 10;
     
+    private List<OrderBy> orderBys;
     
 	public PageParams() {}
 
@@ -14,6 +18,13 @@ public class PageParams {
 		super();
 		this.pageNo = pageNo;
 		this.pageSize = pageSize;
+	}
+	
+	public PageParams(int pageNo, int pageSize,OrderBy orderBy) {
+		super();
+		this.pageNo = pageNo;
+		this.pageSize = pageSize;
+		orderBy(orderBy);
 	}
 	
 	public int getPageNo() {
@@ -28,7 +39,31 @@ public class PageParams {
 	public void setPageSize(int pageSize) {
 		this.pageSize = pageSize;
 	}
+	
     
+	public List<OrderBy> getOrderBys() {
+		return orderBys;
+	}
+
+	public void setOrderBys(List<OrderBy> orderBys) {
+		this.orderBys = orderBys;
+	}
+	
+	public PageParams orderBy(OrderBy orderBy) {
+		if(orderBy == null)return this;
+		if(this.orderBys == null)this.orderBys = new ArrayList<>(2);
+		this.orderBys.add(orderBy);
+		return this;
+	}
+	
+	public PageParams orderBys(OrderBy...orderBys) {
+		if(this.orderBys == null)this.orderBys = new ArrayList<>(orderBys.length);
+		for (OrderBy order : orderBys) {
+			if(order != null)this.orderBys.add(order);
+		}
+		return this;
+	}
+
 	public int offset() {
 		return (pageNo - 1) * pageSize;
 	}

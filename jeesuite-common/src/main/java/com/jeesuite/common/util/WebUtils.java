@@ -175,6 +175,7 @@ public class WebUtils {
 	public static Map<String, String> getCustomHeaders(){
 		Map<String, String> headers = new HashMap<>();
 		HttpServletRequest request = ThreadLocalContext.get(ThreadLocalContext.REQUEST_KEY);
+		if(request == null)return headers;
 		Enumeration<String> headerNames = request.getHeaderNames();
 		 while(headerNames.hasMoreElements()){
 			 String headerName = headerNames.nextElement().toLowerCase();
@@ -183,13 +184,6 @@ public class WebUtils {
 				 if(headerValue != null)headers.put(headerName, headerValue);
 			 }
 		 }
-		 //
-		 headers.put(WebConstants.HEADER_INVOKER_IP, IpUtils.getLocalIpAddr());
-		 
-		 if(!headers.containsKey(WebConstants.HEADER_AUTH_TOKEN)){			 
-			 headers.put(WebConstants.HEADER_AUTH_TOKEN, TokenGenerator.generateWithSign());
-		 }
-		 
 		 return headers;
 	}
 	
@@ -241,6 +235,12 @@ public class WebUtils {
 		}
 		if(StringUtils.isNotBlank(headerValue)){
 			return false;
+		}
+		
+		String clientIp = request.getHeader(WebConstants.HEADER_REAL_IP);
+		if(clientIp == null)clientIp = IpUtils.getIpAddr(request);
+		if(IpUtils.isInnerIp(clientIp)) {
+			return true;
 		}
 		
 		boolean isInner = IpUtils.isInnerIp(request.getServerName());
