@@ -12,7 +12,7 @@ import java.util.Date;
 
 import com.jeesuite.cache.local.Level1CacheSupport;
 
-import redis.clients.util.SafeEncoder;
+import redis.clients.jedis.util.SafeEncoder;
 
 /**
  * 对象redis操作对象（通过二进制序列化缓存）

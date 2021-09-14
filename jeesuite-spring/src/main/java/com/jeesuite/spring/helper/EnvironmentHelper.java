@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
@@ -11,43 +12,31 @@ import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 import org.springframework.util.StringUtils;
 
-import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.common.util.ResourceUtils;
 
 public class EnvironmentHelper {
 
 	private static Environment environment;
 	
 	
-	public static synchronized void setEnvironment(Environment environment) {
-		if(EnvironmentHelper.environment != null){
-			EnvironmentHelper.environment = environment;
+	public static synchronized void init(ApplicationContext context) {
+		if(environment != null){
+			return;
 		}
+		environment = context.getEnvironment();
+		ResourceUtils.merge(getAllProperties(null));
 	}
 
 	public static String getProperty(String key){
-		if(environment == null)init();
 		return environment == null ? null : environment.getProperty(key);
 	}
 
-	private static synchronized void init() {
-		if(!InstanceFactory.isInitialized()){
-			throw new NullPointerException();
-		}
-		if(environment == null){
-			synchronized (EnvironmentHelper.class) {
-				environment = InstanceFactory.getInstance(Environment.class);
-			}
-		}
-	}
-	
 	public static boolean containsProperty(String key){
-		if(environment == null)init();
 		return environment == null ? false : environment.containsProperty(key);
 	}
 	
 	
 	public static Map<String, Object> getAllProperties(String prefix){
-		if(environment == null)init();
 		MutablePropertySources propertySources = ((ConfigurableEnvironment)environment).getPropertySources();
 		
 		Map<String, Object> properties = new LinkedHashMap<String, Object>();

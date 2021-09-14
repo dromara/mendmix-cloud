@@ -3,11 +3,18 @@
  */
 package com.jeesuite.cache.command;
 
-import redis.clients.util.SafeEncoder;
+import static com.jeesuite.cache.redis.JedisProviderFactory.getBinaryJedisClusterCommands;
+import static com.jeesuite.cache.redis.JedisProviderFactory.getBinaryJedisCommands;
+import static com.jeesuite.cache.redis.JedisProviderFactory.getJedisProvider;
+import static com.jeesuite.cache.redis.JedisProviderFactory.isCluster;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.jeesuite.cache.redis.JedisProviderFactory.*;
+import redis.clients.jedis.util.SafeEncoder;
 
 /**
  * redis操作hashmap

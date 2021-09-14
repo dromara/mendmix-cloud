@@ -5,7 +5,6 @@ package com.jeesuite.test.cache;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Random;
 
 import org.apache.commons.lang3.RandomStringUtils;
 

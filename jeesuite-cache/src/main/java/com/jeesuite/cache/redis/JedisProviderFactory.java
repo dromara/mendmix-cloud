@@ -21,15 +21,15 @@ import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.InstanceFactory;
 
 import redis.clients.jedis.BinaryJedis;
-import redis.clients.jedis.BinaryJedisClusterCommands;
-import redis.clients.jedis.BinaryJedisCommands;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisCommands;
 import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.MultiKeyBinaryCommands;
-import redis.clients.jedis.MultiKeyBinaryJedisClusterCommands;
-import redis.clients.jedis.MultiKeyCommands;
-import redis.clients.jedis.MultiKeyJedisClusterCommands;
+import redis.clients.jedis.commands.BinaryJedisClusterCommands;
+import redis.clients.jedis.commands.BinaryJedisCommands;
+import redis.clients.jedis.commands.JedisCommands;
+import redis.clients.jedis.commands.MultiKeyBinaryCommands;
+import redis.clients.jedis.commands.MultiKeyBinaryJedisClusterCommands;
+import redis.clients.jedis.commands.MultiKeyCommands;
+import redis.clients.jedis.commands.MultiKeyJedisClusterCommands;
 
 /**
  * redis实例工厂

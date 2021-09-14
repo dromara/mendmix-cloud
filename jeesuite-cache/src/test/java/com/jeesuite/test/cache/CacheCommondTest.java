@@ -18,7 +18,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.jeesuite.cache.command.RedisBatchCommand;
 import com.jeesuite.cache.command.RedisHashMap;
 import com.jeesuite.cache.command.RedisNumber;
 import com.jeesuite.cache.command.RedisObject;

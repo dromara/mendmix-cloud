@@ -22,7 +22,7 @@ import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.serializer.SerializeUtils;
 
-import redis.clients.util.SafeEncoder;
+import redis.clients.jedis.util.SafeEncoder;
 
 /**
  * redis基础操作指令
