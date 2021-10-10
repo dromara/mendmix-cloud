@@ -9,6 +9,8 @@ import java.util.Map;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.ibatis.mapping.MappedStatement;
 
+import com.jeesuite.mybatis.MybatisConfigs;
+import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
@@ -16,10 +18,8 @@ import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedAt;
 import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedBy;
-import com.jeesuite.mybatis.plugin.autofield.annotation.TenantShardding;
 import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedAt;
 import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedBy;
-import com.jeesuite.spring.InstanceFactory;
 
 /**
  * 字段自动填充
@@ -33,31 +33,16 @@ import com.jeesuite.spring.InstanceFactory;
  */
 public class AutoFieldFillHandler implements InterceptorHandler {
 
-	public static final String NAME = "autoField";
-	
 	private static final String INSERT_LIST_METHOD_NAME = "insertList";
 
 	private static Map<String, Field[]> methodFieldMappings = new HashMap<>();
 	
-	private static CurrentUserProvider currentUserProvider;
-	
-	
-	public static CurrentUserProvider getCurrentUserProvider() {
-		if(currentUserProvider == null && !methodFieldMappings.isEmpty()) {
-			synchronized (AutoFieldFillHandler.class) {
-				currentUserProvider = InstanceFactory.getInstance(CurrentUserProvider.class);
-				if(currentUserProvider == null) {
-					methodFieldMappings.clear();
-				}
-			}
-		}
-		return currentUserProvider;
-	}
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
 		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
 		
+		String tenantSharddingField = MybatisConfigs.getTenantSharddingField(context.getGroupName());
 		for (EntityInfo ei : entityInfos) {
 			Field[] createdFields = new Field[3];
 			Field[] updatedFields = new Field[2];
@@ -75,7 +60,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 				}else if(field.isAnnotationPresent(UpdatedAt.class)) {
 					field.setAccessible(true);
 					updatedFields[1] = field;
-				}else if(field.isAnnotationPresent(TenantShardding.class)) {
+				}else if(tenantSharddingField != null && field.getName().endsWith(tenantSharddingField)) {
 					field.setAccessible(true);
 					createdFields[2] = field;
 				}
@@ -129,11 +114,14 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 	
 
 	private void setFieldValue(Field[] fields, Object parameter) {
-		CurrentUserProvider userProvider = getCurrentUserProvider();
-		Date currentTime = new Date();
-		if(userProvider != null && fields[0] != null) {
-			try {fields[0].set(parameter, userProvider.currentUser());} catch (Exception e) {}
+		String tmpVal;
+		if(fields[0] != null && (tmpVal = MybatisRuntimeContext.getCurrentUser()) != null) {
+			try {fields[0].set(parameter, tmpVal);} catch (Exception e) {}
 		}
+		if(fields.length > 2 && fields[2] != null && (tmpVal = MybatisRuntimeContext.getCurrentTenant()) != null) {
+			try {fields[2].set(parameter, tmpVal);} catch (Exception e) {}
+		}
+		Date currentTime = new Date();
 		if(fields[1] != null) {
 			try {fields[1].set(parameter, currentTime);} catch (Exception e) {}
 		}

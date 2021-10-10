@@ -54,6 +54,16 @@ public class DataSoureConfigHolder {
 		return false;
 	}
 	
+	public static boolean containsTenantConfig(String group){
+		if(allGroupConfigs.isEmpty()) {
+			parse();
+		}
+		if(allGroupConfigs.get(group).stream().anyMatch(o -> StringUtils.isNotBlank(o.getTenantId()))) {
+			return true;
+		}
+		return false;
+	}
+	
 	private synchronized static void parse(){
 		
 		Map<String,Field> fieldMap = new HashMap<>();

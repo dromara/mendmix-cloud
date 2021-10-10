@@ -2,6 +2,7 @@ package com.jeesuite.mybatis.test.entity;
 
 import java.util.Map;
 
+import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -26,6 +27,9 @@ public class UserEntity extends StandardBaseEntity {
     private Short type;
     
     private Short status;
+    
+    @Column(name = "company_id")
+    private String companyId;
     
     @Version
     private int version;
@@ -125,6 +129,16 @@ public class UserEntity extends StandardBaseEntity {
 
 	public void setStatus(Short status) {
 		this.status = status;
+	}
+	
+	
+
+	public String getCompanyId() {
+		return companyId;
+	}
+
+	public void setCompanyId(String companyId) {
+		this.companyId = companyId;
 	}
 
 	public Map<String, String[]> getDataProfileValues() {

@@ -4,22 +4,19 @@
 package com.jeesuite.mybatis.plugin.cache.provider;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.cache.CacheExpires;
 import com.jeesuite.cache.command.RedisBase;
 import com.jeesuite.cache.command.RedisBatchCommand;
+import com.jeesuite.cache.command.RedisList;
 import com.jeesuite.cache.command.RedisObject;
-import com.jeesuite.cache.command.RedisSortSet;
 import com.jeesuite.cache.command.RedisStrList;
 import com.jeesuite.cache.command.RedisString;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.mybatis.plugin.cache.CacheHandler;
+import com.jeesuite.mybatis.MybatisConfigs;
 
 /**
  * @description <br>
@@ -30,13 +27,8 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 
 	protected static final Logger logger = LoggerFactory.getLogger("com.jeesuite.mybatis.plugin.cache");
 	
-	private boolean tenantModeEnabled = ResourceUtils.getBoolean("jeesuite.mybatis.tenantModeEnabled");
-	private int batchSize = 100;
-	
-	public DefaultCacheProvider() {
-		if(tenantModeEnabled && !ResourceUtils.getBoolean("jeesuite.cache.tenantModeEnabled")) {
-			throw new RuntimeException("请配置[jeesuite.cache.tenantModeEnabled]启用缓存租户模式");
-		}
+	public DefaultCacheProvider(String groupName) {
+		super(groupName);
 	}
 
 	@Override
@@ -60,11 +52,28 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 		if(value == null)return false;
 		return new RedisString(key).set(value.toString(),expireSeconds);
 	}
-
+	
+	@Override
+	public boolean remove(String... keys) {
+		if(keys.length == 1) {
+			return new RedisObject(keys[0]).remove();
+		}
+		return RedisBatchCommand.removeObjects(keys);
+	}
 
 	@Override
-	public boolean remove(String key) {
-		return new RedisObject(key).remove();
+	public void setExpire(String key, long expireSeconds) {
+		new RedisObject(key).setExpire(expireSeconds);
+	}
+
+	@Override
+	public List<String> getListItems(String key, int start, int end) {
+		return new RedisList(key).range(start, end);
+	}
+	
+	@Override
+	public long getListSize(String key) {
+		return new RedisList(key).length();
 	}
 
 	@Override
@@ -74,69 +83,12 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 	
 	@Override
 	public void putGroup(String cacheGroupKey, String key) {
-		if(tenantModeEnabled) {
+		if(MybatisConfigs.isSchameSharddingTenant(groupName)) {
 			key = RedisBase.buildTenantNameSpaceKey(key);
 		}
 		new RedisStrList(cacheGroupKey).lpush(key);
 	}
 
-	@Override
-	public void clearGroup(final String groupName,String ...prefixs) {
-		String cacheGroupKey = groupName.endsWith(CacheHandler.GROUPKEY_SUFFIX) ? groupName : groupName + CacheHandler.GROUPKEY_SUFFIX;
-		RedisStrList redisList = new RedisStrList(cacheGroupKey);
-		int keyCount = (int) redisList.length();
-		if(keyCount <= 0)return;
-	    //保护策略
-		if(keyCount > 1000) {
-			redisList.setExpire(CacheExpires.todayEndSeconds());
-		}
-		
-		boolean withPrefixs = prefixs != null && prefixs.length > 0 && prefixs[0] != null;
-		
-		int toIndex;
-		List<String> keys;
-		for (int i = 0; i <= keyCount; i+=batchSize) {
-			toIndex = (i + batchSize) > keyCount ? keyCount : (i + batchSize);
-			keys = redisList.range(i, toIndex);
-			if(keys.isEmpty())break;
-			//
-			if(withPrefixs) {
-				keys = keys.stream().filter(key -> {
-					for (String prefix : prefixs) {
-						if(key.contains(prefix))return true;
-					}
-					return false;
-				}).collect(Collectors.toList());
-			}
-			if(keys.isEmpty())continue;
-			RedisBatchCommand.removeObjects(keys.toArray(new String[0]));
-			if(logger.isDebugEnabled()) {
-				logger.debug("_clearGroupKey -> group:{},keys:{}",groupName,Arrays.toString(keys.toArray()));
-			}
-		}
-		redisList.remove();
-	}
-
-	@Override
-	public void addZsetValue(String key, String value, double score) {
-		new RedisSortSet(key).add(score, value);
-	}
-
-
-	@Override
-	public boolean existZsetValue(String key, String value) {
-		return new RedisSortSet(key).getScore(value) > 0;
-	}
-	
-	@Override
-	public boolean removeZsetValue(String key, String value) {
-		return new RedisSortSet(key).remove(value);
-	}
-
-	@Override
-	public boolean removeZsetValues(String key, double minScore, double maxScore) {
-		return new RedisSortSet(key).removeByScore(minScore, maxScore) > 0;
-	}
 
 	@Override
 	public boolean setnx(String key, String value, long expireSeconds) {
@@ -145,5 +97,7 @@ public class DefaultCacheProvider extends AbstractCacheProvider{
 	
 	@Override
 	public void close() throws IOException {}
+
+	
 
 }

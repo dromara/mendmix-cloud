@@ -23,8 +23,8 @@ import org.springframework.beans.factory.DisposableBean;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.plugin.autofield.AutoFieldFillHandler;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
-import com.jeesuite.mybatis.plugin.dataprofile.DataProfileHandler;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
+import com.jeesuite.mybatis.plugin.rewrite.SqlRewriteHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
 
 /**
@@ -49,6 +49,11 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 	
 	public JeesuiteMybatisInterceptor(String groupName, String[] hanlderNames) {
 		this.groupName = groupName;
+		//
+		this.interceptorHandlers.add(new SqlRewriteHandler());
+		this.interceptorHandlers.add(new AutoFieldFillHandler());
+		this.interceptorHandlers.add(new PaginationHandler());
+		
 		this.setInterceptorHandlers(hanlderNames);
 	}
 
@@ -61,12 +66,6 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 			}else if(RwRouteHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new RwRouteHandler());
 				rwRouteEnabled = true;
-			}else if(PaginationHandler.NAME.equals(name)){
-				this.interceptorHandlers.add(new PaginationHandler());
-			}else if(DataProfileHandler.NAME.equals(name)){
-				this.interceptorHandlers.add(new DataProfileHandler());
-			}else if(AutoFieldFillHandler.NAME.equals(name)){
-				this.interceptorHandlers.add(new AutoFieldFillHandler());
 			}else{
 				//自定义的拦截器
 				try {

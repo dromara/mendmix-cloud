@@ -27,6 +27,7 @@ import com.jeesuite.common.async.RetryTask;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.ReflectUtils;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.BaseEntity;
@@ -43,6 +44,8 @@ import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheIgnore;
 import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
+import com.jeesuite.mybatis.plugin.cache.provider.NullCacheProvider;
+import com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider;
 import com.jeesuite.spring.InstanceFactory;
 
 
@@ -64,6 +67,8 @@ public class CacheHandler implements InterceptorHandler {
 	public final static long IN_1MINS = 60;
     public final static long IN_1HOUR = 60 * 60;
 	public static long defaultCacheExpire = 0;
+	
+	private static String dataSourceGroupName;
 	
 	private static final String STR_PARAM = "param";
 	
@@ -97,8 +102,15 @@ public class CacheHandler implements InterceptorHandler {
 				if(cacheProvider == null){
 					cacheProvider = InstanceFactory.getInstance(CacheProvider.class);
 				}
-				if(cacheProvider == null){					
-					cacheProvider = new DefaultCacheProvider();
+				if(cacheProvider == null){	
+					if(ResourceUtils.containsProperty("jeesuite.cache.servers")) {
+						cacheProvider = new DefaultCacheProvider(dataSourceGroupName);
+					}else if(!ResourceUtils.getPropertyNames("spring.redis.").isEmpty()) {
+						cacheProvider = new SpringRedisProvider(dataSourceGroupName);
+					}
+				}
+				if(cacheProvider == null) {
+					cacheProvider = new NullCacheProvider();
 				}
 				logger.info("Initializing cacheProvider use:{} ",cacheProvider.getClass().getName());
 			}
@@ -108,6 +120,8 @@ public class CacheHandler implements InterceptorHandler {
 	
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
+		
+		this.dataSourceGroupName = context.getGroupName();
 		
 		defaultCacheExpire = Long.parseLong(MybatisConfigs.getProperty(context.getGroupName(), MybatisConfigs.CACHE_EXPIRE_SECONDS, "0"));
 		logger.info("nullValueCache:{},defaultCacheExpireSeconds:{}",nullValueCache,defaultCacheExpire);

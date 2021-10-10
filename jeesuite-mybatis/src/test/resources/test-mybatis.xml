@@ -14,7 +14,9 @@
 
 	<import resource="test-cache.xml" />
 
-	<bean id="routeDataSource" class="com.jeesuite.mybatis.datasource.MultiRouteDataSource" />
+	<bean id="routeDataSource" class="com.jeesuite.mybatis.datasource.MultiRouteDataSource">
+	   <constructor-arg index="0" value="default" />  
+	</bean>
 
 	<bean id="transactionTemplate"
 		class="org.springframework.transaction.support.TransactionTemplate">

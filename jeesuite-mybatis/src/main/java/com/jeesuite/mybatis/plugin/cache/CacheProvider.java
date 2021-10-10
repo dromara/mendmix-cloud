@@ -4,6 +4,7 @@
 package com.jeesuite.mybatis.plugin.cache;
 
 import java.io.Closeable;
+import java.util.List;
 
 /**
  * @description <br>
@@ -21,21 +22,19 @@ public interface CacheProvider extends Closeable{
 	
 	boolean setStr(String key,Object value,long expireSeconds);
 	
-	boolean remove(String key);
+	boolean remove(String...keys);
 	
 	boolean exists(String key);
+	
+	void setExpire(String key,long expireSeconds);
 	
     void putGroup(String cacheGroupKey,String key);
 	
 	void clearGroup(String groupName,String ...prefixs);
-
-	void addZsetValue(String key,String value,double score);
 	
-	boolean existZsetValue(String key,String value);
+	List<String> getListItems(String key,int start,int end);
 	
-	boolean removeZsetValue(String key,String value);
-	
-	boolean removeZsetValues(String key,double minScore, double maxScore);
+	long getListSize(String key);
 	
 	boolean setnx(String key,String value,long expireSeconds);
 }

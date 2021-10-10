@@ -12,6 +12,6 @@ import com.jeesuite.mybatis.MybatisRuntimeContext;
  * @date 2020年4月20日
  */
 public class DataSourceContextVals {
-	public String tenantId = MybatisRuntimeContext.getTenantId();
+	public String tenantId = MybatisRuntimeContext.getCurrentTenant();
 	public Boolean master; //
 }

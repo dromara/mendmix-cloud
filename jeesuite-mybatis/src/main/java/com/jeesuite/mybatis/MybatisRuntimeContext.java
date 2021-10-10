@@ -1,6 +1,5 @@
 package com.jeesuite.mybatis;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,7 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.mybatis.datasource.DataSourceContextVals;
+import com.jeesuite.mybatis.plugin.autofield.AutoFieldFillHandler;
+import com.jeesuite.mybatis.plugin.autofield.CurrentUserProvider;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
+import com.jeesuite.spring.InstanceFactory;
 
 /**
  * 
@@ -22,29 +24,52 @@ import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 public class MybatisRuntimeContext {
 
 
-	private static final String CONTEXT_USER_ID_KEY = "_ctx_userId_";
 	private static final String CONTEXT_TRANS_ON_KEY = "_ctx_trans_on_";
 	private static final String CONTEXT_DATASOURCE_KEY = "_ctx_ds_";
 	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
-	private static final String CONTEXT_DATA_PROFILE_OFF_KEY = "_ctx_dataprofile_off_";
 	
-	public static void setCurrentUserId(Serializable userId){
-		ThreadLocalContext.set(CONTEXT_USER_ID_KEY, userId);
-	}
+    private static CurrentUserProvider currentUserProvider;
 	
-	public static void setTenantId(String tenantId){
-		if(StringUtils.isBlank(tenantId))return;
-		ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, tenantId);
-	}
 	
-	public static void unsetTenantId(){
-		ThreadLocalContext.remove(ThreadLocalContext.TENANT_ID_KEY);
+    private static CurrentUserProvider getCurrentUserProvider() {
+		if(currentUserProvider == null) {
+			synchronized (AutoFieldFillHandler.class) {
+				currentUserProvider = InstanceFactory.getInstance(CurrentUserProvider.class);
+				if(currentUserProvider == null) {
+					currentUserProvider = new CurrentUserProvider() {
+						@Override
+						public String currentUser() {
+							return null;
+						}
+						@Override
+						public String currentTenant() {
+							return null;
+						}
+					};
+				}
+			}
+		}
+		return currentUserProvider;
 	}
+    
+    public static String getCurrentUser() {
+    	if(ThreadLocalContext.exists(ThreadLocalContext.CURRENT_USER_KEY)) {
+    		return ThreadLocalContext.getStringValue(ThreadLocalContext.CURRENT_USER_KEY);
+    	}
+    	return getCurrentUserProvider().currentUser();
+    }
+	
+    public static String getCurrentTenant() {
+    	if(ThreadLocalContext.exists(ThreadLocalContext.TENANT_ID_KEY)) {
+    		return ThreadLocalContext.getStringValue(ThreadLocalContext.TENANT_ID_KEY);
+    	}
+    	return getCurrentUserProvider().currentTenant();
+    }
 	
 	public static String getContextParam(String paramName){
 		if(StringUtils.isBlank(paramName))return null;
 		if(CacheHandler.CURRENT_USER_CONTEXT_NAME.equals(paramName)){
-			return getCurrentUserId();
+			return getCurrentUser();
 		}
 		return ThreadLocalContext.getStringValue(paramName);
 	}
@@ -52,14 +77,7 @@ public class MybatisRuntimeContext {
 	public static void setContextParam(String name,String value){
 		ThreadLocalContext.set(name, value);
 	}
-	
-	public static void dataProfileIgnore(){
-		ThreadLocalContext.set(CONTEXT_DATA_PROFILE_OFF_KEY, String.valueOf(true));
-	}
-	
-	public static boolean isDataProfileIgnore(){
-		return ThreadLocalContext.exists(CONTEXT_DATA_PROFILE_OFF_KEY);
-	}
+
 	
 	public static void setTransactionalMode(boolean on){
 		ThreadLocalContext.set(CONTEXT_TRANS_ON_KEY, String.valueOf(on));
@@ -70,14 +88,6 @@ public class MybatisRuntimeContext {
 	
 	public static String getTransactionalMode(){
 		return ThreadLocalContext.getStringValue(CONTEXT_TRANS_ON_KEY);
-	}
-	
-	public static String getCurrentUserId(){
-		return ThreadLocalContext.getStringValue(CONTEXT_USER_ID_KEY);
-	}
-	
-	public static String getTenantId(){
-		return ThreadLocalContext.getStringValue(ThreadLocalContext.TENANT_ID_KEY);
 	}
 	
 	public static boolean isTransactionalOn(){

@@ -38,7 +38,7 @@ public class JeesuiteMybatisEnhancer {
 	private static final Logger logger = LoggerFactory.getLogger(JeesuiteMybatisEnhancer.class);
 
 	public static void handle(String group, Configuration configuration) throws Exception {
-		if ("tkMapper".equals(MybatisConfigs.getCrudDriver(group))) {
+		if ("tkMapper".equals(MybatisConfigs.getCrudDriver())) {
 			Class<?> helperClazz = Class.forName("tk.mybatis.mapper.mapperhelper.MapperHelper");
 			Object helper = helperClazz.newInstance();
 			Class<?> configClazz = Class.forName("tk.mybatis.mapper.entity.Config");

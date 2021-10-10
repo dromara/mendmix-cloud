@@ -20,8 +20,6 @@ import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.common.model.OrderBy;
-import com.jeesuite.common.model.OrderBy.OrderType;
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.MybatisConfigs;
@@ -32,14 +30,6 @@ import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
-
-import net.sf.jsqlparser.JSQLParserException;
-import net.sf.jsqlparser.parser.CCJSqlParserUtil;
-import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.select.OrderByElement;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
 
 /**
  * 
@@ -54,8 +44,6 @@ import net.sf.jsqlparser.statement.select.Select;
 public class PaginationHandler implements InterceptorHandler {
 
 	private static Logger logger = LoggerFactory.getLogger(PaginationHandler.class);
-	
-	public static final String NAME = "page";
 	
 	private static final String PAGE_COUNT_SUFFIX = "_PageCount";
 	
@@ -99,26 +87,23 @@ public class PaginationHandler implements InterceptorHandler {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {
-		if(invocation.getPageParam() == null)return null;
-		final Executor executor = invocation.getExecutor();
-		final Object[] args = invocation.getArgs();
+		
+		PageParams pageParams = invocation.getPageParam();
+		if(pageParams == null)return null;
 		final MappedStatement orignMappedStatement = invocation.getMappedStatement();
 		
 		if(!orignMappedStatement.getSqlCommandType().equals(SqlCommandType.SELECT))return null;
 		
-		PageParams pageParams = invocation.getPageParam();
-		//final RowBounds rowBounds = (RowBounds) args[2];
-		final ResultHandler resultHandler = (ResultHandler) args[3];
-        final Object parameter = invocation.getParameter();
-        BoundSql boundSql = invocation.getBoundSql();
-        
-        String orignSql = invocation.getSql();
+		if(invocation.getSql() == null) {
+			List<Object> list = new ArrayList<>(1);
+			list.add(new Page<Object>(invocation.getPageParam(),0,null));
+			return list;
+		}
+		final ResultHandler resultHandler = (ResultHandler) invocation.getArgs() [3];
         //查询总数
-        MappedStatement countMappedStatement = getCountMappedStatement(orignMappedStatement);
-        //
-        Long total = executeQueryCount(executor, countMappedStatement, orignSql,parameter, boundSql, resultHandler);
+        Long total = executeQueryCount(invocation, resultHandler);
         //查询分页数据
-        List<?> datas = executeQuery(executor, orignMappedStatement,invocation.getMapperNameSpace(),orignSql, parameter, boundSql, resultHandler, pageParams);	        
+        List<?> datas = executeQuery(invocation, resultHandler);	        
 
         Page<Object> page = new Page<Object>(pageParams,total,(List<Object>) datas);	
 		
@@ -129,39 +114,42 @@ public class PaginationHandler implements InterceptorHandler {
 	
 	
 	@SuppressWarnings("rawtypes")
-	private Long executeQueryCount(Executor executor, MappedStatement countMs,String orignSql,
-            Object parameter, BoundSql boundSql, ResultHandler resultHandler) throws IllegalAccessException, SQLException {
-		CacheKey countKey = executor.createCacheKey(countMs, parameter, RowBounds.DEFAULT, boundSql);
+	private Long executeQueryCount(InvocationVals invocation,ResultHandler resultHandler) throws IllegalAccessException, SQLException {
+		
+		//查询总数
+        MappedStatement countMappedStatement = getCountMappedStatement(invocation.getMappedStatement());
+        Executor executor = invocation.getExecutor();
+        Object parameter = invocation.getParameter();
+        BoundSql boundSql = invocation.getBoundSql();
+        
+		CacheKey countKey = executor.createCacheKey(countMappedStatement, parameter, RowBounds.DEFAULT, boundSql);
 		
 		// count sql
-		String countSql = PageSqlUtils.getCountSql(orignSql);
+		String countSql = PageSqlUtils.getCountSql(invocation.getSql());
 		
-		BoundSql countBoundSql = new BoundSql(countMs.getConfiguration(), countSql, boundSql.getParameterMappings(),
+		BoundSql countBoundSql = new BoundSql(countMappedStatement.getConfiguration(), countSql, boundSql.getParameterMappings(),
 				parameter);
-//		for (ParameterMapping parameterMapping : boundSql.getParameterMappings()) {
-//			String propertyName = parameterMapping.getProperty();
-//			if(boundSql.hasAdditionalParameter(propertyName)){
-//				countBoundSql.setAdditionalParameter(propertyName, boundSql.getAdditionalParameter(propertyName));
-//			}
-//		}
 		// 执行 count 查询
-		Object countResultList = executor.query(countMs, parameter, RowBounds.DEFAULT, resultHandler, countKey,
+		Object countResultList = executor.query(countMappedStatement, parameter, RowBounds.DEFAULT, resultHandler, countKey,
 				countBoundSql);
 		Long count = (Long) ((List) countResultList).get(0);
 		return count;
 	}
 	
 	@SuppressWarnings("rawtypes")
-	private List executeQuery(Executor executor, MappedStatement ms,String mapperNamespace,String orignSql,
-            Object parameter, BoundSql boundSql, ResultHandler resultHandler,PageParams pageParams) throws IllegalAccessException, SQLException {
+	private List executeQuery(InvocationVals invocation, ResultHandler resultHandler) throws IllegalAccessException, SQLException {
 		
-		String pageSql = buildPaginationSql(mapperNamespace, orignSql, pageParams);
+		Executor executor = invocation.getExecutor();
+		MappedStatement mappedStatement = invocation.getMappedStatement();
+		BoundSql boundSql = invocation.getBoundSql();
+		Object parameter = invocation.getParameter();
 		
-		BoundSql countBoundSql = new BoundSql(ms.getConfiguration(), pageSql, boundSql.getParameterMappings(),
+		String pageSql = PageSqlUtils.getLimitSQL(dbType,invocation.getSql(),invocation.getPageParam());
+		
+		BoundSql pageBoundSql = new BoundSql(mappedStatement.getConfiguration(), pageSql, boundSql.getParameterMappings(),
 				parameter);
 		
-		List<?> resultList = executor.query(ms, parameter, RowBounds.DEFAULT, resultHandler, null,
-				countBoundSql);
+		List<?> resultList = executor.query(mappedStatement, parameter, RowBounds.DEFAULT, resultHandler, null,pageBoundSql);
 		return resultList;
 	}
 	
@@ -221,42 +209,6 @@ public class PaginationHandler implements InterceptorHandler {
     	
     }
     
-private String buildPaginationSql(String mapperNamespace,String orignSql, PageParams pageParam) {
-		
-		if(pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty()) {
-			return PageSqlUtils.getLimitSQL(dbType,orignSql,pageParam);
-		}
-		Select select = null;
-		try {
-			select = (Select) CCJSqlParserUtil.parse(orignSql);
-		} catch (JSQLParserException e) {
-			logger.error("buildPaginationSql_ERROR",e);
-			throw new RuntimeException("sql解析错误");
-		}
-		
-		PlainSelect selectBody = (PlainSelect) select.getSelectBody();
-		Table table = (Table) selectBody.getFromItem();
-		
-		List<OrderByElement> orderByElements = new ArrayList<>(pageParam.getOrderBys().size());
-		
-		OrderByElement orderByElement;
-		for (OrderBy orderBy : pageParam.getOrderBys()) {
-			if(orderBy == null)continue;
-    		String columnName = MybatisMapperParser.property2ColumnName(mapperNamespace, orderBy.getField());
-    		if(columnName == null)continue;
-    		orderByElement = new OrderByElement();
-    		orderByElement.setAsc(OrderType.ASC.name().equals(orderBy.getSortType()));
-    		orderByElement.setExpression(new Column(table, orderBy.getField()));
-    		orderByElements.add(orderByElement);
-		}
-		
-		selectBody.setOrderByElements(orderByElements);
-		
-		String limitSQL = PageSqlUtils.getLimitSQL(dbType,selectBody.toString(),pageParam);
-		
-		return limitSQL;
-		
-	}
 
 	@Override
 	public void onFinished(InvocationVals invocation, Object result) {

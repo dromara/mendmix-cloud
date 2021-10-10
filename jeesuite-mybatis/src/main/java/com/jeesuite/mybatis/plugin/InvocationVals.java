@@ -1,8 +1,6 @@
 package com.jeesuite.mybatis.plugin;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.executor.Executor;
@@ -11,7 +9,6 @@ import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
 
-import com.jeesuite.common.model.OrderBy;
 import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.plugin.cache.QueryCacheMethodMetadata;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
@@ -29,14 +26,14 @@ public class InvocationVals {
 	private BoundSql boundSql;
 	private boolean select;
 	private String sql;
+	private boolean sqlRewrited;
+	
+	
 	
 	private String mapperNameSpace;
 	private QueryCacheMethodMetadata queryMethodMetadata;
 	private String cacheKey;
 	private PageParams pageParam;
-	//补充查询条件<table,<column,[values]>>
-	private Map<String, Map<String, String[]>> tableAddtionalConditions;
-	private Map<String, List<OrderBy>> tableOrderBys;
 	
 	public InvocationVals(Invocation invocation) {
 		args = invocation.getArgs();
@@ -89,8 +86,9 @@ public class InvocationVals {
 	}
 
 
-	public void setSql(String sql) {
+	public void setRewriteSql(String sql) {
 		this.sql = sql;
+		this.sqlRewrited = true;
 	}
 
 
@@ -137,11 +135,10 @@ public class InvocationVals {
 	public PageParams getPageParam() {
 		return pageParam;
 	}
-	
-	public void addWhere(String tableName,String column,String[] values) {
-		if(tableAddtionalConditions == null) {
-			tableAddtionalConditions = new HashMap<>();
-		}
+
+	public boolean isSqlRewrited() {
+		return sqlRewrited;
 	}
+
 
 }

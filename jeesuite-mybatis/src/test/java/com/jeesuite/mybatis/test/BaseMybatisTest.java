@@ -20,7 +20,12 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.common.model.Page;
+import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
+import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
+import com.jeesuite.mybatis.plugin.pagination.PageExecutor.PageDataLoader;
 import com.jeesuite.mybatis.test.entity.UserEntity;
 import com.jeesuite.mybatis.test.mapper.SnsAccounyBindingEntityMapper;
 import com.jeesuite.mybatis.test.mapper.UserEntityMapper;
@@ -43,7 +48,8 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	
 	@Before
 	public void init(){
-		MybatisRuntimeContext.setTenantId("1000");
+		ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, "1000");
+		MybatisRuntimeContext.addDataProfileMappings("type", "0");
 	}
 	
 	@Test
@@ -120,6 +126,22 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		example.setType((short) 1);
 		example.setCreatedAt(new Date());
 		userMapper.countByExample(example);
+	}
+	
+	
+	@Test
+	public void testPage(){
+		Page<UserEntity> pageInfo;
+		UserEntity example = new UserEntity();
+		example.setType((short)1);
+		pageInfo = PageExecutor.pagination(new PageParams(1,10), new PageDataLoader<UserEntity>() {
+			@Override
+			public List<UserEntity> load() {
+				return userMapper.selectByExample(example);
+			}
+		});
+		
+		System.out.println(pageInfo);
 	}
 	
 	

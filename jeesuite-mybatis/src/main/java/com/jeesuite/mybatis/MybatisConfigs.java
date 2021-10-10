@@ -29,10 +29,7 @@ import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.datasource.DataSourceConfig;
 import com.jeesuite.mybatis.datasource.DataSoureConfigHolder;
 import com.jeesuite.mybatis.datasource.DatabaseType;
-import com.jeesuite.mybatis.plugin.autofield.AutoFieldFillHandler;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
-import com.jeesuite.mybatis.plugin.dataprofile.DataProfileHandler;
-import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
 import com.jeesuite.mybatis.plugin.rwseparate.RwRouteHandler;
 
 /**
@@ -46,9 +43,7 @@ public class MybatisConfigs {
 	public static final String DB_TYPE = "jeesuite.mybatis.dbType";
 	public static final String CACHE_ENABLED = "jeesuite.mybatis.cache.enabled";
 	public static final String CACHE_EXPIRE_SECONDS = "jeesuite.mybatis.cache.expireSeconds";
-	public static final String TENANT_ENABLED = "jeesuite.mybatis.tenant.enabled";
 	public static final String TENANT_SHARDDING_FIELD = "jeesuite.mybatis.tenant.sharddingField";
-	public static final String DATA_PROFILE_ENABLED = "jeesuite.mybatis.dataProfile.enabled";
 	public static final String INTERCEPTOR_HANDLERCLASS = "jeesuite.mybatis.interceptorHandlerClass";
 	
 	private static Map<String, Properties> groupProperties = new HashMap<>();
@@ -82,20 +77,16 @@ public class MybatisConfigs {
 		return Boolean.parseBoolean(getProperty(group, key, String.valueOf(defaultValue)));
 	}
 	
-	public static String getCrudDriver(String group){
-		return getProperty(group,CRUD_DRIVER, "default");
+	public static String getCrudDriver(){
+		return ResourceUtils.getProperty(CRUD_DRIVER);
 	}
 	
 	public static String getDbType(String group){
-		return getProperty(group,DB_TYPE, DatabaseType.mysql.name());
+		return getProperty(group,DB_TYPE, DatabaseType.mysql.name()).toLowerCase();
 	}
 	
 	public static boolean isCacheEnabled(String group) {
 		return getBoolean(group,CACHE_ENABLED, false);
-	}
-	
-	public static boolean isTenantEnabled(String group) {
-		return getBoolean(group,TENANT_ENABLED, false);
 	}
 	
 	public static String getTenantSharddingField(String group) {
@@ -103,15 +94,11 @@ public class MybatisConfigs {
 	}
 	
 	public static boolean isFieldSharddingTenant(String group) {
-		return isTenantEnabled(group) && getTenantSharddingField(group) != null;
+		return getTenantSharddingField(group) != null;
 	}
 	
 	public static boolean isSchameSharddingTenant(String group) {
-		return isTenantEnabled(group) && getTenantSharddingField(group) == null;
-	}
-	
-	public static boolean isDataProfileEnabled(String group) {
-		return getBoolean(group,DATA_PROFILE_ENABLED, false);
+		return DataSoureConfigHolder.containsTenantConfig(group);
 	}
 	
 	public static String[] getHandlerNames(String group){
@@ -121,20 +108,13 @@ public class MybatisConfigs {
 			String[] customHanlderClass = StringUtils.tokenizeToStringArray(customHandlers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 			hanlders.addAll(Arrays.asList(customHanlderClass));
 		}
-		
-		hanlders.add(PaginationHandler.NAME);
-		hanlders.add(AutoFieldFillHandler.NAME);
-		
+
 		if (isCacheEnabled(group)) {
 			hanlders.add(CacheHandler.NAME);
 		}
         //
 		if (DataSoureConfigHolder.containsSlaveConfig()) {
 			hanlders.add(RwRouteHandler.NAME);
-		}
-		
-		if (isDataProfileEnabled(group)) {
-			hanlders.add(DataProfileHandler.NAME);
 		}
 		
 		return hanlders.toArray(new String[0]);

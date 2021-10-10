@@ -56,6 +56,11 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 	private boolean dsKeyWithTenant = false;
 	//每个master对应slave数
 	private Map<String, Integer> slaveNumsMap = new HashMap<>();
+	
+	
+	public MultiRouteDataSource() {
+		this(DataSourceConfig.DEFAULT_GROUP_NAME);
+	}
 
 	public MultiRouteDataSource(String group) {
 		this.group = group;
