@@ -43,6 +43,7 @@ public abstract class AbstractZuulFilter extends ZuulFilter {
 
 	@Override
 	public boolean shouldFilter() {
+		if(hanlders.isEmpty())return false;
 		RequestContext ctx = RequestContext.getCurrentContext();
 		HttpServletRequest request = ctx.getRequest();
 		boolean skip = HttpMethod.OPTIONS.name().equals(request.getMethod()) 

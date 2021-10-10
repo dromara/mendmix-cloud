@@ -4,6 +4,8 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.jeesuite.common.async.RetryAsyncTaskExecutor;
@@ -21,6 +23,7 @@ import com.jeesuite.springweb.logging.BehaviorLogCollector;
  * @date 2018年9月13日
  */
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class SpringContextManager implements ApplicationContextAware,DisposableBean{
 
 	@Override

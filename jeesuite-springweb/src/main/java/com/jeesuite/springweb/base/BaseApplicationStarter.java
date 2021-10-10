@@ -13,16 +13,11 @@ import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.ApplicationStartedListener;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.springweb.client.RequestHeaderBuilder;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
-import com.jeesuite.springweb.ext.feign.CustomErrorDecoder;
 import com.jeesuite.springweb.ext.feign.CustomLoadBalancerFeignClient;
 import com.jeesuite.springweb.logging.LogProfileManager;
 
 import feign.Client;
-import feign.Feign;
-import feign.RequestInterceptor;
-import feign.RequestTemplate;
 
 public class BaseApplicationStarter{
 
@@ -38,19 +33,6 @@ public class BaseApplicationStarter{
 	@ConditionalOnProperty(value = "feign.custom-loadbalance-mapping.enabled",havingValue = "true")
 	public Client feignClient(LoadBalancerClient loadBalancer) {
 		return new CustomLoadBalancerFeignClient(loadBalancer);
-	}
-
-	@Bean
-	public Feign.Builder feignBuilder() {
-		return Feign.builder().requestInterceptor(new RequestInterceptor() {
-			@Override
-			public void apply(RequestTemplate requestTemplate) {
-				Map<String, String> customHeaders = RequestHeaderBuilder.getHeaders();
-				customHeaders.forEach((k,v)->{					
-					requestTemplate.header(k, v);
-				});  
-			}
-		}).errorDecoder(new CustomErrorDecoder());
 	}
 
 	protected static long before() {

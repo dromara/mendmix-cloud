@@ -7,6 +7,8 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Configuration;
 
 import com.google.common.io.CharStreams;
 import com.jeesuite.common.JeesuiteBaseException;
@@ -15,6 +17,8 @@ import com.jeesuite.common.json.JsonUtils;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 
+@Configuration
+@ConditionalOnClass(feign.RequestInterceptor.class)
 public class CustomErrorDecoder implements ErrorDecoder {
 
 	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.core.rpc");

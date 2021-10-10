@@ -20,10 +20,9 @@ import com.jeesuite.springweb.model.WrapperResponse;
 
 @Configuration
 @ControllerAdvice
-@ConditionalOnProperty(name = "response.reWrite.enbaled",havingValue = "true",matchIfMissing = true)
+@ConditionalOnProperty(name = "response.rewrite.enbaled",havingValue = "true",matchIfMissing = true)
 public class ResonseRewriteConfiguration implements ResponseBodyAdvice<Object>{
 
-	private boolean responseBodyForce = ResourceUtils.getBoolean("response.reWrite.responseBody.force");
     @Override
     public boolean supports(MethodParameter methodParameter,
                             Class<? extends HttpMessageConverter<?>> aClass) {
@@ -52,11 +51,7 @@ public class ResonseRewriteConfiguration implements ResponseBodyAdvice<Object>{
         	return body;
         }
     	
-        if(responseBodyForce) {
-        	if(!mediaType.includes(MediaType.APPLICATION_JSON) && !methodParameter.hasMethodAnnotation(ResponseBody.class)) {
-        		return body;
-            }
-    	}else if(!mediaType.includes(MediaType.APPLICATION_JSON)) {
+    	if(!mediaType.includes(MediaType.APPLICATION_JSON) && !methodParameter.hasMethodAnnotation(ResponseBody.class)) {
     		return body;
         }
     	//
@@ -64,7 +59,7 @@ public class ResonseRewriteConfiguration implements ResponseBodyAdvice<Object>{
     	
     	WrapperResponse<Object> rewriteBody = new WrapperResponse<Object>(body);
     	//
-    	if(responseBodyForce && StringHttpMessageConverter.class == aClass) {
+    	if(StringHttpMessageConverter.class == aClass) {
     		response.getHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     		return JsonUtils.toJson(rewriteBody);
     	}
