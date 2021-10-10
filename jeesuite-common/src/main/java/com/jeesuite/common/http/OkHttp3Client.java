@@ -82,7 +82,13 @@ public class OkHttp3Client implements HttpClientProvider{
 						if(entryValue == null)continue;
 						if(entryValue instanceof FileItem) {
 							FileItem fileItem = (FileItem)entryValue;
-							builder.addFormDataPart(entry.getKey(), fileItem.getFileName(), RequestBody.create(fileItem.getContent(), null));
+							byte[] content = fileItem.getContent();
+							MediaType contentType = null;
+							if(fileItem.getMimeType() != null) {
+								contentType = MediaType.parse(fileItem.getMimeType());
+							}
+							//MultipartBody.
+							builder.addFormDataPart(entry.getKey(), fileItem.getFileName(), RequestBody.create(contentType,content));
 						}else {
 							builder.addFormDataPart(entry.getKey(), entryValue.toString());
 						}

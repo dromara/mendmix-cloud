@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.yaml.snakeyaml.Yaml;
@@ -275,6 +276,14 @@ public final class ResourceUtils {
 			}
 		}
 		return properties;
+	}
+	
+	public static List<String>  getPropertyNames(String prefix){
+		return allProperties.keySet()
+				            .stream() //
+				            .filter(key -> key.toString().startsWith(prefix)) //
+				            .map(key -> key.toString()) //
+				            .collect(Collectors.toList());
 	}
 	
 	public static String getProperty(String key) {

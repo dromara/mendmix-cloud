@@ -275,7 +275,7 @@ public class HttpRequestEntity {
 
 		public String getMimeType() throws IOException {
 			if (this.mimeType == null) {
-				this.mimeType = MimeTypeUtils.getMimeType(getContent()).getMimeType();
+				this.mimeType = MimeTypeUtils.getFileMeta(getContent()).getMimeType();
 			}
 			return this.mimeType;
 		}

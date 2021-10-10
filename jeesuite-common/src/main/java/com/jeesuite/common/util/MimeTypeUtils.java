@@ -1,12 +1,10 @@
 package com.jeesuite.common.util;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.jeesuite.common.JeesuiteBaseException;
+import net.sf.jmimemagic.Magic;
+import net.sf.jmimemagic.MagicMatch;
 
 /**
  * 文件MimeType解析工具
@@ -20,154 +18,72 @@ import com.jeesuite.common.JeesuiteBaseException;
  */
 public class MimeTypeUtils {
 
-	public static MimeType getMimeType(byte[] fileBytes) {
-		String fileHead = bytesToHex(Arrays.copyOf(fileBytes, 28));
-		System.out.println(fileHead);
-		return getMimeType(fileHead);
+	private static List<FileMeta> fileMetas = new ArrayList<>();
+
+	static {
+		fileMetas.add(new FileMeta("image/jpeg", "jpg"));
+		fileMetas.add(new FileMeta("image/gif", "gif"));
+		fileMetas.add(new FileMeta("image/png", "png"));
+		fileMetas.add(new FileMeta("image/bmp", "bmp"));
+		fileMetas.add(new FileMeta("text/plain", "txt"));
+		fileMetas.add(new FileMeta("application/zip", "zip"));
+		fileMetas.add(new FileMeta("application/x-zip-compressed", "zip"));
+		fileMetas.add(new FileMeta("multipart/x-zip", "zip"));
+		fileMetas.add(new FileMeta("application/x-compressed", "zip"));
+		fileMetas.add(new FileMeta("audio/mpeg3", "mp3"));
+		fileMetas.add(new FileMeta("video/avi", "avi"));
+		fileMetas.add(new FileMeta("audio/wav", "wav"));
+		fileMetas.add(new FileMeta("application/x-gzip", "gzip"));
+		fileMetas.add(new FileMeta("application/x-gzip", "gz"));
+		fileMetas.add(new FileMeta("text/html", "html"));
+		fileMetas.add(new FileMeta("application/x-shockwave-flash", "svg"));
+		fileMetas.add(new FileMeta("application/pdf", "pdf"));
+		fileMetas.add(new FileMeta("application/msword", "doc"));
+		fileMetas.add(new FileMeta("application/vnd.openxmlformats-officedocument.wordprocessingml.document", "docx"));
+		fileMetas.add(new FileMeta("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xlsx"));
+		fileMetas.add(new FileMeta("application/vnd.ms-excel", "xls"));
+		fileMetas.add(new FileMeta("application/vnd.ms-powerpoint", "ppt"));
+		fileMetas
+				.add(new FileMeta("application/vnd.openxmlformats-officedocument.presentationml.presentation", "pptx"));
 	}
 
-	/** 判断文件类型 */
-	public static MimeType getMimeType(File file) throws IOException {
-		// 获取文件头
-		String fileHead = getFileHeader(file);
-		return getMimeType(fileHead);
+	public static String getFileExtension(String mimeType) {
+		FileMeta meta = fileMetas.stream().filter(o -> o.mimeType.equals(mimeType)).findFirst().orElse(null);
+		return meta == null ? null : meta.extension;
 	}
 
-	private static MimeType getMimeType(String fileHead) {
-		if (fileHead != null && fileHead.length() > 0) {
-			fileHead = fileHead.toUpperCase();
-			MimeType[] mimeTypes = MimeType.values();
-
-			for (MimeType type : mimeTypes) {
-				if (fileHead.startsWith(type.getHead())) {
-					return type;
-				}
-			}
-		}
-		throw new JeesuiteBaseException("NOT FOUND MimeType for:" + fileHead);
+	public static String getFileMimeType(String extension) {
+		FileMeta meta = fileMetas.stream().filter(o -> o.extension.equals(extension)).findFirst().orElse(null);
+		return meta == null ? null : meta.mimeType;
 	}
 
-	/** 读取文件头 */
-	private static String getFileHeader(File file) throws IOException {
-		byte[] b = new byte[28];
-		InputStream inputStream = null;
-
+	public static FileMeta getFileMeta(byte[] data) {
 		try {
-			inputStream = new FileInputStream(file);
-			inputStream.read(b, 0, 28);
-		} finally {
-			if (inputStream != null) {
-				inputStream.close();
-			}
+			MagicMatch magicMatch = Magic.getMagicMatch(data);
+			return new FileMeta(magicMatch.getMimeType(), magicMatch.getExtension());
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
-
-		return bytesToHex(b);
 	}
 
-	/** 将字节数组转换成16进制字符串 */
-	private static String bytesToHex(byte[] src) {
-		StringBuilder stringBuilder = new StringBuilder("");
-		if (src == null || src.length <= 0) {
-			return null;
-		}
-		for (int i = 0; i < src.length; i++) {
-			int v = src[i] & 0xFF;
-			String hv = Integer.toHexString(v);
-			if (hv.length() < 2) {
-				stringBuilder.append(0);
-			}
-			stringBuilder.append(hv);
-		}
-		return stringBuilder.toString();
-	}
+	public static class FileMeta {
+		String mimeType;
+		String extension;
 
-	public static enum MimeType {
-
-		/** JPEG */
-		JPEG("FFD8FF","image/jpeg"),
-
-		/** PNG */
-		PNG("89504E47","image/png"),
-
-		/** GIF */
-		GIF("47494638","image/gif"),
-		/** Windows bitmap */
-		BMP("424D","image/bmp"),
-		/** Adobe photoshop */
-		PSD("38425053",""),
-
-		/** Rich Text Format */
-		RTF("7B5C727466",""),
-
-		/** XML */
-		XML("3C3F786D6C",""),
-
-		/** HTML */
-		HTML("68746D6C3E",""),
-
-		/** doc;xls;dot;ppt;xla;ppa;pps;pot;msi;sdw;db */
-		OLE2("0xD0CF11E0A1B11AE1",""),
-
-		/** Microsoft Word/Excel */
-		XLS_DOC("D0CF11E0",""),
-
-		/** Microsoft Access */
-		MDB("5374616E64617264204A",""),
-
-		/** Word Perfect */
-		WPB("FF575043",""),
-
-		/** Postscript */
-		EPS_PS("252150532D41646F6265",""),
-
-		/** Adobe Acrobat */
-		PDF("255044462D312E",""),
-
-		/** Windows Password */
-		PWL("E3828596",""),
-
-		/** ZIP Archive */
-		ZIP("504B0304","multipart/x-zip"),
-
-		/** ARAR Archive */
-		RAR("52617221",""),
-
-		/** WAVE */
-		WAV("57415645","audio/wav"),
-
-		/** AVI */
-		AVI("41564920","video/avi"),
-
-		/** Real Audio */
-		RAM("2E7261FD",""),
-
-		/** Real Media */
-		RM("2E524D46",""),
-
-		/** Quicktime */
-		MOV("6D6F6F76",""),
-
-		/** Windows Media */
-		ASF("3026B2758E66CF11",""),
-
-		/** MIDI */
-		MID("4D546864","");
-
-		private final String head;
-		private final String mimeType;
-		
-		private MimeType(String head, String mimeType) {
-			this.head = head;
+		public FileMeta(String mimeType, String extension) {
+			super();
 			this.mimeType = mimeType;
-		}
-
-		public String getHead() {
-			return head;
+			this.extension = extension;
 		}
 
 		public String getMimeType() {
 			return mimeType;
 		}
 
+		public String getExtension() {
+			return extension;
+		}
+
 	}
+
 }
