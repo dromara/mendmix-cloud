@@ -1,5 +1,7 @@
 package com.jeesuite.security.cache;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -51,6 +53,29 @@ public class LocalCache implements Cache{
 	@Override
 	public void removeAll() {
 		cache.invalidateAll();
+	}
+
+	@Override
+	public void setMapValue(String key,String field,Object value) {
+		Map<String, Object> map = getObject(key);
+		if(map == null){
+			map = new HashMap<>(1);
+			setObject(key, map);
+		}
+		map.put(field, value);
+		
+	}
+
+	@Override
+	public <T> T getMapValue(String key, String field) {
+		Map<String, Object> map = getObject(key);
+		if(map == null)return null;
+		return (T) map.get(field);
+	}
+	
+	@Override
+	public void updateExpireTime(String key) {
+		
 	}
 
 }

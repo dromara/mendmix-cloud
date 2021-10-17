@@ -1,8 +1,8 @@
 package com.jeesuite.security.model;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.TokenGenerator;
 
@@ -19,14 +19,19 @@ import com.jeesuite.common.util.TokenGenerator;
 public class UserSession {
 
 	private String sessionId;
-	private AuthUser userInfo;
-	private Integer expiresIn;
-	private Long expiresAt;
-	private String profile;
+	private AuthUser user;
+	private long expiredAt;
+
 	private String tenantId;
-	
-	
+	@JsonIgnore
+	private List<String> permissions;
+
 	public UserSession() {}
+	
+	public UserSession(String sessionId,AuthUser user) {
+		this.sessionId = sessionId;
+		this.user = user;
+	}
 	
 	public static UserSession create(){
 		UserSession session = new UserSession();
@@ -34,56 +39,26 @@ public class UserSession {
 		return session;
 	}
 	
-	public void update(AuthUser userInfo ,Integer expiresIn){
-		this.userInfo = userInfo;
-		setExpiresIn(expiresIn);
+	/**
+	 * @return the user
+	 */
+	public AuthUser getUser() {
+		return user;
 	}
 
-	public Integer getExpiresIn() {
-		return expiresIn;
-	}
-	public void setExpiresIn(Integer expiresIn) {
-		this.expiresIn = expiresIn;
-		this.expiresAt = System.currentTimeMillis()/1000 + this.expiresIn;
-	}
-
-	public boolean isAnonymous(){
-		return userInfo == null;
-	}
-
-
+	/**
+	 * @return the sessionId
+	 */
 	public String getSessionId() {
 		return sessionId;
 	}
-
+	/**
+	 * @param sessionId the sessionId to set
+	 */
 	public void setSessionId(String sessionId) {
 		this.sessionId = sessionId;
 	}
 
-	public Long getExpiresAt() {
-		return expiresAt;
-	}
-
-	public void setExpiresAt(Long expiresAt) {
-		this.expiresAt = expiresAt;
-	}
-
-	public AuthUser getUserInfo() {
-		return userInfo;
-	}
-
-	public void setUserInfo(AuthUser userInfo) {
-		this.userInfo = userInfo;
-	}
-
-
-	public String getProfile() {
-		return profile;
-	}
-
-	public void setProfile(String profile) {
-		this.profile = profile;
-	}
 
 	public String getTenantId() {
 		return tenantId;
@@ -93,21 +68,36 @@ public class UserSession {
 		this.tenantId = tenantId;
 	}
 
-	public String getUserId(){
-		return userInfo == null ? null : userInfo.getId();
+	public void setUser(AuthUser user) {
+		this.user = user;
+	}
+
+	/**
+	 * @return the permissions
+	 */
+	public List<String> getPermissions() {
+		return permissions;
+	}
+	/**
+	 * @param permissions the permissions to set
+	 */
+	public void setPermissions(List<String> permissions) {
+		this.permissions = permissions;
 	}
 	
-	public String encodeBaseUser() {
-		if(userInfo == null)return  null;
-		String info = String.format("%s#%s", userInfo.getId(),userInfo.getUsername());
-		return Base64.getEncoder().encodeToString(info.getBytes(StandardCharsets.UTF_8));
+	public long getExpiredAt() {
+		return expiredAt;
+	}
+	public void setExpiredAt(long expiredAt) {
+		this.expiredAt = expiredAt;
 	}
 	
-	public AccessToken asAccessToken() {
-		AccessToken token = new AccessToken();
-		token.setAccess_token(sessionId);
-		token.setExpires_in(expiresIn);
-		return token;
+	public boolean isAnonymous(){
+		return user == null;
+	}
+	
+	public int getExpiresIn() {
+		return (int) (this.expiredAt - System.currentTimeMillis());
 	}
 	
 }

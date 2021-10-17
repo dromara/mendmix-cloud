@@ -17,8 +17,6 @@ package com.jeesuite.security;
 
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.security.SecurityConstants.CacheType;
@@ -31,10 +29,14 @@ import com.jeesuite.security.model.UserSession;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月30日
  */
-public abstract class SecurityConfigurerProvider<T extends AuthUser> {
+public abstract class SecurityDecisionProvider {
 
 	public String sessionIdName(){
 		return "JSESSIONID";
+	}
+	
+	public String headerTokenName(){
+		return "x-user-token";
 	}
 	
 	public int sessionExpireIn(){
@@ -67,17 +69,13 @@ public abstract class SecurityConfigurerProvider<T extends AuthUser> {
 		}
 		return CacheType.local;
 	}
-	
-	public String getCurrentProfile(HttpServletRequest request){
-		return SecurityConstants.DEFAULT_PROFILE;
-	}
+
 	
 	public abstract String contextPath();
 	public abstract List<String> anonymousUrlPatterns();
-	public abstract T validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
-	public abstract List<String> findAllUriPermissionCodes();
-	public abstract List<String> getUserPermissionCodes(String userId);
-	public abstract void authorizedPostHandle(UserSession session);
+	public abstract AuthUser validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
+	public abstract List<String> getAllApiPermissions();
+	public abstract List<String> getUserApiPermissions(String userId);
 	public abstract String error401Page();
 	public abstract String error403Page();
 }

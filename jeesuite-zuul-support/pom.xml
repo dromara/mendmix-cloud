@@ -34,6 +34,12 @@
 			<artifactId>jeesuite-springweb</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.jeesuite</groupId>
+			<artifactId>jeesuite-security</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>javax.servlet</groupId>

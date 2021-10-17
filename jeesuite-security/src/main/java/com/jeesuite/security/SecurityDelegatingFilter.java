@@ -31,6 +31,7 @@ import org.springframework.http.HttpStatus;
 import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.WebUtils;
+import com.jeesuite.security.model.UserSession;
 import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
 import com.jeesuite.springweb.exception.UnauthorizedException;
@@ -82,8 +83,9 @@ public class SecurityDelegatingFilter implements Filter {
 		
 		CurrentRuntimeContext.init(request, response);
 
+		UserSession userSession = null;
 		try {
-			SecurityDelegating.doAuthorization();
+			userSession = SecurityDelegating.doAuthorization();
 		} catch (UnauthorizedException e) {
 			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			if(WebUtils.isAjax(request)){				
@@ -112,7 +114,7 @@ public class SecurityDelegatingFilter implements Filter {
 		}
 		//
 		if(additionHandler != null) {
-			additionHandler.afterAuthorization(request, response);
+			additionHandler.afterAuthorization(userSession);
 		}
 		
 		chain.doFilter(req, res);

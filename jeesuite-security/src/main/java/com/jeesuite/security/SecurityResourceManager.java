@@ -29,8 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.security.SecurityConstants.CacheType;
-import com.jeesuite.security.cache.LocalCache;
-import com.jeesuite.security.cache.RedisCache;
 import com.jeesuite.security.model.UserSession;
 
 /**
@@ -43,9 +41,8 @@ public class SecurityResourceManager {
 
 	private static final String WILDCARD_START = "{";
 
-	private Cache userPermCache;
 	private String contextPath;
-	private SecurityConfigurerProvider decisionProvider;
+	private SecurityDecisionProvider decisionProvider;
 
 	private PathMatcher anonymousUrlMatcher;
 	// 无通配符uri
@@ -55,15 +52,15 @@ public class SecurityResourceManager {
 	
 	private volatile boolean refreshCallable = true;
 	private ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1);
+			
+	private static String cacheName = "permres";
+	private SecurityStorageManager storageManager;
 
-	public SecurityResourceManager(SecurityConfigurerProvider decisionProvider) {
+	public SecurityResourceManager(SecurityDecisionProvider decisionProvider,SecurityStorageManager storageManager) {
+		this.storageManager = storageManager;
+		this.storageManager.addCahe(cacheName, decisionProvider.sessionExpireIn());
+		storageManager.addCahe(cacheName, decisionProvider.sessionExpireIn());
 		this.decisionProvider = decisionProvider;
-		if(CacheType.redis == decisionProvider.cacheType()){
-	       this.userPermCache = new RedisCache("security:userperms", decisionProvider.sessionExpireIn());
-		}else{
-		   this.userPermCache = new LocalCache(decisionProvider.sessionExpireIn());
-		}
-
 		contextPath = decisionProvider.contextPath();
 		if (contextPath.endsWith("/")) {
 			contextPath = contextPath.substring(0, contextPath.indexOf("/"));
@@ -88,7 +85,7 @@ public class SecurityResourceManager {
 		Map<String, String> nonWildcardUriPerms = new HashMap<>();
 		Map<Pattern, String> wildcardUriPermPatterns = new HashMap<>();
 		Map<String, String> uriPrefixs = new HashMap<>();
-		List<String> permissionCodes = decisionProvider.findAllUriPermissionCodes();
+		List<String> permissionCodes = decisionProvider.getAllApiPermissions();
 		if(permissionCodes == null || permissionCodes.isEmpty())return;
 		String fullUri = null;
 		for (String permCode : permissionCodes) {
@@ -113,11 +110,11 @@ public class SecurityResourceManager {
 	public List<String> getUserPermissionCodes(UserSession session) {
 		
 		//TODO 考虑统一用户在不同租户，不同平台,逻辑要补充
-		String cacheKey = String.format("%s_%s",StringUtils.trimToEmpty(session.getTenantId()) ,session.getUserId());
-		List<String> permissionCodes = userPermCache.getObject(cacheKey);
+		String cacheKey = String.format("%s_%s",StringUtils.trimToEmpty(session.getTenantId()) ,session.getUser().getId());
+		List<String> permissionCodes = storageManager.getCache(cacheName).getObject(cacheKey);
 		if(permissionCodes != null)return permissionCodes;
 		
-		permissionCodes = decisionProvider.getUserPermissionCodes(session.getUserId());
+		permissionCodes = decisionProvider.getUserApiPermissions(session.getUser().getId());
 		
 		if(permissionCodes == null) {
 			permissionCodes = new ArrayList<>(0);
@@ -133,7 +130,7 @@ public class SecurityResourceManager {
 				permissionCodes.addAll(removeWildcards);
 		}
 		
-		userPermCache.setObject(cacheKey, permissionCodes);
+		storageManager.getCache(cacheName).setObject(cacheKey, permissionCodes);
 
 		return permissionCodes;
 	}
@@ -165,11 +162,11 @@ public class SecurityResourceManager {
 	}
 	
 	public void refreshUserPermssions(Serializable userId){
-		userPermCache.remove(String.valueOf(userId));
+		storageManager.getCache(cacheName).remove(String.valueOf(userId));
 	}
 	
 	public void refreshUserPermssions(){
-		userPermCache.removeAll();
+		storageManager.getCache(cacheName).removeAll();
 	}
 	
 	public void refreshResources(){

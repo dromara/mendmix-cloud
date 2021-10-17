@@ -16,6 +16,7 @@
 package com.jeesuite.security.cache;
 
 import com.jeesuite.cache.command.RedisBatchCommand;
+import com.jeesuite.cache.command.RedisHashMap;
 import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.cache.command.RedisString;
 import com.jeesuite.security.Cache;
@@ -27,13 +28,13 @@ import com.jeesuite.security.Cache;
  */
 public class RedisCache implements Cache {
 
-	public static final String CACHE_GROUP_NAME = "security";
-	
-	private int timeToLiveSeconds;
+	private String groupName;
 	private String keyPrefix;
+	private long timeToLiveSeconds;
 	
 	
-	public RedisCache(String keyPrefix,int timeToLiveSeconds) {
+	public RedisCache(String groupName,String keyPrefix,int timeToLiveSeconds) {
+		this.groupName = groupName;
 		this.keyPrefix = keyPrefix + ":";
 		this.timeToLiveSeconds = timeToLiveSeconds;
 	}
@@ -44,37 +45,53 @@ public class RedisCache implements Cache {
 
 	@Override
 	public void setString(String key, String value) {
-		new RedisString(buildKey(key),CACHE_GROUP_NAME).set(value,timeToLiveSeconds);
+		new RedisString(buildKey(key),groupName).set(value,timeToLiveSeconds);
 	}
 
 	@Override
 	public String getString(String key) {
-		return new RedisString(buildKey(key),CACHE_GROUP_NAME).get();
+		return new RedisString(buildKey(key),groupName).get();
 	}
 
 	@Override
 	public void setObject(String key, Object value) {
-		new RedisObject(buildKey(key),CACHE_GROUP_NAME).set(value,timeToLiveSeconds);
+		new RedisObject(buildKey(key),groupName).set(value,timeToLiveSeconds);
 	}
 
 	@Override
 	public <T> T getObject(String key) {
-		return new RedisObject(buildKey(key),CACHE_GROUP_NAME).get();
+		return new RedisObject(buildKey(key),groupName).get();
 	}
 
 	@Override
 	public void remove(String key) {
-		new RedisObject(buildKey(key),CACHE_GROUP_NAME).remove();
+		new RedisObject(buildKey(key),groupName).remove();
 	}
 
 	@Override
 	public void removeAll() {
-		RedisBatchCommand.removeByKeyPrefix(CACHE_GROUP_NAME,keyPrefix);
+		RedisBatchCommand.removeByKeyPrefix(groupName,keyPrefix);
 	}
 
 	@Override
 	public boolean exists(String key) {
-		return new RedisObject(buildKey(key),CACHE_GROUP_NAME).exists();
+		return new RedisObject(buildKey(key),groupName).exists();
+	}
+
+	@Override
+	public void setMapValue(String key,String field,Object value) {
+		new RedisHashMap(key,groupName,timeToLiveSeconds).set(field, value);
+	}
+
+	@Override
+	public <T> T getMapValue(String key, String field) {
+		return new RedisHashMap(key,groupName).getOne(field);
+	}
+
+
+	@Override
+	public void updateExpireTime(String key) {
+		new RedisObject(buildKey(key),groupName).setExpire(timeToLiveSeconds);
 	}
 
 }
