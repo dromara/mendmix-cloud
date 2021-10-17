@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.mybatis.datasource.DataSourceContextVals;
 import com.jeesuite.mybatis.plugin.autofield.AutoFieldFillHandler;
 import com.jeesuite.mybatis.plugin.autofield.CurrentUserProvider;
