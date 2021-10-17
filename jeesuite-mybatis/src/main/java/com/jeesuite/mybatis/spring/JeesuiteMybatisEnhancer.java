@@ -61,11 +61,9 @@ public class JeesuiteMybatisEnhancer {
 		}
 		// 注册拦截器
 		String[] hanlderNames = MybatisConfigs.getHandlerNames(group);
-		if (hanlderNames.length > 0) {
-			JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor(group, hanlderNames);
-			configuration.addInterceptor(interceptor);
-			interceptor.afterRegister();
-		}
+		JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor(group, hanlderNames);
+		configuration.addInterceptor(interceptor);
+		interceptor.afterRegister();
 		
 		logger.info(">> JeesuiteMybatisEnhancer finshed -> group:{},hanlderNames:{}",group,hanlderNames);
 

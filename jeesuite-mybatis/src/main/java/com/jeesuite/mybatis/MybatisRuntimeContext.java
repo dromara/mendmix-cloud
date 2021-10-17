@@ -54,7 +54,8 @@ public class MybatisRuntimeContext {
     
     public static String getCurrentUser() {
     	if(ThreadLocalContext.exists(ThreadLocalContext.CURRENT_USER_KEY)) {
-    		return ThreadLocalContext.getStringValue(ThreadLocalContext.CURRENT_USER_KEY);
+    		AuthUser curUser = ThreadLocalContext.get(ThreadLocalContext.CURRENT_USER_KEY);
+    		return curUser.getUsername();
     	}
     	return getCurrentUserProvider().currentUser();
     }
