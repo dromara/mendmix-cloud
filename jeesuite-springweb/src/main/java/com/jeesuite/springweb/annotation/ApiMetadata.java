@@ -42,7 +42,19 @@ public @interface ApiMetadata {
 	 * 是否记录操作日志
 	 * @return
 	 */
-	boolean actionLog() default false;
+	boolean actionLog() default true;
+	
+	/**
+	 * 是否记录请求日志
+	 * @return
+	 */
+	boolean requestLog() default true;
+	
+	/**
+	 * 是否记录请求日志
+	 * @return
+	 */
+	boolean responseLog() default true;
 	
 	/**
 	 * 是否保持response，即网关不作统一包装

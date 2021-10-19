@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 
+import com.jeesuite.common.WebConstants;
 import com.jeesuite.springweb.client.RequestHeaderBuilder;
 
 import feign.RequestInterceptor;
@@ -20,6 +21,8 @@ public class CustomRequestInterceptor implements RequestInterceptor {
 		customHeaders.forEach((k,v)->{					
 			template.header(k, v);
 		});  
+		//
+		template.header(WebConstants.HEADER_HTTP_STATUS_KEEP, Boolean.TRUE.toString());
 	}
 
 }

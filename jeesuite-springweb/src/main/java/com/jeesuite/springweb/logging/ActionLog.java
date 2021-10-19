@@ -2,6 +2,7 @@ package com.jeesuite.springweb.logging;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,10 +35,12 @@ public class ActionLog implements Serializable{
 	@JsonFormat(pattern=DateUtils.TIMESTAMP_PATTERN,timezone = "GMT+8")
 	private Date requestAt;
 	private int responseCode;
-	private String requestData;
-	private String responseData;
+	private Map<String, String> requestParameters;
+	private Object requestData;
+	private Object responseData;
 	private Integer useTime;
 	private String requestId;
+	private String exceptions;
 	
 	public String getAppId() {
 		return appId;
@@ -172,28 +175,23 @@ public class ActionLog implements Serializable{
 	public void setResponseCode(int responseCode) {
 		this.responseCode = responseCode;
 	}
-	/**
-	 * @return the requestData
-	 */
-	public String getRequestData() {
+	
+	public Map<String, String> getRequestParameters() {
+		return requestParameters;
+	}
+	public void setRequestParameters(Map<String, String> requestParameters) {
+		this.requestParameters = requestParameters;
+	}
+	public Object getRequestData() {
 		return requestData;
 	}
-	/**
-	 * @param requestData the requestData to set
-	 */
-	public void setRequestData(String requestData) {
+	public void setRequestData(Object requestData) {
 		this.requestData = requestData;
 	}
-	/**
-	 * @return the responseData
-	 */
-	public String getResponseData() {
+	public Object getResponseData() {
 		return responseData;
 	}
-	/**
-	 * @param responseData the responseData to set
-	 */
-	public void setResponseData(String responseData) {
+	public void setResponseData(Object responseData) {
 		this.responseData = responseData;
 	}
 	/**
@@ -220,6 +218,13 @@ public class ActionLog implements Serializable{
 	public void setRequestId(String requestId) {
 		this.requestId = requestId;
 	}
+	public String getExceptions() {
+		return exceptions;
+	}
+	public void setExceptions(String exceptions) {
+		this.exceptions = exceptions;
+	}
+	
 	
 
 }

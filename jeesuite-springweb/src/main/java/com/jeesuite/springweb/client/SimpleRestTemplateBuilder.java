@@ -7,8 +7,6 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-import com.jeesuite.springweb.interceptor.LoggingRequestInterceptor;
-
 public class SimpleRestTemplateBuilder {
 
 	
@@ -25,7 +23,7 @@ public class SimpleRestTemplateBuilder {
         RestTemplate restTemplate = new RestTemplate(factory);
         List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
         interceptors.add(new RestTemplateAutoHeaderInterceptor());
-        interceptors.add(new LoggingRequestInterceptor());
+        interceptors.add(new HttpClientLoggingInterceptor());
         restTemplate.setInterceptors(interceptors);
         //
         restTemplate.setErrorHandler(new CustomResponseErrorHandler());

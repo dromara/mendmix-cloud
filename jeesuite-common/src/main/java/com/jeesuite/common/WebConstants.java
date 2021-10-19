@@ -30,6 +30,7 @@ public class WebConstants {
     public static final String HEADER_INVOKER_APP_ID = "x-invoker-appid";
     public static final String HEADER_REQUEST_ID = "x-request-id";
 	public static final String HEADER_RESP_KEEP = "x-resp-keep";
+	public static final String HEADER_HTTP_STATUS_KEEP = "x-httpstatus-keep";
 	public static final String HEADER_VERIFIED_MOBILE = "x-verified-mobile";
 	
 	public static final String PARAM_RETURN_URL = "returnUrl";

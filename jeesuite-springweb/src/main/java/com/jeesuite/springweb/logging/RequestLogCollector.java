@@ -8,7 +8,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.ThreadContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.async.StandardThreadExecutor;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
@@ -25,16 +28,17 @@ import com.jeesuite.springweb.CurrentRuntimeContext;
  * 行为日志采集
  * 
  * <br>
- * Class Name   : BehaviorLogCollector
+ * Class Name   : RequestLogCollector
  *
  * @author jiangwei
  * @version 1.0.0
  * @date 2019年8月22日
  */
-public class BehaviorLogCollector {
+public class RequestLogCollector {
 	
-	private static final String LOG_BASE_URL = ResourceUtils.getProperty("commonlog.base.url");
-	private static final String ACT_LOG_ADD_URL = LOG_BASE_URL + "/action_log/add";
+	private static Logger log = LoggerFactory.getLogger("request.logger.level");
+	
+	private static final String ACT_LOG_ADD_URL = ResourceUtils.getProperty("log.push.url");
 	private static final String TIMER_TASK = "timerTask";
 
 	private static ThreadLocal<ActionLog> context = new ThreadLocal<>();
@@ -44,11 +48,14 @@ public class BehaviorLogCollector {
 	private static boolean inited = false;
 	
 	static {
-		if(inited = StringUtils.isNotBlank(LOG_BASE_URL)) {			
+		if(inited = StringUtils.isNotBlank(ACT_LOG_ADD_URL)) {			
 			asyncSendExecutor = new StandardThreadExecutor(1, 10,60, TimeUnit.SECONDS, 5000,new StandardThreadFactory("log-asyncSendExecutor"));
 		}
 	}
 
+	public static ActionLog currentActionLog() {
+		return context.get();
+	}
 
 	public static void onRequestStart(HttpServletRequest request){
 		if(!inited)return;
@@ -82,9 +89,27 @@ public class BehaviorLogCollector {
 	}
     
     public static void onResponseEnd(HttpServletResponse response,Throwable throwable){
-    	if(context.get() == null)return;
+    	if(context.get() == null) {
+    		if(throwable != null) {
+    			String requestURI = CurrentRuntimeContext.getRequest().getRequestURI();
+    			if (throwable instanceof JeesuiteBaseException) {
+    				log.warn("bizError -> request:{},message:{}",requestURI,throwable.getMessage());
+    			}else {
+    				log.error("systemError",throwable);
+    			}
+    		}
+    		return;
+    	}
     	ActionLog actionLog = context.get();
     	if(actionLog == null)return;
+    	actionLog.setResponseAt(new Date());
+    	actionLog.setResponseCode(response.getStatus());
+    	if(throwable != null) {
+    		log.error("requestError:{}",actionLog.getExceptions());
+		}else  if(log.isDebugEnabled()) {
+			String requestLogMessage = RequestLogBuilder.responseLogMessage(actionLog.getResponseCode(), actionLog.getResponseData());
+			log.debug(requestLogMessage);
+		}
     	try {	
     		asyncSendExecutor.execute(new Runnable() {
 				@Override

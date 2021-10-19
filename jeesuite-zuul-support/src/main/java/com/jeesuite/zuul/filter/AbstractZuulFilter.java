@@ -35,6 +35,11 @@ public abstract class AbstractZuulFilter extends ZuulFilter {
 			//
 			hanlders.add(new ResponseRewriteHandler());
 		} 
+		if(filterHandlers != null && filterHandlers.length > 0 && filterHandlers[0] != null) {
+			for (FilterHandler filterHandler : filterHandlers) {
+				hanlders.add(filterHandler);
+			}
+		}
 		//
 		if(hanlders.size() > 1) {			
 			hanlders.stream().sorted(Comparator.comparing(FilterHandler::order));

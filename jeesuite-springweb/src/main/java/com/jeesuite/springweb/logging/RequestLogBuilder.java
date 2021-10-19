@@ -6,15 +6,12 @@ import com.jeesuite.common.json.JsonUtils;
 
 public class RequestLogBuilder {
 
-	public static String requestLogMessage(String uri,String method,Object headers,Object parameters,Object body) {
+	public static String requestLogMessage(String uri,String method,Object parameters,Object body) {
 		StringBuilder builder = new StringBuilder();
 		
     	builder.append("\n-----------request start-----------\n");
     	builder.append("uri      :").append(uri).append("\n");
     	builder.append("method   :").append(method).append("\n");
-    	if(headers != null) {
-    		builder.append("headers  :").append(headers).append("\n");
-    	}
     	if(parameters != null) {
     		builder.append("parameters  :").append(parameters).append("\n");
     	}
@@ -38,13 +35,10 @@ public class RequestLogBuilder {
 	}
 	
 	
-	public static String responseLogMessage(int statusCode,Object headers,Object body) {
+	public static String responseLogMessage(int statusCode,Object body) {
 		StringBuilder builder = new StringBuilder();
     	builder.append("\n-----------response start-----------\n");
     	builder.append("statusCode      :").append(statusCode).append("\n");
-    	if(headers != null) {
-    		builder.append("headers  :").append(headers).append("\n");
-    	}
     	if(body != null) {
     		String bodyString;
     		if(body instanceof byte[]) {

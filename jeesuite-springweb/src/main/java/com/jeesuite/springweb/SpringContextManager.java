@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import com.jeesuite.common.async.RetryAsyncTaskExecutor;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
-import com.jeesuite.springweb.logging.BehaviorLogCollector;
+import com.jeesuite.springweb.logging.RequestLogCollector;
 
 /**
  * 
@@ -29,7 +29,7 @@ public class SpringContextManager implements ApplicationContextAware,DisposableB
 	@Override
 	public void destroy() throws Exception {
 		RetryAsyncTaskExecutor.close();
-		BehaviorLogCollector.destroy();
+		RequestLogCollector.destroy();
 	}
 
 	@Override

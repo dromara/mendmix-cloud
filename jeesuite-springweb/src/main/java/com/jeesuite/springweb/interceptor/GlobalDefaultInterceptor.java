@@ -1,15 +1,12 @@
 package com.jeesuite.springweb.interceptor;
 
-import java.util.Arrays;
-import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpMethod;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -23,7 +20,7 @@ import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.annotation.ApiMetadata;
 import com.jeesuite.springweb.exception.ForbiddenAccessException;
-import com.jeesuite.springweb.logging.BehaviorLogCollector;
+import com.jeesuite.springweb.logging.RequestLogCollector;
 
 /**
  * 
@@ -40,9 +37,12 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	private static Logger log = LoggerFactory.getLogger("com.jeesuite.springweb");
 	
 	private boolean isLocalEnv = "local".equals(CurrentRuntimeContext.ENV);
-	private boolean authTokenCheckDisabled = ResourceUtils.getBoolean("authtoken.check.disabled", isLocalEnv);
-	private static boolean behaviorlogEnabled = ResourceUtils.getBoolean("behaviorlog.collector.enabled", false);
-	private static List<String> actionLogMethoads = Arrays.asList(HttpMethod.POST.name(),HttpMethod.DELETE.name(),HttpMethod.PUT.name());
+	//调用token检查
+	private boolean authTokenCheckEnabled = ResourceUtils.getBoolean("request.authtoken.enabled", !isLocalEnv);
+	//行为日志采集
+	private boolean requestLogEnabled = ResourceUtils.getBoolean("request.log.enabled", false);
+	//
+	private boolean requestLogGetIngore = ResourceUtils.getBoolean("request.log.getMethod.ignore", true);
 
 	private PathMatcher authtokenCheckIgnoreUriMather = new PathMatcher(StringUtils.EMPTY,ResourceUtils.getProperty("authtoken.check.ignore.uris"));
 	
@@ -52,7 +52,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 
 		CurrentRuntimeContext.init(request, response);
 		//校验授权
-		if(!authTokenCheckDisabled){	
+		if(authTokenCheckEnabled){	
 			String uri = request.getRequestURI();
 			if(!authtokenCheckIgnoreUriMather.match(uri)){				
 				String authCode = request.getHeader(WebConstants.HEADER_AUTH_TOKEN);
@@ -74,12 +74,13 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 				if(config.responseKeep()){
 					response.addHeader(WebConstants.HEADER_RESP_KEEP, Boolean.TRUE.toString());
 				}
-				//行为日志
-				if(behaviorlogEnabled){
-					if((config == null && (actionLogMethoads.contains(request.getMethod()))) 
-							|| (config != null && config.actionLog())){
-						BehaviorLogCollector.onRequestStart(request);
-					}
+			}
+			
+			//行为日志
+			if(requestLogEnabled){
+				if((config == null && (!requestLogGetIngore || !request.getMethod().equals(RequestMethod.GET.name())))
+						|| config.actionLog()){
+					RequestLogCollector.onRequestStart(request);
 				}
 			}
 		}
@@ -96,9 +97,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
-		if(behaviorlogEnabled){			
-			BehaviorLogCollector.onResponseEnd(response, ex);
-		}
+		RequestLogCollector.onResponseEnd(response, ex);
 		ThreadLocalContext.unset();
 	}
 	

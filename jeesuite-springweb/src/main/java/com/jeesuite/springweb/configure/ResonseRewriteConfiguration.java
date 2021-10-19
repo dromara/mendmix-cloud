@@ -15,7 +15,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.json.JsonUtils;
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.model.WrapperResponse;
 
 @Configuration
