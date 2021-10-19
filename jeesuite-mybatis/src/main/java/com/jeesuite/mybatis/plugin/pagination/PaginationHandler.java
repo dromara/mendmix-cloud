@@ -30,6 +30,7 @@ import com.jeesuite.mybatis.parser.EntityInfo;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.jeesuite.mybatis.plugin.rewrite.SqlRewriteHandler;
 
 /**
  * 
@@ -129,6 +130,8 @@ public class PaginationHandler implements InterceptorHandler {
 		
 		BoundSql countBoundSql = new BoundSql(countMappedStatement.getConfiguration(), countSql, boundSql.getParameterMappings(),
 				parameter);
+		//
+		SqlRewriteHandler.copyForeachAdditionlParams(boundSql, countBoundSql);
 		// 执行 count 查询
 		Object countResultList = executor.query(countMappedStatement, parameter, RowBounds.DEFAULT, resultHandler, countKey,
 				countBoundSql);
@@ -148,6 +151,8 @@ public class PaginationHandler implements InterceptorHandler {
 		
 		BoundSql pageBoundSql = new BoundSql(mappedStatement.getConfiguration(), pageSql, boundSql.getParameterMappings(),
 				parameter);
+		//
+		SqlRewriteHandler.copyForeachAdditionlParams(boundSql, pageBoundSql);
 		
 		List<?> resultList = executor.query(mappedStatement, parameter, RowBounds.DEFAULT, resultHandler, null,pageBoundSql);
 		return resultList;

@@ -61,6 +61,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private final static Logger logger = LoggerFactory.getLogger("com.jeesuite.mybatis.plugin");
 
 	public static final String TENANT_ID = "tenantId";
+	private static final String FRCH_INDEX_PREFIX = "_frch_index_";
+	private static final String FRCH_ITEM_PREFIX = "__frch_item_";
 	
 	private Map<String, Map<String,String>> dataProfileMappings = new HashMap<>();
 	
@@ -127,11 +129,32 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			ResultHandler<?> resultHandler = (ResultHandler<?>) invocation.getArgs()[3];
 			List<ParameterMapping> parameterMappings = invocation.getBoundSql().getParameterMappings();
 			BoundSql newBoundSql = new BoundSql(mappedStatement.getConfiguration(), invocation.getSql(),parameterMappings, invocation.getParameter());
+			//
+			copyForeachAdditionlParams(invocation.getBoundSql(), newBoundSql);
 			
 			CacheKey cacheKey = executor.createCacheKey(mappedStatement, invocation.getParameter(), RowBounds.DEFAULT, newBoundSql);
 
 			List<?> resultList = executor.query(mappedStatement, invocation.getParameter(), RowBounds.DEFAULT, resultHandler, cacheKey,newBoundSql);
 			return resultList;
+		}
+	}
+	
+   public static void copyForeachAdditionlParams(BoundSql originBoundSql, BoundSql newBoundSql) {
+		
+		List<ParameterMapping> parameterMappings = originBoundSql.getParameterMappings();
+		
+		Object additionalParamVal;
+		int itemIndex = 0;
+		for (ParameterMapping parameterMapping : parameterMappings) {
+			if(!parameterMapping.getProperty().startsWith(FRCH_ITEM_PREFIX)) {
+				continue;
+			}
+			if(originBoundSql.hasAdditionalParameter(parameterMapping.getProperty())) {
+				additionalParamVal = originBoundSql.getAdditionalParameter(parameterMapping.getProperty());
+				newBoundSql.setAdditionalParameter(parameterMapping.getProperty(), additionalParamVal);
+				newBoundSql.setAdditionalParameter(FRCH_INDEX_PREFIX + itemIndex, itemIndex);
+				itemIndex++;
+			}
 		}
 	}
 
