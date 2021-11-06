@@ -43,20 +43,15 @@ public class EntityHelper {
      */
     public static EntityMapper getEntityMapper(Class<?> entityClass) {
 
+    	EntityMapper entityMapper = tableMapperCache.get(entityClass);
+        // 如果存在直接返回
+        if (entityMapper != null) {
+            return entityMapper;
+        }
         synchronized (entityClass) {
-            // 先从map中获取实体映射信息
-            EntityMapper entityMapper = tableMapperCache.get(entityClass);
-
-            // 如果存在直接返回
-            if (entityMapper != null) {
-                return entityMapper;
-            }
-
             TableMapper tableMapper = getTableMapper(entityClass);
-
             //获取实体ID泛型
             Class<?> idClass = getIdClass(entityClass);
-
             // 获取实体字段列表
             List<Field> fields = getAllField(entityClass);
             // 全部列

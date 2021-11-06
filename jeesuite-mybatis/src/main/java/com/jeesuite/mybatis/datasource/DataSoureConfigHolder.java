@@ -47,7 +47,7 @@ public class DataSoureConfigHolder {
 			parse();
 		}
 		for (String group : allGroupConfigs.keySet()) {
-			if(allGroupConfigs.get(group).stream().anyMatch(o -> !o.isMaster())) {
+			if(allGroupConfigs.get(group).stream().anyMatch(o -> !o.getMaster())) {
 				return true;
 			}
 		}
@@ -128,10 +128,13 @@ public class DataSoureConfigHolder {
 				if(value != null) {
 					config.setIndex(Integer.parseInt(value));
 				}
+				config.setMaster(false);
 			}else if(item.equals("master")) {
+				config.setIndex(0);
 				config.setMaster(true);
 			}
 		}
+		
 		return config;
 	}
 	

@@ -40,11 +40,9 @@ import com.jeesuite.spring.helper.BeanRegistryHelper.BeanValue;
 public class CustomDataSourceMybatisConfiguration implements ApplicationContextAware, BeanDefinitionRegistryPostProcessor {
 
 	private static final Logger logger = LoggerFactory.getLogger("com.jeesuite.springboot.starter");
-	private ApplicationContext context;
 
 	@Override
 	public void setApplicationContext(ApplicationContext context) throws BeansException {
-		this.context = context;
 		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
 	}
 	
@@ -117,13 +115,8 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		propertyPairs.clear();
 		propertyPairs.put("sqlSessionFactoryBeanName", new BeanValue(sessionFactoryBeanName));
 		value = ResourceUtils.getProperty(propKeyPrefix + "mybatis.mapper-package");
-
 		propertyPairs.put("basePackage", new BeanValue(value));
 		BeanRegistryHelper.register(registry, mapperConfigurerBeanName, mapperConfigurerClass, argValues, propertyPairs);
-		// 触发bean实例化
-		context.getBean(transactionTemplateBeanName);
-		context.getBean(sessionFactoryBeanName);
-		context.getBean(mapperConfigurerBeanName);
 	}
 
 }

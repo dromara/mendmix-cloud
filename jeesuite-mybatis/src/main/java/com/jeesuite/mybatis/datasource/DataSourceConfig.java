@@ -1,6 +1,5 @@
 package com.jeesuite.mybatis.datasource;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.JeesuiteBaseException;
@@ -29,32 +28,36 @@ public class DataSourceConfig {
 	private String url;
 	private String username;
 	private String password;
-	private boolean  master;
-	private int index;
+	private Boolean  master;
+	private Integer index;
 	
 	//
 	private String driverClassName;
-	private boolean testWhileIdle = true;
+	private Boolean testWhileIdle;
 	private String validationQuery;
-	private int maxActive = 20;
-	private int initialSize = 1;
-	private int minIdle = 1;
-	private long maxWait = 15000;
-	private long minEvictableIdleTimeMillis = 60000;
-	private long timeBetweenEvictionRunsMillis = 60000;
-	private boolean testOnBorrow = true;
-	private boolean testOnReturn = false;
+	private Integer maxActive;
+	private Integer initialSize;
+	private Integer minIdle;
+	private Long maxWait;
+	private Long minEvictableIdleTimeMillis;
+	private Long timeBetweenEvictionRunsMillis;
+	private Boolean testOnBorrow;
+	private Boolean testOnReturn;
+	
 	
 	
 	public String getGroup() {
 		return group;
 	}
+
 	public void setGroup(String group) {
 		this.group = group;
 	}
+
 	public String getTenantId() {
 		return tenantId;
 	}
+
 	public void setTenantId(String tenantId) {
 		this.tenantId = tenantId;
 	}
@@ -62,106 +65,137 @@ public class DataSourceConfig {
 	public String getUrl() {
 		return url;
 	}
+
 	public void setUrl(String url) {
 		this.url = url;
 	}
+
 	public String getUsername() {
 		return username;
 	}
+
 	public void setUsername(String username) {
 		this.username = username;
 	}
+
 	public String getPassword() {
 		return password;
 	}
+
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	public boolean isMaster() {
+
+	public Boolean getMaster() {
 		return master;
 	}
-	public void setMaster(boolean master) {
+
+	public void setMaster(Boolean master) {
 		this.master = master;
 	}
-	public int getIndex() {
+
+	public Integer getIndex() {
 		return index;
 	}
-	public void setIndex(int index) {
+
+	public void setIndex(Integer index) {
 		this.index = index;
 	}
-	
+
 	public String getDriverClassName() {
 		return driverClassName;
 	}
+
 	public void setDriverClassName(String driverClassName) {
 		this.driverClassName = driverClassName;
 	}
-	public boolean isTestWhileIdle() {
+
+	public Boolean getTestWhileIdle() {
 		return testWhileIdle;
 	}
-	public void setTestWhileIdle(boolean testWhileIdle) {
+
+	public void setTestWhileIdle(Boolean testWhileIdle) {
 		this.testWhileIdle = testWhileIdle;
 	}
+
 	public String getValidationQuery() {
 		return validationQuery;
 	}
+
 	public void setValidationQuery(String validationQuery) {
 		this.validationQuery = validationQuery;
 	}
-	public int getMaxActive() {
+
+	public Integer getMaxActive() {
 		return maxActive;
 	}
-	public void setMaxActive(int maxActive) {
+
+	public void setMaxActive(Integer maxActive) {
 		this.maxActive = maxActive;
 	}
-	public int getInitialSize() {
+
+	public Integer getInitialSize() {
 		return initialSize;
 	}
-	public void setInitialSize(int initialSize) {
+
+	public void setInitialSize(Integer initialSize) {
 		this.initialSize = initialSize;
 	}
-	public int getMinIdle() {
+
+	public Integer getMinIdle() {
 		return minIdle;
 	}
-	public void setMinIdle(int minIdle) {
+
+	public void setMinIdle(Integer minIdle) {
 		this.minIdle = minIdle;
 	}
-	public long getMaxWait() {
+
+	public Long getMaxWait() {
 		return maxWait;
 	}
-	public void setMaxWait(long maxWait) {
+
+	public void setMaxWait(Long maxWait) {
 		this.maxWait = maxWait;
 	}
-	public long getMinEvictableIdleTimeMillis() {
+
+	public Long getMinEvictableIdleTimeMillis() {
 		return minEvictableIdleTimeMillis;
 	}
-	public void setMinEvictableIdleTimeMillis(long minEvictableIdleTimeMillis) {
+
+	public void setMinEvictableIdleTimeMillis(Long minEvictableIdleTimeMillis) {
 		this.minEvictableIdleTimeMillis = minEvictableIdleTimeMillis;
 	}
-	public long getTimeBetweenEvictionRunsMillis() {
+
+	public Long getTimeBetweenEvictionRunsMillis() {
 		return timeBetweenEvictionRunsMillis;
 	}
-	public void setTimeBetweenEvictionRunsMillis(long timeBetweenEvictionRunsMillis) {
+
+	public void setTimeBetweenEvictionRunsMillis(Long timeBetweenEvictionRunsMillis) {
 		this.timeBetweenEvictionRunsMillis = timeBetweenEvictionRunsMillis;
 	}
-	public boolean isTestOnBorrow() {
+
+	public Boolean getTestOnBorrow() {
 		return testOnBorrow;
 	}
-	public void setTestOnBorrow(boolean testOnBorrow) {
+
+	public void setTestOnBorrow(Boolean testOnBorrow) {
 		this.testOnBorrow = testOnBorrow;
 	}
-	public boolean isTestOnReturn() {
+
+	public Boolean getTestOnReturn() {
 		return testOnReturn;
 	}
-	public void setTestOnReturn(boolean testOnReturn) {
+
+	public void setTestOnReturn(Boolean testOnReturn) {
 		this.testOnReturn = testOnReturn;
 	}
+
 	public String dataSourceKey() {
 		return buildDataSourceKey(group, tenantId, master, index);
 	}
 	
 	public void validate() {
-		if(StringUtils.isAnyBlank(url,username)) {
+		if(StringUtils.isAnyBlank(url,username,password)) {
 			throw new JeesuiteBaseException("DataSourceConfig[url,username,password] is required");
 		}
 		//租户分库
@@ -170,11 +204,6 @@ public class DataSourceConfig {
 		}
 	}
 	
-	@Override
-	public String toString() {
-		return "DataSourceConfig [group=" + group + ", tenantId=" + tenantId + ", url=" + url + ", username=" + username
-				+ ", master=" + master + ", index=" + index + ", maxActive=" + maxActive + "]";
-	}
 	
 	public static String buildDataSourceKey(String group,String tenantId,boolean master,int index) {
 		StringBuilder builder = new StringBuilder(group).append(WebConstants.UNDER_LINE);
@@ -186,10 +215,10 @@ public class DataSourceConfig {
 		return builder.toString();
 	}
 	
-	public static void main(String[] args) {
-		for (int i = 0; i < 1000; i++) {
-			System.out.println(RandomUtils.nextInt(0, 5));
-		}
+	@Override
+	public String toString() {
+		return "DataSourceConfig [group=" + group + ", tenantId=" + tenantId + ", url=" + url + ", username=" + username
+				+ ", master=" + master + ", index=" + index + ", maxActive=" + maxActive + "]";
 	}
 	
 }

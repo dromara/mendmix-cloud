@@ -11,7 +11,6 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +20,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.datasource.AbstractDataSource;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.model.RoundRobinSelecter;
 import com.jeesuite.common.util.BeanUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisConfigs;
@@ -51,7 +52,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 	private String group;
 	private boolean dsKeyWithTenant = false;
 	//每个master对应slave数
-	private Map<String, Integer> slaveNumsMap = new HashMap<>();
+	private Map<String, RoundRobinSelecter> slaveNumSelecters = new HashMap<>();
 	
 	
 	public MultiRouteDataSource() {
@@ -69,13 +70,17 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 
 		for (DataSourceConfig dataSourceConfig : dsConfigs) {			
 			registerRealDataSource(dataSourceConfig);
+			//
+			if(dataSourceConfig.getTenantId() != null) {				
+				GlobalRuntimeContext.addTenantId(dataSourceConfig.getTenantId());
+			}
 		}
 
 		if (this.targetDataSources == null || targetDataSources.isEmpty()) {
 			throw new IllegalArgumentException("Property 'targetDataSources' is required");
 		}
 		
-		logger.info("init multiRouteDataSource[{}] finished -> slaveNums:{},dsKeyWithTenant:{}",group,slaveNumsMap,dsKeyWithTenant);
+		logger.info("init multiRouteDataSource[{}] finished -> dsKeyWithTenant:{}",group,dsKeyWithTenant);
 	}
 
 	private String currentDataSourceKey() {
@@ -87,18 +92,14 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 			throw new JeesuiteBaseException("Can't get [tentantId] from currentContext");
 		}
 		if(!useMaster) {
-			if(slaveNumsMap.isEmpty()) {
+			if(slaveNumSelecters.isEmpty()) {
 				useMaster = true;
 			}else {
 				String subGroup = dsKeyWithTenant ? group + WebConstants.UNDER_LINE + tenantId : group;
-				if(!slaveNumsMap.containsKey(subGroup)) {
+				if(!slaveNumSelecters.containsKey(subGroup)) {
 					useMaster = true;
 				}else {
-					Integer slaveNums = slaveNumsMap.get(subGroup);
-					//
-					if(slaveNums > 1) {
-						index = RandomUtils.nextInt(0, slaveNums);
-					}
+					index = slaveNumSelecters.get(subGroup).select();
 				}
 			}
 		}
@@ -169,18 +170,23 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 		//保存slave节点数
 		if(dsKey.contains(DataSourceConfig.SLAVE_KEY)) {
 			String subGroup = StringUtils.splitByWholeSeparator(dsKey, "_slave")[0];
-			if(slaveNumsMap.containsKey(subGroup)) {
-				slaveNumsMap.put(subGroup, slaveNumsMap.get(subGroup) + 1);
+			if(slaveNumSelecters.containsKey(subGroup)) {
+				slaveNumSelecters.get(subGroup).incrNode();
 			}else {
-				slaveNumsMap.put(subGroup, 1);
+				slaveNumSelecters.put(subGroup, new RoundRobinSelecter(1));
 			}
 		}
 		logger.info(">>register realDataSource[{}] finished! -> config:{}",config.dataSourceKey(),config.toString());
 	}
 
 	private void mergeGlobalDataSourceConfig(DataSourceConfig config) {
+		String groupName = config.getGroup();
 		DataSourceConfig globalConfig = ResourceUtils.getBean("db.", DataSourceConfig.class);
 		BeanUtils.copy(globalConfig, config);
+		config.setGroup(groupName);
+		if(config.getTestOnBorrow() == null) {
+			config.setTestOnBorrow(true);
+		}
 	}  
 
     

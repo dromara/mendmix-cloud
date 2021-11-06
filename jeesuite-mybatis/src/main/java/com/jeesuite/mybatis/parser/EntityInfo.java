@@ -25,6 +25,7 @@ import org.apache.ibatis.mapping.SqlCommandType;
 
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.model.PageParams;
+import com.jeesuite.mybatis.crud.helper.EntityHelper;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 
 /**
@@ -122,6 +123,8 @@ public class EntityInfo {
 				//
 				mapperMethods.put(method.getName(),new MapperMethod(method, fullName, sqlType));
 			}
+            //
+            EntityHelper.getEntityMapper(entityClass);
 		} catch (ClassNotFoundException e) {
 			errorMsg = e.getMessage();
 		}catch (Exception e) {
