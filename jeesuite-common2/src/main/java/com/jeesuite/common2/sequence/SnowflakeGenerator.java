@@ -13,7 +13,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
-import com.jeesuite.common.util.NodeNameHolder;
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.ResourceUtils;
 
 /**
@@ -70,7 +70,7 @@ public class SnowflakeGenerator implements IdGenerator, Watcher {
 					zk.create(tmpParent, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 				}
 			}
-			String nodePath = path + "/" + NodeNameHolder.getNodeId();
+			String nodePath = path + "/" + GlobalRuntimeContext.getNodeName();
 			zk.create(nodePath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 			int workerId = zk.getChildren(path, false).size();
 			if (workerId > maxWorkerId || workerId < 0) {

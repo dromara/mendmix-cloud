@@ -8,8 +8,8 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.async.AsyncInitializer;
-import com.jeesuite.common.util.NodeNameHolder;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.ApplicationStartedListener;
 import com.jeesuite.spring.InstanceFactory;
@@ -37,7 +37,7 @@ public class BaseApplicationStarter{
 
 	protected static long before() {
 		LogProfileManager.initialize();
-		System.setProperty("client.nodeId", NodeNameHolder.getNodeId());
+		System.setProperty("client.nodeId", GlobalRuntimeContext.getNodeName());
 		return System.currentTimeMillis();
 	}
 

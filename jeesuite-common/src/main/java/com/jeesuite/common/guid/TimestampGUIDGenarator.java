@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.RandomUtils;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.DateUtils;
-import com.jeesuite.common.util.NodeNameHolder;
 
 /**
  * 带时间错信息全局唯一id生成器
@@ -22,7 +22,7 @@ public class TimestampGUIDGenarator {
 
 	private static final String TIME_PATTERN = "yyyyMMddHHmmss";
 	private static String[] paddingzeros = new String[]{"","0","00","000","0000","00000","000000","0000000","00000000","000000000"};
-	private static final int WORKER_ID =  NodeNameHolder.WORKER_ID;
+	private static final int WORKER_ID =  GlobalRuntimeContext.WORKER_ID;
 
 	private final AtomicInteger NEXT_COUNTER;
 	private int incrMin;

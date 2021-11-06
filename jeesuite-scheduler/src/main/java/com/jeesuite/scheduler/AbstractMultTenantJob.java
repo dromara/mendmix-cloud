@@ -5,7 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.common.TenantIdHolder;
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 
 /**
@@ -27,7 +27,7 @@ public abstract class AbstractMultTenantJob extends AbstractJob{
 
 	@Override
 	public void doJob(JobContext context) throws Exception {
-		List<String> tenantIds = TenantIdHolder.getTenantids();
+		List<String> tenantIds = GlobalRuntimeContext.getTenantids();
 		if(tenantIds.isEmpty()){
 			doStandaloneDadaSourceJob(context);
 		}else{

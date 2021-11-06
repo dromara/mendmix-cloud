@@ -3,7 +3,7 @@
  */
 package com.jeesuite.common.guid;
 
-import com.jeesuite.common.util.NodeNameHolder;
+import com.jeesuite.common.GlobalRuntimeContext;
 
 /**
  * 全局ID生成器 （根据: https://github.com/twitter/snowflake）
@@ -34,7 +34,7 @@ public class SnowflakeGenerator {
 	private long lastTimestamp = -1L;
 
 	public SnowflakeGenerator() {
-		this.workerId = NodeNameHolder.WORKER_ID;
+		this.workerId = GlobalRuntimeContext.WORKER_ID;
 		this.datacenterId = 1;
 	}
 

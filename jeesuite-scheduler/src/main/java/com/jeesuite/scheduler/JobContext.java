@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.jeesuite.common.util.NodeNameHolder;
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.scheduler.helper.ConsistencyHash;
 import com.jeesuite.scheduler.registry.NullJobRegistry;
@@ -64,7 +64,7 @@ public class JobContext {
 	}
 
 	public String getNodeId() {
-		return NodeNameHolder.getNodeId();
+		return GlobalRuntimeContext.getNodeName();
 	}
 	
 	public PersistHandler getPersistHandler() {
