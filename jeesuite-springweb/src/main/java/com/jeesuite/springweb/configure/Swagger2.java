@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
@@ -33,7 +33,7 @@ public class Swagger2 {
 	@Bean
 	public Docket createRestApi() {
 		
-		boolean enable = CurrentRuntimeContext.ENV.equals("dev") || CurrentRuntimeContext.ENV.equals("local");
+		boolean enable = GlobalRuntimeContext.ENV.equals("dev") || GlobalRuntimeContext.ENV.equals("local");
 		String applicationName = ResourceUtils.getProperty("spring.application.name");
 		String basePackage = ResourceUtils.getProperty("application.base-package");
 		Docket docket = new Docket(DocumentationType.SWAGGER_2)

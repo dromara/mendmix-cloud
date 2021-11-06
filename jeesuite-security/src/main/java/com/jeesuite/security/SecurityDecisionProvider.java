@@ -22,7 +22,7 @@ import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.security.SecurityConstants.CacheType;
 import com.jeesuite.security.exception.UserNotFoundException;
 import com.jeesuite.security.exception.UserPasswordWrongException;
-import com.jeesuite.security.model.UserSession;
+import com.jeesuite.security.model.ApiPermission;
 
 /**
  * @description <br>
@@ -59,6 +59,10 @@ public abstract class SecurityDecisionProvider {
 		return true;
 	}
 	
+	public boolean apiAuthzEnabled(){
+		return true;
+	}
+	
 	public String superAdminName(){
 		return "sa";
 	}
@@ -71,11 +75,10 @@ public abstract class SecurityDecisionProvider {
 	}
 
 	
-	public abstract String contextPath();
 	public abstract List<String> anonymousUrlPatterns();
 	public abstract AuthUser validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
-	public abstract List<String> getAllApiPermissions();
-	public abstract List<String> getUserApiPermissions(String userId);
+	public abstract List<ApiPermission> getAllApiPermissions();
+	public abstract List<String> getUserApiPermissionUris(String userId);
 	public abstract String error401Page();
 	public abstract String error403Page();
 }

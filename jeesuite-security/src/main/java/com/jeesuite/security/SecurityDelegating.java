@@ -16,9 +16,11 @@
 package com.jeesuite.security;
 
 import java.io.Serializable;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.constants.PermissionLevel;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.security.model.AccessToken;
@@ -35,7 +37,7 @@ import com.jeesuite.springweb.exception.UnauthorizedException;
  */
 public class SecurityDelegating {
 	
-	private SecurityDecisionProvider configurerProvider;
+	private SecurityDecisionProvider decisionProvider;
 	private SecuritySessionManager sessionManager;
 	private SecurityResourceManager resourceManager;
 	private SecurityStorageManager storageManager;
@@ -43,10 +45,10 @@ public class SecurityDelegating {
 	private static volatile SecurityDelegating instance;
 
 	private SecurityDelegating() {
-		configurerProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
-		storageManager = new SecurityStorageManager(configurerProvider.cacheType());
-		sessionManager = new SecuritySessionManager(configurerProvider,storageManager);
-		resourceManager = new SecurityResourceManager(configurerProvider,storageManager);
+		decisionProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
+		storageManager = new SecurityStorageManager(decisionProvider.cacheType());
+		sessionManager = new SecuritySessionManager(decisionProvider,storageManager);
+		resourceManager = new SecurityResourceManager(decisionProvider,storageManager);
 	}
 
 	private static SecurityDelegating getInstance() {
@@ -59,12 +61,12 @@ public class SecurityDelegating {
 	}
 
 	protected static SecurityDecisionProvider getConfigurerProvider() {
-		return getInstance().configurerProvider;
+		return getInstance().decisionProvider;
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <T extends AuthUser> T validateUser(String name,String password){
-		AuthUser userInfo = getInstance().configurerProvider.validateUser(name, password);
+		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
 		return (T) userInfo;
 	}
 	
@@ -74,12 +76,12 @@ public class SecurityDelegating {
 	 * @param password
 	 */
 	public static UserSession doAuthentication(String name,String password){
-		AuthUser userInfo = getInstance().configurerProvider.validateUser(name, password);
+		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
 		return updateSession(userInfo);
 	}
 	
 	public static String doAuthenticationForOauth2(String name,String password){
-		AuthUser userInfo = getInstance().configurerProvider.validateUser(name, password);
+		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
 		String authCode = TokenGenerator.generate();
 		setTemporaryCacheValue(authCode, userInfo, 60);
 		return authCode;
@@ -106,7 +108,7 @@ public class SecurityDelegating {
 		UserSession session = getCurrentSession();
 		session.setUser(userInfo);
 		
-		if(getInstance().configurerProvider.kickOff()){
+		if(getInstance().decisionProvider.kickOff()){
 			UserSession otherSession = getInstance().sessionManager.getLoginSessionByUserId(userInfo.getId());
 			if(otherSession != null && !otherSession.getSessionId().equals(session.getSessionId())){
 				getInstance().sessionManager.removeLoginSession(otherSession.getSessionId());
@@ -128,15 +130,22 @@ public class SecurityDelegating {
 		String uri = CurrentRuntimeContext.getRequest().getRequestURI();
 		
 		boolean isSuperAdmin = session != null && session.getUser() != null 
-				&& getInstance().configurerProvider.superAdminName().equals(session.getUser().getUsername());
+				&& getInstance().decisionProvider.superAdminName().equals(session.getUser().getUsername());
+		
 		if(!isSuperAdmin && !getInstance().resourceManager.isAnonymous(uri)){
 			if(session == null || session.isAnonymous()){
 				throw new UnauthorizedException();
 			}
-			String permssionCode = getInstance().resourceManager.getPermssionCode(uri);
-			if(StringUtils.isNotBlank(permssionCode) 
-					&& !getInstance().resourceManager.getUserPermissionCodes(session).contains(permssionCode)){
-				throw new ForbiddenAccessException();
+			
+			String permissionKey = ApiPermssionCheckHelper.buildPermissionKey(CurrentRuntimeContext.getRequest().getMethod(), uri);
+			PermissionLevel permissionLevel = ApiPermssionCheckHelper.matchPermissionLevel(getInstance().resourceManager, permissionKey);
+			
+			//如果需鉴权
+			if(permissionLevel == PermissionLevel.PermissionRequired){
+				List<String> permissions = getInstance().resourceManager.getUserPermissions(session);
+				if(!ApiPermssionCheckHelper.checkPermissions(getInstance().resourceManager,permissionKey, permissions)){
+					throw new ForbiddenAccessException();
+				}
 			}
 		}
 		//
@@ -180,10 +189,6 @@ public class SecurityDelegating {
 		}else{
 			getInstance().resourceManager.refreshUserPermssions();
 		}
-	}
-	
-	public static void refreshResources(){
-		getInstance().resourceManager.refreshResources();
 	}
 
     public static void doLogout(){

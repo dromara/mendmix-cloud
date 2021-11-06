@@ -3,13 +3,11 @@
  */
 package com.jeesuite.mybatis.datasource;
 
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.sql.DataSource;
 
@@ -19,19 +17,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.datasource.AbstractDataSource;
 
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.util.BeanUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.datasource.builder.DruidDataSourceBuilder;
-import com.jeesuite.mybatis.datasource.builder.HikariCPDataSourceBuilder;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 
@@ -68,14 +64,13 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 	}
 
 	@Override
-	public void afterPropertiesSet() {
+	public void afterPropertiesSet() throws Exception {
 		List<DataSourceConfig> dsConfigs = DataSoureConfigHolder.getConfigs(group);
 
 		for (DataSourceConfig dataSourceConfig : dsConfigs) {			
 			registerRealDataSource(dataSourceConfig);
 		}
-	
-		
+
 		if (this.targetDataSources == null || targetDataSources.isEmpty()) {
 			throw new IllegalArgumentException("Property 'targetDataSources' is required");
 		}
@@ -154,28 +149,23 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 	/**
 	 * 功能说明：根据DataSource创建bean并注册到容器中
 	 * @param config
+	 * @throws SQLException 
 	 */
-	private void registerRealDataSource(DataSourceConfig config) {
+	private void registerRealDataSource(DataSourceConfig config) throws SQLException {
 		
 		config.validate();
+		//
+		mergeGlobalDataSourceConfig(config);
 		
-		Properties props = convertProperties(config);
-
-		DefaultListableBeanFactory acf = (DefaultListableBeanFactory) this.context.getAutowireCapableBeanFactory();
-
-		BeanDefinitionBuilder beanDefinitionBuilder = null;
+		DataSource dataSource = null;
 		if (DataSourceType.druid == dataSourceType) {
-			beanDefinitionBuilder = DruidDataSourceBuilder.builder(props);
+			dataSource = DruidDataSourceBuilder.builder(config);
 		} else if (DataSourceType.hikariCP == dataSourceType) {
-			beanDefinitionBuilder = HikariCPDataSourceBuilder.builder(props);
+			
 		}
 
 		String dsKey = config.dataSourceKey();
-		String beanName = config.getGroup() + "DataSource";
-		acf.registerBeanDefinition(beanName, beanDefinitionBuilder.getRawBeanDefinition());
-
-		DataSource ds = (DataSource) this.context.getBean(beanName);
-		targetDataSources.put(dsKey, ds);
+		targetDataSources.put(dsKey, dataSource);
 		//保存slave节点数
 		if(dsKey.contains(DataSourceConfig.SLAVE_KEY)) {
 			String subGroup = StringUtils.splitByWholeSeparator(dsKey, "_slave")[0];
@@ -185,31 +175,12 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 				slaveNumsMap.put(subGroup, 1);
 			}
 		}
-		
-		
 		logger.info(">>register realDataSource[{}] finished! -> config:{}",config.dataSourceKey(),config.toString());
-
 	}
 
-	private Properties convertProperties(DataSourceConfig config) {
-		
-		Properties properties = new Properties();
-		Field[] fields = config.getClass().getDeclaredFields();
-		String value;
-		for (Field field : fields) {
-			if("class".equals(field.getName()))continue;
-			field.setAccessible(true);
-			try {
-				value = field.get(config).toString();
-			} catch (Exception e) {
-				value = ResourceUtils.getProperty("db." + field.getName());
-			}
-			
-			if(value != null) {
-				properties.setProperty(field.getName(), value);
-			}
-		}
-		return properties;
+	private void mergeGlobalDataSourceConfig(DataSourceConfig config) {
+		DataSourceConfig globalConfig = ResourceUtils.getBean("db.", DataSourceConfig.class);
+		BeanUtils.copy(globalConfig, config);
 	}  
 
     

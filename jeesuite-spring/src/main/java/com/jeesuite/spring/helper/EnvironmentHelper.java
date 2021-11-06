@@ -4,20 +4,20 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
-import org.springframework.util.StringUtils;
 
 import com.jeesuite.common.util.ResourceUtils;
 
 public class EnvironmentHelper {
+	
 
 	private static Environment environment;
-	
 	
 	public static synchronized void init(ApplicationContext context) {
 		if(environment != null){
@@ -25,6 +25,10 @@ public class EnvironmentHelper {
 		}
 		environment = context.getEnvironment();
 		ResourceUtils.merge(getAllProperties(null));
+		//
+		if(!ResourceUtils.getBoolean("jeesuite.config.enabled", true)) {
+			ResourceUtils.printConfigs(ResourceUtils.getAllProperties());
+		}
 	}
 
 	public static String getProperty(String key){
@@ -61,4 +65,5 @@ public class EnvironmentHelper {
 		}
 		return Collections.unmodifiableMap(properties);
 	}
+
 }

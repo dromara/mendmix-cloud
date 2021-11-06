@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -34,6 +35,8 @@ import org.yaml.snakeyaml.Yaml;
  * @date 2013年2月25日
  */
 public final class ResourceUtils {
+	
+	private static List<String> sensitiveKeys = new ArrayList<>(Arrays.asList("password","key","secret","token","credentials"));
 	
 	public static String CONFIG_DELIMITERS = ",; \t\n";
 	public static final String NULL_VALUE_PLACEHOLDER = "_NULL_PLACEHOLDER_";
@@ -522,6 +525,35 @@ public final class ResourceUtils {
 			}
 		}
 		
+	}
+    
+    public static void printConfigs(Properties properties){
+		List<String> sortKeys = new ArrayList<>();
+		Set<Entry<Object, Object>> entrySet = properties.entrySet();
+		for (Entry<Object, Object> entry : entrySet) {
+			String key = entry.getKey().toString();
+			sortKeys.add(key);
+		}
+		Collections.sort(sortKeys);
+		System.out.println("==================final config list start==================");
+		String value;
+		for (String key : sortKeys) {
+			value = hideSensitive(key, properties.getProperty(key));
+			System.out.println(String.format("%s = %s", key,value ));
+		}
+		System.out.println("==================final config list end====================");
+		
+	}
+	
+	private static String hideSensitive(String key,String orign){
+		if(StringUtils.isAnyBlank(key,orign))return "";
+		boolean is = false;
+		for (String k : sensitiveKeys) {
+			if(is = key.toLowerCase().contains(k))break;
+		}
+		int length = orign.length();
+		if(is && length > 1)return orign.substring(0, length/2).concat("****");
+		return orign;
 	}
 	
 }

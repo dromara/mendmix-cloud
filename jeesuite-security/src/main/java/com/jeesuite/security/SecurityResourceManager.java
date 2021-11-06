@@ -17,108 +17,153 @@ package com.jeesuite.security;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.constants.PermissionLevel;
 import com.jeesuite.common.util.PathMatcher;
-import com.jeesuite.security.SecurityConstants.CacheType;
+import com.jeesuite.security.model.ApiPermission;
 import com.jeesuite.security.model.UserSession;
 
 /**
  * 资源管理器
+ * 
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年12月3日
  */
 public class SecurityResourceManager {
 
-	private static final String WILDCARD_START = "{";
+	private static Logger log = LoggerFactory.getLogger("com.jeesuite.security");
 
-	private String contextPath;
+	public final static String WILDCARD_START = "{";
+
+	private List<String> authzUris = new ArrayList<>();
+	private List<Pattern> authzPatterns = new ArrayList<>();
+	private List<String> anonUris = new ArrayList<>();
+	private List<Pattern> anonUriPatterns = new ArrayList<>();
+	// 所有无通配符uri
+	private List<String> nonWildcardUris = new ArrayList<>();
+
 	private SecurityDecisionProvider decisionProvider;
 
-	private PathMatcher anonymousUrlMatcher;
-	// 无通配符uri
-	private volatile Map<String, String> nonWildcardUriPerms = new HashMap<>();
-	private volatile Map<Pattern, String> wildcardUriPermPatterns = new HashMap<>();
-	private volatile Map<String, String> uriPrefixs = new HashMap<>();
-	
-	private volatile boolean refreshCallable = true;
 	private ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1);
-			
-	private static String cacheName = "permres";
-	private SecurityStorageManager storageManager;
 
-	public SecurityResourceManager(SecurityDecisionProvider decisionProvider,SecurityStorageManager storageManager) {
+	private String cacheName = "permres";
+	private SecurityStorageManager storageManager;
+	
+	private PathMatcher anonymousUrlMatcher;
+
+	public SecurityResourceManager(SecurityDecisionProvider decisionProvider, SecurityStorageManager storageManager) {
 		this.storageManager = storageManager;
 		this.storageManager.addCahe(cacheName, decisionProvider.sessionExpireIn());
 		storageManager.addCahe(cacheName, decisionProvider.sessionExpireIn());
 		this.decisionProvider = decisionProvider;
-		contextPath = decisionProvider.contextPath();
-		if (contextPath.endsWith("/")) {
-			contextPath = contextPath.substring(0, contextPath.indexOf("/"));
-		}
-		
-		if(decisionProvider.anonymousUrlPatterns() != null){
-			anonymousUrlMatcher = new PathMatcher(contextPath, decisionProvider.anonymousUrlPatterns());
-		}
 		//
-		final boolean forceRefresh = CacheType.redis == decisionProvider.cacheType();
-		refreshExecutor.scheduleAtFixedRate(new Runnable() {
-			@Override
-			public void run() {
-				loadPermissionCodes(forceRefresh);
-			}
-		}, 1, forceRefresh ? 30 : 5, TimeUnit.SECONDS);
-	}
-
-	private synchronized void loadPermissionCodes( boolean forceRefresh) {
-		if(!forceRefresh && !refreshCallable)return;
-		
-		Map<String, String> nonWildcardUriPerms = new HashMap<>();
-		Map<Pattern, String> wildcardUriPermPatterns = new HashMap<>();
-		Map<String, String> uriPrefixs = new HashMap<>();
-		List<String> permissionCodes = decisionProvider.getAllApiPermissions();
-		if(permissionCodes == null || permissionCodes.isEmpty())return;
-		String fullUri = null;
-		for (String permCode : permissionCodes) {
-			fullUri = contextPath + permCode;
-			if (permCode.contains(WILDCARD_START)) {
-				String regex = fullUri.replaceAll("\\{.*?(?=})", ".*").replaceAll("\\}", "");
-				wildcardUriPermPatterns.put(Pattern.compile(regex), permCode);
-			} else if (fullUri.endsWith("*")) {
-				uriPrefixs.put(StringUtils.remove(fullUri, "*"), permCode);
-			} else {
-				nonWildcardUriPerms.put(fullUri, permCode);
-			}
+		if(decisionProvider.anonymousUrlPatterns() != null){
+			anonymousUrlMatcher = new PathMatcher(GlobalRuntimeContext.getContextPath(), decisionProvider.anonymousUrlPatterns());
 		}
 		
-		this.nonWildcardUriPerms = nonWildcardUriPerms;
-		this.wildcardUriPermPatterns = wildcardUriPermPatterns;
-		this.uriPrefixs = uriPrefixs;
-		
-		refreshCallable = false;
+		if(decisionProvider.apiAuthzEnabled()) {
+			refreshExecutor.scheduleAtFixedRate(new Runnable() {
+				@Override
+				public void run() {
+					loadApiPermissions();
+				}
+			}, 10, 60, TimeUnit.SECONDS);
+		}
 	}
 
-	public List<String> getUserPermissionCodes(UserSession session) {
+	public List<String> getAuthorizationUris() {
+		return authzUris;
+	}
+
+	public List<String> getAuthzUris() {
+		return authzUris;
+	}
+
+	public List<Pattern> getAuthzPatterns() {
+		return authzPatterns;
+	}
+
+	public List<String> getAnonUris() {
+		return anonUris;
+	}
+
+	public List<Pattern> getAnonUriPatterns() {
+		return anonUriPatterns;
+	}
+
+	public List<String> getNonWildcardUris() {
+		return nonWildcardUris;
+	}
+
+	
+	public synchronized boolean loadApiPermissions() {
+
+		log.info("============begin load perssion data==============");
+		List<ApiPermission> permissions = decisionProvider.getAllApiPermissions();
 		
-		//TODO 考虑统一用户在不同租户，不同平台,逻辑要补充
-		String cacheKey = String.format("%s_%s",StringUtils.trimToEmpty(session.getTenantId()) ,session.getUser().getId());
+		if(permissions == null)return false;
+
+		boolean withWildcard;
+		String permissionKey;
+		Pattern pattern;
+		for (ApiPermission permission : permissions) {
+			withWildcard = permission.getUri().contains(WILDCARD_START);
+			permissionKey = ApiPermssionCheckHelper.buildPermissionKey(permission.getHttpMethod(), permission.getUri());
+			if (!withWildcard) {
+				nonWildcardUris.add(permissionKey);
+			}
+			if (PermissionLevel.PermissionRequired.name().equals(permission.getGrantType())) {
+				if (withWildcard) {
+					pattern = Pattern.compile(permissionKey.replaceAll("\\{[^/]+?\\}", ".+"));
+					authzPatterns.add(pattern);
+				} else {
+					authzUris.add(permissionKey);
+				}
+			} else if (PermissionLevel.Anonymous.name().equals(permission.getGrantType())) {
+				if (withWildcard) {
+					pattern = Pattern.compile(permissionKey.replaceAll("\\{[^/]+?\\}", ".+"));
+					anonUriPatterns.add(pattern);
+				} else {
+					anonUris.add(permissionKey);
+				}
+			}
+		}
+
+		log.info("nonWildcardUris:         {}", nonWildcardUris);
+		log.info("anonUris:                {}", anonUris);
+		log.info("anonUriPatterns:         {}", anonUriPatterns);
+		log.info("authzUris:               {}", authzUris);
+		log.info("authzPatterns:           {}", authzPatterns);
+		log.info("============load perssion data finish==============");
+
+		return true;
+	}
+	
+	public List<String> getUserPermissions(UserSession session) {
+
+		// TODO 考虑统一用户在不同租户，不同平台,逻辑要补充
+		String cacheKey = String.format("%s_%s", StringUtils.trimToEmpty(session.getTenantId()),
+				session.getUser().getId());
 		List<String> permissionCodes = storageManager.getCache(cacheName).getObject(cacheKey);
-		if(permissionCodes != null)return permissionCodes;
-		
-		permissionCodes = decisionProvider.getUserApiPermissions(session.getUser().getId());
-		
-		if(permissionCodes == null) {
+		if (permissionCodes != null)
+			return permissionCodes;
+
+		permissionCodes = decisionProvider.getUserApiPermissionUris(session.getUser().getId());
+
+		if (permissionCodes == null) {
 			permissionCodes = new ArrayList<>(0);
-		}else if(!permissionCodes.isEmpty()) {
+		} else if (!permissionCodes.isEmpty()) {
 			permissionCodes = new ArrayList<>(permissionCodes);
 			List<String> removeWildcards = new ArrayList<>();
 			for (String perm : permissionCodes) {
@@ -129,52 +174,31 @@ public class SecurityResourceManager {
 			if (!removeWildcards.isEmpty())
 				permissionCodes.addAll(removeWildcards);
 		}
-		
+
 		storageManager.getCache(cacheName).setObject(cacheKey, permissionCodes);
 
 		return permissionCodes;
 	}
 
-	public String getPermssionCode(String uri) {
-		if(isAnonymous(uri))return null;
-		if (nonWildcardUriPerms.containsKey(uri))
-			return nonWildcardUriPerms.get(uri);
-
-		for (Pattern pattern : wildcardUriPermPatterns.keySet()) {
-			if (pattern.matcher(uri).matches())
-				return wildcardUriPermPatterns.get(pattern);
-		}
-
-		for (String prefix : uriPrefixs.keySet()) {
-			if (uri.startsWith(prefix)) {
-				return uriPrefixs.get(prefix);
-			}
-		}
-
-		return null;
-	}
-	
 	public boolean isAnonymous(String uri){
-       if(anonymousUrlMatcher != null){
-			return anonymousUrlMatcher.match(uri);
+	       if(anonymousUrlMatcher != null){
+				return anonymousUrlMatcher.match(uri);
+			}
+			return false;
 		}
-		return false;
-	}
-	
-	public void refreshUserPermssions(Serializable userId){
+
+
+	public void refreshUserPermssions(Serializable userId) {
 		storageManager.getCache(cacheName).remove(String.valueOf(userId));
 	}
-	
-	public void refreshUserPermssions(){
+
+	public void refreshUserPermssions() {
 		storageManager.getCache(cacheName).removeAll();
 	}
-	
-	public void refreshResources(){
-		refreshCallable = true;
-	}
-	
-	public void close(){
-		if(refreshExecutor != null)refreshExecutor.shutdown();
+
+	public void close() {
+		if (refreshExecutor != null)
+			refreshExecutor.shutdown();
 	}
 
 }

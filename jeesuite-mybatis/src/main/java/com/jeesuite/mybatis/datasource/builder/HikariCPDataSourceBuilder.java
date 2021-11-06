@@ -1,26 +1,19 @@
 package com.jeesuite.mybatis.datasource.builder;
 
-import java.util.Properties;
+import javax.sql.DataSource;
 
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-
+import com.jeesuite.common.util.BeanUtils;
+import com.jeesuite.mybatis.datasource.DataSourceConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 public class HikariCPDataSourceBuilder {
 
-	public static BeanDefinitionBuilder builder(Properties props){
+public static DataSource builder(DataSourceConfig config){
 		
-		BeanDefinitionBuilder beanDefinitionBuilder =  BeanDefinitionBuilder.genericBeanDefinition(HikariDataSource.class);
-		if(props.containsKey("driverClassName"))beanDefinitionBuilder.addPropertyValue("driverClassName", props.getProperty("driverClassName"));
-    	beanDefinitionBuilder.addPropertyValue("jdbcUrl", props.getProperty("jdbcUrl"));
-    	beanDefinitionBuilder.addPropertyValue("username", props.getProperty("username"));
-    	beanDefinitionBuilder.addPropertyValue("password", props.getProperty("password"));
-    	beanDefinitionBuilder.addPropertyValue("connectionTestQuery", props.getProperty("connectionTestQuery","SELECT 'x'"));
-    	beanDefinitionBuilder.addPropertyValue("connectionTimeout", Long.parseLong(props.getProperty("connectionTimeout","10000")));
-    	beanDefinitionBuilder.addPropertyValue("idleTimeout", Long.parseLong(props.getProperty("idleTimeout","600000")));
-    	beanDefinitionBuilder.addPropertyValue("maximumPoolSize", Integer.parseInt(props.getProperty("maximumPoolSize","10")));
-    	beanDefinitionBuilder.addPropertyValue("maxLifetime", Long.parseLong(props.getProperty("maxLifetime","900000")));
-    	return beanDefinitionBuilder;
+		HikariDataSource dataSource = new HikariDataSource();
+		BeanUtils.copy(config, dataSource);
+		//
+    	return dataSource;
         
 	}
 }

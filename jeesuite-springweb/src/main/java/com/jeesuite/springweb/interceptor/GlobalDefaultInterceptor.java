@@ -11,6 +11,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.util.PathMatcher;
@@ -36,7 +37,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 
 	private static Logger log = LoggerFactory.getLogger("com.jeesuite.springweb");
 	
-	private boolean isLocalEnv = "local".equals(CurrentRuntimeContext.ENV);
+	private boolean isLocalEnv = "local".equals(GlobalRuntimeContext.ENV);
 	//调用token检查
 	private boolean authTokenCheckEnabled = ResourceUtils.getBoolean("request.authtoken.enabled", !isLocalEnv);
 	//行为日志采集

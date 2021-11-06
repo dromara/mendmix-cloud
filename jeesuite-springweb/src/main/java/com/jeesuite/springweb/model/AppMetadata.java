@@ -8,7 +8,6 @@ public class AppMetadata {
 	private String name;
 	private String group;
 	private String module;
-	private String appId;
 	private String serviceId;
 	private List<String> dependencyServices = new ArrayList<>(0);
 	private List<ApiInfo> apis = new ArrayList<>();
@@ -36,18 +35,6 @@ public class AppMetadata {
 	}
 	public void setModule(String module) {
 		this.module = module;
-	}
-	/**
-	 * @return the appId
-	 */
-	public String getAppId() {
-		return appId;
-	}
-	/**
-	 * @param appId the appId to set
-	 */
-	public void setAppId(String appId) {
-		this.appId = appId;
 	}
 	
 	/**

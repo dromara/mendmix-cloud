@@ -29,6 +29,7 @@ import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.apache.logging.log4j.core.config.xml.XmlConfigurationFactory;
 import org.apache.logging.log4j.status.StatusLogger;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.IpUtils;
@@ -88,10 +89,9 @@ public class LogProfileManager{
 	
 	public static void reload(){
 
-		System.setProperty("systemId", CurrentRuntimeContext.SYSTEM_ID);
-		System.setProperty("appId", CurrentRuntimeContext.APPID);
-		System.setProperty("serviceName", CurrentRuntimeContext.EXPORT_SERVICE_NAME);
-		System.setProperty("env", CurrentRuntimeContext.ENV);	
+		System.setProperty("systemId", GlobalRuntimeContext.SYSTEM_ID);
+		System.setProperty("appId", GlobalRuntimeContext.APPID);
+		System.setProperty("env", GlobalRuntimeContext.ENV);	
 		
 		//POD_NAME:micro-staff-app-deploy-c7fb585c9-ck2v7
 		//POD_IP:172.24.20.17

@@ -4,12 +4,13 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.TokenGenerator;
+import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.zuul.filter.FilterHandler;
 import com.jeesuite.zuul.model.BizSystemModule;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.netflix.zuul.context.RequestContext;
 
 
@@ -39,7 +40,7 @@ public class GlobalHeaderHanlder implements FilterHandler {
 		if(StringUtils.isNotBlank(invokeApp)){
 			ctx.addZuulRequestHeader(WebConstants.HEADER_INVOKER_APP_ID,invokeApp);
 		}else{				
-			ctx.addZuulRequestHeader(WebConstants.HEADER_INVOKER_APP_ID,CurrentRuntimeContext.APPID);
+			ctx.addZuulRequestHeader(WebConstants.HEADER_INVOKER_APP_ID,GlobalRuntimeContext.APPID);
 		}
 		//
 		String authToken = request.getHeader(WebConstants.HEADER_AUTH_TOKEN);

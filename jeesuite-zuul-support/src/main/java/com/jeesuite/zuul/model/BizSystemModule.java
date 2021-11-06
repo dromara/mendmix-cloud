@@ -5,13 +5,12 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.PathMatcher;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 
 public class BizSystemModule {
 
 	private String id;
-	private String appId;
     private String serviceId;
 
     private String routeName;
@@ -31,14 +30,6 @@ public class BizSystemModule {
 
 	public void setId(String id) {
 		this.id = id;
-	}
-
-	public String getAppId() {
-		return appId;
-	}
-
-	public void setAppId(String appId) {
-		this.appId = appId;
 	}
 
 	public String getServiceId() {
@@ -73,7 +64,7 @@ public class BizSystemModule {
 	public void setAnonymousUris(String anonymousUris) {
 		this.anonymousUris = anonymousUris;
 		if(StringUtils.isNotBlank(this.anonymousUris)) {
-			anonUriMatcher = new PathMatcher(CurrentRuntimeContext.getContextPath(), this.anonymousUris);
+			anonUriMatcher = new PathMatcher(GlobalRuntimeContext.getContextPath(), this.anonymousUris);
 		}
 	}
 

@@ -1,6 +1,3 @@
-/**
- * Confidential and Proprietary Copyright 2019 By 卓越里程教育科技有限公司 All Rights Reserved
- */
 package com.jeesuite.zuul;
 
 import java.util.ArrayList;
@@ -8,14 +5,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.zuul.model.BizSystem;
+import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.zuul.model.BizSystemModule;
 
 /**
  * <br>
- * Class Name   : SystemModuleHolder
+ * Class Name   : CurrentSystemHolder
  *
  * @author jiangwei
  * @version 1.0.0
@@ -24,16 +24,10 @@ import com.jeesuite.zuul.model.BizSystemModule;
 public class CurrentSystemHolder {
 
 
-	private static BizSystem system;
 	private static AtomicReference<Map<String, BizSystemModule>> routeModuleMappings = new AtomicReference<>();
 
 	private static BizSystemModule defaultModule;
 	
-
-	public static BizSystem getSystem() {
-		return system;
-	}
-
 	public static BizSystemModule getModule(String route){
 		BizSystemModule module = routeModuleMappings.get().get(route);
 		return module != null ? module : defaultModule;
@@ -51,17 +45,18 @@ public class CurrentSystemHolder {
 	}
 	
 	private static synchronized void load(){
-		system = ServiceInstances.systemMgrApi().getSystemMetadata();
-		Map<String, BizSystemModule> _modules = new HashMap<>(system.getModules().size());
-		for (BizSystemModule module : system.getModules()) {
-			_modules.put(module.getRouteName(), module);
+		List<BizSystemModule> modules;
+		try {
+			modules = InstanceFactory.getInstance(SystemMgrApi.class).getSystemModules();
+		} catch (Exception e) {
+			modules = new ArrayList<>(0);
 		}
-		routeModuleMappings.set(_modules);
+		routeModuleMappings.set(modules.stream().collect(Collectors.toMap(BizSystemModule::getRouteName, Function.identity())));
 		//
 		if(defaultModule == null) {
 			defaultModule = new BizSystemModule();
-			defaultModule.setRouteName(system.getCode());
-			defaultModule.setAnonymousUris(ResourceUtils.getProperty("global.anonymousUris"));
+			defaultModule.setRouteName(GlobalRuntimeContext.APPID);
+			defaultModule.setAnonymousUris(ResourceUtils.getProperty("application.global.anonymousUris"));
 		}
 	}
 }

@@ -2,7 +2,6 @@ package com.jeesuite.zuul.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import com.jeesuite.common.util.WebUtils;
 import com.netflix.zuul.ZuulFilter;
@@ -15,7 +14,6 @@ import com.netflix.zuul.context.RequestContext;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2017年6月12日
  */
-@Component
 public class ZuulGlobalErrorFilter extends ZuulFilter {
 
 	/**

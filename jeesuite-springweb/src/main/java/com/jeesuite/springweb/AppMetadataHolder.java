@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.constants.PermissionLevel;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.annotation.ApiMetadata;
@@ -66,7 +67,7 @@ public class AppMetadataHolder {
 		ApiMetadata classMetadata;
 		ApiMetadata methodMetadata;
 		for (String className : classNameList) {
-			if(!className.contains(CurrentRuntimeContext.MODULE_NAME))continue;
+			if(!className.contains(GlobalRuntimeContext.MODULE_NAME))continue;
 			try {
 				Class<?> clazz = Class.forName(className);
 				if (clazz.isAnnotationPresent(Controller.class)
@@ -179,8 +180,7 @@ public class AppMetadataHolder {
 		synchronized (AppMetadataHolder.class) {
 			//
 			metadata = new AppMetadata();
-			metadata.setAppId(CurrentRuntimeContext.APPID);
-			metadata.setServiceId(CurrentRuntimeContext.EXPORT_SERVICE_NAME);
+			metadata.setServiceId(GlobalRuntimeContext.APPID);
 			
 			String basePackage = ResourceUtils.getProperty("application.base-package");
 			if(basePackage == null)return metadata;

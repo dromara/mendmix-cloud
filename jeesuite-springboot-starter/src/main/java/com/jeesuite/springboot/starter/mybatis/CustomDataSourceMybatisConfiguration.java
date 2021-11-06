@@ -17,6 +17,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Configuration;
 
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.mybatis.datasource.DataSourceConfig;
 import com.jeesuite.mybatis.datasource.DataSoureConfigHolder;
 import com.jeesuite.mybatis.spring.SqlSessionFactoryBean;
 import com.jeesuite.spring.InstanceFactory;
@@ -64,7 +65,10 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 
 	private void registerGroupMybatisBean(BeanDefinitionRegistry registry,String group) {
 
-		String propKeyPrefix = group + ".";
+		String propKeyPrefix = "";
+		if(!DataSourceConfig.DEFAULT_GROUP_NAME.equals(group)) {
+			propKeyPrefix = group + ".";
+		}
 	
 		List<BeanValue> argValues = new ArrayList<>();
 		Map<String, BeanValue> propertyPairs = new HashMap<>();
@@ -73,7 +77,6 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		Class<?> dataSourceClass = com.jeesuite.mybatis.datasource.MultiRouteDataSource.class;
 		argValues.add(new BeanValue(group));
 		BeanRegistryHelper.register(registry, dataSourceBeanName, dataSourceClass, argValues, propertyPairs);
-		context.getBean(dataSourceBeanName);
 		//----
 		Class<?> transactionManagerClass = org.springframework.jdbc.datasource.DataSourceTransactionManager.class;
 		String transactionManagerBeanName = group +  "TransactionManager";
@@ -82,7 +85,6 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		propertyPairs.clear();
 		propertyPairs.put("dataSource", new BeanValue(dataSourceBeanName, true));
 		BeanRegistryHelper.register(registry, transactionManagerBeanName, transactionManagerClass, argValues, propertyPairs);
-		context.getBean(transactionManagerBeanName);
 		
 		//----
 		Class<?> transactionTemplateClass = org.springframework.transaction.support.TransactionTemplate.class;
@@ -92,7 +94,6 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		propertyPairs.clear();
 		propertyPairs.put("transactionManager", new BeanValue(transactionManagerBeanName, true));
 		BeanRegistryHelper.register(registry, transactionTemplateBeanName, transactionTemplateClass, argValues, propertyPairs);
-		context.getBean(transactionTemplateBeanName);
 		
         //----
 		String sessionFactoryBeanName = group + "SqlSessionFactoryBean";
@@ -108,8 +109,7 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		propertyPairs.put("typeAliasesPackage", new BeanValue(value));
 		propertyPairs.put("dataSource", new BeanValue(dataSourceBeanName, true));
 		BeanRegistryHelper.register(registry, sessionFactoryBeanName, sessionFactoryClass, argValues, propertyPairs);
-		// 触发bean实例化
-		context.getBean(sessionFactoryBeanName);
+		
 		//----
 		String mapperConfigurerBeanName = group + "MapperScannerConfigurer";
 		Class<?> mapperConfigurerClass = org.mybatis.spring.mapper.MapperScannerConfigurer.class;
@@ -120,6 +120,9 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 
 		propertyPairs.put("basePackage", new BeanValue(value));
 		BeanRegistryHelper.register(registry, mapperConfigurerBeanName, mapperConfigurerClass, argValues, propertyPairs);
+		// 触发bean实例化
+		context.getBean(transactionTemplateBeanName);
+		context.getBean(sessionFactoryBeanName);
 		context.getBean(mapperConfigurerBeanName);
 	}
 

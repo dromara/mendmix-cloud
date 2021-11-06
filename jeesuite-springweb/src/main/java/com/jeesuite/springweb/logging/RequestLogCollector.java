@@ -11,6 +11,7 @@ import org.apache.logging.log4j.ThreadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.async.StandardThreadExecutor;
@@ -60,8 +61,8 @@ public class RequestLogCollector {
 	public static void onRequestStart(HttpServletRequest request){
 		if(!inited)return;
 		ActionLog actionLog = new ActionLog();
-		actionLog.setEnv(CurrentRuntimeContext.ENV);
-		actionLog.setAppId(CurrentRuntimeContext.APPID);
+		actionLog.setEnv(GlobalRuntimeContext.ENV);
+		actionLog.setAppId(GlobalRuntimeContext.APPID);
 		actionLog.setRequestAt(new Date());
 		actionLog.setRequestIp(IpUtils.getIpAddr(request));
 		actionLog.setActionUri(request.getRequestURI());
@@ -127,8 +128,8 @@ public class RequestLogCollector {
     public static void onSystemBackendTaskStart(String taskName,String taskKey){
     	if(!inited)return;
     	ActionLog actionLog = new ActionLog();
-    	actionLog.setEnv(CurrentRuntimeContext.ENV);
-		actionLog.setAppId(CurrentRuntimeContext.APPID);
+    	actionLog.setEnv(GlobalRuntimeContext.ENV);
+		actionLog.setAppId(GlobalRuntimeContext.APPID);
 		actionLog.setRequestAt(new Date());
 		actionLog.setRequestId(TokenGenerator.generate());
 		actionLog.setActionName(taskName);
