@@ -2,10 +2,10 @@ package com.jeesuite.zuul;
 
 import java.util.List;
 
-import com.jeesuite.common.model.IdNamePair;
+import com.jeesuite.zuul.model.Tenant;
 
 public interface TenantApi {
 
-	IdNamePair defaultTenant();
-	List<IdNamePair> tenantList();
+	Tenant defaultTenant();
+	List<Tenant> tenantList();
 }
