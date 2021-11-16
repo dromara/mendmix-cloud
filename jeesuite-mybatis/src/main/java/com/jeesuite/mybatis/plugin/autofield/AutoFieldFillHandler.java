@@ -1,14 +1,19 @@
 package com.jeesuite.mybatis.plugin.autofield;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.ibatis.mapping.MappedStatement;
 
+import com.jeesuite.common.guid.GUID;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
@@ -20,6 +25,7 @@ import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedAt;
 import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedBy;
 import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedAt;
 import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedBy;
+import com.jeesuite.spring.InstanceFactory;
 
 /**
  * 字段自动填充
@@ -37,6 +43,26 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 
 	private static Map<String, Field[]> methodFieldMappings = new HashMap<>();
 	
+	private  IDGenerator idGenerator;
+	
+	
+
+	private IDGenerator getIdGenerator() {
+		if(idGenerator != null)return idGenerator;
+		synchronized (AutoFieldFillHandler.class) {
+			idGenerator = InstanceFactory.getInstance(IDGenerator.class);
+			if(idGenerator == null) {
+				idGenerator = new IDGenerator() {
+					@Override
+					public Serializable nextId() {
+						return String.valueOf(GUID.guid());
+					}
+				};
+			}
+		}
+		return idGenerator;
+	}
+
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
@@ -44,35 +70,38 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 		
 		String tenantSharddingField = MybatisConfigs.getTenantSharddingField(context.getGroupName());
 		for (EntityInfo ei : entityInfos) {
-			Field[] createdFields = new Field[3];
-			Field[] updatedFields = new Field[2];
+			Field[] createdFields = new Field[4];
+			Field[] updatedFields = new Field[3];
 			Field[] fields = FieldUtils.getAllFields(ei.getEntityClass());
 			for (Field field : fields) {
-				if(field.isAnnotationPresent(CreatedBy.class)) {
+				if(field.isAnnotationPresent(Id.class) && !field.isAnnotationPresent(GeneratedValue.class)) {
 					field.setAccessible(true);
 					createdFields[0] = field;
-				}else if(field.isAnnotationPresent(CreatedAt.class)) {
+				}else if(field.isAnnotationPresent(CreatedBy.class)) {
 					field.setAccessible(true);
 					createdFields[1] = field;
-				}else if(field.isAnnotationPresent(UpdatedBy.class)) {
-					field.setAccessible(true);
-					updatedFields[0] = field;
-				}else if(field.isAnnotationPresent(UpdatedAt.class)) {
-					field.setAccessible(true);
-					updatedFields[1] = field;
-				}else if(tenantSharddingField != null && field.getName().endsWith(tenantSharddingField)) {
+				}else if(field.isAnnotationPresent(CreatedAt.class)) {
 					field.setAccessible(true);
 					createdFields[2] = field;
+				}else if(field.isAnnotationPresent(UpdatedBy.class)) {
+					field.setAccessible(true);
+					updatedFields[1] = field;
+				}else if(field.isAnnotationPresent(UpdatedAt.class)) {
+					field.setAccessible(true);
+					updatedFields[2] = field;
+				}else if(tenantSharddingField != null && field.getName().endsWith(tenantSharddingField)) {
+					field.setAccessible(true);
+					createdFields[3] = field;
 				}
 			}
 	
 			String keyPrefix = ei.getMapperClass().getName() + ".";
-			if(createdFields[0] != null || createdFields[1] != null) {
+			if(anyNotNull(createdFields)) {
 	        	methodFieldMappings.put(keyPrefix + "insert", createdFields);
 	        	methodFieldMappings.put(keyPrefix + "insertSelective", createdFields);
 	        	methodFieldMappings.put(keyPrefix + INSERT_LIST_METHOD_NAME, createdFields);
 	        }
-			if(updatedFields[0] != null || updatedFields[1] != null) {
+			if(anyNotNull(updatedFields)) {
 	        	methodFieldMappings.put(keyPrefix + "updateByPrimaryKey", updatedFields);
 	        	methodFieldMappings.put(keyPrefix + "updateByPrimaryKeySelective", updatedFields);
 	        	methodFieldMappings.put(keyPrefix + "updateByPrimaryKeyWithVersion", updatedFields);
@@ -115,16 +144,32 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 
 	private void setFieldValue(Field[] fields, Object parameter) {
 		String tmpVal;
-		if(fields[0] != null && (tmpVal = MybatisRuntimeContext.getCurrentUser()) != null) {
-			try {fields[0].set(parameter, tmpVal);} catch (Exception e) {}
+		if(fields[0] != null && getIdGenerator() != null) {
+			Serializable id = idGenerator.nextId();
+//			if(fields[0].getType() == int.class || fields[0].getType() == Integer.class){
+//				id = Integer.parseInt(id.toString());
+//			}else if(fields[0].getType() == long.class || fields[0].getType() == Long.class){
+//				id = Long.parseLong(id.toString());
+//			}
+			try {fields[0].set(parameter, id);} catch (Exception e) {}
 		}
-		if(fields.length > 2 && fields[2] != null && (tmpVal = MybatisRuntimeContext.getCurrentTenant()) != null) {
-			try {fields[2].set(parameter, tmpVal);} catch (Exception e) {}
+		if(fields[1] != null && (tmpVal = MybatisRuntimeContext.getCurrentUser()) != null) {
+			try {fields[1].set(parameter, tmpVal);} catch (Exception e) {}
 		}
 		Date currentTime = new Date();
-		if(fields[1] != null) {
-			try {fields[1].set(parameter, currentTime);} catch (Exception e) {}
+		if(fields[2] != null) {
+			try {fields[2].set(parameter, currentTime);} catch (Exception e) {}
 		}
+		if(fields.length > 3 && fields[3] != null && (tmpVal = MybatisRuntimeContext.getCurrentTenant()) != null) {
+			try {fields[3].set(parameter, tmpVal);} catch (Exception e) {}
+		}
+	}
+	
+	private boolean anyNotNull(Field[] fields) {
+		for (Field field : fields) {
+			if(field != null)return true;
+		}
+		return false;
 	}
 
 	@Override
