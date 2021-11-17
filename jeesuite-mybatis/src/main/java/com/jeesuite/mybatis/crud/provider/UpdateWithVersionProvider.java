@@ -7,9 +7,9 @@ import java.util.Set;
 
 import org.apache.ibatis.jdbc.SQL;
 
-import com.jeesuite.mybatis.crud.helper.ColumnMapper;
-import com.jeesuite.mybatis.crud.helper.EntityHelper;
-import com.jeesuite.mybatis.crud.helper.EntityMapper;
+import com.jeesuite.mybatis.metadata.ColumnMetadata;
+import com.jeesuite.mybatis.metadata.MetadataHelper;
+import com.jeesuite.mybatis.metadata.EntityMetadata;
 
 /**
  * 
@@ -23,20 +23,20 @@ import com.jeesuite.mybatis.crud.helper.EntityMapper;
 public class UpdateWithVersionProvider extends AbstractExampleProvider{
 
 	public String updateByPrimaryKeyWithVersion(Object example) throws Exception {
-		EntityMapper entityMapper = EntityHelper.getEntityMapper(example.getClass());
-		Set<ColumnMapper> columns = entityMapper.getColumnsMapper();
-		SQL sql = new SQL().UPDATE(entityMapper.getTableMapper().getName());
+		EntityMetadata entityMapper = MetadataHelper.getEntityMapper(example.getClass());
+		Set<ColumnMetadata> columns = entityMapper.getColumns();
+		SQL sql = new SQL().UPDATE(entityMapper.getTable().getName());
 		
 		StringBuilder setBuilder = new StringBuilder();
 		StringBuilder whereBuilder = new StringBuilder();
 		//主键
-		ColumnMapper idColumn = entityMapper.getIdColumn();
+		ColumnMetadata idColumn = entityMapper.getIdColumn();
 		appendWhere(whereBuilder,idColumn);
 		
 		Object value;
-		for (ColumnMapper column : columns) {
+		for (ColumnMetadata column : columns) {
 			if(column.isId() || !column.isUpdatable())continue;
-			value = EntityHelper.getEntityField(entityMapper.getTableMapper().getName(),column.getProperty()).get(example);
+			value = MetadataHelper.getEntityField(entityMapper.getTable().getName(),column.getProperty()).get(example);
 			if(value == null)continue;
 			if(column.isVersionField()) {
 				appendWhere(whereBuilder,column);

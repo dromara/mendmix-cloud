@@ -5,8 +5,8 @@ package com.jeesuite.mybatis.crud.builder;
 
 import org.apache.ibatis.jdbc.SQL;
 
-import com.jeesuite.mybatis.crud.helper.EntityMapper;
-import com.jeesuite.mybatis.crud.helper.TableMapper;
+import com.jeesuite.mybatis.metadata.EntityMetadata;
+import com.jeesuite.mybatis.metadata.TableMetadata;
 
 /**
  * @description <br>
@@ -22,8 +22,8 @@ public class SelectAllBuilder  extends AbstractSelectMethodBuilder{
 	}
 
 	@Override
-	String buildSQL(EntityMapper entityMapper, boolean selective) {
-		TableMapper tableMapper = entityMapper.getTableMapper();
+	String buildSQL(EntityMetadata entityMapper, boolean selective) {
+		TableMetadata tableMapper = entityMapper.getTable();
 		return new SQL() {
             {
                 SELECT("*");

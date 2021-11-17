@@ -9,9 +9,9 @@ import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
-import com.jeesuite.mybatis.crud.helper.EntityHelper;
-import com.jeesuite.mybatis.crud.helper.EntityMapper;
-import com.jeesuite.mybatis.parser.EntityInfo;
+import com.jeesuite.mybatis.metadata.MetadataHelper;
+import com.jeesuite.mybatis.metadata.MapperMetadata;
+import com.jeesuite.mybatis.metadata.EntityMetadata;
 
 /**
  * 
@@ -24,13 +24,13 @@ import com.jeesuite.mybatis.parser.EntityInfo;
  */
 public abstract class AbstractMethodBuilder {
 	
-	public void build(Configuration configuration, LanguageDriver languageDriver,EntityInfo entity) {
+	public void build(Configuration configuration, LanguageDriver languageDriver,MapperMetadata entity) {
 		
 		for (String name : methodNames()) {			
 			String msId = entity.getMapperClass().getName() + "." + name;
 			
 			// 从参数对象里提取注解信息
-			EntityMapper entityMapper = EntityHelper.getEntityMapper(entity.getEntityClass());
+			EntityMetadata entityMapper = MetadataHelper.getEntityMapper(entity.getEntityClass());
 			// 生成sql
 			String sql = buildSQL(entityMapper,name.endsWith("Selective"));
 			
@@ -56,7 +56,7 @@ public abstract class AbstractMethodBuilder {
 
 	abstract SqlCommandType sqlCommandType();
 	abstract String[] methodNames();
-	abstract String buildSQL(EntityMapper entityMapper,boolean selective);
+	abstract String buildSQL(EntityMetadata entityMapper,boolean selective);
 	abstract void setResultType(Configuration configuration, MappedStatement statement,Class<?> entityClass);
 	
 }

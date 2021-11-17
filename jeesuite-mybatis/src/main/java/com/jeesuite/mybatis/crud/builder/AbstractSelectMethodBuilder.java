@@ -14,8 +14,8 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
 import org.apache.ibatis.session.Configuration;
 
-import com.jeesuite.mybatis.crud.helper.ColumnMapper;
-import com.jeesuite.mybatis.crud.helper.EntityHelper;
+import com.jeesuite.mybatis.metadata.ColumnMetadata;
+import com.jeesuite.mybatis.metadata.MetadataHelper;
 
 /**
  * 
@@ -50,8 +50,8 @@ public abstract class AbstractSelectMethodBuilder extends AbstractMethodBuilder 
 	public static ResultMap getResultMap(Configuration configuration,Class<?> entityClass) {
        List<ResultMapping> resultMappings = new ArrayList<ResultMapping>();
        
-       Set<ColumnMapper> entityClassColumns = EntityHelper.getEntityMapper(entityClass).getColumnsMapper();
-       for (ColumnMapper entityColumn : entityClassColumns) {
+       Set<ColumnMetadata> entityClassColumns = MetadataHelper.getEntityMapper(entityClass).getColumns();
+       for (ColumnMetadata entityColumn : entityClassColumns) {
            ResultMapping.Builder builder = new ResultMapping.Builder(configuration, entityColumn.getProperty(), entityColumn.getColumn(), entityColumn.getJavaType());
            if (entityColumn.getJdbcType() != null) {
                builder.jdbcType(entityColumn.getJdbcType());

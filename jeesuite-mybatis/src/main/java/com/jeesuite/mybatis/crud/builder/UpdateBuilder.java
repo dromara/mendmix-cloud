@@ -10,9 +10,9 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.session.Configuration;
 
 import com.jeesuite.mybatis.crud.SqlTemplate;
-import com.jeesuite.mybatis.crud.helper.ColumnMapper;
-import com.jeesuite.mybatis.crud.helper.EntityMapper;
-import com.jeesuite.mybatis.crud.helper.TableMapper;
+import com.jeesuite.mybatis.metadata.ColumnMetadata;
+import com.jeesuite.mybatis.metadata.EntityMetadata;
+import com.jeesuite.mybatis.metadata.TableMetadata;
 
 /**
  * 批量插入
@@ -33,17 +33,17 @@ public class UpdateBuilder  extends AbstractMethodBuilder{
 	}
 
 	@Override
-	String buildSQL(EntityMapper entityMapper, boolean selective) {
+	String buildSQL(EntityMetadata entityMapper, boolean selective) {
 
 		// 从表注解里获取表名等信息
-		TableMapper tableMapper = entityMapper.getTableMapper();
-		Set<ColumnMapper> columnMappers = entityMapper.getColumnsMapper();
+		TableMetadata tableMapper = entityMapper.getTable();
+		Set<ColumnMetadata> columnMappers = entityMapper.getColumns();
 		
 		String idColumn = null;
 		String idProperty = null;
 		StringBuilder set = new StringBuilder();
 		set.append("<trim prefix=\"SET\" suffixOverrides=\",\">");
-		for (ColumnMapper column : columnMappers) {
+		for (ColumnMetadata column : columnMappers) {
 			if (!column.isUpdatable()) {
 				continue;
 			}

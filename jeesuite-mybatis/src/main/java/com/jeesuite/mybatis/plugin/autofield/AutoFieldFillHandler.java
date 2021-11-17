@@ -17,7 +17,7 @@ import com.jeesuite.common.guid.GUID;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.parser.EntityInfo;
+import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
@@ -66,13 +66,13 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
-		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
+		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		
 		String tenantSharddingField = MybatisConfigs.getTenantSharddingField(context.getGroupName());
-		for (EntityInfo ei : entityInfos) {
+		for (MapperMetadata mm : mappers) {
 			Field[] createdFields = new Field[4];
 			Field[] updatedFields = new Field[3];
-			Field[] fields = FieldUtils.getAllFields(ei.getEntityClass());
+			Field[] fields = FieldUtils.getAllFields(mm.getEntityClass());
 			for (Field field : fields) {
 				if(field.isAnnotationPresent(Id.class) && !field.isAnnotationPresent(GeneratedValue.class)) {
 					field.setAccessible(true);
@@ -95,7 +95,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 				}
 			}
 	
-			String keyPrefix = ei.getMapperClass().getName() + ".";
+			String keyPrefix = mm.getMapperClass().getName() + ".";
 			if(anyNotNull(createdFields)) {
 	        	methodFieldMappings.put(keyPrefix + "insert", createdFields);
 	        	methodFieldMappings.put(keyPrefix + "insertSelective", createdFields);

@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.crud.GeneralSqlGenerator;
-import com.jeesuite.mybatis.parser.EntityInfo;
+import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
@@ -49,9 +49,9 @@ public class JeesuiteMybatisEnhancer {
 			method.invoke(helper, config);
 
 			method = helperClazz.getDeclaredMethod("registerMapper", Class.class);
-			List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(group);
-			for (EntityInfo entityInfo : entityInfos) {
-				method.invoke(helper, entityInfo.getMapperClass());
+			List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(group);
+			for (MapperMetadata mapper : mappers) {
+				method.invoke(helper, mapper.getMapperClass());
 			}
 
 			method = helperClazz.getDeclaredMethod("processConfiguration", Configuration.class);

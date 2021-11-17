@@ -1,9 +1,8 @@
 /**
  * 
  */
-package com.jeesuite.mybatis.parser;
+package com.jeesuite.mybatis.metadata;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -13,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.Column;
 import javax.persistence.Table;
 
 import org.apache.commons.lang3.StringUtils;
@@ -22,10 +20,11 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.apache.ibatis.mapping.SqlCommandType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.model.PageParams;
-import com.jeesuite.mybatis.crud.helper.EntityHelper;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 
 /**
@@ -34,7 +33,9 @@ import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
  * @date 2016年2月22日
  * @Copyright (c) 2015, jwww
  */
-public class EntityInfo {
+public class MapperMetadata {
+	
+	private static final Logger log = LoggerFactory.getLogger(MapperMetadata.class);
 
 	private static List<String> queryMethodPrefixs = Arrays.asList("select","query","get","list","find");
 	private String tableName;
@@ -43,50 +44,25 @@ public class EntityInfo {
 	
 	private Class<?> mapperClass;
 	
+	private EntityMetadata entityMetadata;
+	
 	private Map<String, String> mapperSqls = new HashMap<>();
-	
-	private String errorMsg;
-	
-	private Class<?> idType;
-	private String idProperty;
-	
-	private String idColumn;
+
 	
 	private Map<String,MapperMethod> mapperMethods = new HashMap<>();
-	
-	public String getErrorMsg() {
-		return errorMsg;
-	}
 
-	public EntityInfo(String mapperClassName, String entityClassName) {
+
+	public MapperMetadata(String mapperClassName) {
 		try {
-			if(StringUtils.isNotBlank(entityClassName))entityClass = Class.forName(entityClassName);
-//			if(!BaseEntity.class.isAssignableFrom(entityClass)){
-//				errorMsg = "entityClass[" + entityClassName +"] not extend[com.jeesuite.mybatis.core.BaseEntity]";
-//				return;
-//			}
+			mapperClass = Class.forName(mapperClassName);
+			
+			parseEntityInfo();
+
 			if(entityClass.isAnnotationPresent(Table.class)){
 				this.tableName = entityClass.getAnnotation(Table.class).name();
-				
-				Field[] fields = entityClass.getDeclaredFields();
-				for (Field field : fields) {
-					if(field.isAnnotationPresent(javax.persistence.Id.class)){
-						this.idType = field.getType();
-						this.idProperty = field.getName();
-						Column column = field.getAnnotation(javax.persistence.Column.class);
-						if(column != null && StringUtils.isNotBlank(column.name())){
-							this.idColumn = column.name();
-						}else{
-							this.idColumn = this.idProperty;
-						}
-						break;
-					}
-				}
 			}else{
-				errorMsg = "entityClass[" + entityClassName +"] not found annotation[@Table]";
 				return;
 			}
-			mapperClass = Class.forName(mapperClassName);
 			//
 			List<Method> methods = new ArrayList<>();
 			parseAllMethod(mapperClass, methods);
@@ -123,16 +99,12 @@ public class EntityInfo {
 				//
 				mapperMethods.put(method.getName(),new MapperMethod(method, fullName, sqlType));
 			}
-            //
-            EntityHelper.getEntityMapper(entityClass);
-		} catch (ClassNotFoundException e) {
-			errorMsg = e.getMessage();
-		}catch (Exception e) {
-			errorMsg = String.format("parse error,please check class[{}] and [{}]", entityClassName,mapperClassName);
+		} catch (Exception e) {
+			log.info("parse mapper error -> mapperClassName:{}",mapperClassName,e);
 		}
 	}
 	
-	public EntityInfo(String mapperClassName, String entityClassName, String tableName) {
+	public MapperMetadata(String mapperClassName, String entityClassName, String tableName) {
 		this.tableName = tableName;
 		try {
 			if(StringUtils.isNotBlank(entityClassName))entityClass = Class.forName(entityClassName);
@@ -189,18 +161,6 @@ public class EntityInfo {
 	public Map<String, String> getMapperSqls() {
 		return mapperSqls;
 	}
-
-	public Class<?> getIdType() {
-		return idType;
-	}
-
-	public String getIdProperty() {
-		return idProperty;
-	}
-
-	public String getIdColumn() {
-		return idColumn;
-	}
 	
 	public Map<String, MapperMethod> getMapperMethods() {
 		return mapperMethods;
@@ -208,6 +168,10 @@ public class EntityInfo {
 	
 	public MapperMethod getMapperMethod(String methodFullName) {
 		return mapperMethods.get(methodFullName);
+	}
+	
+	public EntityMetadata getEntityMetadata() {
+		return entityMetadata;
 	}
 
 	private static void parseAllMethod(Class<?> clazz,List<Method> methods) {
@@ -220,6 +184,16 @@ public class EntityInfo {
     	for (Class<?> interClass : interfaces) {
     		parseAllMethod(interClass, methods);
 		}
+	}
+	
+	private void parseEntityInfo() {
+		Type[] interfacesTypes = mapperClass.getGenericInterfaces();
+		if(interfacesTypes == null || interfacesTypes.length == 0)return;
+		Type[] genericTypes = ((ParameterizedType) interfacesTypes[0]).getActualTypeArguments();
+		if(genericTypes == null || genericTypes.length == 0)return;
+		entityClass = (Class<?>) genericTypes[0];
+		//
+		entityMetadata = MetadataHelper.getEntityMapper(entityClass);
 	}
 
 	public static class MapperMethod {

@@ -6,9 +6,9 @@ package com.jeesuite.mybatis.crud.builder;
 import org.apache.ibatis.jdbc.SQL;
 
 import com.jeesuite.mybatis.crud.CrudMethods;
-import com.jeesuite.mybatis.crud.helper.ColumnMapper;
-import com.jeesuite.mybatis.crud.helper.EntityMapper;
-import com.jeesuite.mybatis.crud.helper.TableMapper;
+import com.jeesuite.mybatis.metadata.ColumnMetadata;
+import com.jeesuite.mybatis.metadata.EntityMetadata;
+import com.jeesuite.mybatis.metadata.TableMetadata;
 
 /**
  * 批量插入
@@ -24,10 +24,10 @@ public class SelectByPrimaryKeyBuilder extends AbstractSelectMethodBuilder{
 	}
 
 	@Override
-	String buildSQL(EntityMapper entityMapper, boolean selective) {
+	String buildSQL(EntityMetadata entityMapper, boolean selective) {
 		// 从表注解里获取表名等信息
-		TableMapper tableMapper = entityMapper.getTableMapper();
-		ColumnMapper idColumn = entityMapper.getIdColumn();
+		TableMetadata tableMapper = entityMapper.getTable();
+		ColumnMetadata idColumn = entityMapper.getIdColumn();
 		
 		return new SQL()
 		   .SELECT("*")

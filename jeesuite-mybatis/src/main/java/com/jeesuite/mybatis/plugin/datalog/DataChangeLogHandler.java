@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.parser.EntityInfo;
+import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
@@ -33,7 +33,7 @@ public class DataChangeLogHandler implements InterceptorHandler {
 	public static void set(Class<? extends BaseEntity>[] entityClass){
 		List<String> names = new ArrayList<String>(entityClass.length);
         for (Class<? extends BaseEntity> clazz : entityClass) {
-        	EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByEntityName(clazz.getName());
+        	MapperMetadata entityInfo = MybatisMapperParser.getMapperMetadata(clazz.getName());
         	names.add(entityInfo.getMapperClass().getName());
 		}
         entityClassNameHolder.set(names);
@@ -61,7 +61,7 @@ public class DataChangeLogHandler implements InterceptorHandler {
 		
 		String mapperClassName = mt.getId().substring(0,mt.getId().lastIndexOf("."));
 		if(!entityClassNameHolder.get().contains(mapperClassName))return;
-		EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperClassName);
+		MapperMetadata entityInfo = MybatisMapperParser.getMapperMetadata(mapperClassName);
 		if(entityInfo == null)return;
 		try {
 			System.out.println(mt.getId());

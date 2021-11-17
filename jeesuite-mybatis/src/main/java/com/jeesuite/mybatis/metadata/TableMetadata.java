@@ -1,4 +1,4 @@
-package com.jeesuite.mybatis.crud.helper;
+package com.jeesuite.mybatis.metadata;
 
 /**
  * @description <br>
@@ -6,7 +6,7 @@ package com.jeesuite.mybatis.crud.helper;
  * @date 2015年12月2日
  * @Copyright (c) 2015, jwww
  */
-public class TableMapper {
+public class TableMetadata {
 
 	// 表名
 	private String name;

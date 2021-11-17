@@ -18,7 +18,7 @@ import com.jeesuite.mybatis.crud.builder.SelectAllBuilder;
 import com.jeesuite.mybatis.crud.builder.SelectByPrimaryKeyBuilder;
 import com.jeesuite.mybatis.crud.builder.SelectByPrimaryKeysBuilder;
 import com.jeesuite.mybatis.crud.builder.UpdateBuilder;
-import com.jeesuite.mybatis.parser.EntityInfo;
+import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 
 /**
@@ -43,8 +43,8 @@ public class GeneralSqlGenerator {
 	
 	public void generate() {
 		if(languageDriver == null)languageDriver = configuration.getDefaultScriptingLanguageInstance();
-		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(group);
-		for (EntityInfo entity : entityInfos) {
+		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(group);
+		for (MapperMetadata entity : mappers) {
 			new InsertBuilder().build(configuration, languageDriver,entity);
 			new InsertListBuilder().build(configuration,languageDriver, entity);
 			new DeleteByPrimaryKeyBuilder().build(configuration,languageDriver, entity);

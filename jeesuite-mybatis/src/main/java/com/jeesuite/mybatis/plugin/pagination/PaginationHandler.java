@@ -26,7 +26,7 @@ import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.datasource.DatabaseType;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
-import com.jeesuite.mybatis.parser.EntityInfo;
+import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
@@ -59,14 +59,14 @@ public class PaginationHandler implements InterceptorHandler {
 		
 		logger.info("dbType:{}",dbType.name());
 		
-		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
-		for (EntityInfo ei : entityInfos) {
+		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
+		for (MapperMetadata e : mappers) {
 			
-			Class<?> mapperClass = ei.getMapperClass();
+			Class<?> mapperClass = e.getMapperClass();
 			Method[] methods = mapperClass.getDeclaredMethods();
 			for (Method method : methods) {
 				if(method.getReturnType() == Page.class){
-					String msId = ei.getMapperClass().getName() + "." + method.getName();
+					String msId = e.getMapperClass().getName() + "." + method.getName();
 					
 					boolean withPageParams = false;
 					Class<?>[] parameterTypes = method.getParameterTypes();

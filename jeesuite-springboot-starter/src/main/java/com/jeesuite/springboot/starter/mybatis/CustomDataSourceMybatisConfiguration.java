@@ -110,7 +110,13 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		
 		//----
 		String mapperConfigurerBeanName = group + "MapperScannerConfigurer";
-		Class<?> mapperConfigurerClass = org.mybatis.spring.mapper.MapperScannerConfigurer.class;
+		Class<?> mapperConfigurerClass = null;
+		if("tkMapper".equals(ResourceUtils.getProperty("jeesuite.mybatis.crudDriver"))) {
+			try {mapperConfigurerClass = Class.forName("tk.mybatis.spring.mapper.MapperScannerConfigurer");} catch (ClassNotFoundException e) {}
+		}
+		if(mapperConfigurerClass == null) {
+			mapperConfigurerClass = org.mybatis.spring.mapper.MapperScannerConfigurer.class;
+		}
 		argValues.clear();
 		propertyPairs.clear();
 		propertyPairs.put("sqlSessionFactoryBeanName", new BeanValue(sessionFactoryBeanName));

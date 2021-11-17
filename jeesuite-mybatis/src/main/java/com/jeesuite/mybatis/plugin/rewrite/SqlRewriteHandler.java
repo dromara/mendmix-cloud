@@ -26,9 +26,9 @@ import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
-import com.jeesuite.mybatis.crud.helper.ColumnMapper;
-import com.jeesuite.mybatis.crud.helper.EntityHelper;
-import com.jeesuite.mybatis.parser.EntityInfo;
+import com.jeesuite.mybatis.metadata.ColumnMetadata;
+import com.jeesuite.mybatis.metadata.MapperMetadata;
+import com.jeesuite.mybatis.metadata.MetadataHelper;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
@@ -80,24 +80,24 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			buildTableDataProfileMapping(tableName, v.toString());
 		} );
 		
-		final List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
+		final List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		//字段隔离租户模式
 		if (isFieldSharddingTenant) {
 			String tenantField = MybatisConfigs.getTenantSharddingField(context.getGroupName());
 
-			ColumnMapper tenantColumn;
-			for (EntityInfo entityInfo : entityInfos) {
-				tenantColumn = EntityHelper.getTableColumnMappers(entityInfo.getTableName()).stream().filter(o -> {
+			ColumnMetadata tenantColumn;
+			for (MapperMetadata e : mappers) {
+				tenantColumn = MetadataHelper.getTableColumnMappers(e.getTableName()).stream().filter(o -> {
 					return o.getColumn().equals(tenantField) || o.getProperty().equals(tenantField);
 				}).findFirst().orElse(null);
 
 				if (tenantColumn == null)
 					continue;
 
-				if (!dataProfileMappings.containsKey(entityInfo.getTableName())) {
-					dataProfileMappings.put(entityInfo.getTableName(), new HashMap<>());
+				if (!dataProfileMappings.containsKey(e.getTableName())) {
+					dataProfileMappings.put(e.getTableName(), new HashMap<>());
 				}
-				dataProfileMappings.get(entityInfo.getTableName()).put(TENANT_ID, tenantColumn.getColumn());
+				dataProfileMappings.get(e.getTableName()).put(TENANT_ID, tenantColumn.getColumn());
 			}
 		}
 		
@@ -116,7 +116,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		if(invocation.getSql() == null) {
 			List<Object> list = new ArrayList<>(1);
 			//
-			EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(invocation.getMapperNameSpace());
+			MapperMetadata entityInfo = MybatisMapperParser.getMapperMetadata(invocation.getMapperNameSpace());
 			String methodName = invocation.getMappedStatement().getId().replace(invocation.getMapperNameSpace(), StringUtils.EMPTY).substring(1);
 			Class<?> returnType = entityInfo.getMapperMethod(methodName).getMethod().getReturnType();
 			if(returnType == int.class || returnType == Integer.class|| returnType == long.class|| returnType == Long.class) {
@@ -245,8 +245,9 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				OrderByElement orderByElement;
 				for (OrderBy orderBy : pageParam.getOrderBys()) {
 					if(orderBy == null)continue;
-		    		String columnName = MybatisMapperParser.property2ColumnName(invocation.getMapperNameSpace(), orderBy.getField());
-		    		if(columnName == null)continue;
+					MapperMetadata mapperMeta = MybatisMapperParser.getMapperMetadata(invocation.getMapperNameSpace());
+		    		String columnName = mapperMeta.getEntityMetadata().getProp2ColumnMappings().get(orderBy.getField());
+		    		if(columnName == null)columnName = orderBy.getField();
 		    		orderByElement = new OrderByElement();
 		    		orderByElement.setAsc(OrderType.ASC.name().equals(orderBy.getSortType()));
 		    		orderByElement.setExpression(new Column(table, columnName));

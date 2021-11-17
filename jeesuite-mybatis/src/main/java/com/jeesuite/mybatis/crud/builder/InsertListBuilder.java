@@ -10,9 +10,9 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.session.Configuration;
 
 import com.jeesuite.mybatis.crud.SqlTemplate;
-import com.jeesuite.mybatis.crud.helper.ColumnMapper;
-import com.jeesuite.mybatis.crud.helper.EntityMapper;
-import com.jeesuite.mybatis.crud.helper.TableMapper;
+import com.jeesuite.mybatis.metadata.ColumnMetadata;
+import com.jeesuite.mybatis.metadata.EntityMetadata;
+import com.jeesuite.mybatis.metadata.TableMetadata;
 
 /**
  * 批量插入
@@ -33,11 +33,11 @@ public class InsertListBuilder extends AbstractMethodBuilder{
 	}
 
 	@Override
-	String buildSQL(EntityMapper entityMapper, boolean selective) {
+	String buildSQL(EntityMetadata entityMapper, boolean selective) {
 
 		// 从表注解里获取表名等信息
-		TableMapper table = entityMapper.getTableMapper();
-		Set<ColumnMapper> columns = entityMapper.getColumnsMapper();
+		TableMetadata table = entityMapper.getTable();
+		Set<ColumnMetadata> columns = entityMapper.getColumns();
 
 		StringBuilder fieldBuilder = new StringBuilder("(");
 		StringBuilder prppertyBuilder = new StringBuilder("(");
@@ -45,7 +45,7 @@ public class InsertListBuilder extends AbstractMethodBuilder{
 			fieldBuilder.append(entityMapper.getIdColumn().getColumn()).append(",");
 			prppertyBuilder.append("#{item.").append(entityMapper.getIdColumn().getProperty()).append("},");
 		}
-		for (ColumnMapper column : columns) {
+		for (ColumnMetadata column : columns) {
 			if (column.isId() || !column.isInsertable()) {
 				continue;
 			}

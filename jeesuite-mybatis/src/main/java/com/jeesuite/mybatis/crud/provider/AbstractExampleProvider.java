@@ -6,7 +6,7 @@ package com.jeesuite.mybatis.crud.provider;
 import java.util.Date;
 
 import com.jeesuite.common.util.DateUtils;
-import com.jeesuite.mybatis.crud.helper.ColumnMapper;
+import com.jeesuite.mybatis.metadata.ColumnMetadata;
 
 /**
  * 
@@ -23,7 +23,7 @@ public abstract class AbstractExampleProvider {
 	 * @param whereBuilder
 	 * @param column
 	 */
-	protected void appendWhere(StringBuilder whereBuilder, ColumnMapper column) {
+	protected void appendWhere(StringBuilder whereBuilder, ColumnMetadata column) {
 		if(whereBuilder.length() > 0)whereBuilder.append(" AND ");
 		whereBuilder.append(column.getColumn()).append("=");
 		whereBuilder.append("#{").append(column.getProperty()).append("}");
@@ -34,7 +34,7 @@ public abstract class AbstractExampleProvider {
 	 * @param column
 	 * @param value
 	 */
-	protected void appendWhere(StringBuilder whereBuilder, ColumnMapper column, Object value) {
+	protected void appendWhere(StringBuilder whereBuilder, ColumnMetadata column, Object value) {
 		if(whereBuilder.length() > 0)whereBuilder.append(" AND ");
 		whereBuilder.append(column.getColumn()).append("=");
 		if(column.getJavaType() == String.class){
@@ -49,13 +49,13 @@ public abstract class AbstractExampleProvider {
 	}
 	
 	
-	protected void appendUpdateSet(StringBuilder setBuilder, ColumnMapper column) {
+	protected void appendUpdateSet(StringBuilder setBuilder, ColumnMetadata column) {
 		if(setBuilder.length() > 0)setBuilder.append(",");
 		setBuilder.append(column.getColumn()).append("=");
 		setBuilder.append("#{").append(column.getProperty()).append("}");
 	}
 	
-	protected void appendUpdateSet(StringBuilder setBuilder, ColumnMapper column, Object value) {
+	protected void appendUpdateSet(StringBuilder setBuilder, ColumnMetadata column, Object value) {
 		if(setBuilder.length() > 0)setBuilder.append(",");
 		setBuilder.append(column.getColumn()).append("=");
 		if(column.getJavaType() == String.class){

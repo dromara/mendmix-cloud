@@ -36,8 +36,8 @@ import com.jeesuite.mybatis.crud.CrudMethods;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.kit.CacheKeyUtils;
 import com.jeesuite.mybatis.kit.MybatisSqlRewriteUtils.SqlMetadata;
-import com.jeesuite.mybatis.parser.EntityInfo;
-import com.jeesuite.mybatis.parser.EntityInfo.MapperMethod;
+import com.jeesuite.mybatis.metadata.MapperMetadata;
+import com.jeesuite.mybatis.metadata.MapperMetadata.MapperMethod;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
@@ -121,25 +121,25 @@ public class CacheHandler implements InterceptorHandler {
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
 		
-		this.dataSourceGroupName = context.getGroupName();
+		dataSourceGroupName = context.getGroupName();
 		
 		defaultCacheExpire = Long.parseLong(MybatisConfigs.getProperty(context.getGroupName(), MybatisConfigs.CACHE_EXPIRE_SECONDS, "0"));
 		logger.info("nullValueCache:{},defaultCacheExpireSeconds:{}",nullValueCache,defaultCacheExpire);
 
-		List<EntityInfo> entityInfos = MybatisMapperParser.getEntityInfos(context.getGroupName());
+		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		
 		Class<BaseEntity> baseEntityClass = BaseEntity.class;
 		QueryCacheMethodMetadata methodCache = null;
-		for (EntityInfo ei : entityInfos) {
-			if(ei.getMapperClass().isAnnotationPresent(CacheIgnore.class))continue;
-			if(!baseEntityClass.isAssignableFrom(ei.getEntityClass())){
-				logger.warn("[{}] not extends from [{}],ignore register auto cache!!!!",ei.getEntityClass().getName(),baseEntityClass.getName());
+		for (MapperMetadata mm : mappers) {
+			if(mm.getMapperClass().isAnnotationPresent(CacheIgnore.class))continue;
+			if(!baseEntityClass.isAssignableFrom(mm.getEntityClass())){
+				logger.warn("[{}] not extends from [{}],ignore register auto cache!!!!",mm.getEntityClass().getName(),baseEntityClass.getName());
 				continue;
 			}
-			Class<?> mapperClass = ei.getMapperClass();
+			Class<?> mapperClass = mm.getMapperClass();
 			
 			//按主键查询方法定义
-			QueryCacheMethodMetadata queryByPKMethod = generateQueryByPKMethod(mapperClass, ei.getEntityClass());
+			QueryCacheMethodMetadata queryByPKMethod = generateQueryByPKMethod(mapperClass, mm.getEntityClass());
 			if(queryByPKMethod == null)continue;
 			Map<String, QueryCacheMethodMetadata> tmpMap = new HashMap<>();
 			//主键查询方法
@@ -147,22 +147,22 @@ public class CacheHandler implements InterceptorHandler {
 			
 			String keyPatternForPK = queryByPKMethod.keyPattern;
 			//接口定义的自动缓存方法
-			for (MapperMethod method : ei.getMapperMethods().values()) {
+			for (MapperMethod method : mm.getMapperMethods().values()) {
 				if(method.getMethod().isAnnotationPresent(Cache.class)){
 					if(tmpMap.containsKey(method.getFullName()))continue;
-					methodCache = generateQueryMethodCacheByMethod(ei, method);
+					methodCache = generateQueryMethodCacheByMethod(mm, method);
 					tmpMap.put(method.getFullName(), methodCache);
 					logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",methodCache.methodName,methodCache.keyPattern);
 				}
 			}
 			//缓存需要自动缓存的mapper
-			cacheEnableMappers.add(ei.getMapperClass().getName());
+			cacheEnableMappers.add(mm.getMapperClass().getName());
 			logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",queryByPKMethod.methodName,queryByPKMethod.keyPattern);
 			
 			queryCacheMethods.put(mapperClass.getName(), tmpMap);
 			
 			//更新缓存方法
-			generateUpdateByPkCacheMethod(mapperClass, ei.getEntityClass(), keyPatternForPK);
+			generateUpdateByPkCacheMethod(mapperClass, mm.getEntityClass(), keyPatternForPK);
 		}
 		//
 		logger.info(">>>customUpdateCacheMapppings:{}",customUpdateCacheMapppings);
@@ -427,7 +427,7 @@ public class CacheHandler implements InterceptorHandler {
 	 * @param removePkCache  是否同时删除按主键的缓存
 	 */
 	private void removeCacheByGroup(String msId, String mapperClassName) {
-		EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperClassName);
+		MapperMetadata entityInfo = MybatisMapperParser.getMapperMetadata(mapperClassName);
 		if(entityInfo == null)return;
 		final String groupName = entityInfo.getEntityClass().getSimpleName();
 		
@@ -586,13 +586,13 @@ public class CacheHandler implements InterceptorHandler {
 	 * @param method
 	 * @return
 	 */
-	private QueryCacheMethodMetadata generateQueryMethodCacheByMethod(EntityInfo entityInfo,MapperMethod mapperMethod){
+	private QueryCacheMethodMetadata generateQueryMethodCacheByMethod(MapperMetadata mapperMeta,MapperMethod mapperMethod){
 
 		Method method = mapperMethod.getMethod();
 		Cache cacheAnnotation = method.getAnnotation(Cache.class);
 		String[] evictOnMethods = cacheAnnotation.evictOnMethods();
-		Class<?> mapperClass = entityInfo.getMapperClass();
-		Class<?> entityClass = entityInfo.getEntityClass();
+		Class<?> mapperClass = mapperMeta.getMapperClass();
+		Class<?> entityClass = mapperMeta.getEntityClass();
 		QueryCacheMethodMetadata methodCache = new QueryCacheMethodMetadata();
 		methodCache.methodName = mapperClass.getName() + InvocationVals.DOT + method.getName();
 		methodCache.concurrency = cacheAnnotation.concurrency();
@@ -643,7 +643,7 @@ public class CacheHandler implements InterceptorHandler {
 						break inner;
 					}
 				}
-				if(uniqueQuery && MybatisMapperParser.entityHasProperty(entityClass, fieldName)){					
+				if(uniqueQuery && mapperMeta.getEntityMetadata().getProp2ColumnMappings().containsKey(fieldName)){					
 					methodCache.fieldNames[i] = fieldName;
 				}
 			}
@@ -691,7 +691,7 @@ public class CacheHandler implements InterceptorHandler {
 			if(!methodName.endsWith("*")){
 				addCacheCheckRelations(methodName, method.getFullName());
 			}else{
-				EntityInfo methodEntityInfo = MybatisMapperParser.getEntityInfoByMapper(targetMapperClassName);
+				MapperMetadata methodEntityInfo = MybatisMapperParser.getMapperMetadata(targetMapperClassName);
 				if(methodEntityInfo == null){
 					continue;
 				}

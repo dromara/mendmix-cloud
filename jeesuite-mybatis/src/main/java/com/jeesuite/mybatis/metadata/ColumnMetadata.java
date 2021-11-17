@@ -1,9 +1,9 @@
-package com.jeesuite.mybatis.crud.helper;
+package com.jeesuite.mybatis.metadata;
 
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
-public class ColumnMapper {
+public class ColumnMetadata {
 
 	private String property;
 	private String column;
@@ -142,7 +142,7 @@ public class ColumnMapper {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ColumnMapper other = (ColumnMapper) obj;
+		ColumnMetadata other = (ColumnMetadata) obj;
 		if (column == null) {
 			if (other.column != null)
 				return false;

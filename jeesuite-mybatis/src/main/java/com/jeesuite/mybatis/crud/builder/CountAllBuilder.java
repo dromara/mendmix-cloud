@@ -16,8 +16,8 @@ import org.apache.ibatis.reflection.SystemMetaObject;
 import org.apache.ibatis.session.Configuration;
 
 import com.jeesuite.mybatis.crud.CrudMethods;
-import com.jeesuite.mybatis.crud.helper.EntityMapper;
-import com.jeesuite.mybatis.crud.helper.TableMapper;
+import com.jeesuite.mybatis.metadata.EntityMetadata;
+import com.jeesuite.mybatis.metadata.TableMetadata;
 
 /**
  * @description <br>
@@ -38,8 +38,8 @@ public class CountAllBuilder  extends AbstractMethodBuilder{
 	}
 
 	@Override
-	String buildSQL(EntityMapper entityMapper, boolean selective) {
-		TableMapper tableMapper = entityMapper.getTableMapper();
+	String buildSQL(EntityMetadata entityMapper, boolean selective) {
+		TableMetadata tableMapper = entityMapper.getTable();
 		return new SQL().SELECT("COUNT(1)").FROM(tableMapper.getName()).toString();
 	}
 

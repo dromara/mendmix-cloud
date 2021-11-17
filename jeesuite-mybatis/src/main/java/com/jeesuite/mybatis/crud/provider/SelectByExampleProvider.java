@@ -4,9 +4,9 @@ import java.util.Set;
 
 import org.apache.ibatis.jdbc.SQL;
 
-import com.jeesuite.mybatis.crud.helper.ColumnMapper;
-import com.jeesuite.mybatis.crud.helper.EntityHelper;
-import com.jeesuite.mybatis.crud.helper.EntityMapper;
+import com.jeesuite.mybatis.metadata.ColumnMetadata;
+import com.jeesuite.mybatis.metadata.MetadataHelper;
+import com.jeesuite.mybatis.metadata.EntityMetadata;
 
 /**
  * 
@@ -20,13 +20,13 @@ import com.jeesuite.mybatis.crud.helper.EntityMapper;
 public class SelectByExampleProvider extends AbstractExampleProvider{
 
 	public String selectByExample(Object example) throws Exception {
-		EntityMapper entityMapper = EntityHelper.getEntityMapper(example.getClass());
-		Set<ColumnMapper> columns = entityMapper.getColumnsMapper();
-		SQL sql = new SQL().SELECT("*").FROM(entityMapper.getTableMapper().getName());
+		EntityMetadata entityMapper = MetadataHelper.getEntityMapper(example.getClass());
+		Set<ColumnMetadata> columns = entityMapper.getColumns();
+		SQL sql = new SQL().SELECT("*").FROM(entityMapper.getTable().getName());
 		Object value;
 		StringBuilder whereBuilder = new StringBuilder();
-		for (ColumnMapper column : columns) {
-			value = EntityHelper.getEntityField(entityMapper.getTableMapper().getName(),column.getProperty()).get(example);
+		for (ColumnMetadata column : columns) {
+			value = MetadataHelper.getEntityField(entityMapper.getTable().getName(),column.getProperty()).get(example);
 			if(value == null)continue;
 			appendWhere(whereBuilder,column);
 		}

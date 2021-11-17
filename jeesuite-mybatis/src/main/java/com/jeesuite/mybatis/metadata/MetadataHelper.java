@@ -1,4 +1,4 @@
-package com.jeesuite.mybatis.crud.helper;
+package com.jeesuite.mybatis.metadata;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -26,38 +26,38 @@ import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedBy;
 import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedAt;
 import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedBy;
 
-public class EntityHelper {
+public class MetadataHelper {
 
     /**
      * 缓存TableMapper
      */
-    private final static Map<Class<?>, EntityMapper> tableMapperCache = new HashMap<Class<?>, EntityMapper>();
+    private final static Map<Class<?>, EntityMetadata> tableMapperCache = new HashMap<Class<?>, EntityMetadata>();
     private final static Map<String, Map<String, Field>> entityFieldMappings = new HashMap<>();
-    private final static Map<String, List<ColumnMapper>> tableColumnMappings = new HashMap<>();
+    private final static Map<String, List<ColumnMetadata>> tableColumnMappings = new HashMap<>();
 
     /**
      * 由传入的实体的class构建TableMapper对象，构建好的对象存入缓存中，以后使用时直接从缓存中获取
      * 
      * @param entityClass
-     * @return TableMapper
+     * @return EntityMetadata
      */
-    public static EntityMapper getEntityMapper(Class<?> entityClass) {
+    public static EntityMetadata getEntityMapper(Class<?> entityClass) {
 
-    	EntityMapper entityMapper = tableMapperCache.get(entityClass);
+    	EntityMetadata entityMeta = tableMapperCache.get(entityClass);
         // 如果存在直接返回
-        if (entityMapper != null) {
-            return entityMapper;
+        if (entityMeta != null) {
+            return entityMeta;
         }
         synchronized (entityClass) {
-            TableMapper tableMapper = getTableMapper(entityClass);
+            TableMetadata tableMeta = getTableMapper(entityClass);
             //获取实体ID泛型
             Class<?> idClass = getIdClass(entityClass);
             // 获取实体字段列表
             List<Field> fields = getAllField(entityClass);
             // 全部列
-            Set<ColumnMapper> columnMapperSet = new HashSet<ColumnMapper>();
+            Set<ColumnMetadata> columnMetas = new HashSet<ColumnMetadata>();
             // 主键
-            ColumnMapper idColumn = null;
+            ColumnMetadata idColumn = null;
             GenerationType idStrategy = null;
 
             Map<String, Field> map = new HashMap<>();
@@ -67,54 +67,54 @@ public class EntityHelper {
                 if (field.isAnnotationPresent(Transient.class)) {
                     continue;
                 }
-                ColumnMapper columnMapper = new ColumnMapper();
+                ColumnMetadata columnMeta = new ColumnMetadata();
 
                 // 数据库字段名
                 String columnName = null;
                 if (field.isAnnotationPresent(Column.class)) {
                     Column column = field.getAnnotation(Column.class);
                     columnName = column.name();
-                    columnMapper.setInsertable(column.insertable());
-                    columnMapper.setUpdatable(column.updatable());
+                    columnMeta.setInsertable(column.insertable());
+                    columnMeta.setUpdatable(column.updatable());
                 }
                //乐观锁
-                columnMapper.setVersionField(field.isAnnotationPresent(Version.class));
+                columnMeta.setVersionField(field.isAnnotationPresent(Version.class));
                 //审计字段
-                columnMapper.setCreatedByField(field.isAnnotationPresent(CreatedBy.class));
-                columnMapper.setCreatedAtField(field.isAnnotationPresent(CreatedAt.class));
-                columnMapper.setUpdatedAtField(field.isAnnotationPresent(UpdatedAt.class));
-                columnMapper.setUpdatedByField(field.isAnnotationPresent(UpdatedBy.class));
+                columnMeta.setCreatedByField(field.isAnnotationPresent(CreatedBy.class));
+                columnMeta.setCreatedAtField(field.isAnnotationPresent(CreatedAt.class));
+                columnMeta.setUpdatedAtField(field.isAnnotationPresent(UpdatedAt.class));
+                columnMeta.setUpdatedByField(field.isAnnotationPresent(UpdatedBy.class));
                 //创建字段不能修改
-                if(columnMapper.isUpdatable() && (columnMapper.isCreatedAtField() || columnMapper.isCreatedByField())) {
-                	columnMapper.setUpdatable(false);
+                if(columnMeta.isUpdatable() && (columnMeta.isCreatedAtField() || columnMeta.isCreatedByField())) {
+                	columnMeta.setUpdatable(false);
                 }
                 // 如果为空，使用属性名并替换为下划线风格
                 if (columnName == null || columnName.equals("")) {
                     columnName = camelhumpToUnderline(field.getName());
                 }
 
-                columnMapper.setProperty(field.getName());
-                columnMapper.setColumn(columnName);
-                columnMapper.setJavaType(field.getType());
+                columnMeta.setProperty(field.getName());
+                columnMeta.setColumn(columnName);
+                columnMeta.setJavaType(field.getType());
 
                 // 是否主键
                 if(field.isAnnotationPresent(Id.class)){                	
-                	columnMapper.setId(true);
+                	columnMeta.setId(true);
                 	if(field.isAnnotationPresent(GeneratedValue.class)){ 
                 		idStrategy = field.getAnnotation(GeneratedValue.class).strategy();
                 	}
-                	idColumn = columnMapper;
+                	idColumn = columnMeta;
                 }
                 // 添加到所有字段映射信息
-                columnMapperSet.add(columnMapper);
+                columnMetas.add(columnMeta);
                 //
                 field.setAccessible(true);
                 map.put(field.getName(), field);
             }
             
-            entityFieldMappings.put(tableMapper.getName(), map);
+            entityFieldMappings.put(tableMeta.getName(), map);
             
-            if (columnMapperSet.size() <= 0) {
+            if (columnMetas.size() <= 0) {
                 throw new RuntimeException("实体" + entityClass.getName() + "不存在映射字段");
             }
             if (idColumn == null) {
@@ -122,21 +122,21 @@ public class EntityHelper {
             }
 
             // 解析实体映射信息
-            entityMapper = new EntityMapper();
-            entityMapper.setTableMapper(tableMapper);
-            entityMapper.setColumnsMapper(columnMapperSet);
-            entityMapper.setIdClass(idClass);
-            entityMapper.setIdColumn(idColumn);
-            entityMapper.setIdStrategy(idStrategy);
+            entityMeta = new EntityMetadata();
+            entityMeta.setTable(tableMeta);
+            entityMeta.setColumns(columnMetas);
+            entityMeta.setIdClass(idClass);
+            entityMeta.setIdColumn(idColumn);
+            entityMeta.setIdStrategy(idStrategy);
 
-            tableMapperCache.put(entityClass, entityMapper);
+            tableMapperCache.put(entityClass, entityMeta);
             //
-            tableColumnMappings.put(tableMapper.getName().toLowerCase(), new ArrayList<>(columnMapperSet));
-            return entityMapper;
+            tableColumnMappings.put(tableMeta.getName().toLowerCase(), new ArrayList<>(columnMetas));
+            return entityMeta;
         }
     }
     
-    public static List<ColumnMapper> getTableColumnMappers(String tableName){
+    public static List<ColumnMetadata> getTableColumnMappers(String tableName){
     	return tableColumnMappings.get(tableName.toLowerCase());
     }
 
@@ -164,9 +164,9 @@ public class EntityHelper {
     }
 
     // 获取实体Table映射信息
-    private static TableMapper getTableMapper(Class<?> entityClass) {
+    private static TableMetadata getTableMapper(Class<?> entityClass) {
         // 表名
-        TableMapper tableMapper = new TableMapper();
+        TableMetadata tableMapper = new TableMetadata();
         String tableName = null;
         if (entityClass.isAnnotationPresent(Table.class)) {
             Table table = entityClass.getAnnotation(Table.class);
