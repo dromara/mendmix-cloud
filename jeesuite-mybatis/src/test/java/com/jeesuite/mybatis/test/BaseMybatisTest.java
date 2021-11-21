@@ -160,6 +160,21 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		userMapper.findMobileByIds(Arrays.asList(4,5,6));
 		userMapper.findByType((short)1);
 	}
+	
+	@Test
+	public void testUpdate() throws InterruptedException{
+		UserEntity example = new UserEntity();
+		example.setStatus((short)1);
+		example.setType((short)1);
+		example.setName("嘎子");
+		example.setMobile("13800373090");
+		userMapper.updateByExample(example);
+		//
+		userMapper.updateType(1, new int[] {1,2,3});
+		//
+		userMapper.updateByName("嘎子");
+		Thread.sleep(60000);
+	}
 
 	private UserEntity buildUserEntity() {
 		String mobile = "13800"+RandomStringUtils.random(6, false, true);

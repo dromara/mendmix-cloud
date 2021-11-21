@@ -57,6 +57,8 @@ public class MapperMetadata {
 			mapperClass = Class.forName(mapperClassName);
 			
 			parseEntityInfo();
+			
+			if(entityClass == null)return;
 
 			if(entityClass.isAnnotationPresent(Table.class)){
 				this.tableName = entityClass.getAnnotation(Table.class).name();

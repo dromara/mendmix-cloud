@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,19 +14,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.ParameterMapping;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jeesuite.common.async.RetryAsyncTaskExecutor;
-import com.jeesuite.common.async.RetryTask;
+import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.ReflectUtils;
@@ -35,7 +44,9 @@ import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.crud.CrudMethods;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.kit.CacheKeyUtils;
+import com.jeesuite.mybatis.kit.MybatisSqlRewriteUtils;
 import com.jeesuite.mybatis.kit.MybatisSqlRewriteUtils.SqlMetadata;
+import com.jeesuite.mybatis.metadata.ColumnMetadata;
 import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.metadata.MapperMetadata.MapperMethod;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
@@ -46,6 +57,7 @@ import com.jeesuite.mybatis.plugin.cache.annotation.CacheIgnore;
 import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
 import com.jeesuite.mybatis.plugin.cache.provider.NullCacheProvider;
 import com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider;
+import com.jeesuite.mybatis.plugin.rewrite.SqlRewriteHandler;
 import com.jeesuite.spring.InstanceFactory;
 
 
@@ -73,6 +85,7 @@ public class CacheHandler implements InterceptorHandler {
 	private static final String STR_PARAM = "param";
 	
 	public static final String GROUPKEY_SUFFIX = "~keys";
+	private static final String ID_CACHEKEY_JOIN = ".id:";
 	private boolean nullValueCache = true;
 	//null缓存占位符（避免频繁查询不存在对象造成缓存穿透导致频繁查询db）
 	public static final String NULL_PLACEHOLDER = "~null";
@@ -90,6 +103,10 @@ public class CacheHandler implements InterceptorHandler {
 	private static Map<String, List<String>> customUpdateCacheMapppings = new HashMap<>();
 	
 	protected static CacheProvider cacheProvider;
+	
+	private DataSource dataSource;
+	
+	private ExecutorService cleanCacheExecutor = Executors.newFixedThreadPool(1, new StandardThreadFactory("cleanCacheExecutor"));
 	
 	public void setCacheProvider(CacheProvider cacheProvider) {
 		CacheHandler.cacheProvider = cacheProvider;
@@ -122,6 +139,18 @@ public class CacheHandler implements InterceptorHandler {
 	public void start(JeesuiteMybatisInterceptor context) {
 		
 		dataSourceGroupName = context.getGroupName();
+		
+		Map<String, DataSource> dataSources = InstanceFactory.getInstanceProvider().getInterfaces(DataSource.class);
+		if(dataSources.size() == 1) {
+			dataSource = new ArrayList<>(dataSources.values()).get(0);
+		}else {
+			for (String beanName : dataSources.keySet()) {
+				if(beanName.startsWith(dataSourceGroupName)) {
+					dataSource = dataSources.get(beanName);
+					break;
+				}
+			}
+		}
 		
 		defaultCacheExpire = Long.parseLong(MybatisConfigs.getProperty(context.getGroupName(), MybatisConfigs.CACHE_EXPIRE_SECONDS, "0"));
 		logger.info("nullValueCache:{},defaultCacheExpireSeconds:{}",nullValueCache,defaultCacheExpire);
@@ -299,21 +328,29 @@ public class CacheHandler implements InterceptorHandler {
 				//返回0，未更新成功
 				if(result != null && ((int)result) == 0)return;
 				//更新方法移除缓存，避免事务回滚导致缓存不一致，所以更新方法直接移除缓存
-				if(updatePkCacheMethods.containsKey(mt.getId()) && !mt.getSqlCommandType().equals(SqlCommandType.INSERT)){
-					UpdateByPkCacheMethodMetadata updateMethodCache = updatePkCacheMethods.get(mt.getId());
-					String idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,invocationVal.getParameter());
-					getCacheProvider().remove(idCacheKey);
-					
-					//针对按条件更新或者删除的方法，按查询条件查询相关内容，然后清理对应主键缓存内容
-//					EntityInfo entityInfo = MybatisMapperParser.getEntityInfoByMapper(mapperClassName);
-//					final Object parameter = args[1];
-//					BoundSql boundSql = mt.getBoundSql(parameter);
-//					String orignSql = StringUtils.replace(boundSql.getSql(), ";$", StringUtils.EMPTY);
-//					SqlMetadata sqlMetadata = MybatisSqlRewriteUtils.rewriteAsSelectPkField(orignSql, entityInfo.getIdColumn());
-//		
-//					if(entityInfo.getTableName().equalsIgnoreCase(sqlMetadata.getTableName())) {						
-//						removeCacheByDyncQuery(sqlMetadata,parameter);
-//					}	
+				if(mt.getSqlCommandType().equals(SqlCommandType.INSERT)) {
+					//TODO 写入缓存 ，考虑回滚
+				}else {
+					if(updatePkCacheMethods.containsKey(mt.getId())){
+						UpdateByPkCacheMethodMetadata updateMethodCache = updatePkCacheMethods.get(mt.getId());
+						String idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,invocationVal.getParameter());
+						getCacheProvider().remove(idCacheKey);
+					}else {
+						//针对按条件更新或者删除的方法，按查询条件查询相关内容，然后清理对应主键缓存内容
+						MapperMetadata mapperMeta = MybatisMapperParser.getMapperMetadata(mapperClassName);
+						final Object parameter = invocationVal.getArgs()[1];
+						BoundSql boundSql = mt.getBoundSql(parameter);
+						String orignSql = boundSql.getSql();
+						ColumnMetadata idColumn = mapperMeta.getEntityMetadata().getIdColumn();
+						SqlMetadata sqlMetadata = MybatisSqlRewriteUtils.rewriteAsSelectPkField(orignSql, idColumn.getColumn());
+						//
+						cleanCacheExecutor.execute(new Runnable() {
+							@Override
+							public void run() {
+								removeCacheByDyncQuery(mapperMeta,boundSql, sqlMetadata);
+							}
+						});
+					}
 				}
 				//删除同一cachegroup关联缓存
 				removeCacheByGroup(mt.getId(), mapperClassName);
@@ -371,54 +408,77 @@ public class CacheHandler implements InterceptorHandler {
 		}
 	}
 	
+	
 	/**
 	 * 根据动态查询内容清理缓存
 	 * @param sqlMetadata 查询主键列表SQL语句信息
 	 * @param parameter 参数
+	 * @throws Exception 
 	 */
-	@SuppressWarnings({ "unchecked" })
-	private void removeCacheByDyncQuery(SqlMetadata sqlMetadata, Object parameter) {
-		if(parameter instanceof BaseEntity) {
-			//TODO 
-			//sqlSessionFactory.openSession().selectList("findByExample")
-		}
-		List<Object> parameterList = new ArrayList<>(sqlMetadata.getParameterNums());
-		if(parameter instanceof Map){
-			Map<String, Object> map = (Map<String, Object>) parameter;
-			Object value;
-			for (int i = sqlMetadata.getWhereParameterIndex(); i < 100; i++) {
-				value = map.get(STR_PARAM + i);
-				if(value == null){
-					break;
-				}
-				valueToParamList(parameterList, value);
+	private void removeCacheByDyncQuery(MapperMetadata mapperMeta,BoundSql boundSql,SqlMetadata sqlMetadata) {
+		Connection connection = null;
+		PreparedStatement statement = null;
+		ResultSet rs = null;
+		try {
+			parseDyncQueryParameters(boundSql, sqlMetadata);
+			connection = dataSource.getConnection();
+			statement = connection.prepareStatement(sqlMetadata.getSql());
+			
+			List<Object> parameters = sqlMetadata.getParameters();
+			for (int i = 0; i < parameters.size(); i++) {
+				statement.setObject(i+1, parameters.get(i));
 			}
-		}else {
-			valueToParamList(parameterList, parameter);
+			
+			rs = statement.executeQuery();
+			List<String> ids = new ArrayList<>();
+			while (rs.next()) {
+				ids.add(rs.getString(1));
+			}
+			if(ids != null && !ids.isEmpty()){
+				List<String> idCacheKeys = ids.stream().map(id -> {
+					return mapperMeta.getEntityClass().getSimpleName() + ID_CACHEKEY_JOIN + id.toString();
+				}).collect(Collectors.toList());
+				getCacheProvider().remove(idCacheKeys.toArray(new String[0]));
+				if(logger.isDebugEnabled()) {
+					logger.debug("remove cacheKeys:{}",idCacheKeys);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			final String groupName = mapperMeta.getEntityClass().getSimpleName();
+			getCacheProvider().clearGroup(groupName);
+		}finally {
+			try {rs.close();} catch (Exception e2) {}
+			try {statement.close();} catch (Exception e2) {}
+			try {connection.close();} catch (Exception e2) {}
 		}
-		
-		if(parameterList.size() != sqlMetadata.getParameterNums()) {
-			logger.warn(">>parameterNotMatch  -> sql:{},parameterList:{}",sqlMetadata.getSql());
-			return;
-		}
-		
-		
-		
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void valueToParamList(List<Object> result,Object value) {
-		if(value instanceof Map) {
-			Collection values = ((Map)value).values();
-			for (Object obj : values) {
-				valueToParamList(result, obj);
-			}
-		}else if(value instanceof Collection) {
-			result.addAll((Collection) value);
-		}else {
-			result.add(value);
-		}
+	private void parseDyncQueryParameters(BoundSql boundSql,SqlMetadata sqlMetadata) throws Exception {
+		List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
+		Object parameterObject = boundSql.getParameterObject();
+		ParameterMapping parameterMapping;
+		
+        if(parameterMappings.size() == 1) {
+        	sqlMetadata.getParameters().add(parameterObject);
+        }else {
+        	Object indexValue = null;
+        	for (int i = sqlMetadata.getWhereParameterStartIndex(); i <= sqlMetadata.getWhereParameterEndIndex(); i++) {
+    			parameterMapping = parameterMappings.get(i);
+    			if(parameterMapping.getProperty().startsWith(SqlRewriteHandler.FRCH_PREFIX)) {
+    				indexValue = boundSql.getAdditionalParameter(parameterMapping.getProperty());
+    			}else {
+    				if(parameterObject instanceof Map) {
+    					indexValue = ((Map)parameterObject).get(parameterMapping.getProperty());
+    				}else {
+    					indexValue = FieldUtils.readDeclaredField(parameterObject, parameterMapping.getProperty(),true);
+    				}
+    			}
+    			sqlMetadata.getParameters().add(indexValue);
+    		}
+        }
 	}
+
 	
 	/**
 	 * 删除缓存组
@@ -430,18 +490,11 @@ public class CacheHandler implements InterceptorHandler {
 		MapperMetadata entityInfo = MybatisMapperParser.getMapperMetadata(mapperClassName);
 		if(entityInfo == null)return;
 		final String groupName = entityInfo.getEntityClass().getSimpleName();
-		
-		RetryAsyncTaskExecutor.execute(new RetryTask() {
+		cleanCacheExecutor.execute(new Runnable() {
 			@Override
-			public String traceId() {
-				return msId;
-			}
-			
-			@Override
-			public boolean process() throws Exception {
+			public void run() {
 				getCacheProvider().clearGroup(groupName);
 				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process removeGroupCache -> mapperId:{},groupName:{}",msId,groupName);
-				return true;
 			}
 		});
 	}
@@ -452,20 +505,15 @@ public class CacheHandler implements InterceptorHandler {
 	 */
 	private void removeCustomRelateCache(String updateId) {
 		final List<String> queryMethods = customUpdateCacheMapppings.get(updateId);
-		RetryAsyncTaskExecutor.execute(new RetryTask() {
+		cleanCacheExecutor.execute(new Runnable() {
 			@Override
-			public String traceId() {
-				return updateId;
-			}
-			@Override
-			public boolean process() throws Exception {
+			public void run() {
 				QueryCacheMethodMetadata metadata;
 				for (String method : queryMethods) {
 					metadata = getQueryMethodCache(method);
 					String prefix = StringUtils.splitByWholeSeparator(metadata.keyPattern, "%s")[0];
 					cacheProvider.clearGroup(metadata.cacheGroupKey,prefix);
 				}
-				return true;
 			}
 		});
 	}

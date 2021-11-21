@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.model.PageParams;
@@ -37,9 +38,12 @@ public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 
 	int updateType(@Param("type") int type,@Param("ids") int[] ids);
 
-	void updateType2(UserEntity user);
+	void updateByExample(UserEntity user);
 	
-	int updateByIds(List<Integer> ids);
+	int batchDisabled(List<Integer> ids);
+	
+	@Update("update users set status = 1,updated_at = now() where name = #{name}")
+	int updateByName(String name);
 
 	@Cache(expire = 300)
 	public List<String> findMobileByIds(List<Integer> ids);

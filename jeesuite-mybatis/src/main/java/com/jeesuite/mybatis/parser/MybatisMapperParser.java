@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.builder.xml.XMLMapperEntityResolver;
@@ -89,7 +90,9 @@ public class MybatisMapperParser {
 			log.error("解析mapper文件异常", e);
 			throw new RuntimeException("解析mapper文件异常");
 		}
-		entitiesGroupMap.put(group, new ArrayList<>(entityInfos.values()));
+		
+		List<MapperMetadata> list = entityInfos.values().stream().filter(e -> e.getEntityClass() != null).collect(Collectors.toList());
+		entitiesGroupMap.put(group, list);
 		log.info(">parse group[{}] finish,size:{}", group, entityInfos.size());
 
 	}

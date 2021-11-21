@@ -75,27 +75,29 @@
   </select>
   
   <update id="updateType" parameterType="map">
-     update users set type = #{type} where id in
+     update users set type = #{type},updated_at = now() where id in
      <foreach item="id" index="index" collection="ids" open="(" separator="," close=")">
 			#{id}
 	 </foreach>
   </update>
   
-  <update id="updateByIds" parameterType="list">
-     update users set status = 0 where id in
+  <update id="batchDisabled" parameterType="list">
+     update users set status = 0,updated_at = now() where id in
      <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
 			#{id}
 	 </foreach>
   </update>
   
-  <update id="updateType2" parameterType="com.jeesuite.mybatis.test.entity.UserEntity">
-     update users set type = #{type} where 1=1
+  <update id="updateByExample" parameterType="com.jeesuite.mybatis.test.entity.UserEntity">
+     update users set type = #{type},updated_at = now(),status = #{status}
+     <where>
      <if test="name != null">  
         AND name = #{name}  
     </if> 
     <if test="mobile != null">  
         AND mobile = #{mobile}  
     </if> 
+     </where>
   </update>
   
    <select id="findByLoginName" resultMap="BaseResultMap">

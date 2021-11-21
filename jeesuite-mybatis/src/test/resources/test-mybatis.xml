@@ -30,7 +30,7 @@
 		<property name="dataSource" ref="routeDataSource" />
 	</bean>
 
-	<bean id="routeSqlSessionFactory" class="com.jeesuite.mybatis.spring.SqlSessionFactoryBean">
+	<bean id="aarouteSqlSessionFactory" class="com.jeesuite.mybatis.spring.SqlSessionFactoryBean">
 	    <!-- 如果包含多个数据源则需要指定groupName，默认为：default -->
 	    <property name="groupName" value="default" />
 		<property name="configLocation" value="classpath:mybatis-configuration.xml" />
@@ -40,7 +40,7 @@
 	</bean>
 	
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-		<property name="sqlSessionFactoryBeanName" value="routeSqlSessionFactory" />
+		<property name="sqlSessionFactoryBeanName" value="aarouteSqlSessionFactory" />
 		<property name="basePackage" value="com.jeesuite.mybatis.test.mapper" />
 	</bean>
 	
