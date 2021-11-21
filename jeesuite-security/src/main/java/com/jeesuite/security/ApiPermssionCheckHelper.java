@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.constants.PermissionLevel;
 
 /**
@@ -91,6 +91,6 @@ public class ApiPermssionCheckHelper {
 	}
 	
 	public static String buildPermissionKey(String method, String uri) {
-		return new StringBuilder(method.toUpperCase()).append(WebConstants.UNDER_LINE).append(uri).toString();
+		return new StringBuilder(method.toUpperCase()).append(GlobalConstants.UNDER_LINE).append(uri).toString();
 	}
 }

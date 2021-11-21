@@ -17,7 +17,7 @@ import org.springframework.http.MediaType;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.io.CharStreams;
-import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.zuul.filter.FilterHandler;
 import com.jeesuite.zuul.model.BizSystemModule;
 import com.netflix.util.Pair;
@@ -44,7 +44,7 @@ public class ResponseRewriteHandler implements FilterHandler {
 		
 		List<Pair<String, String>> headers = ctx.getOriginResponseHeaders();
 		for (Pair<String, String> pair : headers) {
-			if (WebConstants.HEADER_RESP_KEEP.equals(pair.first())) {
+			if (CustomRequestHeaders.HEADER_RESP_KEEP.equals(pair.first())) {
 				if (Boolean.parseBoolean(pair.second())) {
 					return null;
 				}

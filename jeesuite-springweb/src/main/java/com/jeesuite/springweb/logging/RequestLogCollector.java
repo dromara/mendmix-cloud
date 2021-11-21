@@ -11,9 +11,9 @@ import org.apache.logging.log4j.ThreadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.async.StandardThreadExecutor;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.http.HttpUtils;
@@ -66,8 +66,8 @@ public class RequestLogCollector {
 		actionLog.setRequestAt(new Date());
 		actionLog.setRequestIp(IpUtils.getIpAddr(request));
 		actionLog.setActionUri(request.getRequestURI());
-		actionLog.setOriginAppId(request.getHeader(WebConstants.HEADER_INVOKER_APP_ID));
-		String requestId = request.getHeader(WebConstants.HEADER_REQUEST_ID);
+		actionLog.setOriginAppId(request.getHeader(CustomRequestHeaders.HEADER_INVOKER_APP_ID));
+		String requestId = request.getHeader(CustomRequestHeaders.HEADER_REQUEST_ID);
 		if(StringUtils.isBlank(requestId))requestId = TokenGenerator.generate();
 		actionLog.setRequestId(requestId);
 		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();

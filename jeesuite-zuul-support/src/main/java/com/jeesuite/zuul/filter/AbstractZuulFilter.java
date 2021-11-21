@@ -9,11 +9,11 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpMethod;
 
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.springweb.model.WrapperResponse;
 import com.jeesuite.zuul.FilterConstants;
 import com.jeesuite.zuul.filter.post.ResponseRewriteHandler;
 import com.jeesuite.zuul.filter.pre.GlobalHeaderHanlder;
 import com.jeesuite.zuul.model.BizSystemModule;
-import com.jeesuite.springweb.model.WrapperResponse;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 

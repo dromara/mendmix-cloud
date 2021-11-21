@@ -12,8 +12,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpMethod;
 
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.constants.SpecCharacters;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.ParameterUtils;
@@ -95,7 +95,7 @@ public class HttpServletRequestReader {
 			if(requestDatas != null && !requestDatas.isEmpty()){
 				String paramsString = ParameterUtils.mapToQueryParams(requestDatas);
 				if(paramsString.length() > 32)paramsString = DigestUtils.md5(paramsString);
-				builder.append(SpecCharacters.COLON).append(paramsString);
+				builder.append(GlobalConstants.COLON).append(paramsString);
 			}
 			cacheKey = builder.toString();
 		}

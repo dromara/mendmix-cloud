@@ -22,7 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
-import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
@@ -108,10 +108,10 @@ public class CustomLoadBalancerFeignClient implements Client{
       customHeaders.forEach( (k,v) -> {
     	  connection.addRequestProperty(k, v);
       } );
-      if(!customHeaders.containsKey(WebConstants.HEADER_AUTH_USER)){
+      if(!customHeaders.containsKey(CustomRequestHeaders.HEADER_AUTH_USER)){
     	  AuthUser session = CurrentRuntimeContext.getCurrentUser();
           if(session != null){
-        	  connection.addRequestProperty(WebConstants.HEADER_AUTH_USER, session.toEncodeString());
+        	  connection.addRequestProperty(CustomRequestHeaders.HEADER_AUTH_USER, session.toEncodeString());
           } 
       }
 

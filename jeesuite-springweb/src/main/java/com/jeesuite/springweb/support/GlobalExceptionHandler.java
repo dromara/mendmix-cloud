@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.WebConstants;
 import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.logging.RequestLogCollector;
 import com.jeesuite.springweb.model.WrapperResponseEntity;
@@ -81,7 +81,7 @@ public class GlobalExceptionHandler {
 		}
 
 		//默认情况http code都转换为200，异常信息由异常体传递
-		if(Boolean.parseBoolean(CurrentRuntimeContext.getRequest().getHeader(WebConstants.HEADER_HTTP_STATUS_KEEP))){
+		if(Boolean.parseBoolean(CurrentRuntimeContext.getRequest().getHeader(CustomRequestHeaders.HEADER_HTTP_STATUS_KEEP))){
 			int errorCode = resp.getCode();
 			if(errorCode >= 400 && errorCode<=500){
 				response.setStatus(errorCode);

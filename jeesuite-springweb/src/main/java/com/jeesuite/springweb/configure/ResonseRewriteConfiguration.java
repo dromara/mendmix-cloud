@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
-import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.springweb.model.WrapperResponse;
 
@@ -38,11 +38,11 @@ public class ResonseRewriteConfiguration implements ResponseBodyAdvice<Object>{
             ServerHttpResponse response) {
        
     	
-    	if(request.getHeaders().containsKey(WebConstants.HEADER_RESP_KEEP)) {
+    	if(request.getHeaders().containsKey(CustomRequestHeaders.HEADER_RESP_KEEP)) {
         	return body;
         }
     	
-    	if(response.getHeaders().containsKey(WebConstants.HEADER_RESP_KEEP)) {
+    	if(response.getHeaders().containsKey(CustomRequestHeaders.HEADER_RESP_KEEP)) {
         	return body;
         }
     	
@@ -54,7 +54,7 @@ public class ResonseRewriteConfiguration implements ResponseBodyAdvice<Object>{
     		return body;
         }
     	//
-    	response.getHeaders().add(WebConstants.HEADER_RESP_KEEP, Boolean.TRUE.toString());
+    	response.getHeaders().add(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
     	
     	WrapperResponse<Object> rewriteBody = new WrapperResponse<Object>(body);
     	//

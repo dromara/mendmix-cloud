@@ -29,8 +29,8 @@ import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.apache.logging.log4j.core.config.xml.XmlConfigurationFactory;
 import org.apache.logging.log4j.status.StatusLogger;
 
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
-import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.ResourceUtils;
@@ -114,13 +114,13 @@ public class LogProfileManager{
 	
 	public static void initRequestContext(HttpServletRequest request){
 		ThreadContext.put(LogConstants.LOG_CONTEXT_REQUEST_IP, IpUtils.getIpAddr(request));
-		String value = request.getHeader(WebConstants.HEADER_REQUEST_ID);
+		String value = request.getHeader(CustomRequestHeaders.HEADER_REQUEST_ID);
 		if(StringUtils.isBlank(value)){
 			value = TokenGenerator.generate();
 		}
 		ThreadContext.put(LogConstants.LOG_CONTEXT_REQUEST_ID, value);
 		
-		value = request.getHeader(WebConstants.HEADER_INVOKER_APP_ID);
+		value = request.getHeader(CustomRequestHeaders.HEADER_INVOKER_APP_ID);
 		if(StringUtils.isNotBlank(value)){
 			ThreadContext.put(LogConstants.LOG_CONTEXT_INVOKER_APP_ID, value);
 		}

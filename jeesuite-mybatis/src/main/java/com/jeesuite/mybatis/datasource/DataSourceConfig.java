@@ -3,7 +3,7 @@ package com.jeesuite.mybatis.datasource;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.mybatis.MybatisConfigs;
 
 /**
@@ -206,11 +206,11 @@ public class DataSourceConfig {
 	
 	
 	public static String buildDataSourceKey(String group,String tenantId,boolean master,int index) {
-		StringBuilder builder = new StringBuilder(group).append(WebConstants.UNDER_LINE);
+		StringBuilder builder = new StringBuilder(group).append(GlobalConstants.UNDER_LINE);
 		if(tenantId != null) {
-			builder.append(tenantId).append(WebConstants.UNDER_LINE);
+			builder.append(tenantId).append(GlobalConstants.UNDER_LINE);
 		}
-		builder.append(master ? MASTER_KEY : SLAVE_KEY).append(WebConstants.UNDER_LINE);
+		builder.append(master ? MASTER_KEY : SLAVE_KEY).append(GlobalConstants.UNDER_LINE);
 		builder.append(index);
 		return builder.toString();
 	}

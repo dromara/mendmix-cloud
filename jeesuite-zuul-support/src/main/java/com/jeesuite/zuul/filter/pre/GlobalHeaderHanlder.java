@@ -4,8 +4,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
-import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.springweb.CurrentRuntimeContext;
@@ -29,45 +29,45 @@ public class GlobalHeaderHanlder implements FilterHandler {
 	@Override
 	public Object process(RequestContext ctx,HttpServletRequest request, BizSystemModule module) {
 		
-		String invokeIp = request.getHeader(WebConstants.HEADER_INVOKER_IP);
+		String invokeIp = request.getHeader(CustomRequestHeaders.HEADER_INVOKER_IP);
 		if(StringUtils.isNotBlank(invokeIp)){
-			ctx.addZuulRequestHeader(WebConstants.HEADER_INVOKER_IP,invokeIp);
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_INVOKER_IP,invokeIp);
 		}else{
-			ctx.addZuulRequestHeader(WebConstants.HEADER_INVOKER_IP,IpUtils.getLocalIpAddr());
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_INVOKER_IP,IpUtils.getLocalIpAddr());
 		}
 		//
-		String invokeApp = request.getHeader(WebConstants.HEADER_INVOKER_APP_ID);
+		String invokeApp = request.getHeader(CustomRequestHeaders.HEADER_INVOKER_APP_ID);
 		if(StringUtils.isNotBlank(invokeApp)){
-			ctx.addZuulRequestHeader(WebConstants.HEADER_INVOKER_APP_ID,invokeApp);
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_INVOKER_APP_ID,invokeApp);
 		}else{				
-			ctx.addZuulRequestHeader(WebConstants.HEADER_INVOKER_APP_ID,GlobalRuntimeContext.APPID);
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_INVOKER_APP_ID,GlobalRuntimeContext.APPID);
 		}
 		//
-		String authToken = request.getHeader(WebConstants.HEADER_AUTH_TOKEN);
+		String authToken = request.getHeader(CustomRequestHeaders.HEADER_AUTH_TOKEN);
 		if(StringUtils.isNotBlank(authToken)){
-			ctx.addZuulRequestHeader(WebConstants.HEADER_AUTH_TOKEN,authToken);
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_AUTH_TOKEN,authToken);
 		}else{
-			ctx.addZuulRequestHeader(WebConstants.HEADER_AUTH_TOKEN, TokenGenerator.generateWithSign());
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_AUTH_TOKEN, TokenGenerator.generateWithSign());
 		}
 		//
-		String requrstId = request.getHeader(WebConstants.HEADER_REQUEST_ID);
+		String requrstId = request.getHeader(CustomRequestHeaders.HEADER_REQUEST_ID);
 		if(StringUtils.isNotBlank(requrstId)){
-			ctx.addZuulRequestHeader(WebConstants.HEADER_REQUEST_ID,requrstId);
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_REQUEST_ID,requrstId);
 		}else{
-			ctx.addZuulRequestHeader(WebConstants.HEADER_REQUEST_ID, TokenGenerator.generate());
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_REQUEST_ID, TokenGenerator.generate());
 		}
 		//
-		String authUser = request.getHeader(WebConstants.HEADER_AUTH_USER);
+		String authUser = request.getHeader(CustomRequestHeaders.HEADER_AUTH_USER);
 		if(StringUtils.isNotBlank(authUser) && StringUtils.isNotBlank(authToken)){
-			ctx.addZuulRequestHeader(WebConstants.HEADER_AUTH_USER,authUser);
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_AUTH_USER,authUser);
 		}
 		
 		String tenantId = CurrentRuntimeContext.getTenantId(false);
 		if(tenantId != null){				
-			ctx.addZuulRequestHeader(WebConstants.HEADER_TENANT_ID, tenantId);
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_TENANT_ID, tenantId);
 		}
 		//
-		ctx.addZuulRequestHeader(WebConstants.HEADER_GATEWAY_TOKEN,TokenGenerator.generateWithSign());
+		ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_GATEWAY_TOKEN,TokenGenerator.generateWithSign());
 		
 		return null;
 	}

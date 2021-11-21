@@ -32,6 +32,7 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.DigestUtils;
@@ -454,31 +455,43 @@ public class CacheHandler implements InterceptorHandler {
 		}
 	}
 	
+	@SuppressWarnings("rawtypes")
 	private void parseDyncQueryParameters(BoundSql boundSql,SqlMetadata sqlMetadata) throws Exception {
 		List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
 		Object parameterObject = boundSql.getParameterObject();
-		ParameterMapping parameterMapping;
 		
+		ParameterMapping parameterMapping;
         if(parameterMappings.size() == 1) {
         	sqlMetadata.getParameters().add(parameterObject);
         }else {
         	Object indexValue = null;
+        	String property;
         	for (int i = sqlMetadata.getWhereParameterStartIndex(); i <= sqlMetadata.getWhereParameterEndIndex(); i++) {
     			parameterMapping = parameterMappings.get(i);
-    			if(parameterMapping.getProperty().startsWith(SqlRewriteHandler.FRCH_PREFIX)) {
-    				indexValue = boundSql.getAdditionalParameter(parameterMapping.getProperty());
+    			property = parameterMapping.getProperty();
+				if(property.startsWith(SqlRewriteHandler.FRCH_PREFIX)) {
+    				indexValue = boundSql.getAdditionalParameter(property);
     			}else {
-    				if(parameterObject instanceof Map) {
-    					indexValue = ((Map)parameterObject).get(parameterMapping.getProperty());
-    				}else {
-    					indexValue = FieldUtils.readDeclaredField(parameterObject, parameterMapping.getProperty(),true);
-    				}
+    				indexValue = getParameterItemValue(parameterObject, property);
     			}
     			sqlMetadata.getParameters().add(indexValue);
     		}
         }
 	}
 
+	@SuppressWarnings("rawtypes")
+	private Object getParameterItemValue(Object parameter,String property) throws Exception {
+		if(parameter instanceof Map) {
+			Map map = (Map)parameter;
+			if(!property.contains(GlobalConstants.DOT)) {
+				return map.get(property);
+			}
+			String[] subs = StringUtils.split(property, GlobalConstants.DOT,2);
+			return getParameterItemValue(map.get(subs[0]), subs[1]);
+		}else {
+			return FieldUtils.readDeclaredField(parameter, property,true);
+		}
+	}
 	
 	/**
 	 * 删除缓存组

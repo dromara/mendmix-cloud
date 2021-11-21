@@ -120,4 +120,28 @@
     select union_id from sns_account_binding where user_id = #{userId} and enabled = 1 limit 1
   </select>
   
+  <update id="updateByMap">
+     update users set type = #{type},updated_at = now(),status = #{status}
+     <where>
+     <if test="name != null">  
+        AND name = #{name}  
+    </if> 
+    <if test="mobile != null">  
+        AND mobile = #{mobile}  
+    </if> 
+     </where>
+  </update>
+  
+  <update id="updateTypeByExample">
+     update users set type = #{type},updated_at = now()
+     <where>
+     <if test="example.name != null">  
+        AND name = #{example.name}  
+    </if> 
+    <if test="example.mobile != null">  
+        AND mobile = #{example.mobile}  
+    </if> 
+     </where>
+  </update>
+  
 </mapper>

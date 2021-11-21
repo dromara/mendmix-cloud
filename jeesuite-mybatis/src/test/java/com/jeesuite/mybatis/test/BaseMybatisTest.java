@@ -6,7 +6,9 @@ package com.jeesuite.mybatis.test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
@@ -168,11 +170,21 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		example.setType((short)1);
 		example.setName("嘎子");
 		example.setMobile("13800373090");
-		userMapper.updateByExample(example);
+		//userMapper.updateByExample(example);
 		//
-		userMapper.updateType(1, new int[] {1,2,3});
+		//userMapper.updateType(1, new int[] {1,2,3});
 		//
-		userMapper.updateByName("嘎子");
+		//userMapper.updateByName("嘎子");
+		//
+		Map<String, Object> param = new HashMap<>();
+		param.put("status", example.getStatus());
+		param.put("type", example.getType());
+		param.put("name", example.getName());
+		param.put("mobile", example.getMobile());
+		//userMapper.updateByMap(param);
+		
+		userMapper.updateTypeByExample(example.getType(), example);
+		
 		Thread.sleep(60000);
 	}
 

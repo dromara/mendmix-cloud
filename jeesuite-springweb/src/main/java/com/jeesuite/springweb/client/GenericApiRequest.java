@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,16 +14,13 @@ import org.springframework.http.HttpStatus;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.jeesuite.common.CustomRequestHeaders;
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.json.JsonUtils;
-import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.BeanUtils;
-import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.ParameterUtils;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.common.util.TokenGenerator;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 
 import okhttp3.ConnectionPool;
 import okhttp3.FormBody;
@@ -127,6 +122,9 @@ public class GenericApiRequest {
 		customHeaders.forEach( (name,value) -> {
 			headerBuilder.add(name, value);
 		});
+		//标记不需要封装
+		headerBuilder.add(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
+				
 
 		okhttp3.Request.Builder requestBuilder = new Request.Builder().headers(headerBuilder.build())
 				.url(urlBuilder.build());
@@ -171,9 +169,9 @@ public class GenericApiRequest {
 				responseString = response.body().string();
 				if (responseString.startsWith(STANDARD_RSP_JSON_PREFIX)) {
 					JSONObject jsonObject = JSON.parseObject(responseString);
-					int code = jsonObject.getIntValue(WebConstants.PARAM_CODE);
+					int code = jsonObject.getIntValue(GlobalConstants.PARAM_CODE);
 					if (code == 200) {
-						responseString = jsonObject.getString(WebConstants.PARAM_DATA);
+						responseString = jsonObject.getString(GlobalConstants.PARAM_DATA);
 					} else {
 						if (logger.isDebugEnabled())
 							logger.debug("call_remote_api_error ->url:{},code:{},message:{}", url, code,

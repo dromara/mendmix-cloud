@@ -7,9 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.ThreadLocalContext;
-import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.springweb.exception.UnauthorizedException;
 
@@ -32,7 +32,7 @@ public class CurrentRuntimeContext {
 		
 		ThreadLocalContext.set(ThreadLocalContext.REQUEST_KEY, request);
 		ThreadLocalContext.set(ThreadLocalContext.RESPONSE_KEY, response);
-		String tenantId = request.getHeader(WebConstants.HEADER_TENANT_ID);
+		String tenantId = request.getHeader(CustomRequestHeaders.HEADER_TENANT_ID);
 		if(tenantId != null)setTenantId(tenantId);
 	}
 	
@@ -61,7 +61,7 @@ public class CurrentRuntimeContext {
 		if(user == null){
 			HttpServletRequest request = getRequest();
 			if(request == null)return null;
-			String headerString = request.getHeader(WebConstants.HEADER_AUTH_USER);
+			String headerString = request.getHeader(CustomRequestHeaders.HEADER_AUTH_USER);
 			user = AuthUser.decode(headerString);
 			if(user != null){
 				ThreadLocalContext.set(ThreadLocalContext.CURRENT_USER_KEY, user);
@@ -91,7 +91,7 @@ public class CurrentRuntimeContext {
 	
 	public static String getInvokeAppId(){
 		try {			
-			return getRequest().getHeader(WebConstants.HEADER_INVOKER_APP_ID);
+			return getRequest().getHeader(CustomRequestHeaders.HEADER_INVOKER_APP_ID);
 		} catch (Exception e) {
 			return null;
 		}
@@ -99,7 +99,7 @@ public class CurrentRuntimeContext {
 	
 	public static String getRequestId(){
 		try {			
-			return getRequest().getHeader(WebConstants.HEADER_REQUEST_ID);
+			return getRequest().getHeader(CustomRequestHeaders.HEADER_REQUEST_ID);
 		} catch (Exception e) {
 			return null;
 		}
@@ -109,7 +109,7 @@ public class CurrentRuntimeContext {
 		String tenantId = ThreadLocalContext.getStringValue(ThreadLocalContext.TENANT_ID_KEY);
 		if(tenantId == null){
 			HttpServletRequest request = getRequest();
-			if(request != null)tenantId = request.getHeader(WebConstants.HEADER_TENANT_ID);
+			if(request != null)tenantId = request.getHeader(CustomRequestHeaders.HEADER_TENANT_ID);
 		}
 		if(validate && StringUtils.isBlank(tenantId)){
 			throw new JeesuiteBaseException(500,"无法识别租户信息");
@@ -119,15 +119,15 @@ public class CurrentRuntimeContext {
 	
 	public static void setClientType(String clientType){
 		if(StringUtils.isBlank(clientType))return;
-		ThreadLocalContext.set(WebConstants.HEADER_CLIENT_TYPE, clientType);
+		ThreadLocalContext.set(CustomRequestHeaders.HEADER_CLIENT_TYPE, clientType);
 	}
 	
 	
 	public static String getClientType() {
-		String clientType = ThreadLocalContext.getStringValue(WebConstants.HEADER_CLIENT_TYPE);
+		String clientType = ThreadLocalContext.getStringValue(CustomRequestHeaders.HEADER_CLIENT_TYPE);
 		if(clientType != null)return clientType;
 		try {
-			return getRequest().getHeader(WebConstants.HEADER_CLIENT_TYPE);
+			return getRequest().getHeader(CustomRequestHeaders.HEADER_CLIENT_TYPE);
 		} catch (Exception e) {
 			return null;
 		}

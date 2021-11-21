@@ -61,5 +61,9 @@ public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 	String findWxUnionIdByUserId(@Param("userId") int userId);
 	
 	UserEntity findByWxOpenId(String openId);
+	
+	int updateByMap(Map<String, Object> param);
+	
+	int updateTypeByExample(@Param("type") int type,@Param("example") UserEntity example);
 
 }

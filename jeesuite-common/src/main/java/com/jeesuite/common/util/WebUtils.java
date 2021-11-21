@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.ThreadLocalContext;
-import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.json.JsonUtils;
 
@@ -31,8 +31,8 @@ public class WebUtils {
 	
 	
 	public static boolean isAjax(HttpServletRequest request){
-	    return  (request.getHeader(WebConstants.HEADER_REQUESTED_WITH) != null  
-	    && XML_HTTP_REQUEST.equalsIgnoreCase(request.getHeader(WebConstants.HEADER_REQUESTED_WITH).toString())) ;
+	    return  (request.getHeader(CustomRequestHeaders.HEADER_REQUESTED_WITH) != null  
+	    && XML_HTTP_REQUEST.equalsIgnoreCase(request.getHeader(CustomRequestHeaders.HEADER_REQUESTED_WITH).toString())) ;
 	}
 	
 	public static  void responseOutJson(HttpServletResponse response,String json) {  
@@ -96,7 +96,7 @@ public class WebUtils {
 	 * @return
 	 */
 	public static  String getRootDomain(HttpServletRequest request) {
-		String host = request.getHeader(WebConstants.HEADER_FORWARDED_HOST);
+		String host = request.getHeader(CustomRequestHeaders.HEADER_FORWARDED_HOST);
 		if(StringUtils.isBlank(host))host = request.getServerName();
 		return parseHostRootDomain(host);
 	}
@@ -143,15 +143,15 @@ public class WebUtils {
 	public static String getBaseUrl(HttpServletRequest request,boolean withContextPath){
         String baseUrl = null;
         
-        String schame = request.getHeader(WebConstants.HEADER_FORWARDED_PROTO);
-		String host = request.getHeader(WebConstants.HEADER_FORWARDED_HOST);
-		String prefix = request.getHeader(WebConstants.HEADER_FORWARDED_PRIFIX);
+        String schame = request.getHeader(CustomRequestHeaders.HEADER_FORWARDED_PROTO);
+		String host = request.getHeader(CustomRequestHeaders.HEADER_FORWARDED_HOST);
+		String prefix = request.getHeader(CustomRequestHeaders.HEADER_FORWARDED_PRIFIX);
 		if(StringUtils.isBlank(host)){
 			String[] segs = StringUtils.split(request.getRequestURL().toString(),"/");
 			baseUrl = segs[0] + "//" + segs[1];
 		}else{
 			if(StringUtils.isBlank(schame)){
-				String port = request.getHeader(WebConstants.HEADER_FORWARDED_PORT);
+				String port = request.getHeader(CustomRequestHeaders.HEADER_FORWARDED_PORT);
 				schame = "443".equals(port) ? "https://" : "http://";
 			}else{
 				if(schame.contains(",")){
@@ -179,7 +179,7 @@ public class WebUtils {
 		Enumeration<String> headerNames = request.getHeaderNames();
 		 while(headerNames.hasMoreElements()){
 			 String headerName = headerNames.nextElement().toLowerCase();
-			 if(headerName.startsWith(WebConstants.HEADER_PREFIX)){				 
+			 if(headerName.startsWith(CustomRequestHeaders.HEADER_PREFIX)){				 
 				 String headerValue = request.getHeader(headerName);
 				 if(headerValue != null)headers.put(headerName, headerValue);
 			 }
@@ -211,7 +211,7 @@ public class WebUtils {
 	 */
 	public static boolean isInternalRequest(HttpServletRequest request){
 		//
-		String headerValue = request.getHeader(WebConstants.HEADER_INTERNAL_REQUEST);
+		String headerValue = request.getHeader(CustomRequestHeaders.HEADER_INTERNAL_REQUEST);
 		if(StringUtils.isNotBlank(headerValue)){
 			try {
 				TokenGenerator.validate(headerValue, true);
@@ -225,7 +225,7 @@ public class WebUtils {
 		}
 
 		//从网关转发
-		headerValue = request.getHeader(WebConstants.HEADER_GATEWAY_TOKEN);
+		headerValue = request.getHeader(CustomRequestHeaders.HEADER_GATEWAY_TOKEN);
 		if(StringUtils.isNotBlank(headerValue)){
 			try {
 				TokenGenerator.validate(headerValue, true);
@@ -237,7 +237,7 @@ public class WebUtils {
 			return false;
 		}
 		
-		String clientIp = request.getHeader(WebConstants.HEADER_REAL_IP);
+		String clientIp = request.getHeader(CustomRequestHeaders.HEADER_REAL_IP);
 		if(clientIp == null)clientIp = IpUtils.getIpAddr(request);
 		if(IpUtils.isInnerIp(clientIp)) {
 			return true;

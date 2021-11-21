@@ -1,6 +1,6 @@
 package com.jeesuite.springweb.utils;
 
-import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.util.SimpleCryptUtils;
 import com.jeesuite.springweb.CurrentRuntimeContext;
 
@@ -21,7 +21,7 @@ public class CustomHeaderUtils {
 	 * @return
 	 */
 	public static String getVerifiedMobile() {
-		String header = CurrentRuntimeContext.getRequest().getHeader(WebConstants.HEADER_VERIFIED_MOBILE);
+		String header = CurrentRuntimeContext.getRequest().getHeader(CustomRequestHeaders.HEADER_VERIFIED_MOBILE);
 		if(header == null)return header;
 		return SimpleCryptUtils.decrypt(header);
 	}

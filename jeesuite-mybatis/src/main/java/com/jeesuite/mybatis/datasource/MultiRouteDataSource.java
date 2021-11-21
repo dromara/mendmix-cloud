@@ -22,7 +22,7 @@ import org.springframework.jdbc.datasource.AbstractDataSource;
 
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.WebConstants;
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.model.RoundRobinSelecter;
 import com.jeesuite.common.util.BeanUtils;
 import com.jeesuite.common.util.ResourceUtils;
@@ -95,7 +95,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 			if(slaveNumSelecters.isEmpty()) {
 				useMaster = true;
 			}else {
-				String subGroup = dsKeyWithTenant ? group + WebConstants.UNDER_LINE + tenantId : group;
+				String subGroup = dsKeyWithTenant ? group + GlobalConstants.UNDER_LINE + tenantId : group;
 				if(!slaveNumSelecters.containsKey(subGroup)) {
 					useMaster = true;
 				}else {

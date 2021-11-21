@@ -11,9 +11,9 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
-import com.jeesuite.common.WebConstants;
 import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
@@ -56,7 +56,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 		if(authTokenCheckEnabled){	
 			String uri = request.getRequestURI();
 			if(!authtokenCheckIgnoreUriMather.match(uri)){				
-				String authCode = request.getHeader(WebConstants.HEADER_AUTH_TOKEN);
+				String authCode = request.getHeader(CustomRequestHeaders.HEADER_AUTH_TOKEN);
 				TokenGenerator.validate(authCode, true);
 			}
 		}
@@ -73,7 +73,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	
 				//@ResponseBody and ResponseEntity的接口在postHandle addHeader不生效，因为会经过HttpMessageConverter
 				if(config.responseKeep()){
-					response.addHeader(WebConstants.HEADER_RESP_KEEP, Boolean.TRUE.toString());
+					response.addHeader(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
 				}
 			}
 			
