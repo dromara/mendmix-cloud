@@ -345,9 +345,13 @@ public class CacheHandler implements InterceptorHandler {
 						ColumnMetadata idColumn = mapperMeta.getEntityMetadata().getIdColumn();
 						SqlMetadata sqlMetadata = MybatisSqlRewriteUtils.rewriteAsSelectPkField(orignSql, idColumn.getColumn());
 						//
+						String tenantId = MybatisRuntimeContext.getCurrentTenant();
 						cleanCacheExecutor.execute(new Runnable() {
 							@Override
 							public void run() {
+								if(tenantId != null) {
+								    ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, tenantId);
+								}
 								removeCacheByDyncQuery(mapperMeta,boundSql, sqlMetadata);
 							}
 						});
