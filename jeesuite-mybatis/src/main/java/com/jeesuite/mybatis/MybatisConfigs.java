@@ -45,6 +45,7 @@ public class MybatisConfigs {
 	public static final String CACHE_EXPIRE_SECONDS = "jeesuite.mybatis.cache.expireSeconds";
 	public static final String TENANT_SHARDDING_FIELD = "jeesuite.mybatis.tenant.sharddingField";
 	public static final String INTERCEPTOR_HANDLERCLASS = "jeesuite.mybatis.interceptorHandlerClass";
+	public static final String SOFT_DELETED_FALSE_VALUE = "jeesuite.mybatis.deleted.falseValue";
 	
 	private static Map<String, Properties> groupProperties = new HashMap<>();
 	
@@ -91,6 +92,10 @@ public class MybatisConfigs {
 	
 	public static String getTenantSharddingField(String group) {
 		return getProperty(group,TENANT_SHARDDING_FIELD,null);
+	}
+	
+	public static String getSoftDeletedFalseValue(String group) {
+		return getProperty(group,SOFT_DELETED_FALSE_VALUE,"0");
 	}
 	
 	public static boolean isFieldSharddingTenant(String group) {

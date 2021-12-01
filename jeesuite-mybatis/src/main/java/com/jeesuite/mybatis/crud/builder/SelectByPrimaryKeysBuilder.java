@@ -27,7 +27,12 @@ public class SelectByPrimaryKeysBuilder extends AbstractSelectMethodBuilder{
 		TableMetadata tableMapper = entityMapper.getTable();
 		ColumnMetadata idColumn = entityMapper.getIdColumn();
 		String sql = String.format(SqlTemplate.SELECT_BY_KEYS, tableMapper.getName(),idColumn.getColumn());
-		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
+		return sql;
+	}
+	
+	@Override
+	boolean scriptWrapper() {
+		return true;
 	}
 
 }

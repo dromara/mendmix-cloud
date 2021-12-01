@@ -41,5 +41,10 @@ public class DeleteByPrimaryKeyBuilder extends AbstractMethodBuilder{
 
 	@Override
 	void setResultType(Configuration configuration, MappedStatement statement, Class<?> entityClass) {}
+
+	@Override
+	boolean scriptWrapper() {
+		return false;
+	}
 	
 }

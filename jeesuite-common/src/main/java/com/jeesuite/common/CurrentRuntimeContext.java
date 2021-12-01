@@ -1,17 +1,12 @@
-package com.jeesuite.springweb;
+package com.jeesuite.common;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import com.jeesuite.common.CustomRequestHeaders;
-import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.common.exception.UnauthorizedException;
 import com.jeesuite.common.model.AuthUser;
-import com.jeesuite.springweb.exception.UnauthorizedException;
 
 /**
  * 当前上下文
@@ -39,9 +34,6 @@ public class CurrentRuntimeContext {
 	public static HttpServletRequest getRequest() {
 		if(ThreadLocalContext.exists(ThreadLocalContext.REQUEST_KEY)){
 			return ThreadLocalContext.get(ThreadLocalContext.REQUEST_KEY);
-		}
-		if(RequestContextHolder.getRequestAttributes() != null){
-			return ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 		}
 		return null;
 	}

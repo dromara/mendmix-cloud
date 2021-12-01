@@ -1,9 +1,10 @@
 package com.jeesuite.springweb.interceptor;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -11,16 +12,16 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.common.exception.ForbiddenAccessException;
 import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.common.util.WebUtils;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.annotation.ApiMetadata;
-import com.jeesuite.springweb.exception.ForbiddenAccessException;
 import com.jeesuite.springweb.logging.RequestLogCollector;
 
 /**
@@ -45,8 +46,21 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	//
 	private boolean requestLogGetIngore = ResourceUtils.getBoolean("request.log.getMethod.ignore", true);
 
-	private PathMatcher authtokenCheckIgnoreUriMather = new PathMatcher(StringUtils.EMPTY,ResourceUtils.getProperty("authtoken.check.ignore.uris"));
+	private PathMatcher authtokenCheckIgnoreUriMather = new PathMatcher();
 	
+	
+	public GlobalDefaultInterceptor() {
+		String contextPath = GlobalRuntimeContext.getContextPath();
+		if(authTokenCheckEnabled) {
+			authtokenCheckIgnoreUriMather.addUriPattern(contextPath, "/error");
+		}
+		List<String> ignoreUris = ResourceUtils.getList("request.authtoken.ignore-uris");
+		for (String uri : ignoreUris) {
+			authtokenCheckIgnoreUriMather.addUriPattern(contextPath, uri);
+		}
+		
+	}
+
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {

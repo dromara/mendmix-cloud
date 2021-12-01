@@ -1,8 +1,8 @@
 package com.jeesuite.springweb.utils;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.util.SimpleCryptUtils;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 
 
 /**

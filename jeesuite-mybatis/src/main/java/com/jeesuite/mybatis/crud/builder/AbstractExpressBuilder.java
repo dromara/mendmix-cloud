@@ -1,9 +1,8 @@
-/**
- * Confidential and Proprietary Copyright 2019 By 卓越里程教育科技有限公司 All Rights Reserved
- */
-package com.jeesuite.mybatis.crud.provider;
+package com.jeesuite.mybatis.crud.builder;
 
 import java.util.Date;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.util.DateUtils;
 import com.jeesuite.mybatis.metadata.ColumnMetadata;
@@ -11,22 +10,23 @@ import com.jeesuite.mybatis.metadata.ColumnMetadata;
 /**
  * 
  * <br>
- * Class Name   : AbstractExampleProvider
+ * Class Name   : AbstractExpressBuilder
  *
  * @author jiangwei
  * @version 1.0.0
  * @date 2020年5月29日
  */
-public abstract class AbstractExampleProvider {
+public abstract class AbstractExpressBuilder {
 
 	/**
 	 * @param whereBuilder
 	 * @param column
 	 */
-	protected void appendWhere(StringBuilder whereBuilder, ColumnMetadata column) {
+	protected StringBuilder appendWhere(StringBuilder whereBuilder, ColumnMetadata column) {
 		if(whereBuilder.length() > 0)whereBuilder.append(" AND ");
 		whereBuilder.append(column.getColumn()).append("=");
 		whereBuilder.append("#{").append(column.getProperty()).append("}");
+		return whereBuilder;
 	}
 	
 	/**
@@ -34,7 +34,7 @@ public abstract class AbstractExampleProvider {
 	 * @param column
 	 * @param value
 	 */
-	protected void appendWhere(StringBuilder whereBuilder, ColumnMetadata column, Object value) {
+	protected StringBuilder appendWhere(StringBuilder whereBuilder, ColumnMetadata column, Object value) {
 		if(whereBuilder.length() > 0)whereBuilder.append(" AND ");
 		whereBuilder.append(column.getColumn()).append("=");
 		if(column.getJavaType() == String.class){
@@ -42,20 +42,26 @@ public abstract class AbstractExampleProvider {
 		}else if(column.getJavaType() == Date.class){
 			whereBuilder.append("'").append(DateUtils.format((Date)value)).append("'");
 		}else if(column.getJavaType() == Boolean.class || column.getJavaType() == boolean.class){
-			whereBuilder.append((boolean)value ? 1 : 0);
+			if(StringUtils.isNumeric(value.toString())) {
+				whereBuilder.append(value);
+			}else {
+				whereBuilder.append((boolean)value ? 1 : 0);
+			}
 		}else{
 			whereBuilder.append(value);
 		}
+		return whereBuilder;
 	}
 	
 	
-	protected void appendUpdateSet(StringBuilder setBuilder, ColumnMetadata column) {
+	protected StringBuilder appendUpdateSet(StringBuilder setBuilder, ColumnMetadata column) {
 		if(setBuilder.length() > 0)setBuilder.append(",");
 		setBuilder.append(column.getColumn()).append("=");
 		setBuilder.append("#{").append(column.getProperty()).append("}");
+		return setBuilder;
 	}
 	
-	protected void appendUpdateSet(StringBuilder setBuilder, ColumnMetadata column, Object value) {
+	protected StringBuilder appendUpdateSet(StringBuilder setBuilder, ColumnMetadata column, Object value) {
 		if(setBuilder.length() > 0)setBuilder.append(",");
 		setBuilder.append(column.getColumn()).append("=");
 		if(column.getJavaType() == String.class){
@@ -67,5 +73,6 @@ public abstract class AbstractExampleProvider {
 		}else{
 			setBuilder.append(value);
 		}
+		return setBuilder;
 	}
 }

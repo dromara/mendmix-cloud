@@ -63,10 +63,14 @@ public class InsertListBuilder extends AbstractMethodBuilder{
 		fieldBuilder.append(")");
 		prppertyBuilder.append(")");
 		String sql = String.format(SqlTemplate.BATCH_INSERT, table.getName(),fieldBuilder.toString(),prppertyBuilder.toString());
-		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
+		return sql;
 	}
 
 	@Override
 	void setResultType(Configuration configuration, MappedStatement statement, Class<?> entityClass) {}
 	
+	@Override
+	boolean scriptWrapper() {
+		return true;
+	}
 }

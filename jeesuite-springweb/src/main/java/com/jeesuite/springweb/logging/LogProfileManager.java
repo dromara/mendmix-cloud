@@ -29,13 +29,13 @@ import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.apache.logging.log4j.core.config.xml.XmlConfigurationFactory;
 import org.apache.logging.log4j.status.StatusLogger;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 /**
  * 
  * 

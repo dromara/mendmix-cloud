@@ -4,11 +4,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.TokenGenerator;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.zuul.filter.FilterHandler;
 import com.jeesuite.zuul.model.BizSystemModule;
 import com.netflix.zuul.context.RequestContext;

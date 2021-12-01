@@ -64,12 +64,17 @@ public class InsertBuilder  extends AbstractMethodBuilder{
 		fieldBuilder.append(SqlTemplate.TRIM_SUFFIX);
 		prppertyBuilder.append(SqlTemplate.TRIM_SUFFIX);
 		String sql = String.format(SqlTemplate.INSERT, table.getName(),fieldBuilder.toString(),prppertyBuilder.toString());
-		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
+		return sql;
 	}
 
 
 	@Override
 	void setResultType(Configuration configuration, MappedStatement statement, Class<?> entityClass) {}
+	
+	@Override
+	boolean scriptWrapper() {
+		return true;
+	}
 	
 }
 

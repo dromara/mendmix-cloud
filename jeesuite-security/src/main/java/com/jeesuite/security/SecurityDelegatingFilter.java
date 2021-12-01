@@ -26,15 +26,13 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.http.HttpStatus;
-
+import com.jeesuite.common.CurrentRuntimeContext;
+import com.jeesuite.common.exception.ForbiddenAccessException;
+import com.jeesuite.common.exception.UnauthorizedException;
 import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.security.model.UserSession;
-import com.jeesuite.springweb.CurrentRuntimeContext;
-import com.jeesuite.springweb.exception.ForbiddenAccessException;
-import com.jeesuite.springweb.exception.UnauthorizedException;
 
 /**
  * @description <br>
@@ -87,11 +85,11 @@ public class SecurityDelegatingFilter implements Filter {
 		try {
 			userSession = SecurityDelegating.doAuthorization();
 		} catch (UnauthorizedException e) {
-			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 			if(WebUtils.isAjax(request)){				
 				WebUtils.responseOutJson(response, MSG_401_UNAUTHORIZED);
 			}else{
 				if(SecurityDelegating.getConfigurerProvider().error401Page() == null){
+					response.setStatus(401);
 					WebUtils.responseOutHtml(response, "401 Unauthorized");
 				}else{					
 					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.getConfigurerProvider().error401Page();
@@ -104,6 +102,7 @@ public class SecurityDelegatingFilter implements Filter {
 				WebUtils.responseOutJson(response, MSG_403_FORBIDDEN);
 			}else{
 				if(SecurityDelegating.getConfigurerProvider().error403Page() == null){
+					response.setStatus(403);
 					WebUtils.responseOutHtml(response, "403 Forbidden");
 				}else{					
 					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.getConfigurerProvider().error403Page();

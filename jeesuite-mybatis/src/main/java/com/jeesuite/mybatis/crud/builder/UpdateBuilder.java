@@ -61,12 +61,17 @@ public class UpdateBuilder  extends AbstractMethodBuilder{
 
 		String sql = String.format(SqlTemplate.UPDATE_BY_KEY, tableMapper.getName(),set.toString(),idColumn,idProperty);
 
-		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
+		return sql;
 	}
 
 
 	@Override
 	void setResultType(Configuration configuration, MappedStatement statement, Class<?> entityClass) {}
+	
+	@Override
+	boolean scriptWrapper() {
+		return true;
+	}
 	
 }
 

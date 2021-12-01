@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.mybatis.datasource.DataSourceContextVals;
@@ -40,11 +41,12 @@ public class MybatisRuntimeContext {
 					currentUserProvider = new CurrentUserProvider() {
 						@Override
 						public String currentUser() {
-							return null;
+							AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+							return currentUser == null ? null : currentUser.getUsername();
 						}
 						@Override
 						public String currentTenant() {
-							return null;
+							return CurrentRuntimeContext.getTenantId(false);
 						}
 					};
 				}

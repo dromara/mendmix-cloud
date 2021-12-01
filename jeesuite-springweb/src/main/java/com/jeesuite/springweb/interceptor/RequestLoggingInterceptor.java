@@ -26,9 +26,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.util.BeanUtils;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.annotation.ApiMetadata;
 import com.jeesuite.springweb.logging.ActionLog;
 import com.jeesuite.springweb.logging.RequestLogBuilder;

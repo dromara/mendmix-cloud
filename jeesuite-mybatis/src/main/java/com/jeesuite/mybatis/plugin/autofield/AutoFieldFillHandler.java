@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.ibatis.mapping.MappedStatement;
 
@@ -45,8 +46,6 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 	
 	private  IDGenerator idGenerator;
 	
-	
-
 	private IDGenerator getIdGenerator() {
 		if(idGenerator != null)return idGenerator;
 		synchronized (AutoFieldFillHandler.class) {
@@ -144,7 +143,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 
 	private void setFieldValue(Field[] fields, Object parameter) {
 		String tmpVal;
-		if(fields[0] != null && getIdGenerator() != null) {
+		if(fields[0] != null && getIdGenerator() != null && isNullValue(parameter, fields[0])) {
 			Serializable id = idGenerator.nextId();
 //			if(fields[0].getType() == int.class || fields[0].getType() == Integer.class){
 //				id = Integer.parseInt(id.toString());
@@ -153,14 +152,16 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 //			}
 			try {fields[0].set(parameter, id);} catch (Exception e) {}
 		}
-		if(fields[1] != null && (tmpVal = MybatisRuntimeContext.getCurrentUser()) != null) {
+		
+		if(fields[1] != null && (tmpVal = MybatisRuntimeContext.getCurrentUser()) != null && isNullValue(parameter, fields[1])) {
 			try {fields[1].set(parameter, tmpVal);} catch (Exception e) {}
 		}
-		Date currentTime = new Date();
-		if(fields[2] != null) {
-			try {fields[2].set(parameter, currentTime);} catch (Exception e) {}
+		
+		if(fields[2] != null && isNullValue(parameter, fields[2])) {
+			try {fields[2].set(parameter, new Date());} catch (Exception e) {}
 		}
-		if(fields.length > 3 && fields[3] != null && (tmpVal = MybatisRuntimeContext.getCurrentTenant()) != null) {
+		
+		if(fields.length > 3 && fields[3] != null && (tmpVal = MybatisRuntimeContext.getCurrentTenant()) != null && isNullValue(parameter, fields[3])) {
 			try {fields[3].set(parameter, tmpVal);} catch (Exception e) {}
 		}
 	}
@@ -170,6 +171,15 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 			if(field != null)return true;
 		}
 		return false;
+	}
+	
+	private boolean isNullValue(Object obj,Field field) {
+		try {
+			Object value = field.get(field);
+			return value == null || StringUtils.isBlank(value.toString());
+		} catch (Exception e) {
+			return true;
+		}
 	}
 
 	@Override

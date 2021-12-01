@@ -18,6 +18,7 @@
     <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" />
     <result column="updated_by" property="updatedBy" jdbcType="VARCHAR" />
     <result column="version" property="version" jdbcType="INTEGER" />
+    <result column="is_deleted" jdbcType="BIT" property="deleted" />
   </resultMap>
   
   <select id="findByType" resultMap="BaseResultMap">

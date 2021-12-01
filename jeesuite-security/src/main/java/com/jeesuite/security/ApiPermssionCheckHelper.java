@@ -40,7 +40,7 @@ public class ApiPermssionCheckHelper {
 			}
 		}
 		
-		uris = resourceManager.getAuthorizationUris();
+		uris = resourceManager.getAuthzUris();
 		if(uris != null && uris.contains(permissionKey))return PermissionLevel.PermissionRequired;
 		
 		patterns = resourceManager.getAuthzPatterns();

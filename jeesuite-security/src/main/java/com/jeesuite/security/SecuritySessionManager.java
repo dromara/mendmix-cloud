@@ -8,8 +8,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.CurrentRuntimeContext;
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.security.model.UserSession;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 
 /**
  * session管理器
@@ -27,7 +28,9 @@ public class SecuritySessionManager {
 	private String headerTokenName;
 	private String sessionIdName;
 	private boolean keepCookie;
-	private int cookieExpireIn = 0;
+	private int sessionExpireIn = 0;
+	
+	private boolean isDevTestEnv = "dev|local|test".contains(GlobalRuntimeContext.ENV);
 
 	private SecurityStorageManager storageManager;
 
@@ -37,9 +40,9 @@ public class SecuritySessionManager {
 		this.sessionIdName = decisionProvider.sessionIdName();
 		this.headerTokenName = decisionProvider.headerTokenName();
 		this.keepCookie = decisionProvider.keepCookie();
-		this.cookieExpireIn = decisionProvider.sessionExpireIn();
+		this.sessionExpireIn = decisionProvider.sessionExpireIn();
 		//
-		this.storageManager.addCahe(cacheName, this.cookieExpireIn);
+		this.storageManager.addCahe(cacheName, this.sessionExpireIn);
 	}
 
 	public UserSession getLoginSession(String sessionId) {
@@ -54,20 +57,24 @@ public class SecuritySessionManager {
 
 	public UserSession getSession(boolean createIfAbsent) {
 		String sessionId = getSessionId();
+		
+		UserSession session = null;
 		if (StringUtils.isNotBlank(sessionId)) {
-			return getLoginSession(sessionId);
-		} else if (createIfAbsent) {
-			UserSession session = UserSession.create();
+			session = getLoginSession(sessionId);
+		} 
+		if (createIfAbsent && session == null) {
+			session = UserSession.create();
+			if(sessionId != null &&isDevTestEnv) {
+				session.setSessionId(sessionId);
+			}
 			HttpServletRequest request = CurrentRuntimeContext.getRequest();
-			Cookie cookie = createSessionCookies(request, session.getSessionId(), cookieExpireIn);
+			Cookie cookie = createSessionCookies(request, session.getSessionId(), sessionExpireIn);
 			CurrentRuntimeContext.getResponse().addCookie(cookie);
 			//
 			storageLoginSession(session);
-
-			return session;
 		}
 
-		return null;
+		return session;
 
 	}
 
@@ -83,6 +90,7 @@ public class SecuritySessionManager {
 		String key = session.getSessionId();
 		storageManager.getCache(cacheName).setObject(key, session);
 		if (!session.isAnonymous()) {
+			session.setExpiredAt(System.currentTimeMillis() + sessionExpireIn * 1000);
 			key = String.format(SESSION_UID_CACHE_KEY, session.getUser().getId());
 			storageManager.getCache(cacheName).setString(key, session.getSessionId());
 		}

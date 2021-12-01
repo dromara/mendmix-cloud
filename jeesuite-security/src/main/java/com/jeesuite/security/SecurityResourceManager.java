@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -46,12 +47,12 @@ public class SecurityResourceManager {
 
 	public final static String WILDCARD_START = "{";
 
-	private List<String> authzUris = new ArrayList<>();
-	private List<Pattern> authzPatterns = new ArrayList<>();
-	private List<String> anonUris = new ArrayList<>();
-	private List<Pattern> anonUriPatterns = new ArrayList<>();
+	private AtomicReference<List<String>> authzUris = new AtomicReference<>();
+	private AtomicReference<List<Pattern>> authzPatterns = new AtomicReference<>();
+	private AtomicReference<List<String>> anonUris = new AtomicReference<>();
+	private AtomicReference<List<Pattern>> anonUriPatterns = new AtomicReference<>();
 	// 所有无通配符uri
-	private List<String> nonWildcardUris = new ArrayList<>();
+	private AtomicReference<List<String>> nonWildcardUris = new AtomicReference<>();
 
 	private SecurityDecisionProvider decisionProvider;
 
@@ -82,28 +83,25 @@ public class SecurityResourceManager {
 		}
 	}
 
-	public List<String> getAuthorizationUris() {
-		return authzUris;
-	}
 
 	public List<String> getAuthzUris() {
-		return authzUris;
+		return authzUris.get() == null ? new ArrayList<>(0) : authzUris.get();
 	}
 
 	public List<Pattern> getAuthzPatterns() {
-		return authzPatterns;
+		return authzPatterns.get() == null ? new ArrayList<>(0) : authzPatterns.get();
 	}
 
 	public List<String> getAnonUris() {
-		return anonUris;
+		return anonUris.get() == null ? new ArrayList<>(0) : anonUris.get();
 	}
 
 	public List<Pattern> getAnonUriPatterns() {
-		return anonUriPatterns;
+		return anonUriPatterns.get() == null ? new ArrayList<>(0) : anonUriPatterns.get();
 	}
 
 	public List<String> getNonWildcardUris() {
-		return nonWildcardUris;
+		return nonWildcardUris.get() == null ? new ArrayList<>(0) : nonWildcardUris.get();
 	}
 
 	
@@ -113,6 +111,13 @@ public class SecurityResourceManager {
 		List<ApiPermission> permissions = decisionProvider.getAllApiPermissions();
 		
 		if(permissions == null)return false;
+		
+		List<String> _authzUris = new ArrayList<>();
+		List<Pattern> _authzPatterns = new ArrayList<>();
+		List<String> _anonUris = new ArrayList<>();
+		List<Pattern> _anonUriPatterns = new ArrayList<>();
+		// 所有无通配符uri
+		List<String> _nonWildcardUris = new ArrayList<>();
 
 		boolean withWildcard;
 		String permissionKey;
@@ -121,30 +126,37 @@ public class SecurityResourceManager {
 			withWildcard = permission.getUri().contains(WILDCARD_START);
 			permissionKey = ApiPermssionCheckHelper.buildPermissionKey(permission.getHttpMethod(), permission.getUri());
 			if (!withWildcard) {
-				nonWildcardUris.add(permissionKey);
+				_nonWildcardUris.add(permissionKey);
 			}
 			if (PermissionLevel.PermissionRequired.name().equals(permission.getGrantType())) {
 				if (withWildcard) {
 					pattern = Pattern.compile(permissionKey.replaceAll("\\{[^/]+?\\}", ".+"));
-					authzPatterns.add(pattern);
+					_authzPatterns.add(pattern);
 				} else {
-					authzUris.add(permissionKey);
+					_authzUris.add(permissionKey);
 				}
 			} else if (PermissionLevel.Anonymous.name().equals(permission.getGrantType())) {
 				if (withWildcard) {
 					pattern = Pattern.compile(permissionKey.replaceAll("\\{[^/]+?\\}", ".+"));
-					anonUriPatterns.add(pattern);
+					_anonUriPatterns.add(pattern);
 				} else {
-					anonUris.add(permissionKey);
+					_anonUris.add(permissionKey);
 				}
 			}
 		}
+		
+		nonWildcardUris.set(_nonWildcardUris);
+		anonUris.set(_anonUris);
+		anonUriPatterns.set(_anonUriPatterns);
+		authzUris.set(_authzUris);
+		authzPatterns.set(_authzPatterns);
+		
 
-		log.info("nonWildcardUris:         {}", nonWildcardUris);
-		log.info("anonUris:                {}", anonUris);
-		log.info("anonUriPatterns:         {}", anonUriPatterns);
-		log.info("authzUris:               {}", authzUris);
-		log.info("authzPatterns:           {}", authzPatterns);
+		log.info("nonWildcardUris:         {}", getNonWildcardUris());
+		log.info("anonUris:                {}", getAnonUris());
+		log.info("anonUriPatterns:         {}", getAnonUriPatterns());
+		log.info("authzUris:               {}", getAuthzUris());
+		log.info("authzPatterns:           {}", getAuthzPatterns());
 		log.info("============load perssion data finish==============");
 
 		return true;

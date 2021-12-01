@@ -28,8 +28,14 @@ public class SelectAllBuilder  extends AbstractSelectMethodBuilder{
             {
                 SELECT("*");
                 FROM(tableMapper.getName());
+                WHERE("1=1");
             }
         }.toString();
+	}
+	
+	@Override
+	boolean scriptWrapper() {
+		return false;
 	}
 
 }

@@ -2,38 +2,15 @@ package com.jeesuite.springweb.base;
 
 import java.util.Map;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.client.RestTemplate;
-
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.async.AsyncInitializer;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.ApplicationStartedListener;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
-import com.jeesuite.springweb.ext.feign.CustomLoadBalancerFeignClient;
 import com.jeesuite.springweb.logging.LogProfileManager;
-
-import feign.Client;
 
 public class BaseApplicationStarter{
 
-	
-	@Bean("restTemplate")
-	@LoadBalanced
-	RestTemplate restTemplate() {
-		int readTimeout = ResourceUtils.getInt("restTemplate.readTimeout.ms", 30000);
-		return SimpleRestTemplateBuilder.build(readTimeout);
-	}
-	
-	@Bean
-	@ConditionalOnProperty(value = "feign.custom-loadbalance-mapping.enabled",havingValue = "true")
-	public Client feignClient(LoadBalancerClient loadBalancer) {
-		return new CustomLoadBalancerFeignClient(loadBalancer);
-	}
 
 	protected static long before() {
 		LogProfileManager.initialize();

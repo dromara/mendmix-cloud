@@ -35,5 +35,10 @@ public class SelectByPrimaryKeyBuilder extends AbstractSelectMethodBuilder{
 		   .WHERE(idColumn.getColumn() + "=#{" + idColumn.getProperty() + "}")
 		   .toString();
 	}
+	
+	@Override
+	boolean scriptWrapper() {
+		return false;
+	}
 
 }

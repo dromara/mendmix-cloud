@@ -5,8 +5,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.model.AuthUser;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 
 public class MockLoginUserInterceptor extends HandlerInterceptorAdapter {
 

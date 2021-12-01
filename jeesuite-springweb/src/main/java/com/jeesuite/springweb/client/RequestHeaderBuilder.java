@@ -2,12 +2,12 @@ package com.jeesuite.springweb.client;
 
 import java.util.Map;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 
 public class RequestHeaderBuilder {
 

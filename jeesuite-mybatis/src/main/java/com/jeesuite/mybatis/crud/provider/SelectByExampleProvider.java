@@ -4,9 +4,10 @@ import java.util.Set;
 
 import org.apache.ibatis.jdbc.SQL;
 
+import com.jeesuite.mybatis.crud.builder.AbstractExpressBuilder;
 import com.jeesuite.mybatis.metadata.ColumnMetadata;
-import com.jeesuite.mybatis.metadata.MetadataHelper;
 import com.jeesuite.mybatis.metadata.EntityMetadata;
+import com.jeesuite.mybatis.metadata.MetadataHelper;
 
 /**
  * 
@@ -17,7 +18,7 @@ import com.jeesuite.mybatis.metadata.EntityMetadata;
  * @version 1.0.0
  * @date 2020年5月11日
  */
-public class SelectByExampleProvider extends AbstractExampleProvider{
+public class SelectByExampleProvider extends AbstractExpressBuilder{
 
 	public String selectByExample(Object example) throws Exception {
 		EntityMetadata entityMapper = MetadataHelper.getEntityMapper(example.getClass());

@@ -33,6 +33,9 @@ public class UserEntity extends StandardBaseEntity {
     
     @Version
     private int version;
+
+    @Column(name = "is_deleted")
+    private Boolean deleted;
     
 
     @Transient
@@ -156,6 +159,15 @@ public class UserEntity extends StandardBaseEntity {
 	public void setVersion(int version) {
 		this.version = version;
 	}
+
+	public Boolean getDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(Boolean deleted) {
+		this.deleted = deleted;
+	}
     
+	
     
 }

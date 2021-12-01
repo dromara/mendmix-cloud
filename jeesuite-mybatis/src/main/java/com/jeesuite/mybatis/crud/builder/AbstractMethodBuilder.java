@@ -9,9 +9,9 @@ import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
-import com.jeesuite.mybatis.metadata.MetadataHelper;
-import com.jeesuite.mybatis.metadata.MapperMetadata;
+import com.jeesuite.mybatis.crud.SqlTemplate;
 import com.jeesuite.mybatis.metadata.EntityMetadata;
+import com.jeesuite.mybatis.metadata.MapperMetadata;
 
 /**
  * 
@@ -22,19 +22,23 @@ import com.jeesuite.mybatis.metadata.EntityMetadata;
  * @version 1.0.0
  * @date 2020年5月9日
  */
-public abstract class AbstractMethodBuilder {
+public abstract class AbstractMethodBuilder extends AbstractExpressBuilder {
 	
-	public void build(Configuration configuration, LanguageDriver languageDriver,MapperMetadata entity) {
+	public void build(Configuration configuration, LanguageDriver languageDriver,MapperMetadata mapperMeta) {
 		
 		for (String name : methodNames()) {			
-			String msId = entity.getMapperClass().getName() + "." + name;
+			String msId = mapperMeta.getMapperClass().getName() + "." + name;
 			
 			// 从参数对象里提取注解信息
-			EntityMetadata entityMapper = MetadataHelper.getEntityMapper(entity.getEntityClass());
+			EntityMetadata entityMapper = mapperMeta.getEntityMetadata();
 			// 生成sql
 			String sql = buildSQL(entityMapper,name.endsWith("Selective"));
 			
-			SqlSource sqlSource = languageDriver.createSqlSource(configuration, sql, entity.getEntityClass());
+			if(scriptWrapper()) {
+				sql = String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
+			}
+			
+			SqlSource sqlSource = languageDriver.createSqlSource(configuration, sql, mapperMeta.getEntityClass());
 			
 			MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, msId, sqlSource,sqlCommandType());
 			
@@ -48,7 +52,7 @@ public abstract class AbstractMethodBuilder {
 			
 			MappedStatement statement = statementBuilder.build();
 			//
-			setResultType(configuration, statement, entity.getEntityClass());
+			setResultType(configuration, statement, mapperMeta.getEntityClass());
 			configuration.addMappedStatement(statement);
 		}
 		
@@ -56,7 +60,8 @@ public abstract class AbstractMethodBuilder {
 
 	abstract SqlCommandType sqlCommandType();
 	abstract String[] methodNames();
-	abstract String buildSQL(EntityMetadata entityMapper,boolean selective);
+	abstract String buildSQL(EntityMetadata entity,boolean selective);
+	abstract boolean scriptWrapper();
 	abstract void setResultType(Configuration configuration, MappedStatement statement,Class<?> entityClass);
 	
 }

@@ -20,15 +20,15 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.constants.PermissionLevel;
+import com.jeesuite.common.exception.ForbiddenAccessException;
+import com.jeesuite.common.exception.UnauthorizedException;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.security.model.AccessToken;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.springweb.CurrentRuntimeContext;
-import com.jeesuite.springweb.exception.ForbiddenAccessException;
-import com.jeesuite.springweb.exception.UnauthorizedException;
 
 /**
  * @description <br>
@@ -149,10 +149,12 @@ public class SecurityDelegating {
 			}
 		}
 		//
-		CurrentRuntimeContext.setAuthUser(session.getUser());
-		
-		if(StringUtils.isNotBlank(session.getTenantId())) {
-			CurrentRuntimeContext.setTenantId(session.getTenantId());
+		if(session != null) {
+			CurrentRuntimeContext.setAuthUser(session.getUser());
+			
+			if(StringUtils.isNotBlank(session.getTenantId())) {
+				CurrentRuntimeContext.setTenantId(session.getTenantId());
+			}
 		}
 		
 		return session;

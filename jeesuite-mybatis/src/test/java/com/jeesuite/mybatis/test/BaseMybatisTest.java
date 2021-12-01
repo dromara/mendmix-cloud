@@ -107,7 +107,8 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	}
 	
 	@Test
-	public void testSelectByPrimaryKeys(){
+	public void testSelectByPrimaryKey(){
+		userMapper.selectByPrimaryKey(1);
 		List<UserEntity> list = userMapper.selectByPrimaryKeys(Arrays.asList(4,5,6));
 		System.out.println(list.size());
 	}

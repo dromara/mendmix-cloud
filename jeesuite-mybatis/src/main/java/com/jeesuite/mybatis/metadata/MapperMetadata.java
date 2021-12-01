@@ -38,6 +38,8 @@ public class MapperMetadata {
 	private static final Logger log = LoggerFactory.getLogger(MapperMetadata.class);
 
 	private static List<String> queryMethodPrefixs = Arrays.asList("select","query","get","list","find");
+	private String group;
+	
 	private String tableName;
 	
 	private Class<?> entityClass;
@@ -123,6 +125,15 @@ public class MapperMetadata {
 				}
 			} catch (Exception e1) {}
 		}
+	}
+
+	
+	public String getGroup() {
+		return group;
+	}
+
+	public void setGroup(String group) {
+		this.group = group;
 	}
 
 	public String getTableName() {

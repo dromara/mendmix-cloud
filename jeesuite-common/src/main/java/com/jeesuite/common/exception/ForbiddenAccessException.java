@@ -1,4 +1,4 @@
-package com.jeesuite.springweb.exception;
+package com.jeesuite.common.exception;
 
 import com.jeesuite.common.JeesuiteBaseException;
 

@@ -11,6 +11,7 @@ import org.apache.logging.log4j.ThreadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
@@ -22,7 +23,6 @@ import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 
 
 /**

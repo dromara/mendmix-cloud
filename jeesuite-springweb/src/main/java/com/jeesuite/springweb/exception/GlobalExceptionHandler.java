@@ -1,4 +1,4 @@
-package com.jeesuite.springweb.support;
+package com.jeesuite.springweb.exception;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.springweb.CurrentRuntimeContext;
 import com.jeesuite.springweb.logging.RequestLogCollector;
 import com.jeesuite.springweb.model.WrapperResponseEntity;
 

@@ -45,6 +45,7 @@ public class GeneralSqlGenerator {
 		if(languageDriver == null)languageDriver = configuration.getDefaultScriptingLanguageInstance();
 		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(group);
 		for (MapperMetadata entity : mappers) {
+			entity.setGroup(group);
 			new InsertBuilder().build(configuration, languageDriver,entity);
 			new InsertListBuilder().build(configuration,languageDriver, entity);
 			new DeleteByPrimaryKeyBuilder().build(configuration,languageDriver, entity);
