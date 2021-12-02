@@ -60,14 +60,12 @@
 
 	<modules>
 		<module>jeesuite-common</module>
-		<!-- <module>jeesuite-kafka</module> -->
 		<module>jeesuite-spring</module>
 		<module>jeesuite-cache</module>
 		<module>jeesuite-scheduler</module>
 		<module>jeesuite-mybatis</module>
 		<!-- <module>jeesuite-rest</module> -->
 		<module>jeesuite-common2</module>
-		<!-- <module>jeesuite-filesystem</module> -->
 		<module>jeesuite-springboot-starter</module>
 		<module>jeesuite-springweb</module>
 		<!-- <module>jeesuite-search</module> -->
@@ -75,7 +73,8 @@
 		<module>jeesuite-security</module>
 		<module>jeesuite-log</module>
 		<module>jeesuite-zuul-support</module>
-		<!-- <module>jeesuite-mongodb</module> -->
+		<module>jeesuite-amqp-adapter</module> 
+		<module>jeesuite-cos-adapter</module> 
 	</modules>
 
 	<dependencies>
