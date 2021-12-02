@@ -154,15 +154,13 @@ public class JdkHttpClient implements HttpClientProvider {
 			String name = entry.getKey();
 			String value = Objects.toString(entry.getValue(), null);
 			// 忽略参数名或参数值为空的参数
-			if (StringUtils.isAnyEmpty(name, value)) {
-				if (hasParam) {
-					query.append("&");
-				} else {
-					hasParam = true;
-				}
-
-				query.append(name).append("=").append(URLEncoder.encode(value, charset));
+			if (StringUtils.isAnyEmpty(name, value))continue;
+			if (hasParam) {
+			   query.append("&");
+			} else {
+			   hasParam = true;
 			}
+                        query.append(name).append("=").append(URLEncoder.encode(value, charset));
 		}
 
 		return query.toString();
