@@ -15,22 +15,23 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.update.Update;
 
 /**
- * mybatis SQL重写工具
+ * mybatis SQL工具
  * 
  * <br>
- * Class Name   : MybatisSqlRewriteUtils
+ * Class Name   : MybatisSqlUtils
  *
  * @author jiangwei
  * @version 1.0.0
  * @date Dec 23, 2020
  */
-public class MybatisSqlRewriteUtils {
+public class MybatisSqlUtils {
 	
 	private static String mybatisWhereExprEnd = "</where>";
 	public static String sqlWherePatternString = "(<|\\s+)WHERE|where(>|\\s+)";
@@ -160,9 +161,34 @@ public class MybatisSqlRewriteUtils {
 		
 	}
 	
+	public static List<String> parseSqlUseTables(String sql){
+		List<String> tables = new ArrayList<>(3);
+		try {
+			String cleanSql = sql.replace("<where>", " where ").replace("<WHERE>", " WHERE ");
+			cleanSql = StringUtils.replacePattern(cleanSql, "<.*>"," ");
+			cleanSql = StringUtils.replacePattern(cleanSql, "(\\$|\\#){1}.*\\}", "1").trim();
+			if(cleanSql.toLowerCase().endsWith(" where")) {
+				cleanSql = cleanSql.substring(0,cleanSql.length() - 5).trim();
+			}
+			Select select = (Select) CCJSqlParserUtil.parse(cleanSql);
+			PlainSelect selectBody = (PlainSelect) select.getSelectBody();
+			Table table = (Table) selectBody.getFromItem();
+			tables.add(table.getName().toLowerCase());
+			List<Join> joins = selectBody.getJoins();
+			if (joins != null) {
+				for (Join join : joins) {
+					table = (Table) join.getRightItem();
+					tables.add(table.getName().toLowerCase());
+				}
+			}
+		} catch (Exception e) {}
+		
+		return tables;
+	}
+	
 	public static void main(String[] args) throws SQLException {
-		String sql = "update users set type = #{type},updated_at = now()     	 <where>    <if test=\"name != null\">          AND name = #{name}      </if>    <if test=\"mobile != null\">          AND mobile = #{mobile}      </if></where>";
-		sql = toSelectPkFieldSql(SqlCommandType.UPDATE, sql, "id");
-		System.out.println(sql);
+		String sql = "select * from users 	 <where>    <if test=\"name != null\">          AND name = #{name}      </if>    <if test=\"mobile != null\">          AND mobile = #{mobile}      </if></where>";
+		
+		System.out.println(parseSqlUseTables(sql));
 	}
 }

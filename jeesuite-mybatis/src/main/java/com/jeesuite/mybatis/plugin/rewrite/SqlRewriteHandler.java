@@ -26,9 +26,9 @@ import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
+import com.jeesuite.mybatis.crud.CrudMethods;
 import com.jeesuite.mybatis.metadata.ColumnMetadata;
 import com.jeesuite.mybatis.metadata.MapperMetadata;
-import com.jeesuite.mybatis.metadata.MetadataHelper;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
@@ -67,37 +67,72 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	
 	private Map<String, Map<String,String>> dataProfileMappings = new HashMap<>();
 	
+	private List<String> softDeleteMappedStatements = new ArrayList<>();
+	private String softDeleteColumn;
+	private String softDeleteFalseValue;
+	
 	private boolean isFieldSharddingTenant;
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
 	
 		isFieldSharddingTenant = MybatisConfigs.isFieldSharddingTenant(context.getGroupName());
+		softDeleteColumn = MybatisConfigs.getSoftDeleteColumn(context.getGroupName());
+		softDeleteFalseValue = MybatisConfigs.getSoftDeletedFalseValue(context.getGroupName());
 		
 		Properties properties = ResourceUtils.getAllProperties("jeesuite.mybatis.dataPermission.mappings");
 		properties.forEach( (k,v) -> {
 			String tableName = k.toString().substring(k.toString().indexOf("[") + 1).replace("]", "").trim();
-			buildTableDataProfileMapping(tableName, v.toString());
+			buildTableDataPermissionMapping(tableName, v.toString());
 		} );
 		
 		final List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
+		//软删除
+		if(softDeleteColumn != null) {
+			List<String> softDeleteTables = new ArrayList<>();
+			for (MapperMetadata mapper : mappers) {
+				if(!mapper.getEntityMetadata().getColumns().stream().anyMatch(o -> o.getColumn().equals(softDeleteColumn))) {
+					continue;
+				}
+				softDeleteTables.add(mapper.getTableName());
+				dataProfileMappings.get(mapper.getTableName()).put(softDeleteColumn, softDeleteColumn);
+			}
+			//
+			for (MapperMetadata mapper : mappers) {
+				if(softDeleteTables.contains(mapper.getTableName().toLowerCase())) {
+					softDeleteMappedStatements.add(mapper.getMapperClass().getName());
+				}else {
+					Set<String> querys = mapper.getQueryTableMappings().keySet();
+					List<String> tables;
+					for (String query : querys) {
+						tables = mapper.getQueryTableMappings().get(query);
+						for (String table : tables) {
+							if(softDeleteTables.contains(table)) {
+								softDeleteMappedStatements.add(query);
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
 		//字段隔离租户模式
 		if (isFieldSharddingTenant) {
 			String tenantField = MybatisConfigs.getTenantSharddingField(context.getGroupName());
 
 			ColumnMetadata tenantColumn;
-			for (MapperMetadata e : mappers) {
-				tenantColumn = MetadataHelper.getTableColumnMappers(e.getTableName()).stream().filter(o -> {
+			for (MapperMetadata mapper : mappers) {
+				tenantColumn = mapper.getEntityMetadata().getColumns().stream().filter(o -> {
 					return o.getColumn().equals(tenantField) || o.getProperty().equals(tenantField);
 				}).findFirst().orElse(null);
 
 				if (tenantColumn == null)
 					continue;
 
-				if (!dataProfileMappings.containsKey(e.getTableName())) {
-					dataProfileMappings.put(e.getTableName(), new HashMap<>());
+				if (!dataProfileMappings.containsKey(mapper.getTableName())) {
+					dataProfileMappings.put(mapper.getTableName(), new HashMap<>());
 				}
-				dataProfileMappings.get(e.getTableName()).put(TENANT_ID, tenantColumn.getColumn());
+				dataProfileMappings.get(mapper.getTableName()).put(TENANT_ID, tenantColumn.getColumn());
 			}
 		}
 		
@@ -107,6 +142,9 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	@Override
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		if(!invocation.isSelect())return null;
+		if(invocation.getMappedStatement().getId().endsWith(CrudMethods.selectByPrimaryKey.name())) {
+			return null;
+		}
 		Map<String, String[]> dataMappings = MybatisRuntimeContext.getDataProfileMappings();
 		//
 		rewriteSql(invocation, dataMappings);
@@ -121,8 +159,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			Class<?> returnType = entityInfo.getMapperMethod(methodName).getMethod().getReturnType();
 			if(returnType == int.class || returnType == Integer.class|| returnType == long.class|| returnType == Long.class) {
 				list.add(0);
-			}
-			
+			}	
 			return list;
 		}else {
 			Executor executor = invocation.getExecutor();
@@ -178,7 +215,12 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			dataMapping.put(TENANT_ID, new String[] {currentTenantId});
 		}
 		
-		if(dataMapping == null && currentTenantId == null) {
+		boolean softDelete = softDeleteMappedStatements.contains(invocation.getMapperNameSpace()) 
+				|| softDeleteMappedStatements.contains(invocation.getMappedStatement().getId());
+		if(softDelete) {
+			dataMapping.put(softDeleteColumn, new String[] {softDeleteFalseValue});
+		}
+		if(!softDelete && dataMapping == null && currentTenantId == null) {
 			if(pageParam == null || (pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty())) {
 				return;
 			}
@@ -188,7 +230,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		try {
 			select = (Select) CCJSqlParserUtil.parse(orignSql);
 		} catch (JSQLParserException e) {
-			logger.error("rebuildDataProfileSql_ERROR",e);
+			logger.error("rebuildDataPermissionSql_ERROR",e);
 			throw new RuntimeException("sql解析错误");
 		}
 		
@@ -210,7 +252,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 					invocation.setRewriteSql(null);
 					return;
 				}
-				newExpression = appendDataProfileCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),values);
+				newExpression = appendDataPermissionCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),values);
 				selectBody.setWhere(newExpression);
 				//TODO 主表已经处理的条件，join表不在处理
 			}
@@ -232,7 +274,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 							return;
 						}
 						//左右连接加在ON 无法过滤
-						newExpression = appendDataProfileCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),values);
+						newExpression = appendDataPermissionCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),values);
 						selectBody.setWhere(newExpression);
 					}
 				}
@@ -261,7 +303,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	}
 	
 	
-	private static Expression appendDataProfileCondition(Table table,Expression orginExpression,String columnName,String[] values){
+	private static Expression appendDataPermissionCondition(Table table,Expression orginExpression,String columnName,String[] values){
 		Expression newExpression = null;
 		Column column = new Column(table, columnName);
 		if (values.length == 1) {
@@ -283,7 +325,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	
 	
 	
-	private void buildTableDataProfileMapping(String tableName,String ruleString) {
+	private void buildTableDataPermissionMapping(String tableName,String ruleString) {
 		dataProfileMappings.put(tableName, new HashMap<>());
 		String[] rules = ruleString.split(",|;");
 		String[] tmpArr;

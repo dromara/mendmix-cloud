@@ -92,6 +92,9 @@ public class MybatisMapperParser {
 		}
 		
 		List<MapperMetadata> list = entityInfos.values().stream().filter(e -> e.getEntityClass() != null).collect(Collectors.toList());
+		for (MapperMetadata mapperMetadata : list) {
+			mapperMetadata.setGroup(group);
+		}
 		entitiesGroupMap.put(group, list);
 		log.info(">parse group[{}] finish,size:{}", group, entityInfos.size());
 

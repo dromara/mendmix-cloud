@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
+import com.jeesuite.mybatis.kit.MybatisSqlUtils;
 
 /**
  * @description <br>
@@ -38,6 +39,7 @@ public class MapperMetadata {
 	private static final Logger log = LoggerFactory.getLogger(MapperMetadata.class);
 
 	private static List<String> queryMethodPrefixs = Arrays.asList("select","query","get","list","find");
+	
 	private String group;
 	
 	private String tableName;
@@ -49,6 +51,8 @@ public class MapperMetadata {
 	private EntityMetadata entityMetadata;
 	
 	private Map<String, String> mapperSqls = new HashMap<>();
+	
+	private Map<String, List<String>> queryTableMappings = new HashMap<>();
 
 	
 	private Map<String,MapperMethod> mapperMethods = new HashMap<>();
@@ -169,6 +173,10 @@ public class MapperMetadata {
 				break;
 			}
 		}
+		//
+		if(SqlCommandType.SELECT.name().equals(method.toUpperCase())) {
+			queryTableMappings.put(fullName, MybatisSqlUtils.parseSqlUseTables(sql));
+		}
 	}
 
 	public Map<String, String> getMapperSqls() {
@@ -185,6 +193,14 @@ public class MapperMetadata {
 	
 	public EntityMetadata getEntityMetadata() {
 		return entityMetadata;
+	}
+	
+	public Map<String, List<String>> getQueryTableMappings() {
+		return queryTableMappings;
+	}
+
+	public List<String> getUseTableNames(String msId){
+		return queryTableMappings.get(msId);
 	}
 
 	private static void parseAllMethod(Class<?> clazz,List<Method> methods) {

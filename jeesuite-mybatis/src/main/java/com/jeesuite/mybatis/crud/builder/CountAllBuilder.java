@@ -40,7 +40,7 @@ public class CountAllBuilder  extends AbstractMethodBuilder{
 	@Override
 	String buildSQL(EntityMetadata entityMapper, boolean selective) {
 		TableMetadata tableMapper = entityMapper.getTable();
-		return new SQL().SELECT("COUNT(1)").FROM(tableMapper.getName()).WHERE("1=1").toString();
+		return new SQL().SELECT("COUNT(1)").FROM(tableMapper.getName()).toString();
 	}
 
 	@Override

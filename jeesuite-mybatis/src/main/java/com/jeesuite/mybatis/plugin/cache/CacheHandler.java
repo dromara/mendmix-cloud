@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.GlobalConstants;
+import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.DigestUtils;
@@ -45,8 +46,8 @@ import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.crud.CrudMethods;
 import com.jeesuite.mybatis.exception.MybatisHanlerInitException;
 import com.jeesuite.mybatis.kit.CacheKeyUtils;
-import com.jeesuite.mybatis.kit.MybatisSqlRewriteUtils;
-import com.jeesuite.mybatis.kit.MybatisSqlRewriteUtils.SqlMetadata;
+import com.jeesuite.mybatis.kit.MybatisSqlUtils;
+import com.jeesuite.mybatis.kit.MybatisSqlUtils.SqlMetadata;
 import com.jeesuite.mybatis.metadata.ColumnMetadata;
 import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.metadata.MapperMetadata.MapperMethod;
@@ -154,7 +155,6 @@ public class CacheHandler implements InterceptorHandler {
 		}
 		
 		defaultCacheExpire = Long.parseLong(MybatisConfigs.getProperty(context.getGroupName(), MybatisConfigs.CACHE_EXPIRE_SECONDS, "0"));
-		logger.info("nullValueCache:{},defaultCacheExpireSeconds:{}",nullValueCache,defaultCacheExpire);
 
 		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		
@@ -343,7 +343,7 @@ public class CacheHandler implements InterceptorHandler {
 						BoundSql boundSql = mt.getBoundSql(parameter);
 						String orignSql = boundSql.getSql();
 						ColumnMetadata idColumn = mapperMeta.getEntityMetadata().getIdColumn();
-						SqlMetadata sqlMetadata = MybatisSqlRewriteUtils.rewriteAsSelectPkField(orignSql, idColumn.getColumn());
+						SqlMetadata sqlMetadata = MybatisSqlUtils.rewriteAsSelectPkField(orignSql, idColumn.getColumn());
 						//
 						String tenantId = MybatisRuntimeContext.getCurrentTenant();
 						cleanCacheExecutor.execute(new Runnable() {
@@ -459,7 +459,6 @@ public class CacheHandler implements InterceptorHandler {
 		}
 	}
 	
-	@SuppressWarnings("rawtypes")
 	private void parseDyncQueryParameters(BoundSql boundSql,SqlMetadata sqlMetadata) throws Exception {
 		List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
 		Object parameterObject = boundSql.getParameterObject();
