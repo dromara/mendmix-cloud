@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 
 /**
  * 

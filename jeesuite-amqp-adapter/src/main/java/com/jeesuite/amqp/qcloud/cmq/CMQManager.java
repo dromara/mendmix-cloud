@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.amqp.MQContext;
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.qcloud.cmq.Account;
 import com.qcloud.cmq.Queue;

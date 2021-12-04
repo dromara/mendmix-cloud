@@ -20,6 +20,8 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedAt;
 import com.jeesuite.mybatis.plugin.autofield.annotation.CreatedBy;
@@ -170,18 +172,18 @@ public class MetadataHelper {
         String tableName = null;
         if (entityClass.isAnnotationPresent(Table.class)) {
             Table table = entityClass.getAnnotation(Table.class);
-            if (!table.name().equals("")) {
+            if (StringUtils.isNotBlank(table.name())) {
                 tableName = table.name();
             } else {
                 tableName = camelhumpToUnderline(entityClass.getSimpleName());
             }
         }
 
-        if (tableName == null || tableName.equals("")) {
+        if (StringUtils.isBlank(tableName)) {
             throw new RuntimeException("实体" + entityClass.getName() + "不存在'Table'注解");
         }
 
-        tableMapper.setName(tableName);
+        tableMapper.setName(tableName.toLowerCase());
         return tableMapper;
     }
 
@@ -257,6 +259,6 @@ public class MetadataHelper {
     }
     
     public static Field getEntityField(String tableName,String fieldName){
-    	return entityFieldMappings.get(tableName).get(fieldName);
+    	return entityFieldMappings.get(tableName.toLowerCase()).get(fieldName);
     }
 }

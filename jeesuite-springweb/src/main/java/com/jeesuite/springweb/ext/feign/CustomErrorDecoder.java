@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.google.common.io.CharStreams;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 
 import feign.Response;
 import feign.codec.ErrorDecoder;

@@ -12,9 +12,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.jeesuite.common.http.HttpUtils;
-import com.jeesuite.common.json.JsonUtils;
-
 public class IpUtils {
 
 	public static final String HEADER_FROWARDED_FOR = "x-forwarded-for";

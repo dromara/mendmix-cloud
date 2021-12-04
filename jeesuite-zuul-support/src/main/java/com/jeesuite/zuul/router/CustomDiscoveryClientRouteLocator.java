@@ -9,13 +9,18 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.netflix.zuul.filters.ZuulProperties;
 import org.springframework.cloud.netflix.zuul.filters.ZuulProperties.ZuulRoute;
 import org.springframework.cloud.netflix.zuul.filters.discovery.DiscoveryClientRouteLocator;
 import org.springframework.cloud.netflix.zuul.filters.discovery.ServiceRouteMapper;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
+import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.spring.SpringInstanceProvider;
 import com.jeesuite.zuul.CurrentSystemHolder;
 import com.jeesuite.zuul.model.BizSystemModule;
 
@@ -28,7 +33,7 @@ import com.jeesuite.zuul.model.BizSystemModule;
  * @version 1.0.0
  * @date 2019年9月29日
  */
-public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocator {
+public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocator implements ApplicationContextAware{
 
 	private final static Logger logger = LoggerFactory.getLogger(CustomDiscoveryClientRouteLocator.class);
 	
@@ -43,6 +48,10 @@ public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocat
 		this.properties = properties;
 	}
 
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
+	}
 
 	@Override
 	protected LinkedHashMap<String, ZuulRoute> locateRoutes() {

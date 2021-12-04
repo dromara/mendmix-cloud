@@ -3,7 +3,7 @@ package com.jeesuite.springweb.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 
 /**
  * 

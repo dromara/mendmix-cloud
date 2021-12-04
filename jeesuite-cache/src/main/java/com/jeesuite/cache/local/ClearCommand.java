@@ -9,7 +9,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 
 /**
  * @description <br>

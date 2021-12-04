@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.common.io.CharStreams;
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.scheduler.JobContext;
 import com.jeesuite.scheduler.model.JobConfig;

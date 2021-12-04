@@ -9,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.jeesuite.common.ThreadLocalContext;
-import com.jeesuite.common.http.HttpUtils;
-import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.BeanUtils;
+import com.jeesuite.common.util.HttpUtils;
+import com.jeesuite.common.util.JsonUtils;
 
 /**
  * 

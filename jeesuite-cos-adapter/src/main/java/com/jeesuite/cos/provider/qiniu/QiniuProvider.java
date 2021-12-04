@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.cos.BucketConfig;
 import com.jeesuite.cos.CObjectMetadata;
 import com.jeesuite.cos.CUploadObject;

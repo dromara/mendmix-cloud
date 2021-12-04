@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.cache.redis.JedisProviderFactory;
-import com.jeesuite.common.serializer.SerializeUtils;
+import com.jeesuite.common.util.SerializeUtils;
 
 import redis.clients.jedis.util.SafeEncoder;
 

@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.jeesuite.cache.CacheExpires;
 import com.jeesuite.cache.redis.JedisProviderFactory;
 import com.jeesuite.common.ThreadLocalContext;
-import com.jeesuite.common.serializer.SerializeUtils;
+import com.jeesuite.common.util.SerializeUtils;
 
 import redis.clients.jedis.util.SafeEncoder;
 

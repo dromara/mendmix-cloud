@@ -11,7 +11,7 @@ import org.springframework.web.client.DefaultResponseErrorHandler;
 
 import com.google.common.io.CharStreams;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 
 /**
  * 全局错误处理hanlder

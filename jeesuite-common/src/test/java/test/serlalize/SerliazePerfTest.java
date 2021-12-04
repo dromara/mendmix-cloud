@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.serializer.JavaSerializer;
-import com.jeesuite.common.serializer.SerializeUtils;
+import com.jeesuite.common.util.JsonUtils;
+import com.jeesuite.common.util.SerializeUtils;
 
 import test.User;
 

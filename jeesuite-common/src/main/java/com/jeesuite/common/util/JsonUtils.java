@@ -1,4 +1,4 @@
-package com.jeesuite.common.json;
+package com.jeesuite.common.util;
 
 import java.util.List;
 import java.util.Map;
@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jeesuite.common.json.JsonMapper;
 
 public class JsonUtils {
 	

@@ -7,7 +7,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
-import com.jeesuite.common.http.HttpUtils;
+import com.jeesuite.common.util.HttpUtils;
 import com.jeesuite.cos.BucketConfig;
 import com.jeesuite.cos.CosProvider;
 import com.jeesuite.cos.CosProviderConfig;

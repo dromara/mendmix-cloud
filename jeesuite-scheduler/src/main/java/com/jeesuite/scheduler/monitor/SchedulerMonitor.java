@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.AsyncEventBus;
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.scheduler.JobContext;
 import com.jeesuite.scheduler.model.JobConfig;
 import com.jeesuite.scheduler.model.JobGroupInfo;

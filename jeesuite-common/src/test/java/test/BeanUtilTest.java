@@ -1,7 +1,7 @@
 package test;
 
-import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.BeanUtils;
+import com.jeesuite.common.util.JsonUtils;
 
 public class BeanUtilTest {
 

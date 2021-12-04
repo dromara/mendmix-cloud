@@ -160,7 +160,7 @@ public class JdkHttpClient implements HttpClientProvider {
 			} else {
 			   hasParam = true;
 			}
-                        query.append(name).append("=").append(URLEncoder.encode(value, charset));
+            query.append(name).append("=").append(URLEncoder.encode(value, charset));
 		}
 
 		return query.toString();

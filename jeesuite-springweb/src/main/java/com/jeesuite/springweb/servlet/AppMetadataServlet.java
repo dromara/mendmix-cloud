@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.springweb.AppMetadataHolder;
 import com.jeesuite.springweb.model.WrapperResponse;

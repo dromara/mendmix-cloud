@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.http.HttpMethod;
-import com.jeesuite.common.json.JsonUtils;
 
 
 public class WebUtils {

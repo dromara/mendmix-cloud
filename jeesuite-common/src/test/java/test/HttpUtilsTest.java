@@ -3,7 +3,7 @@ package test;
 import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.http.HttpRequestEntity;
 import com.jeesuite.common.http.HttpResponseEntity;
-import com.jeesuite.common.http.HttpUtils;
+import com.jeesuite.common.util.HttpUtils;
 import com.jeesuite.common.util.ResourceUtils;
 
 public class HttpUtilsTest {

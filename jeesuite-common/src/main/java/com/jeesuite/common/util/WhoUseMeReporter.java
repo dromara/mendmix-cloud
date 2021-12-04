@@ -1,7 +1,5 @@
 package com.jeesuite.common.util;
 
-import com.jeesuite.common.http.HttpUtils;
-
 /**
  * 这个一个上报工具：仅仅是为了知道谁在用我们
  * @description <br>

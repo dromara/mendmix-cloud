@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.scheduler.JobContext;
 import com.jeesuite.scheduler.model.JobConfig;

@@ -1,6 +1,8 @@
-package com.jeesuite.common.serializer;
+package com.jeesuite.common.util;
 
 import java.io.IOException;
+
+import com.jeesuite.common.serializer.KryoPoolSerializer;
 
 /**
  * @description <br>

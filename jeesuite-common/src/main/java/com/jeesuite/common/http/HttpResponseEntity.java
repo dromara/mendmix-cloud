@@ -2,8 +2,6 @@ package com.jeesuite.common.http;
 
 import java.net.HttpURLConnection;
 
-import com.jeesuite.common.json.JsonUtils;
-
 /**
  * 
  * 

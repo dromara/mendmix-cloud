@@ -17,8 +17,8 @@ import com.alibaba.fastjson.TypeReference;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.json.JsonUtils;
 import com.jeesuite.common.util.BeanUtils;
+import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ParameterUtils;
 import com.jeesuite.common.util.ResourceUtils;
 

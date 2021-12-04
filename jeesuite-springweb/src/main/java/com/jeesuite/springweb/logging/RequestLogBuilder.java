@@ -2,7 +2,7 @@ package com.jeesuite.springweb.logging;
 
 import java.util.Arrays;
 
-import com.jeesuite.common.json.JsonUtils;
+import com.jeesuite.common.util.JsonUtils;
 
 public class RequestLogBuilder {
 

@@ -67,7 +67,7 @@ public class MapperMetadata {
 			if(entityClass == null)return;
 
 			if(entityClass.isAnnotationPresent(Table.class)){
-				this.tableName = entityClass.getAnnotation(Table.class).name();
+				this.tableName = entityClass.getAnnotation(Table.class).name().toLowerCase();
 			}else{
 				return;
 			}

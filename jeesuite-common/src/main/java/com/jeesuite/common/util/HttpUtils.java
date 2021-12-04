@@ -1,4 +1,4 @@
-package com.jeesuite.common.http;
+package com.jeesuite.common.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,7 +8,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.http.ApacheHttpClient;
+import com.jeesuite.common.http.HttpClientProvider;
+import com.jeesuite.common.http.HttpMethod;
+import com.jeesuite.common.http.HttpRequestEntity;
+import com.jeesuite.common.http.HttpResponseEntity;
+import com.jeesuite.common.http.JdkHttpClient;
+import com.jeesuite.common.http.OkHttp3Client;
 
 
 /**
