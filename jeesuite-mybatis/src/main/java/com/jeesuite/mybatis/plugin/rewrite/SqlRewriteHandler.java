@@ -95,6 +95,9 @@ public class SqlRewriteHandler implements InterceptorHandler {
 					continue;
 				}
 				softDeleteTables.add(mapper.getTableName());
+				if(!dataProfileMappings.containsKey(mapper.getTableName())) {
+					dataProfileMappings.put(mapper.getTableName(), new HashMap<>());
+				}
 				dataProfileMappings.get(mapper.getTableName()).put(softDeleteColumn, softDeleteColumn);
 			}
 			//
@@ -218,6 +221,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		boolean softDelete = softDeleteMappedStatements.contains(invocation.getMapperNameSpace()) 
 				|| softDeleteMappedStatements.contains(invocation.getMappedStatement().getId());
 		if(softDelete) {
+			if(dataMapping == null)dataMapping = new HashMap<>(1);
 			dataMapping.put(softDeleteColumn, new String[] {softDeleteFalseValue});
 		}
 		if(!softDelete && dataMapping == null && currentTenantId == null) {
@@ -303,14 +307,22 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	}
 	
 	
-	private static Expression appendDataPermissionCondition(Table table,Expression orginExpression,String columnName,String[] values){
+	private  Expression appendDataPermissionCondition(Table table,Expression orginExpression,String columnName,String[] values){
 		Expression newExpression = null;
 		Column column = new Column(table, columnName);
 		if (values.length == 1) {
 			EqualsTo equalsTo = new EqualsTo();
 			equalsTo.setLeftExpression(column);
 			equalsTo.setRightExpression(new StringValue(values[0]));
-			newExpression = orginExpression == null ? equalsTo : new AndExpression(equalsTo,orginExpression);
+			if(orginExpression == null) {
+				newExpression = equalsTo;
+			}else {
+				if(columnName.equalsIgnoreCase(softDeleteColumn)) {
+					newExpression = new AndExpression(orginExpression,equalsTo);
+				}else {
+					newExpression = new AndExpression(equalsTo,orginExpression);
+				}
+			}
 		} else {
 			ExpressionList expressionList = new ExpressionList(new ArrayList<>(values.length));
 			for (String value : values) {
