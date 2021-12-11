@@ -1,13 +1,12 @@
 package com.jeesuite.common.model;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -18,11 +17,10 @@ public class TreeModel {
 	private String id;
 	private String name;
 	private String value;
-	private String icon;
 	private String pid;
-	private Object data;
 	private boolean checked = false;
 	private boolean disabled = false;
+	private int sort;
 	private List<TreeModel> children;
 	
 
@@ -61,13 +59,6 @@ public class TreeModel {
 		this.value = value;
 	}
 
-
-	public String getIcon() {
-		return icon;
-	}
-	public void setIcon(String icon) {
-		this.icon = icon;
-	}
 	public String getPid() {
 		return pid;
 	}
@@ -75,36 +66,35 @@ public class TreeModel {
 		this.pid = pid;
 	}
 
-	/**
-	 * @return the data
-	 */
-	public Object getData() {
-		return data;
-	}
-
-	/**
-	 * @param data the data to set
-	 */
-	public void setData(Object data) {
-		this.data = data;
-	}
-
-
 	public boolean isChecked() {
 		return checked;
 	}
+
 
 	public void setChecked(boolean checked) {
 		this.checked = checked;
 	}
 
+
 	public boolean isDisabled() {
 		return disabled;
 	}
 
+
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
 	}
+
+
+	public int getSort() {
+		return sort;
+	}
+
+
+	public void setSort(int sort) {
+		this.sort = sort;
+	}
+
 
 	public void addChild(TreeModel child) {
 		children = children == null ? (children = new ArrayList<>()) : children;
@@ -122,14 +112,6 @@ public class TreeModel {
 		return StringUtils.isNotBlank(value);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public TreeModel addDataItem(String key,Object value){
-		if(data == null){
-			data = new HashMap<String,Object>();
-		}
-		((Map)data).put(key, value);
-		return this;
-	}
 	
 	
 	@Override
@@ -137,6 +119,8 @@ public class TreeModel {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((pid == null) ? 0 : pid.hashCode());
+		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		return result;
 	}
 
@@ -155,12 +139,17 @@ public class TreeModel {
 				return false;
 		} else if (!id.equals(other.id))
 			return false;
+		if (pid == null) {
+			if (other.pid != null)
+				return false;
+		} else if (!pid.equals(other.pid))
+			return false;
+		if (value == null) {
+			if (other.value != null)
+				return false;
+		} else if (!value.equals(other.value))
+			return false;
 		return true;
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 	}
 
 
@@ -190,8 +179,18 @@ public class TreeModel {
 			}
 		}
 		
+		sortedChildren(root);
+		
 		return root;
 	}
 	
+	private static void sortedChildren(TreeModel model) {
+		List<TreeModel> children = model.getChildren();
+		if(children == null || children.isEmpty())return;
+		children.sort(Comparator.comparingInt(TreeModel::getSort));
+		for (TreeModel child : children) {
+			sortedChildren(child);
+		}
+	}
 
 }

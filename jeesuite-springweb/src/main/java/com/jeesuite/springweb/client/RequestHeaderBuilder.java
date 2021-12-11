@@ -42,6 +42,11 @@ public class RequestHeaderBuilder {
 			headers.put(CustomRequestHeaders.HEADER_TENANT_ID, tenantId);
 		}
 		
+		String clientType = CurrentRuntimeContext.getClientType();
+		if (clientType != null) {
+			headers.put(CustomRequestHeaders.HEADER_CLIENT_TYPE, clientType);
+		}
+		
 		return headers;
 	}
 }

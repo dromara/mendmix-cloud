@@ -29,6 +29,8 @@ public class CurrentRuntimeContext {
 		ThreadLocalContext.set(ThreadLocalContext.RESPONSE_KEY, response);
 		String tenantId = request.getHeader(CustomRequestHeaders.HEADER_TENANT_ID);
 		if(tenantId != null)setTenantId(tenantId);
+		String clientType = request.getHeader(CustomRequestHeaders.HEADER_CLIENT_TYPE);
+		if(clientType != null)setClientType(clientType);
 	}
 	
 	public static HttpServletRequest getRequest() {
@@ -120,6 +122,22 @@ public class CurrentRuntimeContext {
 		if(clientType != null)return clientType;
 		try {
 			return getRequest().getHeader(CustomRequestHeaders.HEADER_CLIENT_TYPE);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public static void setSystemId(String systemId){
+		if(StringUtils.isBlank(systemId))return;
+		ThreadLocalContext.set(CustomRequestHeaders.HEADER_SYSTEM_ID, systemId);
+	}
+	
+	
+	public static String getSystemId() {
+		String systemId = ThreadLocalContext.getStringValue(CustomRequestHeaders.HEADER_SYSTEM_ID);
+		if(systemId != null)return systemId;
+		try {
+			return getRequest().getHeader(CustomRequestHeaders.HEADER_SYSTEM_ID);
 		} catch (Exception e) {
 			return null;
 		}
