@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 
@@ -33,7 +34,7 @@ public abstract class AbstractMultTenantJob extends AbstractJob{
 		}else{
 			for (String tenantId : tenantIds) {
 				logger.debug("doStandaloneDadaSourceJob route to TenantId:{}",tenantId);
-				ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, tenantId);
+				CurrentRuntimeContext.setTenantId(tenantId);
 				try {
 					doStandaloneDadaSourceJob(context);
 				} finally {

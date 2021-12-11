@@ -26,4 +26,5 @@ public class CustomRequestHeaders {
 		public static final String HEADER_RESP_KEEP = "x-resp-keep";
 		public static final String HEADER_HTTP_STATUS_KEEP = "x-httpstatus-keep";
 		public static final String HEADER_VERIFIED_MOBILE = "x-verified-mobile";
+		public static final String HEADER_IGNORE_TENANT = "x-ignore-tenant";
 }

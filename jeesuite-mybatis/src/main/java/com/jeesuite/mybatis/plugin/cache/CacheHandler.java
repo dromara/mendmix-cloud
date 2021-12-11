@@ -32,8 +32,8 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.GlobalConstants;
-import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.JsonUtils;
@@ -345,12 +345,12 @@ public class CacheHandler implements InterceptorHandler {
 						ColumnMetadata idColumn = mapperMeta.getEntityMetadata().getIdColumn();
 						SqlMetadata sqlMetadata = MybatisSqlUtils.rewriteAsSelectPkField(orignSql, idColumn.getColumn());
 						//
-						String tenantId = MybatisRuntimeContext.getCurrentTenant();
+						String tenantId = CurrentRuntimeContext.getTenantId();
 						cleanCacheExecutor.execute(new Runnable() {
 							@Override
 							public void run() {
 								if(tenantId != null) {
-								    ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, tenantId);
+									CurrentRuntimeContext.setTenantId(tenantId);
 								}
 								removeCacheByDyncQuery(mapperMeta,boundSql, sqlMetadata);
 							}

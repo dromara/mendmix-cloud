@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
-
 
 /**
  * 
@@ -20,11 +18,8 @@ public class ThreadLocalContext {
 
 	private static ThreadLocal<Map<String, Object>> context = new ThreadLocal<>();
 	
-	private static final String _ID = "_thread_id_";
 	public static final String REQUEST_KEY = "_ctx_request_";
 	public static final String RESPONSE_KEY = "_ctx_response_";
-	public static final String CURRENT_USER_KEY = "_ctx_current_user_";
-	public static final String TENANT_ID_KEY = "_ctx_tenantId_";
 	
 	public static void set(String key,Object value){
 		if(value == null)return;
@@ -57,18 +52,6 @@ public class ThreadLocalContext {
 		return context.get() == null || context.get().isEmpty();
 	}
 	
-	public static boolean isExpired(){
-		if(isEmpty())return false;
-		String threadId = getStringValue(_ID);
-		if(threadId == null)return false;
-		String id = buildThreadId();
-		return !StringUtils.equals(threadId, id);
-	}
-	
-	public static String getId(){
-		return getStringValue(_ID);
-	}
-	
 	public static void unset(){
 		if(context.get() != null){
 			context.get().clear();
@@ -79,17 +62,8 @@ public class ThreadLocalContext {
 	private static Map<String, Object> getContextMap(){
 		if(context.get() == null){
 			context.set(new HashMap<>());
-			String id = buildThreadId();
-			set(_ID, id);
 		}
 		return context.get();
 	}
-	
-	private static String buildThreadId(){
-		return new StringBuilder()
-				   .append(Thread.currentThread().getName())
-				   .append(Thread.currentThread().getId()).toString();
-	}
-	
-	
+
 }

@@ -22,7 +22,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
@@ -50,7 +50,7 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	
 	@Before
 	public void init(){
-		ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, "1000");
+		CurrentRuntimeContext.setTenantId("1");
 		MybatisRuntimeContext.addDataProfileMappings("type", "0");
 	}
 	

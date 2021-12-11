@@ -18,6 +18,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.model.OrderBy;
 import com.jeesuite.common.model.OrderBy.OrderType;
@@ -43,10 +44,17 @@ import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectBody;
+import net.sf.jsqlparser.statement.select.SetOperation;
+import net.sf.jsqlparser.statement.select.SetOperationList;
+import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.select.UnionOp;
 
 /**
  * sql重写处理器 <br>
@@ -60,7 +68,6 @@ public class SqlRewriteHandler implements InterceptorHandler {
 
 	private final static Logger logger = LoggerFactory.getLogger("com.jeesuite.mybatis.plugin");
 
-	public static final String TENANT_ID = "tenantId";
 	public static final String FRCH_PREFIX = "__frch_";
 	private static final String FRCH_INDEX_PREFIX = "__frch_index_";
 	private static final String FRCH_ITEM_PREFIX = "__frch_item_";
@@ -72,6 +79,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private String softDeleteFalseValue;
 	
 	private boolean isFieldSharddingTenant;
+	private String tenantColumnName;
+	private String tenantPropName;
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
@@ -132,10 +141,13 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				if (tenantColumn == null)
 					continue;
 
+				if(tenantColumnName == null)tenantColumnName = tenantColumn.getColumn();
+				if(tenantPropName == null)tenantPropName = tenantColumn.getProperty();
+				
 				if (!dataProfileMappings.containsKey(mapper.getTableName())) {
 					dataProfileMappings.put(mapper.getTableName(), new HashMap<>());
 				}
-				dataProfileMappings.get(mapper.getTableName()).put(TENANT_ID, tenantColumn.getColumn());
+				dataProfileMappings.get(mapper.getTableName()).put(tenantPropName, tenantColumnName);
 			}
 		}
 		
@@ -210,12 +222,9 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		String orignSql = invocation.getSql();
 		PageParams pageParam = invocation.getPageParam();
 		
-		String currentTenantId = null;
-		if(isFieldSharddingTenant) {
-			currentTenantId = MybatisRuntimeContext.getCurrentTenant();
-			if(currentTenantId == null)throw new JeesuiteBaseException("无法获取当前租户ID");
-			if(dataMapping == null)dataMapping = new HashMap<>(1);
-			dataMapping.put(TENANT_ID, new String[] {currentTenantId});
+		boolean sharddingTenant = false;
+		if(isFieldSharddingTenant && !CurrentRuntimeContext.getIgnoreTenant()) {
+			sharddingTenant = true;
 		}
 		
 		boolean softDelete = softDeleteMappedStatements.contains(invocation.getMapperNameSpace()) 
@@ -224,90 +233,99 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			if(dataMapping == null)dataMapping = new HashMap<>(1);
 			dataMapping.put(softDeleteColumn, new String[] {softDeleteFalseValue});
 		}
-		if(!softDelete && dataMapping == null && currentTenantId == null) {
+		if(!softDelete && dataMapping == null && !sharddingTenant) {
 			if(pageParam == null || (pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty())) {
 				return;
 			}
 		}
 			
-		Select select = null;
+		SelectBody selectBody = null;
 		try {
-			select = (Select) CCJSqlParserUtil.parse(orignSql);
+			Statement stmt = CCJSqlParserUtil.parse(orignSql);
+			selectBody = ((Select)stmt).getSelectBody();
 		} catch (JSQLParserException e) {
-			logger.error("rebuildDataPermissionSql_ERROR",e);
+			logger.error("PARSER_ERROR["+orignSql+"]",e);
 			throw new RuntimeException("sql解析错误");
 		}
 		
-		PlainSelect selectBody = (PlainSelect) select.getSelectBody();
-		Table table = (Table) selectBody.getFromItem();
-		
-		Map<String, String> columnMapping;
-		Set<String> fieldNames;
-		Expression newExpression = null;
-		String[] values;
-		if(dataProfileMappings.containsKey(table.getName())) {
-			columnMapping = dataProfileMappings.get(table.getName());
-			fieldNames = columnMapping.keySet();
-			for (String fieldName : fieldNames) {
-				if(!dataMapping.containsKey(fieldName))continue;
-				values = dataMapping.get(fieldName);
-				//如果某个匹配字段为空直接返回null，不在查询数据库
-				if(values == null || values.length == 0) {
-					invocation.setRewriteSql(null);
-					return;
-				}
-				newExpression = appendDataPermissionCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),values);
-				selectBody.setWhere(newExpression);
-				//TODO 主表已经处理的条件，join表不在处理
-			}
-		}
-		
-		//JOIN 
-		List<Join> joins = selectBody.getJoins();
-		if(joins != null){
-			for (Join join : joins) {
-				table = (Table) join.getRightItem();
-				if(dataProfileMappings.containsKey(table.getName())) {
-					columnMapping = dataProfileMappings.get(table.getName());
-					fieldNames = columnMapping.keySet();
-					for (String fieldName : fieldNames) {
-						if(!dataMapping.containsKey(fieldName))continue;
-						values = dataMapping.get(fieldName);
-						//如果某个匹配字段为空直接返回null，不在查询数据库
-						if(values == null || values.length == 0) {
-							return;
-						}
-						//左右连接加在ON 无法过滤
-						newExpression = appendDataPermissionCondition(table, selectBody.getWhere(), columnMapping.get(fieldName),values);
-						selectBody.setWhere(newExpression);
-					}
-				}
-			}
-		}
-		
-		if(pageParam != null && pageParam.getOrderBys() != null && !pageParam.getOrderBys().isEmpty()) {
-			 List<OrderByElement> orderByElements = new ArrayList<>(pageParam.getOrderBys().size());
-				
-				OrderByElement orderByElement;
-				for (OrderBy orderBy : pageParam.getOrderBys()) {
-					if(orderBy == null)continue;
-					MapperMetadata mapperMeta = MybatisMapperParser.getMapperMetadata(invocation.getMapperNameSpace());
-		    		String columnName = mapperMeta.getEntityMetadata().getProp2ColumnMappings().get(orderBy.getField());
-		    		if(columnName == null)columnName = orderBy.getField();
-		    		orderByElement = new OrderByElement();
-		    		orderByElement.setAsc(OrderType.ASC.name().equals(orderBy.getSortType()));
-		    		orderByElement.setExpression(new Column(table, columnName));
-		    		orderByElements.add(orderByElement);
-				}
-				
-				selectBody.setOrderByElements(orderByElements);
-		}
+		handleSelectRewrite(selectBody, invocation, dataMapping, sharddingTenant);
 		//
 		invocation.setRewriteSql(selectBody.toString());
 	}
+
 	
 	
-	private  Expression appendDataPermissionCondition(Table table,Expression orginExpression,String columnName,String[] values){
+	private boolean handleSelectRewrite(SelectBody selectBody,InvocationVals invocation,Map<String, String[]> dataMapping,boolean sharddingTenant) {
+		
+		if(selectBody instanceof PlainSelect) {
+			PlainSelect select = (PlainSelect)selectBody;
+			FromItem fromItem = select.getFromItem();
+			if(fromItem instanceof Table) {
+				Table table = (Table) fromItem;
+				//
+				handleTableDataPermission(select, table, dataMapping, sharddingTenant);
+				//
+				handleTableOrderBy(select, table, invocation);
+				//
+				List<Join> joins = select.getJoins();
+				if(joins != null){
+					for (Join join : joins) {
+						table = (Table) join.getRightItem();
+						handleTableDataPermission(select, table, dataMapping, sharddingTenant);
+					}
+				}
+			}else if(fromItem instanceof SubSelect) {
+				SubSelect subSelect = (SubSelect) fromItem;
+				handleSelectRewrite(subSelect.getSelectBody() ,invocation, dataMapping, sharddingTenant);
+			}
+		}else if(selectBody instanceof SetOperationList) {
+			SetOperationList optList = (SetOperationList) selectBody;
+			SetOperation operation = optList.getOperations().get(0);
+			if(operation instanceof UnionOp) {
+				
+			}
+			List<SelectBody> selects = optList.getSelects();
+			for (SelectBody body : selects) {
+				handleSelectRewrite(body,invocation, dataMapping, sharddingTenant);
+			}
+		}
+		
+		return true;
+	}
+	
+	private boolean handleTableDataPermission(PlainSelect selectBody,Table table,Map<String, String[]> dataMapping,boolean sharddingTenant) {
+		if(!dataProfileMappings.containsKey(table.getName())) {
+			return true;
+		}
+		Set<String> fieldNames;
+		Expression newExpression = null;
+		String column;
+		String[] values;
+		Map<String, String> columnMapping = dataProfileMappings.get(table.getName());
+		fieldNames = columnMapping.keySet();
+		for (String fieldName : fieldNames) {
+			if(sharddingTenant && fieldName.equals(tenantPropName)) {
+				column = tenantColumnName;
+				String currentTenantId = CurrentRuntimeContext.getTenantId();
+				if(currentTenantId == null)throw new JeesuiteBaseException("无法获取当前租户ID");
+				values = new String[] {currentTenantId};
+			}else {
+				if(!dataMapping.containsKey(fieldName))continue;
+				column = columnMapping.get(fieldName);
+				values = dataMapping.get(fieldName);
+			}
+			//如果某个匹配字段为空直接返回null，不在查询数据库
+			if(values == null || values.length == 0) {
+				return false;
+			}
+			newExpression = handleColumnDataPermCondition(table, selectBody.getWhere(), column,values);
+			selectBody.setWhere(newExpression);
+		}
+		
+		return true;
+	}
+	
+	private  Expression handleColumnDataPermCondition(Table table,Expression orginExpression,String columnName,String[] values){
 		Expression newExpression = null;
 		Column column = new Column(table, columnName);
 		if (values.length == 1) {
@@ -335,7 +353,27 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		return newExpression;
 	}
 	
-	
+	private void handleTableOrderBy(PlainSelect selectBody, Table table, InvocationVals invocation) {
+		PageParams pageParam = invocation.getPageParam();
+		if(pageParam == null || pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty()) {
+			 return;
+		}
+		List<OrderByElement> orderByElements = new ArrayList<>(pageParam.getOrderBys().size());
+		
+		OrderByElement orderByElement;
+		for (OrderBy orderBy : pageParam.getOrderBys()) {
+			if(orderBy == null)continue;
+			MapperMetadata mapperMeta = MybatisMapperParser.getMapperMetadata(invocation.getMapperNameSpace());
+    		String columnName = mapperMeta.getEntityMetadata().getProp2ColumnMappings().get(orderBy.getField());
+    		if(columnName == null)columnName = orderBy.getField();
+    		orderByElement = new OrderByElement();
+    		orderByElement.setAsc(OrderType.ASC.name().equals(orderBy.getSortType()));
+    		orderByElement.setExpression(new Column(table, columnName));
+    		orderByElements.add(orderByElement);
+		}
+		
+		selectBody.setOrderByElements(orderByElements);
+	}
 	
 	private void buildTableDataPermissionMapping(String tableName,String ruleString) {
 		dataProfileMappings.put(tableName, new HashMap<>());

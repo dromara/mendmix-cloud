@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.util.BeanUtils;
 import com.jeesuite.common.util.HttpUtils;
 import com.jeesuite.common.util.JsonUtils;
@@ -78,9 +77,6 @@ public class MQMessage {
 	}
 
 	public String getTenantId() {
-		if (tenantId == null) {
-			tenantId = ThreadLocalContext.getStringValue(ThreadLocalContext.TENANT_ID_KEY);
-		}
 		return tenantId;
 	}
 
@@ -89,9 +85,6 @@ public class MQMessage {
 	}
 
 	public String getRequestId() {
-		if (requestId == null) {
-			requestId = ThreadLocalContext.getStringValue("_ctx_requestId_");
-		}
 		return requestId;
 	}
 
@@ -110,9 +103,6 @@ public class MQMessage {
 	}
 
 	public String getProduceBy() {
-		if (produceBy == null) {
-			produceBy = ThreadLocalContext.getStringValue(ThreadLocalContext.CURRENT_USER_KEY);
-		}
 		return produceBy;
 	}
 

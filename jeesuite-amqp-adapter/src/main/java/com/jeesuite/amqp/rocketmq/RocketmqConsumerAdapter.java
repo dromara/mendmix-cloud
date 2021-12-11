@@ -20,6 +20,7 @@ import com.jeesuite.amqp.MQMessage;
 import com.jeesuite.amqp.MessageHandler;
 import com.jeesuite.amqp.MessageHeaderNames;
 import com.jeesuite.amqp.MessageStatus;
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.util.ResourceUtils;
 
@@ -107,7 +108,7 @@ public class RocketmqConsumerAdapter implements MQConsumer {
 			message.setTransactionId(msg.getUserProperty(MessageHeaderNames.transactionId.name()));
 			//多租户支持
 			if(message.getTenantId() != null) {							
-				ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, message.getTenantId());
+				CurrentRuntimeContext.setTenantId(message.getTenantId());
 			}
 			try {
 				//事务消息检查

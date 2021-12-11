@@ -14,9 +14,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.ibatis.mapping.MappedStatement;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.guid.GUID;
 import com.jeesuite.mybatis.MybatisConfigs;
-import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
@@ -153,7 +153,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 			try {fields[0].set(parameter, id);} catch (Exception e) {}
 		}
 		
-		if(fields[1] != null && (tmpVal = MybatisRuntimeContext.getCurrentUser()) != null && isNullValue(parameter, fields[1])) {
+		if(fields[1] != null && (tmpVal = CurrentRuntimeContext.getCurrentUserId()) != null && isNullValue(parameter, fields[1])) {
 			try {fields[1].set(parameter, tmpVal);} catch (Exception e) {}
 		}
 		
@@ -161,7 +161,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 			try {fields[2].set(parameter, new Date());} catch (Exception e) {}
 		}
 		
-		if(fields.length > 3 && fields[3] != null && (tmpVal = MybatisRuntimeContext.getCurrentTenant()) != null && isNullValue(parameter, fields[3])) {
+		if(fields.length > 3 && fields[3] != null && (tmpVal = CurrentRuntimeContext.getTenantId()) != null && isNullValue(parameter, fields[3])) {
 			try {fields[3].set(parameter, tmpVal);} catch (Exception e) {}
 		}
 	}

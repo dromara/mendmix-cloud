@@ -10,6 +10,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 
@@ -64,7 +65,7 @@ public class RetryAsyncTaskExecutor {
 	}
 	
 	private void executeWithRetry(RetryTask task,int execNums) {
-		final String tenantId = ThreadLocalContext.getStringValue(ThreadLocalContext.TENANT_ID_KEY);
+		final String tenantId = CurrentRuntimeContext.getTenantId();
 		if(execNums >= maxRetry){	
 			logger.warn("{} executeWithRetry over maxRetry[{}]",task.traceId(),maxRetry);
 			onFinalErrorProcess(task);
@@ -79,7 +80,7 @@ public class RetryAsyncTaskExecutor {
 		executor.execute(new Runnable() {
 			@Override
 			public void run() {
-				if(tenantId != null)ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, tenantId);
+				if(tenantId != null)CurrentRuntimeContext.setTenantId(tenantId);
 				traceIdHolder.set(task.traceId());
 				try {
 					boolean result = task.process();

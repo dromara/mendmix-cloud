@@ -1,7 +1,5 @@
 package com.jeesuite.mybatis.datasource;
 
-import com.jeesuite.mybatis.MybatisRuntimeContext;
-
 /**
  * 
  * <br>
@@ -12,6 +10,6 @@ import com.jeesuite.mybatis.MybatisRuntimeContext;
  * @date 2020年4月20日
  */
 public class DataSourceContextVals {
-	public String tenantId = MybatisRuntimeContext.getCurrentTenant();
+	public String tenantId;
 	public Boolean master; //
 }

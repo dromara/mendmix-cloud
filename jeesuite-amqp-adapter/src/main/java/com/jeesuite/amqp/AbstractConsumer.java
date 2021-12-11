@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.amqp.MQContext.ActionType;
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.async.StandardThreadExecutor;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
@@ -109,8 +110,8 @@ public abstract class AbstractConsumer implements MQConsumer {
 		MessageHandler messageHandler = messageHandlers.get(message.getTopic());
 		try {	
 			//多租户支持
-			if(message.getTenantId() != null) {							
-				ThreadLocalContext.set(ThreadLocalContext.TENANT_ID_KEY, message.getTenantId());
+			if(message.getTenantId() != null) {	
+				CurrentRuntimeContext.setTenantId(message.getTenantId());
 			}
 			//事务消息检查
             if(message.getTransactionId() != null){

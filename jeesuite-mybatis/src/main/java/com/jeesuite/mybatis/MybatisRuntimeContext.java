@@ -9,10 +9,7 @@ import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.mybatis.datasource.DataSourceContextVals;
-import com.jeesuite.mybatis.plugin.autofield.AutoFieldFillHandler;
-import com.jeesuite.mybatis.plugin.autofield.CurrentUserProvider;
 import com.jeesuite.mybatis.plugin.cache.CacheHandler;
-import com.jeesuite.spring.InstanceFactory;
 
 /**
  * 
@@ -30,50 +27,12 @@ public class MybatisRuntimeContext {
 	private static final String CONTEXT_DATASOURCE_KEY = "_ctx_ds_";
 	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
 	
-    private static CurrentUserProvider currentUserProvider;
-	
-	
-    private static CurrentUserProvider getCurrentUserProvider() {
-		if(currentUserProvider == null) {
-			synchronized (AutoFieldFillHandler.class) {
-				currentUserProvider = InstanceFactory.getInstance(CurrentUserProvider.class);
-				if(currentUserProvider == null) {
-					currentUserProvider = new CurrentUserProvider() {
-						@Override
-						public String currentUser() {
-							AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
-							return currentUser == null ? null : currentUser.getUsername();
-						}
-						@Override
-						public String currentTenant() {
-							return CurrentRuntimeContext.getTenantId(false);
-						}
-					};
-				}
-			}
-		}
-		return currentUserProvider;
-	}
-    
-    public static String getCurrentUser() {
-    	if(ThreadLocalContext.exists(ThreadLocalContext.CURRENT_USER_KEY)) {
-    		AuthUser curUser = ThreadLocalContext.get(ThreadLocalContext.CURRENT_USER_KEY);
-    		return curUser.getUsername();
-    	}
-    	return getCurrentUserProvider().currentUser();
-    }
-	
-    public static String getCurrentTenant() {
-    	if(ThreadLocalContext.exists(ThreadLocalContext.TENANT_ID_KEY)) {
-    		return ThreadLocalContext.getStringValue(ThreadLocalContext.TENANT_ID_KEY);
-    	}
-    	return getCurrentUserProvider().currentTenant();
-    }
-	
+ 	
 	public static String getContextParam(String paramName){
 		if(StringUtils.isBlank(paramName))return null;
 		if(CacheHandler.CURRENT_USER_CONTEXT_NAME.equals(paramName)){
-			return getCurrentUser();
+			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+			return currentUser == null ? null : currentUser.getUsername();
 		}
 		return ThreadLocalContext.getStringValue(paramName);
 	}
@@ -133,6 +92,7 @@ public class MybatisRuntimeContext {
 		DataSourceContextVals dataSourceContextVals = ThreadLocalContext.get(CONTEXT_DATASOURCE_KEY);
 		if(dataSourceContextVals == null){
 			dataSourceContextVals = new DataSourceContextVals();
+			dataSourceContextVals.tenantId = CurrentRuntimeContext.getTenantId();
 			ThreadLocalContext.set(CONTEXT_DATASOURCE_KEY, dataSourceContextVals);
 		}
 		return dataSourceContextVals;
