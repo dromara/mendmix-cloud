@@ -12,7 +12,9 @@ import com.jeesuite.common.util.ResourceUtils;
 
 public class GlobalRuntimeContext {
 	
-	public static int WORKER_ID = RandomUtils.nextInt(10, 99);
+	private static WorkIdGenerator workIdGenerator;
+	
+	public static volatile int workId;
 	
 	private static final List<String> tenantIds = new ArrayList<>();
 
@@ -47,6 +49,10 @@ public class GlobalRuntimeContext {
 		//
 		System.getProperty("env", ENV);
 	}
+	
+	public static void setWorkIdGenerator(WorkIdGenerator workIdGenerator) {
+		GlobalRuntimeContext.workIdGenerator = workIdGenerator;
+	}
 
 	public static String getContextPath() {
 		return contextPath;
@@ -61,12 +67,23 @@ public class GlobalRuntimeContext {
 		return Collections.unmodifiableList(tenantIds);
 	}
 	
+
+	public static int getWorkId() {
+		if(workId > 0)return workId;
+		if(workIdGenerator != null) {
+			workId = workIdGenerator.generate(getNodeName());
+		}else {
+			workId = RandomUtils.nextInt(10, 99);
+		}
+		return workId;
+	}
+
 	public static String getNodeName() {
 		if(nodeName != null)return nodeName;
 		try {
 			nodeName = InetAddress.getLocalHost().getHostAddress() + ":" + ResourceUtils.getProperty("server.port", "8080");
 		} catch (Exception e) {
-			nodeName = String.valueOf(WORKER_ID);
+			nodeName = "127.0.0.1:" + ResourceUtils.getProperty("server.port", "8080");
 		}
 		return nodeName;
 	}

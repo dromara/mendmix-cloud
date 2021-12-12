@@ -23,6 +23,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.jeesuite.common.CurrentRuntimeContext;
+import com.jeesuite.common.model.OrderBy;
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
@@ -137,7 +138,8 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		Page<UserEntity> pageInfo;
 		UserEntity example = new UserEntity();
 		example.setType((short)1);
-		pageInfo = PageExecutor.pagination(new PageParams(1,10), new PageDataLoader<UserEntity>() {
+		PageParams pageParams = new PageParams(1,10,new OrderBy("name"));
+		pageInfo = PageExecutor.pagination(pageParams, new PageDataLoader<UserEntity>() {
 			@Override
 			public List<UserEntity> load() {
 				return userMapper.selectByExample(example);
@@ -145,6 +147,16 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		});
 		
 		System.out.println(pageInfo);
+		
+	}
+	
+	
+	@Test
+	public void testQuery(){
+		Map<String, Object> param = new HashMap<>();
+		param.put("status", 1);
+		
+		userMapper.testQuery1(param);
 	}
 	
 	

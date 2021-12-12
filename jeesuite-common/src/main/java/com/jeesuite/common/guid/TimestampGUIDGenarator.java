@@ -22,7 +22,6 @@ public class TimestampGUIDGenarator {
 
 	private static final String TIME_PATTERN = "yyyyMMddHHmmss";
 	private static String[] paddingzeros = new String[]{"","0","00","000","0000","00000","000000","0000000","00000000","000000000"};
-	private static final int WORKER_ID =  GlobalRuntimeContext.WORKER_ID;
 
 	private final AtomicInteger NEXT_COUNTER;
 	private int incrMin;
@@ -42,7 +41,7 @@ public class TimestampGUIDGenarator {
 			sb.append(prefixs[0]);
 		}
 		sb.append(DateUtils.format(new Date(),TIME_PATTERN));
-		sb.append(WORKER_ID);
+		sb.append(GlobalRuntimeContext.getWorkId());
 		sb.append(buildIncrNumSequence());
 		return sb.toString();
 	}

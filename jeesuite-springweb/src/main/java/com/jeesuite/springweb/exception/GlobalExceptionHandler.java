@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.springweb.logging.RequestLogCollector;
+import com.jeesuite.logging.integrate.RequestLogCollector;
 import com.jeesuite.springweb.model.WrapperResponseEntity;
 
 @ControllerAdvice

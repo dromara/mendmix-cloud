@@ -21,22 +21,18 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.util.BeanUtils;
+import com.jeesuite.logging.integrate.ActionLog;
+import com.jeesuite.logging.integrate.RequestLogBuilder;
+import com.jeesuite.logging.integrate.RequestLogCollector;
 import com.jeesuite.springweb.annotation.ApiMetadata;
-import com.jeesuite.springweb.logging.ActionLog;
-import com.jeesuite.springweb.logging.RequestLogBuilder;
-import com.jeesuite.springweb.logging.RequestLogCollector;
 
 @Aspect
-@Component
-@ConditionalOnProperty(value = "request.log.enabled",havingValue = "true")
 public class RequestLoggingInterceptor {
 
 private static Logger log = LoggerFactory.getLogger("global.request.logger");

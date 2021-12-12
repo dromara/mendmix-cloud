@@ -34,7 +34,7 @@ public class SnowflakeGenerator {
 	private long lastTimestamp = -1L;
 
 	public SnowflakeGenerator() {
-		this.workerId = GlobalRuntimeContext.WORKER_ID;
+		this.workerId = GlobalRuntimeContext.getWorkId();
 		this.datacenterId = 1;
 	}
 

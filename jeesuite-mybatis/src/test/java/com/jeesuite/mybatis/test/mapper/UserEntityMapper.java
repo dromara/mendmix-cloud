@@ -65,5 +65,7 @@ public interface UserEntityMapper extends BaseMapper<UserEntity,Integer> {
 	int updateByMap(Map<String, Object> param);
 	
 	int updateTypeByExample(@Param("type") int type,@Param("example") UserEntity example);
+	
+	List<UserEntity> testQuery1(Map<String, Object> param);
 
 }

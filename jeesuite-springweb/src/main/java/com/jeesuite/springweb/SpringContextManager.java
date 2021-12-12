@@ -9,9 +9,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.jeesuite.common.async.RetryAsyncTaskExecutor;
+import com.jeesuite.logging.integrate.RequestLogCollector;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
-import com.jeesuite.springweb.logging.RequestLogCollector;
 
 /**
  * 

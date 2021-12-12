@@ -145,4 +145,18 @@
      </where>
   </update>
   
+  <select id="testQuery1" parameterType="map" resultMap="BaseResultMap">
+    select u.* from users u,sns_account_binding a
+    <where>
+      <if test="status != null">
+        and u.status = #{status}
+      </if>
+      <if test="name != null">
+        and u.name like CONCAT('%', #{name}, '%')  
+      </if>
+      and u.id = a.user_id
+    </where>
+    order by id desc
+  </select>
+  
 </mapper>

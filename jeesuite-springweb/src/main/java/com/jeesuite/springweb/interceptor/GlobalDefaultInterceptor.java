@@ -21,8 +21,8 @@ import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.common.util.WebUtils;
+import com.jeesuite.logging.integrate.RequestLogCollector;
 import com.jeesuite.springweb.annotation.ApiMetadata;
-import com.jeesuite.springweb.logging.RequestLogCollector;
 
 /**
  * 

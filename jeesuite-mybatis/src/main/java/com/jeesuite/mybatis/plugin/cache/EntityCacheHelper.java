@@ -6,6 +6,7 @@ package com.jeesuite.mybatis.plugin.cache;
 import java.io.Serializable;
 import java.util.concurrent.Callable;
 
+import com.jeesuite.cache.CacheUtils;
 import com.jeesuite.cache.command.RedisObject;
 import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.plugin.InvocationVals;
@@ -45,22 +46,14 @@ public class EntityCacheHelper {
 	 */
 	public static <T> T queryTryCache(Class<? extends BaseEntity> entityClass,String key,long expireSeconds,Callable<T> dataCaller){
 		
-		if(CacheHandler.cacheProvider == null){
-			try {
-				return dataCaller.call();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-		
 		String entityClassName = entityClass.getSimpleName();
 		key = entityClassName + InvocationVals.DOT + key;
-		T result = CacheHandler.cacheProvider.get(key);
+		T result = CacheUtils.get(key);
 		if(result == null){
 			try {				
 				result = dataCaller.call();
 				if(result != null){
-					CacheHandler.cacheProvider.set(key, result, expireSeconds);
+					CacheUtils.set(key, result, expireSeconds);
 				}
 			} catch (Exception e) {
 				throw new RuntimeException(e);
@@ -75,10 +68,9 @@ public class EntityCacheHelper {
 	 * @param key
 	 */
     public static void removeCache(Class<? extends BaseEntity> entityClass,String key){
-    	if(CacheHandler.cacheProvider == null)return;
     	String entityClassName = entityClass.getSimpleName();
 		key = entityClassName + InvocationVals.DOT + key;
-		CacheHandler.cacheProvider.remove(key);
+		CacheUtils.remove(key);
 	}
 	
 	/**
@@ -86,9 +78,8 @@ public class EntityCacheHelper {
 	 * @param bean
 	 */
 	public static <T extends BaseEntity> void removeCache(T bean){
-		if(CacheHandler.cacheProvider == null)return;
 		String key = buildCacheKey(bean.getClass(), bean.getId());
-		CacheHandler.cacheProvider.remove(key);
+		CacheUtils.remove(key);
 	}
 	
 	/**
@@ -96,7 +87,6 @@ public class EntityCacheHelper {
 	 * @param entityClass
 	 */
 	public static void removeCache(Class<? extends BaseEntity> entityClass){
-		if(CacheHandler.cacheProvider == null)return;
 		String entityClassName = entityClass.getSimpleName();
 	}
 	

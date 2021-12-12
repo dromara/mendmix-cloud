@@ -15,7 +15,7 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.util.StreamUtils;
 
-import com.jeesuite.springweb.logging.RequestLogBuilder;
+import com.jeesuite.logging.integrate.RequestLogBuilder;
 
 public class HttpClientLoggingInterceptor implements ClientHttpRequestInterceptor {
 

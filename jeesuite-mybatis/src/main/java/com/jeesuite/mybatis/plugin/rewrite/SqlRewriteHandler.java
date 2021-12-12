@@ -2,6 +2,7 @@ package com.jeesuite.mybatis.plugin.rewrite;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -72,7 +73,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private static final String FRCH_INDEX_PREFIX = "__frch_index_";
 	private static final String FRCH_ITEM_PREFIX = "__frch_item_";
 	
-	private Map<String, Map<String,String>> dataProfileMappings = new HashMap<>();
+	private Map<String, LinkedHashMap<String,String>> dataProfileMappings = new HashMap<>();
 	
 	private List<String> softDeleteMappedStatements = new ArrayList<>();
 	private String softDeleteColumn;
@@ -105,7 +106,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				}
 				softDeleteTables.add(mapper.getTableName());
 				if(!dataProfileMappings.containsKey(mapper.getTableName())) {
-					dataProfileMappings.put(mapper.getTableName(), new HashMap<>());
+					dataProfileMappings.put(mapper.getTableName(), new LinkedHashMap<>());
 				}
 				dataProfileMappings.get(mapper.getTableName()).put(softDeleteColumn, softDeleteColumn);
 			}
@@ -145,7 +146,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				if(tenantPropName == null)tenantPropName = tenantColumn.getProperty();
 				
 				if (!dataProfileMappings.containsKey(mapper.getTableName())) {
-					dataProfileMappings.put(mapper.getTableName(), new HashMap<>());
+					dataProfileMappings.put(mapper.getTableName(), new LinkedHashMap<>());
 				}
 				dataProfileMappings.get(mapper.getTableName()).put(tenantPropName, tenantColumnName);
 			}
@@ -376,7 +377,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	}
 	
 	private void buildTableDataPermissionMapping(String tableName,String ruleString) {
-		dataProfileMappings.put(tableName, new HashMap<>());
+		dataProfileMappings.put(tableName, new LinkedHashMap<>());
 		String[] rules = ruleString.split(",|;");
 		String[] tmpArr;
 		for (String rule : rules) {

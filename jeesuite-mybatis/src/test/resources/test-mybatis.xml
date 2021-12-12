@@ -8,8 +8,8 @@
                             http://www.springframework.org/schema/tx  http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
 
 
-	<context:property-placeholder
-		ignore-unresolvable="true" location="classpath*:*.properties" />
+	
+	<context:property-placeholder ignore-unresolvable="true" location="classpath*:*.properties" />
 	<aop:aspectj-autoproxy />
 
 	<import resource="test-cache.xml" />
@@ -43,7 +43,5 @@
 		<property name="sqlSessionFactoryBeanName" value="aarouteSqlSessionFactory" />
 		<property name="basePackage" value="com.jeesuite.mybatis.test.mapper" />
 	</bean>
-	
-	<bean class="com.jeesuite.mybatis.test.service.MyCurrentUserProvider" />
-	
+
 </beans>

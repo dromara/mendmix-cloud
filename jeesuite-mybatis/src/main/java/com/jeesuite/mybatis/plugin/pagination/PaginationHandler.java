@@ -135,8 +135,12 @@ public class PaginationHandler implements InterceptorHandler {
 		// 执行 count 查询
 		Object countResultList = executor.query(countMappedStatement, parameter, RowBounds.DEFAULT, resultHandler, countKey,
 				countBoundSql);
-		Long count = (Long) ((List) countResultList).get(0);
-		return count;
+		try {
+			Long count = (Long) ((List) countResultList).get(0);
+			return count;
+		} catch (IndexOutOfBoundsException e) {
+			return 0L;
+		}
 	}
 	
 	@SuppressWarnings("rawtypes")

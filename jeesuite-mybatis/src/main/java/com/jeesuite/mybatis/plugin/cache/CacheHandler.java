@@ -32,13 +32,14 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jeesuite.cache.CacheExpires;
+import com.jeesuite.cache.CacheUtils;
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ReflectUtils;
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.core.BaseEntity;
@@ -56,9 +57,6 @@ import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import com.jeesuite.mybatis.plugin.cache.annotation.Cache;
 import com.jeesuite.mybatis.plugin.cache.annotation.CacheIgnore;
-import com.jeesuite.mybatis.plugin.cache.provider.DefaultCacheProvider;
-import com.jeesuite.mybatis.plugin.cache.provider.NullCacheProvider;
-import com.jeesuite.mybatis.plugin.cache.provider.SpringRedisProvider;
 import com.jeesuite.mybatis.plugin.rewrite.SqlRewriteHandler;
 import com.jeesuite.spring.InstanceFactory;
 
@@ -104,38 +102,9 @@ public class CacheHandler implements InterceptorHandler {
 	//<更新方法msId,[关联查询方法列表]>
 	private static Map<String, List<String>> customUpdateCacheMapppings = new HashMap<>();
 	
-	protected static CacheProvider cacheProvider;
-	
 	private DataSource dataSource;
 	
 	private ExecutorService cleanCacheExecutor = Executors.newFixedThreadPool(1, new StandardThreadFactory("cleanCacheExecutor"));
-	
-	public void setCacheProvider(CacheProvider cacheProvider) {
-		CacheHandler.cacheProvider = cacheProvider;
-	}
-
-	private static CacheProvider getCacheProvider() {
-		if(cacheProvider == null){
-			synchronized (CacheHandler.class) {
-				if(cacheProvider != null)return cacheProvider;
-				if(cacheProvider == null){
-					cacheProvider = InstanceFactory.getInstance(CacheProvider.class);
-				}
-				if(cacheProvider == null){	
-					if(ResourceUtils.containsProperty("jeesuite.cache.servers")) {
-						cacheProvider = new DefaultCacheProvider(dataSourceGroupName);
-					}else if(!ResourceUtils.getPropertyNames("spring.redis.").isEmpty()) {
-						cacheProvider = new SpringRedisProvider(dataSourceGroupName);
-					}
-				}
-				if(cacheProvider == null) {
-					cacheProvider = new NullCacheProvider();
-				}
-				logger.info("Initializing cacheProvider use:{} ",cacheProvider.getClass().getName());
-			}
-		}
-		return cacheProvider;
-	}
 	
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
@@ -224,7 +193,7 @@ public class CacheHandler implements InterceptorHandler {
 			if(!metadata.concurrency){
 				String concurrentLockKey = "concurrent:" + cacheKey;
 				invocationVal.setConcurrentLockKey(concurrentLockKey);
-				getLock = getCacheProvider().setnx(concurrentLockKey, "1", 30);
+				getLock = CacheUtils.setIfAbsent(concurrentLockKey, "1", 30);
 				if(!getLock){
 					if(logger.isDebugEnabled())logger.debug(">>auto_cache_process notGetConcurrentLock -> mapperId:{}",mt.getId());
 					return BLOCK_ON_CONCURRENT_LOCK_RETURN;
@@ -237,10 +206,10 @@ public class CacheHandler implements InterceptorHandler {
 			//
 			if(!metadata.isSecondQueryById()){
 				//从缓存读取
-				cacheObject = getCacheProvider().get(cacheKey);
+				cacheObject = CacheUtils.get(cacheKey);
 				nullPlaceholder = nullValueCache && NULL_PLACEHOLDER.equals(cacheObject);
 				if(StringUtils.isNotBlank(metadata.refKey) && (nullPlaceholder || cacheObject == null)){
-					cacheObject = getCacheProvider().get(metadata.refKey);
+					cacheObject = CacheUtils.get(metadata.refKey);
 					nullPlaceholder = nullValueCache && NULL_PLACEHOLDER.equals(cacheObject);
 				}
 				if(nullPlaceholder){
@@ -250,12 +219,12 @@ public class CacheHandler implements InterceptorHandler {
 				}
 			}else{
 				//新根据缓存KEY找到与按ID缓存的KEY
-				String refCacheKey = nullValueCache ? getCacheProvider().get(cacheKey) : getCacheProvider().getStr(cacheKey);
+				String refCacheKey = nullValueCache ? CacheUtils.get(cacheKey) : CacheUtils.getString(cacheKey);
 				if(refCacheKey != null){
 					if(nullPlaceholder = (nullValueCache && NULL_PLACEHOLDER.equals(refCacheKey))){
 						cacheObject = NULL_PLACEHOLDER;
 					}else{						
-						cacheObject = getCacheProvider().get(refCacheKey);
+						cacheObject = CacheUtils.get(refCacheKey);
 						if(cacheObject != null && logger.isDebugEnabled())logger.debug(">>auto_cache_process  hitRefCache -> mapperId:{},cacheKey:{},refCacheKey:{}",mt.getId(),cacheKey,refCacheKey);
 					}
 				}
@@ -292,7 +261,7 @@ public class CacheHandler implements InterceptorHandler {
 					List list = (List)result;
 					if(list.isEmpty()){
 						if(nullValueCache){
-							getCacheProvider().set(cacheKey,NULL_PLACEHOLDER, IN_1MINS);
+							CacheUtils.set(cacheKey,NULL_PLACEHOLDER, IN_1MINS);
 						}
 						return;
 					}
@@ -300,23 +269,23 @@ public class CacheHandler implements InterceptorHandler {
 				}
 				//
 				if(!metadata.isSecondQueryById()){
-					if(getCacheProvider().set(cacheKey,result, metadata.getExpire())){
-						if(logger.isDebugEnabled())logger.debug(">>auto_cache_process addCache -> mapperId:{},cacheKey:{}",mt.getId(),cacheKey);
-					}
-					
-					if(metadata.isPk){//唯一索引（业务上）
+					CacheUtils.set(cacheKey,result, metadata.getExpire());
+					if(logger.isDebugEnabled())logger.debug(">>auto_cache_process addCache -> mapperId:{},cacheKey:{}",mt.getId(),cacheKey);
+                    
+					if(metadata.isPk){
+						//唯一索引（业务上）
 						cacheUniqueSelectRef(result, mt, cacheKey);
 					}else if(metadata.groupRalated){//结果为集合的情况，增加key到cacheGroup
-						getCacheProvider().putGroup(metadata.cacheGroupKey, cacheKey);
+						CacheUtils.addListItems(metadata.cacheGroupKey, cacheKey);
 					}
 				}else{
 					//之前没有按主键的缓存，增加按主键缓存
 					String idCacheKey = genarateQueryCacheKey(getQueryByPkMethodCache(mt.getId()).keyPattern,result);
 					
 					if(idCacheKey != null && cacheKey != null){
-						if(!getCacheProvider().exists(idCacheKey)){						
+						if(!CacheUtils.exists(idCacheKey)){						
 							//缓存idkey->实体
-							getCacheProvider().set(idCacheKey,result, metadata.getExpire());
+							CacheUtils.set(idCacheKey,result, metadata.getExpire());
 						}
 						//缓存fieldkey->idkey
 						cacheFieldRefKey(cacheKey,idCacheKey, metadata.getExpire());
@@ -335,7 +304,7 @@ public class CacheHandler implements InterceptorHandler {
 					if(updatePkCacheMethods.containsKey(mt.getId())){
 						UpdateByPkCacheMethodMetadata updateMethodCache = updatePkCacheMethods.get(mt.getId());
 						String idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,invocationVal.getParameter());
-						getCacheProvider().remove(idCacheKey);
+						CacheUtils.remove(idCacheKey);
 					}else {
 						//针对按条件更新或者删除的方法，按查询条件查询相关内容，然后清理对应主键缓存内容
 						MapperMetadata mapperMeta = MybatisMapperParser.getMapperMetadata(mapperClassName);
@@ -367,7 +336,7 @@ public class CacheHandler implements InterceptorHandler {
 		} finally {
 			//清除并发控制锁
 			if(invocationVal.getConcurrentLockKey() != null){
-				cacheProvider.remove(invocationVal.getConcurrentLockKey());
+				CacheUtils.remove(invocationVal.getConcurrentLockKey());
 			}
 		}
 	}
@@ -407,9 +376,9 @@ public class CacheHandler implements InterceptorHandler {
 	 */
 	private void cacheFieldRefKey(String fieldCacheKey,String idCacheKey,long expired){
 		if(nullValueCache){
-			getCacheProvider().set(fieldCacheKey, idCacheKey, expired);
+			CacheUtils.set(fieldCacheKey, idCacheKey, expired);
 		}else{
-			getCacheProvider().setStr(fieldCacheKey, idCacheKey, expired);
+			CacheUtils.setString(fieldCacheKey, idCacheKey, expired);
 		}
 	}
 	
@@ -443,7 +412,7 @@ public class CacheHandler implements InterceptorHandler {
 				List<String> idCacheKeys = ids.stream().map(id -> {
 					return mapperMeta.getEntityClass().getSimpleName() + ID_CACHEKEY_JOIN + id.toString();
 				}).collect(Collectors.toList());
-				getCacheProvider().remove(idCacheKeys.toArray(new String[0]));
+				CacheUtils.remove(idCacheKeys.toArray(new String[0]));
 				if(logger.isDebugEnabled()) {
 					logger.debug("remove cacheKeys:{}",idCacheKeys);
 				}
@@ -451,7 +420,7 @@ public class CacheHandler implements InterceptorHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 			final String groupName = mapperMeta.getEntityClass().getSimpleName();
-			getCacheProvider().clearGroup(groupName);
+			clearCacheGroup(groupName);
 		}finally {
 			try {rs.close();} catch (Exception e2) {}
 			try {statement.close();} catch (Exception e2) {}
@@ -509,7 +478,7 @@ public class CacheHandler implements InterceptorHandler {
 		cleanCacheExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				getCacheProvider().clearGroup(groupName);
+				clearCacheGroup(groupName);
 				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process removeGroupCache -> mapperId:{},groupName:{}",msId,groupName);
 			}
 		});
@@ -528,7 +497,7 @@ public class CacheHandler implements InterceptorHandler {
 				for (String method : queryMethods) {
 					metadata = getQueryMethodCache(method);
 					String prefix = StringUtils.splitByWholeSeparator(metadata.keyPattern, "%s")[0];
-					cacheProvider.clearGroup(metadata.cacheGroupKey,prefix);
+					clearCacheGroup(metadata.cacheGroupKey,prefix);
 				}
 			}
 		});
@@ -781,12 +750,46 @@ public class CacheHandler implements InterceptorHandler {
 		 list.add(queryMethodName);
 	}
 	
-	@Override
-	public void close() {
-		try {			
-			getCacheProvider().close();
-		} catch (Exception e) {}
+	public void clearCacheGroup(final String groupName,String ...prefixs) {
+		String cacheGroupKey = groupName.endsWith(CacheHandler.GROUPKEY_SUFFIX) ? groupName : groupName + CacheHandler.GROUPKEY_SUFFIX;
+		int keyCount = (int) CacheUtils.getListSize(cacheGroupKey);
+		if(keyCount <= 0)return;
+		int batchSize = 1000;
+	    //保护策略
+		if(keyCount > batchSize) {
+			CacheUtils.setExpire(cacheGroupKey, CacheExpires.todayEndSeconds());
+		}
+		
+		boolean withPrefixs = prefixs != null && prefixs.length > 0 && prefixs[0] != null;
+		
+		int toIndex;
+		List<String> keys;
+		for (int i = 0; i <= keyCount; i+=batchSize) {
+			toIndex = (i + batchSize) > keyCount ? keyCount : (i + batchSize);
+			keys = CacheUtils.getListItems(cacheGroupKey,i, toIndex);
+			if(keys.isEmpty())break;
+			//
+			if(withPrefixs) {
+				keys = keys.stream().filter(key -> {
+					for (String prefix : prefixs) {
+						if(key.contains(prefix))return true;
+					}
+					return false;
+				}).collect(Collectors.toList());
+			}
+			if(keys.isEmpty())continue;
+			//
+			CacheUtils.remove(keys.toArray(new String[0]));
+			if(logger.isDebugEnabled()) {
+				logger.debug("_clearGroupKey -> group:{},keys:{}",groupName,Arrays.toString(keys.toArray()));
+			}
+		}
+		//
+		CacheUtils.remove(cacheGroupKey);
 	}
+	
+	@Override
+	public void close() {}
 
 	@Override
 	public int interceptorOrder() {

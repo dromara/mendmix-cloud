@@ -205,7 +205,7 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 	        }
 	        
 	        if (!result.containsKey(ConsumerConfig.CLIENT_ID_CONFIG)) {
-	            result.put(ConsumerConfig.CLIENT_ID_CONFIG, MQContext.getGroupName() + GlobalRuntimeContext.WORKER_ID);
+	            result.put(ConsumerConfig.CLIENT_ID_CONFIG, MQContext.getGroupName() + GlobalRuntimeContext.getWorkId());
 	        }
 	        
 	        //每批次最大拉取记录
