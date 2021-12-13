@@ -264,7 +264,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			if(fromItem instanceof Table) {
 				Table table = (Table) fromItem;
 				//
-				handleTableDataPermission(select, table, dataMapping, sharddingTenant);
+				Expression newWhere = handleTableDataPermission(select.getWhere(), table, dataMapping, sharddingTenant);
+				select.setWhere(newWhere);
 				//
 				handleTableOrderBy(select, table, invocation);
 				//
@@ -272,7 +273,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				if(joins != null){
 					for (Join join : joins) {
 						table = (Table) join.getRightItem();
-						handleTableDataPermission(select, table, dataMapping, sharddingTenant);
+						newWhere = handleTableDataPermission(join.getOnExpression(), table, dataMapping, sharddingTenant);
+						join.setOnExpression(newWhere);
 					}
 				}
 			}else if(fromItem instanceof SubSelect) {
@@ -294,9 +296,9 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		return true;
 	}
 	
-	private boolean handleTableDataPermission(PlainSelect selectBody,Table table,Map<String, String[]> dataMapping,boolean sharddingTenant) {
+	private Expression handleTableDataPermission(Expression originWhere,Table table,Map<String, String[]> dataMapping,boolean sharddingTenant) {
 		if(!dataProfileMappings.containsKey(table.getName())) {
-			return true;
+			return originWhere;
 		}
 		Set<String> fieldNames;
 		Expression newExpression = null;
@@ -317,13 +319,15 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 			//如果某个匹配字段为空直接返回null，不在查询数据库
 			if(values == null || values.length == 0) {
-				return false;
+				EqualsTo equalsTo = new EqualsTo();
+				equalsTo.setLeftExpression(new Column(table, column));
+				equalsTo.setRightExpression(new StringValue("_PERMISSION_NOT_MATCH_"));
+				return equalsTo;
 			}
-			newExpression = handleColumnDataPermCondition(table, selectBody.getWhere(), column,values);
-			selectBody.setWhere(newExpression);
+			newExpression = handleColumnDataPermCondition(table, originWhere, column,values);
 		}
 		
-		return true;
+		return newExpression;
 	}
 	
 	private  Expression handleColumnDataPermCondition(Table table,Expression orginExpression,String columnName,String[] values){

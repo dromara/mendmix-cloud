@@ -11,7 +11,7 @@ import javax.persistence.Transient;
 import javax.persistence.Version;
 
 @Table(name = "users")
-public class UserEntity extends StandardBaseEntity {
+public class UserEntity extends TestBaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

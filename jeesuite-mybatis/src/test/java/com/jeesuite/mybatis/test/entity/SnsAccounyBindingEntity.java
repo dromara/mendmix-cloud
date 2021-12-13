@@ -7,7 +7,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Table(name = "sns_account_binding")
-public class SnsAccounyBindingEntity extends StandardBaseEntity {
+public class SnsAccounyBindingEntity extends TestBaseEntity {
 	
 	public static enum SnsType{
 		weixin,weibo,qq

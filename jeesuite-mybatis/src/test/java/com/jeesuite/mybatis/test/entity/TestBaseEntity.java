@@ -13,7 +13,7 @@ import com.jeesuite.mybatis.plugin.autofield.annotation.UpdatedBy;
  * <br>
  * Class Name   : StandardBaseEntity
  */
-public abstract class StandardBaseEntity extends BaseEntity {
+public abstract class TestBaseEntity extends BaseEntity {
 
 	private static final long serialVersionUID = 1L;
 
