@@ -7,7 +7,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.jeesuite.common.util.ResourceUtils;
@@ -41,9 +43,24 @@ public class CustomWebMvcConfiguration implements WebMvcConfigurer {
 		       .addPathPatterns("/**")
 		       .excludePathPatterns("/error","/swagger-ui.html", "/v2/api-docs", "/swagger-resources/**", "/webjars/**", "/info", "/health");
 
-		if ("local".equals(ResourceUtils.getProperty("jeesuite.configcenter.profile"))) {
+		if ("local".equals(ResourceUtils.getProperty("jeesuite.config.profile"))) {
 			registry.addInterceptor(new MockLoginUserInterceptor()).addPathPatterns("/**");
 		}
 	}
+	
+	@Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+		String pathPrefix = ResourceUtils.getProperty("jeesuite.request.pathPrefix");
+		if(pathPrefix != null) {
+			configurer.addPathPrefix(pathPrefix,c -> true);
+		}
+    }
+	
+	
+	@Override
+    public void addCorsMappings(CorsRegistry registry) {
+		if (!ResourceUtils.getBoolean("jeesuite.request.cors.enabled"))return;
+        registry.addMapping("/**").allowedOrigins("*");
+    }
 
 }

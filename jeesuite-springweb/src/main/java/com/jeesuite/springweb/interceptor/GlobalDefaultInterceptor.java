@@ -40,11 +40,11 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	
 	private boolean isLocalEnv = "local".equals(GlobalRuntimeContext.ENV);
 	//调用token检查
-	private boolean authTokenCheckEnabled = ResourceUtils.getBoolean("request.authtoken.enabled", !isLocalEnv);
+	private boolean authTokenCheckEnabled = ResourceUtils.getBoolean("jeesuite.request.authtoken.enabled", !isLocalEnv);
 	//行为日志采集
-	private boolean requestLogEnabled = ResourceUtils.getBoolean("request.log.enabled", false);
+	private boolean requestLogEnabled = ResourceUtils.getBoolean("jeesuite.request.log.enabled", false);
 	//
-	private boolean requestLogGetIngore = ResourceUtils.getBoolean("request.log.getMethod.ignore", true);
+	private boolean requestLogGetIngore = ResourceUtils.getBoolean("jeesuite.request.log.getMethod.ignore", true);
 
 	private PathMatcher authtokenCheckIgnoreUriMather = new PathMatcher();
 	
@@ -54,7 +54,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 		if(authTokenCheckEnabled) {
 			authtokenCheckIgnoreUriMather.addUriPattern(contextPath, "/error");
 		}
-		List<String> ignoreUris = ResourceUtils.getList("request.authtoken.ignore-uris");
+		List<String> ignoreUris = ResourceUtils.getList("jeesuite.request.authtoken.ignore-uris");
 		for (String uri : ignoreUris) {
 			authtokenCheckIgnoreUriMather.addUriPattern(contextPath, uri);
 		}

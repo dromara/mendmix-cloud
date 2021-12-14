@@ -22,6 +22,10 @@ public class PageSqlUtils {
 
 	private static final String SQL_COUNT_PREFIX = "SELECT count(1) ";
 	
+	private static final String[] UNION_KEYS = new String[] {" union "," UNION "};
+	
+	private static final String COMMON_COUNT_SQL_TEMPLATE = "SELECT count(1) FROM (%s) tmp";
+	
 	private static Map<String, String>  pageTemplates = new HashMap<>(4);
 	
 	static {
@@ -44,7 +48,12 @@ public class PageSqlUtils {
 	
 	public static String getCountSql(String sql){
 		sql = sql.replaceAll(REGEX_N_T_S, StringUtils.SPACE).split(SQL_ORDER_PATTERN)[0];
-		return sql.replaceFirst(SQL_SELECT_PATTERN, SQL_COUNT_PREFIX);
+		if(StringUtils.containsAny(sql, UNION_KEYS)) {
+			sql = String.format(COMMON_COUNT_SQL_TEMPLATE, sql);
+		}else {
+			sql = sql.replaceFirst(SQL_SELECT_PATTERN, SQL_COUNT_PREFIX);
+		}
+		return sql;
 	}
 	
 	public static void main(String[] args) {
