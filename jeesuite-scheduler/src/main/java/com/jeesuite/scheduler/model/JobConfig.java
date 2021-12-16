@@ -26,8 +26,6 @@ public class JobConfig implements Serializable {
 
 	private String jobName;
 
-	private String schedulerName;
-
 	private boolean running = false;// 是否运行中
 
 	private boolean active = true;// 是否启用
@@ -79,14 +77,6 @@ public class JobConfig implements Serializable {
 
 	public void seJobName(String jobName) {
 		this.jobName = jobName;
-	}
-
-	public String getSchedulerName() {
-		return schedulerName;
-	}
-
-	public void setSchedulerName(String schedulerName) {
-		this.schedulerName = schedulerName;
 	}
 
 	public boolean isRunning() {

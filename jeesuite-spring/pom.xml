@@ -60,6 +60,7 @@
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjweaver</artifactId>
 			<version>1.8.5</version>
+			<optional>true</optional>
 		</dependency>
 		
 		<!-- <dependency>

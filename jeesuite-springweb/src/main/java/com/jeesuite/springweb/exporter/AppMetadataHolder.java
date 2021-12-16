@@ -39,9 +39,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.constants.PermissionLevel;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.springweb.annotation.ApiMetadata;
 import com.jeesuite.springweb.model.ApiInfo;
 import com.jeesuite.springweb.model.AppMetadata;
 

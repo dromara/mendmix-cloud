@@ -176,15 +176,19 @@ public final class ResourceUtils {
 			Map<String, Properties> filePropMap = new LinkedHashMap<>(fileList.size());
 			
 			
+			String profile = System.getProperty("spring.profiles.active");
 			Properties p;
 			for (String file : fileList) {
 				p = parseToProperties(file, jarFile);
-				if(withProfileKeyFile ==null && p.containsKey("spring.profiles.active")){
+				if(profile != null) {
+					if(file.endsWith("-" + profile + fileExt)) {
+						activeProfileFile = file;
+					}
+				}else if(withProfileKeyFile ==null && p.containsKey("spring.profiles.active")){
 					withProfileKeyFile = file;
 					profileFileBaseName = file.replace(fileExt, "") + "-";
-					String profile = replaceRefValue(p.getProperty("spring.profiles.active"));
+					profile = replaceRefValue(p.getProperty("spring.profiles.active"));
 					activeProfileFile = profileFileBaseName + profile + fileExt;
-					System.out.println(">>activeProfileFile:"+profile);
 				}
 				filePropMap.put(file, p);
 			}

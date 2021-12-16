@@ -25,11 +25,12 @@ public class ActionLog implements Serializable{
 	
 	private String appId;
 	private String env;
-	private String appName;
+	private String tenantId;
+	private String clientType;
 	private String actionName;
-	private String actionUri;
-	private String actionUserId;
-	private String actionUserName;
+	private String actionKey;
+	private String userId;
+	private String userName;
 	private String originAppId;
 	private String requestIp;
 	@JsonFormat(pattern=DateUtils.TIMESTAMP_PATTERN,timezone = "GMT+8")
@@ -60,18 +61,7 @@ public class ActionLog implements Serializable{
 	public void setEnv(String env) {
 		this.env = env;
 	}
-	/**
-	 * @return the appName
-	 */
-	public String getAppName() {
-		return appName;
-	}
-	/**
-	 * @param appName the appName to set
-	 */
-	public void setAppName(String appName) {
-		this.appName = appName;
-	}
+
 	/**
 	 * @return the actionName
 	 */
@@ -84,43 +74,46 @@ public class ActionLog implements Serializable{
 	public void setActionName(String actionName) {
 		this.actionName = actionName;
 	}
-	/**
-	 * @return the actionUri
-	 */
-	public String getActionUri() {
-		return actionUri;
-	}
-	/**
-	 * @param actionUri the actionUri to set
-	 */
-	public void setActionUri(String actionUri) {
-		this.actionUri = actionUri;
-	}
-	/**
-	 * @return the actionUserId
-	 */
-	public String getActionUserId() {
-		return actionUserId;
-	}
-	/**
-	 * @param actionUserId the actionUserId to set
-	 */
-	public void setActionUserId(String actionUserId) {
-		this.actionUserId = actionUserId;
-	}
-	/**
-	 * @return the actionUserName
-	 */
-	public String getActionUserName() {
-		return actionUserName;
-	}
-	/**
-	 * @param actionUserName the actionUserName to set
-	 */
-	public void setActionUserName(String actionUserName) {
-		this.actionUserName = actionUserName;
+	
+	public String getTenantId() {
+		return tenantId;
 	}
 	
+	public void setTenantId(String tenantId) {
+		this.tenantId = tenantId;
+	}
+	
+	public String getClientType() {
+		return clientType;
+	}
+	
+	public void setClientType(String clientType) {
+		this.clientType = clientType;
+	}
+	
+	public String getActionKey() {
+		return actionKey;
+	}
+	
+	public void setActionKey(String actionKey) {
+		this.actionKey = actionKey;
+	}
+	
+	public String getUserId() {
+		return userId;
+	}
+	
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+	
+	public String getUserName() {
+		return userName;
+	}
+	
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
 	/**
 	 * @return the originAppId
 	 */

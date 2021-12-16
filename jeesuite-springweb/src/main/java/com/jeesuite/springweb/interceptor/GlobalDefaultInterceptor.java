@@ -16,13 +16,13 @@ import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.exception.ForbiddenAccessException;
 import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.logging.integrate.RequestLogCollector;
-import com.jeesuite.springweb.annotation.ApiMetadata;
 
 /**
  * 
@@ -95,7 +95,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			if(requestLogEnabled){
 				if((config == null && (!requestLogGetIngore || !request.getMethod().equals(RequestMethod.GET.name())))
 						|| config.actionLog()){
-					RequestLogCollector.onRequestStart(request);
+					RequestLogCollector.onRequestStart(request,config);
 				}
 			}
 		}

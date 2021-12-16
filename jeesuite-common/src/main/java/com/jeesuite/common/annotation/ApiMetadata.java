@@ -1,4 +1,4 @@
-package com.jeesuite.springweb.annotation;
+package com.jeesuite.common.annotation;
 
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;

@@ -12,9 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.CurrentRuntimeContext;
-import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.async.StandardThreadExecutor;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.model.AuthUser;
@@ -23,6 +23,7 @@ import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
+import com.jeesuite.spring.InstanceFactory;
 
 
 /**
@@ -44,12 +45,13 @@ public class RequestLogCollector {
 
 	private static ThreadLocal<ActionLog> context = new ThreadLocal<>();
 	
+	private static LogStorageProvider storageProvider;
 	private static StandardThreadExecutor asyncSendExecutor;
 	
-	private static boolean inited = false;
 	
 	static {
-		if(inited = StringUtils.isNotBlank(ACT_LOG_ADD_URL)) {			
+		storageProvider = InstanceFactory.getInstance(LogStorageProvider.class);
+		if(storageProvider != null || StringUtils.isNotBlank(ACT_LOG_ADD_URL)) {			
 			asyncSendExecutor = new StandardThreadExecutor(1, 10,60, TimeUnit.SECONDS, 5000,new StandardThreadFactory("log-asyncSendExecutor"));
 		}
 	}
@@ -58,22 +60,24 @@ public class RequestLogCollector {
 		return context.get();
 	}
 
-	public static void onRequestStart(HttpServletRequest request){
-		if(!inited)return;
+	public static void onRequestStart(HttpServletRequest request,ApiMetadata apiMeta){
 		ActionLog actionLog = new ActionLog();
 		actionLog.setEnv(GlobalRuntimeContext.ENV);
 		actionLog.setAppId(GlobalRuntimeContext.APPID);
 		actionLog.setRequestAt(new Date());
 		actionLog.setRequestIp(IpUtils.getIpAddr(request));
-		actionLog.setActionUri(request.getRequestURI());
-		actionLog.setOriginAppId(request.getHeader(CustomRequestHeaders.HEADER_INVOKER_APP_ID));
-		String requestId = request.getHeader(CustomRequestHeaders.HEADER_REQUEST_ID);
-		if(StringUtils.isBlank(requestId))requestId = TokenGenerator.generate();
-		actionLog.setRequestId(requestId);
+		if(apiMeta != null) {
+			actionLog.setActionName(apiMeta.actionName());
+		}
+		actionLog.setActionKey(request.getRequestURI());
+		actionLog.setOriginAppId(CurrentRuntimeContext.getInvokeAppId());
+		actionLog.setRequestId(CurrentRuntimeContext.getRequestId());
+		actionLog.setTenantId(CurrentRuntimeContext.getTenantId());
+		actionLog.setClientType(CurrentRuntimeContext.getClientType());
 		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 		if(currentUser != null){
-			actionLog.setActionUserId(currentUser.getId());
-			actionLog.setActionUserName(currentUser.getUsername());
+			actionLog.setUserId(currentUser.getId());
+			actionLog.setUserName(currentUser.getUsername());
 		}
 		
 		if(context.get() == null){
@@ -115,7 +119,7 @@ public class RequestLogCollector {
     		asyncSendExecutor.execute(new Runnable() {
 				@Override
 				public void run() {
-					sendUserBehaviorLog(actionLog);
+					saveLog(actionLog);
 				}
 			});
 		} catch (Exception e) {
@@ -125,16 +129,15 @@ public class RequestLogCollector {
     }
     
     
-    public static void onSystemBackendTaskStart(String taskName,String taskKey){
-    	if(!inited)return;
+    public static void onSystemBackendTaskStart(String taskKey,String taskName){
     	ActionLog actionLog = new ActionLog();
     	actionLog.setEnv(GlobalRuntimeContext.ENV);
 		actionLog.setAppId(GlobalRuntimeContext.APPID);
 		actionLog.setRequestAt(new Date());
 		actionLog.setRequestId(TokenGenerator.generate());
 		actionLog.setActionName(taskName);
-		actionLog.setActionUserName(TIMER_TASK);
-		actionLog.setActionUri(taskKey);
+		actionLog.setUserName(TIMER_TASK);
+		actionLog.setActionKey(taskKey);
 		if(context.get() == null){
 			context.set(actionLog);
 		}
@@ -152,7 +155,7 @@ public class RequestLogCollector {
     		asyncSendExecutor.execute(new Runnable() {
 				@Override
 				public void run() {
-					sendUserBehaviorLog(actionLog);
+					saveLog(actionLog);
 				}
 			});
 		} catch (Exception e) {
@@ -161,8 +164,13 @@ public class RequestLogCollector {
 		}
     }
 
-    private static void sendUserBehaviorLog(ActionLog actionLog){
-    	HttpUtils.postJson(ACT_LOG_ADD_URL, JsonUtils.toJson(actionLog));
+    private static void saveLog(ActionLog actionLog){
+    	if(storageProvider != null) {
+    		storageProvider.storage(actionLog);
+    	}else {
+    		HttpUtils.postJson(ACT_LOG_ADD_URL, JsonUtils.toJson(actionLog));
+    	}
+    	
     }
 
     public static void destroy(){

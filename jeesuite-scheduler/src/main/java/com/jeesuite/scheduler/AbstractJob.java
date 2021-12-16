@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 
+import com.jeesuite.logging.integrate.RequestLogCollector;
 import com.jeesuite.scheduler.model.JobConfig;
 import com.jeesuite.spring.InstanceFactory;
 
@@ -119,6 +120,8 @@ public abstract class AbstractJob implements DisposableBean{
 			beginTime = getPreviousFireTime();
 			JobContext.getContext().getRegistry().setRuning(jobName, beginTime);
 			logger.debug("Job_{} at node[{}] execute begin...", jobName, JobContext.getContext().getNodeId());
+			
+			if(logging())RequestLogCollector.onSystemBackendTaskStart(jobName, jobName);
 			// 执行
 			doJob(JobContext.getContext());
 			logger.debug("Job_{} at node[{}] execute finish", jobName, JobContext.getContext().getNodeId());
@@ -143,6 +146,8 @@ public abstract class AbstractJob implements DisposableBean{
 			}
 			// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
 			cronTrigger = null;
+			//
+			if(logging())RequestLogCollector.onSystemBackendTaskEnd(exception);
 		}
 	}
 
@@ -325,6 +330,9 @@ public abstract class AbstractJob implements DisposableBean{
 		return true;
 	}
 
+	public boolean logging() {
+		return true;
+	}
 	/**
 	 * 是否开启并行处理
 	 * @return
