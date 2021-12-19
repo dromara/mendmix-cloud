@@ -27,21 +27,21 @@ import com.jeesuite.zuul.model.BizSystemModule;
 /**
  * 
  * <br>
- * Class Name   : CustomDiscoveryClientRouteLocator
+ * Class Name : CustomDiscoveryClientRouteLocator
  *
  * @author jiangwei
  * @version 1.0.0
  * @date 2019年9月29日
  */
-public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocator implements ApplicationContextAware{
+public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocator implements ApplicationContextAware {
 
 	private final static Logger logger = LoggerFactory.getLogger(CustomDiscoveryClientRouteLocator.class);
-	
-    private ZuulProperties properties;
-	
+
+	private ZuulProperties properties;
+
 	private Map<String, BizSystemModule> currentRouteModules = new HashMap<>();
 	private Map<String, ZuulProperties.ZuulRoute> localRoutes;
-	
+
 	public CustomDiscoveryClientRouteLocator(String servletPath, DiscoveryClient discovery, ZuulProperties properties,
 			ServiceRouteMapper serviceRouteMapper, ServiceInstance localServiceInstance) {
 		super(servletPath, discovery, properties, serviceRouteMapper, localServiceInstance);
@@ -57,69 +57,65 @@ public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocat
 	protected LinkedHashMap<String, ZuulRoute> locateRoutes() {
 		LinkedHashMap<String, ZuulProperties.ZuulRoute> routesMap = new LinkedHashMap<>();
 		// 从远程加载路由信息
-        Map<String, ZuulRoute> remoteRoutes = buildRemoteRoutes();
-        
-        // 从application.properties中加载路由信息
-        if(localRoutes == null) {
-        	List<String> remoteRoutePaths = new ArrayList<>(remoteRoutes.keySet());
-        	localRoutes = new  HashMap<>();
-        	for (ZuulRoute route : this.properties.getRoutes().values()) {
-        		if(!remoteRoutePaths.contains(route.getPath())) {
-        			localRoutes.put(route.getPath(), route);
-        		}
-    		}
-        }
-        
-        if(!localRoutes.isEmpty()) {
-        	routesMap.putAll(localRoutes);
-        }
+		Map<String, ZuulRoute> remoteRoutes = buildRemoteRoutes();
+
+		// 从application.properties中加载路由信息
+		if (localRoutes == null) {
+			List<String> remoteRoutePaths = new ArrayList<>(remoteRoutes.keySet());
+			localRoutes = new HashMap<>();
+			for (ZuulRoute route : this.properties.getRoutes().values()) {
+				if (!remoteRoutePaths.contains(route.getPath())) {
+					localRoutes.put(route.getPath(), route);
+				}
+			}
+		}
+
+		if (!localRoutes.isEmpty()) {
+			routesMap.putAll(localRoutes);
+		}
 		routesMap.putAll(remoteRoutes);
-		
-		logger.info(">>load locateRoutes:{}",routesMap);
+
+		logger.info(">>load locateRoutes:{}", routesMap);
 		return routesMap;
 	}
 
-
 	@Override
-	public void refresh() {	
+	public void refresh() {
 		Map<String, BizSystemModule> newestServiceModules = CurrentSystemHolder.getRouteModuleMappings();
 		//
-		if(newestServiceModules.size() != currentRouteModules.size() 
-				|| !newestServiceModules.keySet().containsAll(currentRouteModules.keySet()) 
-				|| !currentRouteModules.keySet().containsAll(newestServiceModules.keySet()) 
-		){
+		if (newestServiceModules.size() != currentRouteModules.size()
+				|| !newestServiceModules.keySet().containsAll(currentRouteModules.keySet())
+				|| !currentRouteModules.keySet().containsAll(newestServiceModules.keySet())) {
 			currentRouteModules = newestServiceModules;
 			doRefresh();
 		}
 	}
-	
-	
-private Map<String, ZuulProperties.ZuulRoute> buildRemoteRoutes(){
-		
-	    if(currentRouteModules == null) {
-		   currentRouteModules = CurrentSystemHolder.getRouteModuleMappings();
-	    }
-	   
-		Collection<BizSystemModule> modules = currentRouteModules.values();
-		Map<String, ZuulProperties.ZuulRoute> routes = new  HashMap<>();
-		String path = null;
-        ZuulProperties.ZuulRoute zuulRoute = null;
-        for (BizSystemModule module : modules) {
-        	path = String.format("/%s/**", module.getRouteName());
-        	zuulRoute = new ZuulProperties.ZuulRoute();  
-        	zuulRoute.setPath(path);
-        	zuulRoute.setId(module.getRouteName());
-        	if(module.getServiceId().startsWith("http")) {
-        		zuulRoute.setUrl(module.getServiceId());
-        	}else {
-        		zuulRoute.setServiceId(module.getServiceId());
-        	}
-        	//
-        	routes.put(path, zuulRoute);
+
+	private Map<String, ZuulProperties.ZuulRoute> buildRemoteRoutes() {
+
+		if (currentRouteModules == null) {
+			currentRouteModules = CurrentSystemHolder.getRouteModuleMappings();
 		}
-        
-        return routes;
+
+		Collection<BizSystemModule> modules = currentRouteModules.values();
+		Map<String, ZuulProperties.ZuulRoute> routes = new HashMap<>();
+		String path = null;
+		ZuulProperties.ZuulRoute zuulRoute = null;
+		for (BizSystemModule module : modules) {
+			path = String.format("/%s/**", module.getRouteName());
+			zuulRoute = new ZuulProperties.ZuulRoute();
+			zuulRoute.setPath(path);
+			zuulRoute.setId(module.getRouteName());
+			if (module.getServiceId().startsWith("http")) {
+				zuulRoute.setUrl(module.getServiceId());
+			} else {
+				zuulRoute.setServiceId(module.getServiceId());
+			}
+			//
+			routes.put(path, zuulRoute);
+		}
+
+		return routes;
 	}
-	
 
 }
