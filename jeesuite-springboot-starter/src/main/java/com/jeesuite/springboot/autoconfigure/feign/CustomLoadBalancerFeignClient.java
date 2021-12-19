@@ -22,11 +22,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
-import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
-import com.jeesuite.common.model.AuthUser;
-import com.jeesuite.common.util.WebUtils;
+import com.jeesuite.common.util.SimpleCryptUtils;
 import com.jeesuite.springweb.client.CustomRequestHostHolder;
+import com.jeesuite.springweb.client.RequestHeaderBuilder;
 
 import feign.Client;
 import feign.Request;
@@ -104,16 +103,17 @@ public class CustomLoadBalancerFeignClient implements Client{
       }
       
       //headers
-      Map<String, String> customHeaders = WebUtils.getCustomHeaders();
+      Map<String, String> customHeaders = RequestHeaderBuilder.getHeaders();
       customHeaders.forEach( (k,v) -> {
     	  connection.addRequestProperty(k, v);
       } );
-      if(!customHeaders.containsKey(CustomRequestHeaders.HEADER_AUTH_USER)){
-    	  AuthUser session = CurrentRuntimeContext.getCurrentUser();
-          if(session != null){
-        	  connection.addRequestProperty(CustomRequestHeaders.HEADER_AUTH_USER, session.toEncodeString());
-          } 
-      }
+
+     //保持原始http状态码
+      connection.addRequestProperty(CustomRequestHeaders.HEADER_HTTP_STATUS_KEEP, Boolean.TRUE.toString());
+     //标记不需要封装
+      connection.addRequestProperty(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
+    //保持原始http状态码
+      connection.addRequestProperty(CustomRequestHeaders.HEADER_CLUSTER_ID, SimpleCryptUtils.encrypt("local_test"));
 
       if (request.body() != null) {
         if (contentLength != null) {

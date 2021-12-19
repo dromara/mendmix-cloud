@@ -4,7 +4,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
+import com.jeesuite.common.model.AuthUser;
+import com.jeesuite.common.util.SimpleCryptUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.springweb.client.RequestHeaderBuilder;
 import com.jeesuite.zuul.filter.FilterHandler;
@@ -25,19 +28,45 @@ import com.netflix.zuul.context.RequestContext;
 public class GlobalHeaderHanlder implements FilterHandler {
 
 	@Override
-	public Object process(RequestContext ctx,HttpServletRequest request, BizSystemModule module) {
+	public Object process(RequestContext ctx, HttpServletRequest request, BizSystemModule module) {
 		String requrstId = request.getHeader(CustomRequestHeaders.HEADER_REQUEST_ID);
-		if(StringUtils.isNotBlank(requrstId)){
-			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_REQUEST_ID,requrstId);
-		}else{
+		if (StringUtils.isNotBlank(requrstId)) {
+			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_REQUEST_ID, requrstId);
+		} else {
 			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_REQUEST_ID, TokenGenerator.generate());
 		}
-		ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_GATEWAY_TOKEN,TokenGenerator.generateWithSign());
-		
-		RequestHeaderBuilder.getHeaders().forEach( (k,v) -> {
-			ctx.addZuulRequestHeader(k,v);
-		} );
-		
+		ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_GATEWAY_TOKEN, TokenGenerator.generateWithSign());
+
+		RequestHeaderBuilder.getHeaders().forEach((k, v) -> {
+			ctx.addZuulRequestHeader(k, v);
+		});
+
+		// 跨集群
+		boolean crossCluster = false;
+		try {
+			String clusterName = request.getHeader(CustomRequestHeaders.HEADER_CLUSTER_ID);
+			if (clusterName != null) {
+				clusterName = SimpleCryptUtils.decrypt(clusterName);
+			}
+			// TODO 验证合法性
+			crossCluster = true;
+		} catch (Exception e) {
+		}
+
+		if (!crossCluster) {
+			// 一些header禁止前端传入
+			if (request.getHeader(CustomRequestHeaders.HEADER_IGNORE_TENANT) != null) {
+				ctx.getZuulRequestHeaders().remove(CustomRequestHeaders.HEADER_IGNORE_TENANT);
+			}
+			if (request.getHeader(CustomRequestHeaders.HEADER_AUTH_USER) != null) {
+				ctx.getZuulRequestHeaders().remove(CustomRequestHeaders.HEADER_AUTH_USER);
+				AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+				if (currentUser != null) {
+					ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_AUTH_USER, currentUser.toEncodeString());
+				}
+			}
+		}
+
 		return null;
 	}
 

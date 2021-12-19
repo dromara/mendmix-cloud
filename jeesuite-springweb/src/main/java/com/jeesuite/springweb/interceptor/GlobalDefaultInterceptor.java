@@ -93,8 +93,11 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			
 			//行为日志
 			if(requestLogEnabled){
-				if((config == null && (!requestLogGetIngore || !request.getMethod().equals(RequestMethod.GET.name())))
-						|| config.actionLog()){
+				boolean logging = !requestLogGetIngore || !request.getMethod().equals(RequestMethod.GET.name());
+				if(config != null && !logging){
+					logging = config.actionLog();
+				}
+				if(logging) {
 					RequestLogCollector.onRequestStart(request,config);
 				}
 			}
