@@ -43,9 +43,9 @@ public final class ResourceUtils {
 	public static final String PLACEHOLDER_PREFIX = "${";
 	public static final String PLACEHOLDER_SUFFIX = "}";
 
-	private static String withProfileKeyFile = null;
-	private static String profileFileBaseName = null;
-	private static String activeProfileFile = null;
+	private static String profile;
+	private static String profileFile;
+	private static Properties profileProperties;
 	
 	private final static Properties allProperties = new Properties();
 	
@@ -94,6 +94,11 @@ public final class ResourceUtils {
 					String value = replaceRefValue(allProperties.getProperty(key.toString()));
 					if(StringUtils.isNotBlank(value))allProperties.setProperty(key.toString(), value);
 				}
+			}
+			
+			if(profileFile != null) {
+				allProperties.putAll(profileProperties);
+				System.out.println(">>load properties from file:" + profileFile);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -170,36 +175,22 @@ public final class ResourceUtils {
 		if(fileList.size() == 1){
 			Properties p = parseToProperties(fileList.get(0), jarFile);
 			allProperties.putAll(p);
-			System.out.println(">>load properties from file:" + fileList.get(0));
 		}else if(fileList.size() > 1){
-			sortFileNames(fileList, fileExt);
 			Map<String, Properties> filePropMap = new LinkedHashMap<>(fileList.size());
-			
-			
-			String profile = System.getProperty("spring.profiles.active");
 			Properties p;
 			for (String file : fileList) {
-				p = parseToProperties(file, jarFile);
-				if(profile != null) {
-					if(file.endsWith("-" + profile + fileExt)) {
-						activeProfileFile = file;
-					}
-				}else if(withProfileKeyFile ==null && p.containsKey("spring.profiles.active")){
-					withProfileKeyFile = file;
-					profileFileBaseName = file.replace(fileExt, "") + "-";
+				filePropMap.put(file, p = parseToProperties(file, jarFile));
+				if(profile == null && p.containsKey("spring.profiles.active")) {
 					profile = replaceRefValue(p.getProperty("spring.profiles.active"));
-					activeProfileFile = profileFileBaseName + profile + fileExt;
 				}
-				filePropMap.put(file, p);
 			}
-			
-			for (String filePath : filePropMap.keySet()) {
-				if(profileFileBaseName == null 
-						|| filePath.equals(withProfileKeyFile)
-						|| !filePath.startsWith(profileFileBaseName)
-						|| filePath.equals(activeProfileFile)){
-					allProperties.putAll(filePropMap.get(filePath));
-					System.out.println(">>load properties from file:" + filePath);
+			for (String file : fileList) {
+				if(profile != null && file.endsWith("-" + profile + fileExt)) {
+					profileFile = file;
+					profileProperties = filePropMap.get(file);
+				}else {
+					allProperties.putAll(filePropMap.get(file));
+					System.out.println(">>load properties from file:" + file);
 				}
 			}
 		}
