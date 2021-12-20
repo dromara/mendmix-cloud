@@ -12,13 +12,15 @@ import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.springweb.model.WrapperResponse;
 import com.jeesuite.zuul.FilterConstants;
 import com.jeesuite.zuul.filter.post.ResponseRewriteHandler;
-import com.jeesuite.zuul.filter.pre.GlobalHeaderHanlder;
+import com.jeesuite.zuul.filter.pre.GlobalHeaderHandler;
 import com.jeesuite.zuul.model.BizSystemModule;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 
 public abstract class AbstractZuulFilter extends ZuulFilter {
 
+	public static String CTX_IGNORE_AUTH = "_ctx_ignore_auth_";
+	
 	protected List<FilterHandler> hanlders = new ArrayList<>();
 	
 	private String filterType;
@@ -29,7 +31,7 @@ public abstract class AbstractZuulFilter extends ZuulFilter {
 		if("pre".equals(filterType)) {
 			this.filterOrder = 0;
 			//
-			hanlders.add(new GlobalHeaderHanlder());
+			hanlders.add(new GlobalHeaderHandler());
 		}else if("post".equals(filterType)) {
 			this.filterOrder = 9;
 			//

@@ -25,7 +25,7 @@ import com.netflix.zuul.context.RequestContext;
  * @version 1.0.0
  * @date 2020年9月15日
  */
-public class GlobalHeaderHanlder implements FilterHandler {
+public class GlobalHeaderHandler implements FilterHandler {
 
 	@Override
 	public Object process(RequestContext ctx, HttpServletRequest request, BizSystemModule module) {

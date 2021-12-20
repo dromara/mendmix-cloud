@@ -46,7 +46,7 @@ public class HttpServletRequestReader {
 		try {	
 			requestUri = request.getRequestURI();
 			queryString = request.getQueryString();
-			this.postMethod = HttpMethod.POST.equals(request.getMethod());
+			this.postMethod = HttpMethod.POST.name().equals(request.getMethod());
 			this.requestDatas =  queryParamsToMap(request);
 			if(!WebUtils.isMultipartContent(request)){	
 				this.stream = IOUtils.toByteArray(request.getInputStream());
