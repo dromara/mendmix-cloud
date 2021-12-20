@@ -114,7 +114,7 @@ public class MetadataHelper {
                 map.put(field.getName(), field);
             }
             
-            entityFieldMappings.put(tableMeta.getName(), map);
+            entityFieldMappings.put(tableMeta.getName().toLowerCase(), map);
             
             if (columnMetas.size() <= 0) {
                 throw new RuntimeException("实体" + entityClass.getName() + "不存在映射字段");
@@ -183,7 +183,7 @@ public class MetadataHelper {
             throw new RuntimeException("实体" + entityClass.getName() + "不存在'Table'注解");
         }
 
-        tableMapper.setName(tableName.toLowerCase());
+        tableMapper.setName(tableName);
         return tableMapper;
     }
 

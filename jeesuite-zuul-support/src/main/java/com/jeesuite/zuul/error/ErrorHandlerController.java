@@ -14,7 +14,7 @@ import com.netflix.zuul.exception.ZuulException;
 
 public class ErrorHandlerController implements ErrorController {
 
-	private static Logger log = LoggerFactory.getLogger("com.zvosframework");
+	private static Logger log = LoggerFactory.getLogger("com.jeesuite");
 
 	@Override
 	public String getErrorPath() {

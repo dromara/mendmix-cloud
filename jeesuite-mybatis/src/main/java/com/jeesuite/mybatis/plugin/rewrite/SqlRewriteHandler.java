@@ -112,7 +112,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 			//
 			for (MapperMetadata mapper : mappers) {
-				if(softDeleteTables.contains(mapper.getTableName().toLowerCase())) {
+				if(softDeleteTables.contains(mapper.getTableName())) {
 					softDeleteMappedStatements.add(mapper.getMapperClass().getName());
 				}else {
 					Set<String> querys = mapper.getQueryTableMappings().keySet();

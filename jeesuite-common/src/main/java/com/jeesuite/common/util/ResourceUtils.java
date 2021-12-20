@@ -11,7 +11,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -175,6 +174,7 @@ public final class ResourceUtils {
 		if(fileList.size() == 1){
 			Properties p = parseToProperties(fileList.get(0), jarFile);
 			allProperties.putAll(p);
+			System.out.println(">>load properties from file:" + fileList.get(0));
 		}else if(fileList.size() > 1){
 			Map<String, Properties> filePropMap = new LinkedHashMap<>(fileList.size());
 			Properties p;
@@ -184,11 +184,20 @@ public final class ResourceUtils {
 					profile = replaceRefValue(p.getProperty("spring.profiles.active"));
 				}
 			}
+			
+			String fileName;
 			for (String file : fileList) {
 				if(profile != null && file.endsWith("-" + profile + fileExt)) {
 					profileFile = file;
 					profileProperties = filePropMap.get(file);
 				}else {
+					if(file.contains("/")) {
+						fileName = file.substring(file.lastIndexOf("/") + 1);
+					}else {
+						fileName = file.substring(file.lastIndexOf(File.separator) + 1);
+					}
+					if(fileName.startsWith("application-"))continue;
+					if(fileName.startsWith("bootstrap-"))continue;
 					allProperties.putAll(filePropMap.get(file));
 					System.out.println(">>load properties from file:" + file);
 				}
@@ -223,17 +232,7 @@ public final class ResourceUtils {
 		}
 		return properties;
 	}
-	
-	private static void sortFileNames(List<String> files,String ext){
-		Collections.sort(files, new Comparator<String>() {
-			@Override
-			public int compare(String o1, String o2) {
-				o1 = o1.replace(ext, "");
-				o2 = o2.replace(ext, "");
-				return o1.compareTo(o2);
-			}
-		});
-	}
+
 
 	/**
 	 * 获取所有配置的副本
