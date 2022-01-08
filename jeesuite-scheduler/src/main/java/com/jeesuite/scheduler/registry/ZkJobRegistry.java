@@ -56,8 +56,6 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 
 	private volatile boolean zkAvailabled = true;
 
-	private volatile boolean updatingStatus;
-
 	public void setZkServers(String zkServers) {
 		this.zkServers = zkServers;
 	}
@@ -237,30 +235,6 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 		logger.info("current activeNodes:{}", activeNodes);
 	}
 
-	/**
-	 * 重新分配执行节点
-	 * 
-	 * @param nodes
-	 */
-	private synchronized void rebalanceJobNode(List<String> nodes) {
-		while (updatingStatus)
-			;
-		Collection<JobConfig> jobs = schedulerConfgs.values();
-		int nodeIndex = 0;
-		for (JobConfig job : jobs) {
-			String nodeId = nodes.get(nodeIndex++);
-			if (!StringUtils.equals(job.getCurrentNodeId(), nodeId)) {
-				job.setCurrentNodeId(nodeId);
-				logger.info("rebalance Job[{}-{}] To Node[{}] ", job.getGroupName(), job.getJobName(), nodeId);
-			}
-			if (nodeIndex >= nodes.size()) {
-				nodeIndex = 0;
-			}
-			//
-			updateJobConfig(job);
-		}
-
-	}
 
 	private synchronized JobConfig getConfigFromZK(String path, Stat stat) {
 		Object data = stat == null ? zkClient.readData(path) : zkClient.readData(path, stat);

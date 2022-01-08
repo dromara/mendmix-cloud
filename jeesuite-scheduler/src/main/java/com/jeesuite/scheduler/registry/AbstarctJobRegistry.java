@@ -15,9 +15,12 @@
  */
 package com.jeesuite.scheduler.registry;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +42,33 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 	
 	protected Map<String, JobConfig> schedulerConfgs = new ConcurrentHashMap<>();
 
+	protected volatile boolean updatingStatus;
+	
+	/**
+	 * 重新分配执行节点
+	 * 
+	 * @param nodes
+	 */
+	protected synchronized void rebalanceJobNode(List<String> nodes) {
+		while (updatingStatus)
+			;
+		Collection<JobConfig> jobs = schedulerConfgs.values();
+		int nodeIndex = 0;
+		for (JobConfig job : jobs) {
+			String nodeId = nodes.get(nodeIndex++);
+			if (!StringUtils.equals(job.getCurrentNodeId(), nodeId)) {
+				job.setCurrentNodeId(nodeId);
+				logger.info("rebalance Job[{}-{}] To Node[{}] ", job.getGroupName(), job.getJobName(), nodeId);
+			}
+			if (nodeIndex >= nodes.size()) {
+				nodeIndex = 0;
+			}
+			//
+			updateJobConfig(job);
+		}
+
+	}
+	
 	public void execCommond(MonitorCommond cmd){
 		if(cmd == null)return;
 		JobConfig config = schedulerConfgs.get(cmd.getJobName());
