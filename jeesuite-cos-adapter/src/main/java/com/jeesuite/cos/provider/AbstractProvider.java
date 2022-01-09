@@ -32,7 +32,6 @@ public abstract class AbstractProvider implements CosProvider{
 	public AbstractProvider(CosProviderConfig conf) {
 		Validate.notBlank(conf.getAccessKey(), "[accessKey] not defined");
 		Validate.notBlank(conf.getSecretKey(), "[secretKey] not defined");
-		Validate.notBlank(conf.getRegionName(), "[regionName] not defined");
 		this.conf = conf;
 		
 		List<BucketConfig> bucketConfigs = conf.getBucketConfigs();

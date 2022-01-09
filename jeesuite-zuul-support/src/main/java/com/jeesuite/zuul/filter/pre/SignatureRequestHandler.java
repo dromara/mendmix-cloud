@@ -2,7 +2,6 @@ package com.jeesuite.zuul.filter.pre;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -11,7 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.ParameterUtils;
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.servlet.HttpServletRequestReader;
 import com.jeesuite.zuul.filter.AbstractZuulFilter;
 import com.jeesuite.zuul.filter.FilterHandler;
@@ -38,12 +36,8 @@ public class SignatureRequestHandler implements FilterHandler{
 	private Map<String, String> appIdSecretMappings = new HashMap<String, String>();
 	
 
-	public SignatureRequestHandler() {
-		Properties properties = ResourceUtils.getAllProperties("openapi.secret.mapping");
-		properties.forEach( (k,v) -> {
-			String appId = k.toString().split("\\[|\\]")[1];
-			appIdSecretMappings.put(appId, v.toString());
-		} );
+	public SignatureRequestHandler(Map<String, String> configs) {
+		this.appIdSecretMappings = configs;
 	}
 
 	@Override
@@ -51,12 +45,18 @@ public class SignatureRequestHandler implements FilterHandler{
 		
 		String sign = request.getHeader(X_SIGN_HEADER);
 		if(StringUtils.isBlank(sign))return null;
-		String timestamp = request.getHeader(X_SIGN_HEADER);
+		String timestamp = request.getHeader(TIMESTAMP_HEADER);
 		String appId = request.getHeader(APP_ID_HEADER);
 		
-		if(StringUtils.isAnyBlank(timestamp,appId))return null;
+		if(StringUtils.isAnyBlank(timestamp,appId)) {
+			throw new JeesuiteBaseException("认证头信息不完整");
+		}
 		
 		String secret = appIdSecretMappings.get(appId);
+		
+		if(StringUtils.isBlank(secret)) {
+			throw new JeesuiteBaseException("appId不存在");
+		}
 		
 		Map<String, Object> requestDatas = new HttpServletRequestReader(request).getRequestDatas();
 		

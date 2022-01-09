@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.common.util.WebUtils;
@@ -28,9 +29,10 @@ public class RequestHeaderBuilder {
 		if(!headers.containsKey(CustomRequestHeaders.HEADER_REQUEST_ID)){			 
 			headers.put(CustomRequestHeaders.HEADER_REQUEST_ID, TokenGenerator.generate());
 		}
-		if(!headers.containsKey(CustomRequestHeaders.HEADER_AUTH_TOKEN)){			 
-			headers.put(CustomRequestHeaders.HEADER_AUTH_TOKEN, TokenGenerator.generateWithSign());
+		if(!headers.containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)){			 
+			headers.put(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generateWithSign());
 		}
+		headers.put(CustomRequestHeaders.HEADER_INVOKER_APP_ID, GlobalRuntimeContext.APPID);
 		// 登录用户
 		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 		if(currentUser != null) {

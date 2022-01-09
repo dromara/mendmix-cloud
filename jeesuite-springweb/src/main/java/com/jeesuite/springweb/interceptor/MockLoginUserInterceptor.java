@@ -17,7 +17,7 @@ public class MockLoginUserInterceptor extends HandlerInterceptorAdapter {
     	if(CurrentRuntimeContext.getCurrentUser() == null){
     		AuthUser authUser = new AuthUser();
     		authUser.setId("1");
-    		authUser.setUsername("admin");
+    		authUser.setName("admin");
     		CurrentRuntimeContext.setAuthUser(authUser);
     	}
     	return true;

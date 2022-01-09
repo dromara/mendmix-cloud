@@ -301,7 +301,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			return originWhere;
 		}
 		Set<String> fieldNames;
-		Expression newExpression = null;
+		Expression newExpression = originWhere;
 		String column;
 		String[] values;
 		Map<String, String> columnMapping = dataProfileMappings.get(table.getName());

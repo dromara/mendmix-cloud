@@ -367,8 +367,10 @@ public final class ResourceUtils {
 		Properties properties = getAllProperties(prefix);
 		Map<String, String> result = new HashMap<>(properties.size());
 		properties.forEach( (k,v) -> {
-			String[] arr = k.toString().split("[|]");
-			result.put(arr[1], v.toString());
+			if(v != null) {
+				String[] arr = StringUtils.split(k.toString(), "[]");
+				result.put(arr[1], v.toString());
+			}
 		} );
 		return result;
 	}

@@ -175,8 +175,8 @@ public class JedisProviderFactory {
 			JedisProvider<Jedis,BinaryJedis> provider = new JedisStandaloneProvider(groupName, poolConfig, servers, timeout, password, Integer.parseInt(datebase),null);
 			JedisProviderFactory.addProvider(provider);
 		}else if("sentinel".equals(mode)){
-			String masterName = ResourceUtils.getProperty("jeesuite.lock.redis.masterName", ResourceUtils.getProperty("jeesuite.cache.masterName"));
-			Validate.notBlank(masterName, "config[jeesuite.lock.redis.masterName] not found");
+			String masterName = ResourceUtils.getProperty(prefix + "masterName");
+			Validate.notBlank(masterName, "[masterName] not found");
 			JedisSentinelProvider provider = new JedisSentinelProvider(groupName, poolConfig, servers, timeout, password, Integer.parseInt(datebase), null, masterName);
 			JedisProviderFactory.addProvider(provider);
 		}

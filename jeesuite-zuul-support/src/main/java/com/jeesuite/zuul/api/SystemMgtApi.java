@@ -1,4 +1,4 @@
-package com.jeesuite.zuul;
+package com.jeesuite.zuul.api;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import com.jeesuite.zuul.model.BizSystemModule;
  * @version 1.0.0
  * @date 2020-10-19
  */
-public interface SystemMgrApi {
+public interface SystemMgtApi {
 
 	List<BizSystemModule> getSystemModules();
 

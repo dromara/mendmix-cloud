@@ -7,13 +7,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.scheduler.JobContext;
 import com.jeesuite.scheduler.model.JobConfig;
@@ -25,7 +30,7 @@ import com.jeesuite.scheduler.model.JobConfig;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2021年12月18日
  */
-public class RedisJobRegistry extends AbstarctJobRegistry{
+public class RedisJobRegistry extends AbstarctJobRegistry implements DisposableBean{
 
 private static final Logger logger = LoggerFactory.getLogger("com.zvosframework");
 	
@@ -35,6 +40,8 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 	private static final String JOB_REGISTER_KEY = "__schedulerJobs:" + GlobalRuntimeContext.APPID;
 
 	private StringRedisTemplate redisTemplate;
+	
+	private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, new StandardThreadFactory("RedisJobRegistry"));
 	
 
 	public RedisJobRegistry(StringRedisTemplate redisTemplate) {
@@ -119,6 +126,12 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 	@Override
 	public void onRegistered() {
 		coordinate();
+		executor.scheduleWithFixedDelay(new Runnable() {
+			@Override
+			public void run() {
+				coordinate();
+			}
+		}, 1000, 1000, TimeUnit.MILLISECONDS);
 	}
 	
 	private void updateNodeSTat(String nodeId,long currentTime) {
@@ -168,5 +181,10 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 			rebalanceJobNode(activeNodeIds);
 		}
 		
+	}
+
+	@Override
+	public void destroy() throws Exception {
+		executor.shutdown();
 	}
 }

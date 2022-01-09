@@ -30,12 +30,12 @@ public class BaseWebConfiguration {
 	@Bean("restTemplate")
 	@LoadBalanced
 	RestTemplate restTemplate() {
-		int readTimeout = ResourceUtils.getInt("restTemplate.readTimeout.ms", 30000);
+		int readTimeout = ResourceUtils.getInt("jeesuite.httpclient.readTimeout.ms", 30000);
 		return SimpleRestTemplateBuilder.build(readTimeout);
 	}
 	
 	@Bean
-	@ConditionalOnProperty(value = "feign.custom-loadbalance-mapping.enabled",havingValue = "true")
+	@ConditionalOnProperty(value = "jeesuite.feign.custom-loadbalance-mapping.enabled",havingValue = "true")
 	public Client feignClient(LoadBalancerClient loadBalancer) {
 		return new CustomLoadBalancerFeignClient(loadBalancer);
 	}
@@ -46,6 +46,7 @@ public class BaseWebConfiguration {
 	}
 	
 	@Bean
+	@ConditionalOnProperty(value = "jeesuite.response.rewrite.enabled",havingValue = "true",matchIfMissing = true)
 	public ResonseRewriteAdvice resonseRewriteAdvice() {
 		return new ResonseRewriteAdvice();
 	}

@@ -166,7 +166,8 @@ public class GenericApiRequest {
 		try {
 			Response response = httpClient.newCall(requestBuilder.build()).execute();
 			if (response.body() != null) {
-				responseString = response.body().string();
+				responseString = StringUtils.trimToNull(response.body().string());
+				if(responseString == null)return null;
 				if (responseString.startsWith(STANDARD_RSP_JSON_PREFIX)) {
 					JSONObject jsonObject = JSON.parseObject(responseString);
 					int code = jsonObject.getIntValue(GlobalConstants.PARAM_CODE);

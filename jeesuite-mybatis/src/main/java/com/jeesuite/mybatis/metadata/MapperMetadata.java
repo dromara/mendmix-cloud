@@ -62,6 +62,8 @@ public class MapperMetadata {
 		try {
 			mapperClass = Class.forName(mapperClassName);
 			
+			if(!mapperClass.isInterface())return;
+			
 			parseEntityInfo();
 			
 			if(entityClass == null)return;

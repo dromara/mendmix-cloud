@@ -17,11 +17,10 @@ package com.jeesuite.security;
 
 import java.util.List;
 
+import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.security.SecurityConstants.CacheType;
-import com.jeesuite.security.exception.UserNotFoundException;
-import com.jeesuite.security.exception.UserPasswordWrongException;
 import com.jeesuite.security.model.ApiPermission;
 
 /**
@@ -36,7 +35,7 @@ public abstract class SecurityDecisionProvider {
 	}
 	
 	public String headerTokenName(){
-		return "x-user-token";
+		return "Authorization";
 	}
 	
 	public int sessionExpireIn(){
@@ -63,10 +62,6 @@ public abstract class SecurityDecisionProvider {
 		return true;
 	}
 	
-	public String superAdminName(){
-		return "sa";
-	}
-	
 	public CacheType cacheType(){
 		if(CacheType.redis.name().equals(ResourceUtils.getProperty(SecurityConstants.CONFIG_STORAGE_TYPE))){
 			return CacheType.redis;
@@ -74,9 +69,11 @@ public abstract class SecurityDecisionProvider {
 		return CacheType.local;
 	}
 
+	public List<String> anonymousUrlPatterns() {
+		return ResourceUtils.getList("jeesuite.security.anonymous-uris");
+	}
 	
-	public abstract List<String> anonymousUrlPatterns();
-	public abstract AuthUser validateUser(String name,String password) throws UserNotFoundException,UserPasswordWrongException;
+	public abstract AuthUser validateUser(String type,String name,String password) throws JeesuiteBaseException;
 	public abstract List<ApiPermission> getAllApiPermissions();
 	public abstract List<String> getUserApiPermissionUris(String userId);
 	public abstract String error401Page();

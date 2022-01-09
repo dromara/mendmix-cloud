@@ -40,23 +40,29 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	
 	private boolean isLocalEnv = "local".equals(GlobalRuntimeContext.ENV);
 	//调用token检查
-	private boolean authTokenCheckEnabled = ResourceUtils.getBoolean("jeesuite.request.authtoken.enabled", !isLocalEnv);
+	private boolean invokeTokenCheckEnabled = ResourceUtils.getBoolean("jeesuite.request.invoke-token.enabled", !isLocalEnv);
 	//行为日志采集
 	private boolean requestLogEnabled = ResourceUtils.getBoolean("jeesuite.request.log.enabled", false);
 	//
 	private boolean requestLogGetIngore = ResourceUtils.getBoolean("jeesuite.request.log.getMethod.ignore", true);
+	
+	private boolean integratedGatewayDeploy = false;
 
-	private PathMatcher authtokenCheckIgnoreUriMather = new PathMatcher();
+	private PathMatcher invoketokenCheckIgnoreUriMather = new PathMatcher();
 	
 	
 	public GlobalDefaultInterceptor() {
+		try {
+			Class.forName("org.springframework.cloud.netflix.zuul.EnableZuulProxy");
+			integratedGatewayDeploy = true;
+		} catch (Exception e) {}
 		String contextPath = GlobalRuntimeContext.getContextPath();
-		if(authTokenCheckEnabled) {
-			authtokenCheckIgnoreUriMather.addUriPattern(contextPath, "/error");
+		if(invokeTokenCheckEnabled) {
+			invoketokenCheckIgnoreUriMather.addUriPattern(contextPath, "/error");
 		}
-		List<String> ignoreUris = ResourceUtils.getList("jeesuite.request.authtoken.ignore-uris");
+		List<String> ignoreUris = ResourceUtils.getList("jeesuite.request.invoke-token.ignore-uris");
 		for (String uri : ignoreUris) {
-			authtokenCheckIgnoreUriMather.addUriPattern(contextPath, uri);
+			invoketokenCheckIgnoreUriMather.addUriPattern(contextPath, uri);
 		}
 		
 	}
@@ -65,13 +71,15 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 
-		CurrentRuntimeContext.init(request, response);
-		//校验授权
-		if(authTokenCheckEnabled){	
-			String uri = request.getRequestURI();
-			if(!authtokenCheckIgnoreUriMather.match(uri)){				
-				String authCode = request.getHeader(CustomRequestHeaders.HEADER_AUTH_TOKEN);
-				TokenGenerator.validate(authCode, true);
+		if(!integratedGatewayDeploy) {
+			CurrentRuntimeContext.init(request, response);
+			//
+			if(invokeTokenCheckEnabled){	
+				String uri = request.getRequestURI();
+				if(!invoketokenCheckIgnoreUriMather.match(uri)){				
+					String authCode = request.getHeader(CustomRequestHeaders.HEADER_INVOKE_TOKEN);
+					TokenGenerator.validate(authCode, true);
+				}
 			}
 		}
 	

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -19,6 +20,7 @@ import org.springframework.cloud.netflix.zuul.filters.discovery.ServiceRouteMapp
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.SpringInstanceProvider;
 import com.jeesuite.zuul.CurrentSystemHolder;
@@ -102,12 +104,16 @@ public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocat
 		String path = null;
 		ZuulProperties.ZuulRoute zuulRoute = null;
 		for (BizSystemModule module : modules) {
+			if(GlobalRuntimeContext.APPID.equalsIgnoreCase(module.getServiceId()))continue;
+			if (StringUtils.isBlank(module.getServiceId()) && StringUtils.isBlank(module.getProxyUrl())) {
+				continue;
+			}
 			path = String.format("/%s/**", module.getRouteName());
 			zuulRoute = new ZuulProperties.ZuulRoute();
 			zuulRoute.setPath(path);
 			zuulRoute.setId(module.getRouteName());
-			if (module.getServiceId().startsWith("http")) {
-				zuulRoute.setUrl(module.getServiceId());
+			if (StringUtils.isNotBlank(module.getProxyUrl())) {
+				zuulRoute.setUrl(module.getProxyUrl());
 			} else {
 				zuulRoute.setServiceId(module.getServiceId());
 			}

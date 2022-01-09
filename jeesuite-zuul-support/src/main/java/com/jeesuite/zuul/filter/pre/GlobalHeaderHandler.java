@@ -35,7 +35,8 @@ public class GlobalHeaderHandler implements FilterHandler {
 		} else {
 			ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_REQUEST_ID, TokenGenerator.generate());
 		}
-		ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_GATEWAY_TOKEN, TokenGenerator.generateWithSign());
+		
+		ctx.addZuulRequestHeader(CustomRequestHeaders.HEADER_INVOKER_IS_GATEWAY, Boolean.TRUE.toString());
 
 		RequestHeaderBuilder.getHeaders().forEach((k, v) -> {
 			ctx.addZuulRequestHeader(k, v);

@@ -64,24 +64,19 @@ public class SecurityDelegating {
 		return getInstance().decisionProvider;
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <T extends AuthUser> T validateUser(String name,String password){
-		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
-		return (T) userInfo;
-	}
 	
 	/**
 	 * 认证
 	 * @param name
 	 * @param password
 	 */
-	public static UserSession doAuthentication(String name,String password){
-		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
+	public static UserSession doAuthentication(String type,String name,String password){
+		AuthUser userInfo = getInstance().decisionProvider.validateUser(type,name, password);
 		return updateSession(userInfo);
 	}
 	
-	public static String doAuthenticationForOauth2(String name,String password){
-		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
+	public static String doAuthenticationForOauth2(String type,String name,String password){
+		AuthUser userInfo = getInstance().decisionProvider.validateUser(type,name, password);
 		String authCode = TokenGenerator.generate();
 		setTemporaryCacheValue(authCode, userInfo, 60);
 		return authCode;
@@ -129,10 +124,10 @@ public class SecurityDelegating {
 		UserSession session = getCurrentSession();
 		String uri = CurrentRuntimeContext.getRequest().getRequestURI();
 		
-		boolean isSuperAdmin = session != null && session.getUser() != null 
-				&& getInstance().decisionProvider.superAdminName().equals(session.getUser().getUsername());
+		boolean isAdmin = session != null && session.getUser() != null 
+				&& session.getUser().isAdmin();
 		
-		if(!isSuperAdmin && !getInstance().resourceManager.isAnonymous(uri)){
+		if(!isAdmin && !getInstance().resourceManager.isAnonymous(uri)){
 			if(session == null || session.isAnonymous()){
 				throw new UnauthorizedException();
 			}

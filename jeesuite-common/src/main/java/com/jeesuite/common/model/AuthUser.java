@@ -22,9 +22,11 @@ public class AuthUser {
 	private static final String PLACEHOLDER_CHAR = "{-}";
 	
 	private String id;
-	private String username;
-	private String userType;//用户类型类型
-	private String departmentId;
+	private String name;
+	private String type;//用户类型类型
+	private String deptId;
+	private String principalType;
+	private String principalId;
 	private boolean admin;
 
 	public String getId() {
@@ -34,23 +36,38 @@ public class AuthUser {
 		this.id = id;
 	}
 	
-	public String getUsername() {
-		return username;
+	public String getName() {
+		return name;
 	}
-	public void setUsername(String username) {
-		this.username = username;
+	public void setName(String name) {
+		this.name = name;
 	}
-	public String getUserType() {
-		return userType;
+	public String getType() {
+		return type;
 	}
-	public void setUserType(String userType) {
-		this.userType = userType;
+	public void setType(String type) {
+		this.type = type;
 	}
-	public String getDepartmentId() {
-		return departmentId;
+	public String getDeptId() {
+		return deptId;
 	}
-	public void setDepartmentId(String departmentId) {
-		this.departmentId = departmentId;
+	public void setDeptId(String deptId) {
+		this.deptId = deptId;
+	}
+	
+	public String getPrincipalType() {
+		return principalType;
+	}
+	
+	public void setPrincipalType(String principalType) {
+		this.principalType = principalType;
+	}
+	
+	public String getPrincipalId() {
+		return principalId;
+	}
+	public void setPrincipalId(String principalId) {
+		this.principalId = principalId;
 	}
 	public boolean isAdmin() {
 		return admin;
@@ -62,9 +79,11 @@ public class AuthUser {
 	public String toEncodeString(){
 		StringBuilder builder = new StringBuilder();
 		builder.append(id).append(CONTACT_CHAR);
-		builder.append(trimToPlaceHolder(username)).append(CONTACT_CHAR);
-		builder.append(trimToPlaceHolder(userType)).append(CONTACT_CHAR);
-		builder.append(trimToPlaceHolder(departmentId)).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(name)).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(type)).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(deptId)).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(principalType)).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(principalId)).append(CONTACT_CHAR);
 		builder.append(admin).append(CONTACT_CHAR);
 		return SimpleCryptUtils.encrypt(builder.toString());
 	}
@@ -76,10 +95,12 @@ public class AuthUser {
 		String[] splits = encodeString.split(CONTACT_CHAR);
 		AuthUser user = new AuthUser();
 		user.setId(placeHolderToNull(splits[0]));
-		user.setUsername(placeHolderToNull(splits[1]));
-		user.setUserType(placeHolderToNull(splits[2]));
-		user.setDepartmentId(placeHolderToNull(splits[3]));
-		user.setAdmin(Boolean.parseBoolean(splits[4]));
+		user.setName(placeHolderToNull(splits[1]));
+		user.setType(placeHolderToNull(splits[2]));
+		user.setDeptId(placeHolderToNull(splits[3]));
+		user.setPrincipalType(placeHolderToNull(splits[4]));
+		user.setPrincipalId(placeHolderToNull(splits[5]));
+		user.setAdmin(Boolean.parseBoolean(splits[6]));
 		
 		return user;
 	}

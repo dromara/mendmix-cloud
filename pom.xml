@@ -52,7 +52,7 @@
 		<mybatis-spring.version>2.0.5</mybatis-spring.version>
 		<mybatis-boot-starter>2.1.3</mybatis-boot-starter>
 		<slf4j.version>1.7.32</slf4j.version>
-		<log4j2.version>2.16.0</log4j2.version>
+		<log4j2.version>2.17.1</log4j2.version>
 		<druid.version>1.2.5</druid.version>
 		<guava.version>30.1.1-jre</guava.version>
 		<mysql.version>8.0.16</mysql.version>

@@ -17,7 +17,7 @@ public class TreeModel {
 	private String id;
 	private String name;
 	private String value;
-	private String pid;
+	private String parentId;
 	private boolean checked = false;
 	private boolean disabled = false;
 	private int sort;
@@ -32,7 +32,7 @@ public class TreeModel {
 		this.id = id;
 		this.name = name;
 		this.value = value;
-		this.pid = pid;
+		this.parentId = pid;
 	}
 
 	public String getId() {
@@ -59,12 +59,17 @@ public class TreeModel {
 		this.value = value;
 	}
 
-	public String getPid() {
-		return pid;
+	
+
+	public String getParentId() {
+		return parentId;
 	}
-	public void setPid(String pid) {
-		this.pid = pid;
+
+
+	public void setParentId(String parentId) {
+		this.parentId = parentId;
 	}
+
 
 	public boolean isChecked() {
 		return checked;
@@ -119,7 +124,7 @@ public class TreeModel {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		result = prime * result + ((pid == null) ? 0 : pid.hashCode());
+		result = prime * result + ((parentId == null) ? 0 : parentId.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		return result;
 	}
@@ -139,10 +144,10 @@ public class TreeModel {
 				return false;
 		} else if (!id.equals(other.id))
 			return false;
-		if (pid == null) {
-			if (other.pid != null)
+		if (parentId == null) {
+			if (other.parentId != null)
 				return false;
-		} else if (!pid.equals(other.pid))
+		} else if (!parentId.equals(other.parentId))
 			return false;
 		if (value == null) {
 			if (other.value != null)
@@ -158,7 +163,7 @@ public class TreeModel {
 	 * @param models 已排序
 	 * @return
 	 */
-	public static TreeModel build(List<TreeModel> models){
+	public static <T extends TreeModel> TreeModel build(List<T> models){
 		TreeModel root = new TreeModel();
 		if(models.isEmpty()){
 			root.children = new ArrayList<>(0);
@@ -172,10 +177,10 @@ public class TreeModel {
 			}
 		}
 		for (TreeModel model : models) {
-			if(((StringUtils.isBlank(model.getPid())) && !model.isLeaf()) || !modelMap.containsKey(model.getPid())){
+			if(((StringUtils.isBlank(model.getParentId())) && !model.isLeaf()) || !modelMap.containsKey(model.getParentId())){
 				root.addChild(model);
 			}else{
-				modelMap.get(model.getPid()).addChild(model);
+				modelMap.get(model.getParentId()).addChild(model);
 			}
 		}
 		

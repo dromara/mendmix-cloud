@@ -77,7 +77,7 @@ public class RequestLogCollector {
 		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 		if(currentUser != null){
 			actionLog.setUserId(currentUser.getId());
-			actionLog.setUserName(currentUser.getUsername());
+			actionLog.setUserName(currentUser.getName());
 		}
 		
 		if(context.get() == null){

@@ -20,9 +20,9 @@ import com.jeesuite.cache.serializer.TenantPartitionKeySerializer;
 @ConditionalOnProperty(name = {"spring.redis.database"})
 public class RedisConfiguration {
 
-	@Value("${application.redis.keyUseStringSerializer:true}")
+	@Value("${jeesuite.redis.keyUseStringSerializer:true}")
 	private boolean keyUseStringSerializer;
-	@Value("${application.redis.valueSerializerType:}")
+	@Value("${jeesuite.redis.valueSerializerType:}")
 	private String valueSerializerType;
 	
 	@Bean

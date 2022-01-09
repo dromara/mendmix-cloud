@@ -32,7 +32,7 @@ public class MybatisRuntimeContext {
 		if(StringUtils.isBlank(paramName))return null;
 		if(CacheHandler.CURRENT_USER_CONTEXT_NAME.equals(paramName)){
 			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
-			return currentUser == null ? null : currentUser.getUsername();
+			return currentUser == null ? null : currentUser.getName();
 		}
 		return ThreadLocalContext.getStringValue(paramName);
 	}

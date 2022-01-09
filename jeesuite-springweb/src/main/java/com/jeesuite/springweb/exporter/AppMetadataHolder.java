@@ -192,7 +192,7 @@ public class AppMetadataHolder {
 			metadata = new AppMetadata();
 			metadata.setServiceId(GlobalRuntimeContext.APPID);
 
-			String basePackage = ResourceUtils.getProperty("application.base-package");
+			String basePackage = ResourceUtils.getProperty("jeesuite.application.base-package");
 			if (basePackage == null)
 				return metadata;
 			List<String> classNameList = scanControllerClassNames(basePackage);

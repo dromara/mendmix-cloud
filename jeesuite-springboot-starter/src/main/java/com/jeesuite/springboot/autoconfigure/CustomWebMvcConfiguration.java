@@ -2,11 +2,13 @@ package com.jeesuite.springboot.autoconfigure;
 
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.method.HandlerTypePredicate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -22,7 +24,7 @@ public class CustomWebMvcConfiguration implements WebMvcConfigurer {
 	@Override
 	public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
 
-		Charset charset = Charset.forName(ResourceUtils.getProperty("response.force-charset.name", "UTF-8"));
+		Charset charset = Charset.forName(ResourceUtils.getProperty("jeesuite.response.charset.name", "UTF-8"));
 
 		for (HttpMessageConverter<?> converter : converters) {
 			// 解决controller返回普通文本中文乱码问题
@@ -34,7 +36,6 @@ public class CustomWebMvcConfiguration implements WebMvcConfigurer {
 				((MappingJackson2HttpMessageConverter) converter).setDefaultCharset(charset);
 			}
 		}
-		System.out.println(">>setDefaultCharset:" + charset);
 	}
 
 	@Override
@@ -54,8 +55,15 @@ public class CustomWebMvcConfiguration implements WebMvcConfigurer {
 		if(pathPrefix != null) {
 			configurer.addPathPrefix(pathPrefix,c -> true);
 		}
+		
+		Map<String, String> mappings = ResourceUtils.getMappingValues("jeesuite.request.pathPrefix.mapping");
+		if(!mappings.isEmpty()) {
+			mappings.forEach( (packageName,prefix) -> {
+				configurer.addPathPrefix(prefix,HandlerTypePredicate.forBasePackage(packageName));
+			} );
+		}
+		
     }
-	
 	
 	@Override
     public void addCorsMappings(CorsRegistry registry) {

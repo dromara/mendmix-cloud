@@ -211,31 +211,23 @@ public class WebUtils {
 	public static boolean isInternalRequest(HttpServletRequest request){
 		//
 		String headerValue = request.getHeader(CustomRequestHeaders.HEADER_INTERNAL_REQUEST);
-		if(StringUtils.isNotBlank(headerValue)){
+		if(Boolean.parseBoolean(headerValue)){
 			try {
-				TokenGenerator.validate(headerValue, true);
-			} catch (Exception e) {
-				headerValue = null;
-			}
+				String authCode = request.getHeader(CustomRequestHeaders.HEADER_INVOKE_TOKEN);
+				TokenGenerator.validate(authCode, true);
+				return true;
+			} catch (Exception e) {}
 		}
-		
-		if(headerValue != null && Boolean.parseBoolean(headerValue)){
-			return true;
+		//从网关转发
+		headerValue = request.getHeader(CustomRequestHeaders.HEADER_INVOKER_IS_GATEWAY);
+		if(Boolean.parseBoolean(headerValue)){
+			try {
+				String authCode = request.getHeader(CustomRequestHeaders.HEADER_INVOKE_TOKEN);
+				TokenGenerator.validate(authCode, true);
+				return false;
+			} catch (Exception e) {}
 		}
 
-		//从网关转发
-		headerValue = request.getHeader(CustomRequestHeaders.HEADER_GATEWAY_TOKEN);
-		if(StringUtils.isNotBlank(headerValue)){
-			try {
-				TokenGenerator.validate(headerValue, true);
-			} catch (Exception e) {
-				headerValue = null;
-			}
-		}
-		if(StringUtils.isNotBlank(headerValue)){
-			return false;
-		}
-		
 		String clientIp = request.getHeader(CustomRequestHeaders.HEADER_REAL_IP);
 		if(clientIp == null)clientIp = IpUtils.getIpAddr(request);
 		if(IpUtils.isInnerIp(clientIp)) {

@@ -12,6 +12,7 @@ public class BizSystemModule {
 
 	private String id;
     private String serviceId;
+    private String proxyUrl;
 
     private String routeName;
 
@@ -40,6 +41,15 @@ public class BizSystemModule {
 		this.serviceId = serviceId;
 	}
 
+	
+	public String getProxyUrl() {
+		return proxyUrl;
+	}
+
+	public void setProxyUrl(String proxyUrl) {
+		this.proxyUrl = proxyUrl;
+	}
+
 	public String getRouteName() {
 		return routeName;
 	}
@@ -63,10 +73,8 @@ public class BizSystemModule {
 
 	public void setAnonymousUris(String anonymousUris) {
 		this.anonymousUris = anonymousUris;
-		if(StringUtils.isNotBlank(this.anonymousUris)) {
-			anonUriMatcher = new PathMatcher(GlobalRuntimeContext.getContextPath(), this.anonymousUris);
-		}
 	}
+
 
 	public PathMatcher getAnonUriMatcher() {
 		return anonUriMatcher;
@@ -76,5 +84,16 @@ public class BizSystemModule {
 		this.anonUriMatcher = anonUriMatcher;
 	}
 
+	public void buildAnonUriMatcher() {
+		if(StringUtils.isNotBlank(this.anonymousUris)) {
+			String prefix;
+			if(GlobalRuntimeContext.APPID.equals(serviceId)) {
+				prefix = GlobalRuntimeContext.getContextPath();
+			}else {
+				prefix = GlobalRuntimeContext.getContextPath() + "/" + routeName;
+			}
+			anonUriMatcher = new PathMatcher(prefix, this.anonymousUris);
+		}
+	}
     
 }

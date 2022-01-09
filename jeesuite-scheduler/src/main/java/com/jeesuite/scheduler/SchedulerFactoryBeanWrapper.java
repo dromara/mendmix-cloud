@@ -97,6 +97,8 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			logger.info("jeesuite.task.disabled = {},Skip!!!",ResourceUtils.getBoolean("jeesuite.task.disabled", false));
 			return;
 		}
+		
+		logger.info(">>JobContextNodeId:{}",JobContext.getContext().getNodeId());
 		Validate.notBlank(groupName);
 		
 		DefaultListableBeanFactory acf = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();

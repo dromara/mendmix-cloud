@@ -62,6 +62,8 @@ public class SecurityResourceManager {
 	private SecurityStorageManager storageManager;
 	
 	private PathMatcher anonymousUrlMatcher;
+	
+	private boolean logging = true;
 
 	public SecurityResourceManager(SecurityDecisionProvider decisionProvider, SecurityStorageManager storageManager) {
 		this.storageManager = storageManager;
@@ -107,7 +109,6 @@ public class SecurityResourceManager {
 	
 	public synchronized boolean loadApiPermissions() {
 
-		log.info("============begin load perssion data==============");
 		List<ApiPermission> permissions = decisionProvider.getAllApiPermissions();
 		
 		if(permissions == null)return false;
@@ -151,13 +152,14 @@ public class SecurityResourceManager {
 		authzUris.set(_authzUris);
 		authzPatterns.set(_authzPatterns);
 		
-
-		log.info("nonWildcardUris:         {}", getNonWildcardUris());
-		log.info("anonUris:                {}", getAnonUris());
-		log.info("anonUriPatterns:         {}", getAnonUriPatterns());
-		log.info("authzUris:               {}", getAuthzUris());
-		log.info("authzPatterns:           {}", getAuthzPatterns());
-		log.info("============load perssion data finish==============");
+        if(logging) {
+        	log.info("nonWildcardUris:         {}", getNonWildcardUris());
+    		log.info("anonUris:                {}", getAnonUris());
+    		log.info("anonUriPatterns:         {}", getAnonUriPatterns());
+    		log.info("authzUris:               {}", getAuthzUris());
+    		log.info("authzPatterns:           {}", getAuthzPatterns());
+    		logging = false;
+        }
 
 		return true;
 	}

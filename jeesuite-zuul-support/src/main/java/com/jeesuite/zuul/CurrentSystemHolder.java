@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.zuul.api.SystemMgtApi;
 import com.jeesuite.zuul.model.BizSystemModule;
 
 /**
@@ -66,39 +67,41 @@ public class CurrentSystemHolder {
 		}
 		List<BizSystemModule> modules;
 		try {
-			modules = InstanceFactory.getInstance(SystemMgrApi.class).getSystemModules();
+			modules = InstanceFactory.getInstance(SystemMgtApi.class).getSystemModules();
 			if (!localModules.isEmpty()) {
 				modules.addAll(localModules);
 			}
 		} catch (Exception e) {
 			modules = localModules;
 		}
+		
+		if(!modules.stream().anyMatch(o -> GlobalRuntimeContext.APPID.equalsIgnoreCase(o.getServiceId()))) {
+			BizSystemModule module = new BizSystemModule();
+			module.setServiceId(GlobalRuntimeContext.APPID);
+			modules.add(module);
+			localModules.add(module);
+		}
 
 		Map<String, BizSystemModule> _modules = new HashMap<>(modules.size());
 		routeNames = new ArrayList<>(modules.size());
 		for (BizSystemModule module : modules) {
 			boolean isGateway = GlobalRuntimeContext.APPID.equalsIgnoreCase(module.getServiceId());
-			if (!isGateway && StringUtils.isAnyBlank(module.getRouteName(), module.getServiceId())) {
+			if (!isGateway && StringUtils.isBlank(module.getRouteName())) {
 				continue;
 			}
 			// 网关特殊处理
 			if (isGateway) {
 				module.setRouteName(GlobalRuntimeContext.APPID);
-				_modules.put(GlobalRuntimeContext.APPID, module);
+				if(module.getAnonymousUris() == null) {
+					module.setAnonymousUris(ResourceUtils.getProperty("jeesuite.request.anonymous-uris"));
+				}
 			} else {
-				_modules.put(module.getRouteName(), module);
 				routeNames.add(module.getRouteName());
 			}
-		}
-		// 远程没配置网关模块
-		if (!_modules.containsKey(GlobalRuntimeContext.APPID)) {
-			BizSystemModule module = new BizSystemModule();
-			module.setServiceId(GlobalRuntimeContext.APPID);
-			module.setRouteName(GlobalRuntimeContext.APPID);
-			module.setAnonymousUris(ResourceUtils.getProperty("application.anonymousUris"));
-			//
+			
+			module.buildAnonUriMatcher();
 			_modules.put(module.getRouteName(), module);
-			localModules.add(module);
+			
 		}
 		routeModuleMappings.set(_modules);
 

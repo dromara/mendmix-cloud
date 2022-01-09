@@ -1,8 +1,15 @@
 package com.jeesuite.cos.provider.minio;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.collect.Maps;
+import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.cos.BucketConfig;
 import com.jeesuite.cos.CObjectMetadata;
 import com.jeesuite.cos.CUploadObject;
@@ -12,21 +19,81 @@ import com.jeesuite.cos.UploadTokenParam;
 import com.jeesuite.cos.provider.AbstractProvider;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetBucketPolicyArgs;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
+import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.ObjectWriteResponse;
+import io.minio.PutObjectArgs;
+import io.minio.RemoveBucketArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.SetBucketPolicyArgs;
+import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
+import io.minio.UploadObjectArgs;
+import io.minio.http.Method;
 
 public class MinioProvider extends AbstractProvider{
 
 	public static final String NAME = "minio";
 	
+	private final String publicPolicyTemplate ="{\n" +
+            "    \"Version\": \"2012-10-17\",\n" +
+            "    \"Statement\": [\n" +
+            "        {\n" +
+            "            \"Effect\": \"Allow\",\n" +
+            "            \"Principal\": {\n" +
+            "                \"AWS\": [\n" +
+            "                    \"*\"\n" +
+            "                ]\n" +
+            "            },\n" +
+            "            \"Action\": [\n" +
+            "                \"s3:GetBucketLocation\",\n" +
+            "                \"s3:ListBucket\",\n" +
+            "                \"s3:ListBucketMultipartUploads\"\n" +
+            "            ],\n" +
+            "            \"Resource\": [\n" +
+            "                \"arn:aws:s3:::%s\"\n" +
+            "            ]\n" +
+            "        },\n" +
+            "        {\n" +
+            "            \"Effect\": \"Allow\",\n" +
+            "            \"Principal\": {\n" +
+            "                \"AWS\": [\n" +
+            "                    \"*\"\n" +
+            "                ]\n" +
+            "            },\n" +
+            "            \"Action\": [\n" +
+            "                \"s3:ListMultipartUploadParts\",\n" +
+            "                \"s3:PutObject\",\n" +
+            "                \"s3:AbortMultipartUpload\",\n" +
+            "                \"s3:DeleteObject\",\n" +
+            "                \"s3:GetObject\"\n" +
+            "            ],\n" +
+            "            \"Resource\": [\n" +
+            "                \"arn:aws:s3:::%s/*\"\n" +
+            "            ]\n" +
+            "        }\n" +
+            "    ]\n" +
+            "}";
+
+	
 	private MinioClient minioClient;
 	
 	public MinioProvider(CosProviderConfig conf) {
-		super(conf);
-		minioClient = MinioClient.builder()
-				                 .endpoint(conf.getEndpoint())//
-				                 .credentials(conf.getAccessKey(), conf.getSecretKey())
-				                 .build();
-	}
+        super(conf);
+        if(StringUtils.isBlank(conf.getRegionName())) {
+        	conf.setRegionName("china-south-1");
+        }
+        String endpoint=conf.getEndpoint();
+        minioClient = MinioClient.builder()
+                .endpoint(endpoint)
+                .region(conf.getRegionName())
+                .credentials(conf.getAccessKey(), conf.getSecretKey())
+                .build();
+    }
 
 	@Override
 	public String name() {
@@ -34,82 +101,245 @@ public class MinioProvider extends AbstractProvider{
 	}
 
 	@Override
-	public boolean existsBucket(String bucketName) {
-		return false;
-	}
+    public boolean existsBucket(String bucketName) {
+        try {
+            return minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
+    }
 
-	@Override
-	public void createBucket(String bucketName, boolean isPrivate) {
-		// TODO Auto-generated method stub
-		
-	}
+    /**
+     * @param bucketName 只能是数字， 字母， 点（.)和中画线(-)
+     * @param isPrivate
+     */
+    @Override
+    public void createBucket(String bucketName, boolean isPrivate) {
+        try {
+            boolean found = existsBucket(bucketName);
+            if (found) {
+                throw new JeesuiteBaseException(406, "bucketName[" + bucketName + "]已存在");
+            }
+            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+          //默认是none， 即私有
+            if (!isPrivate) {
+                minioClient.setBucketPolicy(SetBucketPolicyArgs.builder()
+                        .bucket(bucketName)
+                        .config(String.format(publicPolicyTemplate, bucketName, bucketName))
+                        .build());
+            }
 
-	@Override
-	public void deleteBucket(String bucketName) {
-		// TODO Auto-generated method stub
-		
-	}
+        } catch (JeesuiteBaseException jbex) {
+            throw jbex;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    @Override
+    public void deleteBucket(String bucketName) {
+        try {
+            boolean found = existsBucket(bucketName);
+            if (!found) {
+                return;
+            }
+            minioClient.removeBucket(RemoveBucketArgs.builder().bucket(bucketName).build());
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
+    }
+    
+    @Override
+    public CUploadResult upload(CUploadObject object) {
+        try {
+            String bucketName = object.getBucketName();
+            if (StringUtils.isEmpty(bucketName)) {
+                throw new JeesuiteBaseException("BucketName 不能为空");
+            }
+            String fileKey = object.getFileKey();
+            InputStream inputStream = object.getInputStream();
+            byte[] objectBytes = object.getBytes();
+            ObjectWriteResponse objectWriteResponse = null;
+            long size=0;
+            if (object.getFile() != null) {
+                objectWriteResponse = minioClient.uploadObject(UploadObjectArgs.builder()
+                        .bucket(bucketName)
+                        .filename(object.getFile().getAbsolutePath())
+                        .object(fileKey)
+                        .contentType(object.getMimeType())
+                        .build());
+                size=object.getFile().length();
+            } else if (objectBytes != null) {
+                byte[] bytes = objectBytes;
+                ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+                objectWriteResponse = minioClient.putObject(PutObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(fileKey)
+                        .contentType(object.getMimeType())
+                        .stream(bis, bytes.length, -1)
+                        .build());
+                size=bytes.length;
+                bis.close();
+            } else if (inputStream != null) {
+            	 objectWriteResponse = minioClient.putObject(PutObjectArgs.builder()
+                         .bucket(bucketName)
+                         .object(fileKey)
+                         .contentType(object.getMimeType())
+                         .stream(inputStream, inputStream.available(), -1)
+                         .build());
+                 size=inputStream.available();
+             } else {
+                 throw new JeesuiteBaseException("upload object is NULL");
+             }
+             if (objectWriteResponse != null) {
+                 CUploadResult uploadResult = new CUploadResult(fileKey, getDownloadUrl(object.getBucketName(),fileKey, 300), null);
+                 uploadResult.setMimeType(object.getMimeType());
+                 uploadResult.setFileSize(size);
+                 return uploadResult;
+             }
+        } catch (JeesuiteBaseException jbex) {
+            throw jbex;
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
+        return null;
+    }
 
-	@Override
-	public BucketConfig getBucketConfig(String bucketName) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public boolean exists(String bucketName, String fileKey) {
+        try {
+            if (!existsBucket(bucketName)) {
+                return false;
+            }
+            StatObjectResponse stat = minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(fileKey)
+                    .build());
+            if (stat != null) {
+                return true;
+            }
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean delete(String bucketName, String fileKey) {
+        if (!exists(bucketName, fileKey)) {
+            return false;
+        }
+        try {
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(fileKey)
+                    .build());
+            return true;
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
+    }
+    
+    @Override
+    protected String buildBucketUrlPrefix(String bucketName) {
+        String baseUrl=conf.getEndpoint();
+        if (!baseUrl.endsWith("/")) {
+            baseUrl = baseUrl + "/";
+        }
+        return baseUrl + bucketName + "/";
+    }
 
-	@Override
-	public CUploadResult upload(CUploadObject object) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean exists(String bucketName, String fileKey) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean delete(String bucketName, String fileKey) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public byte[] getObjectBytes(String bucketName, String fileKey) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public InputStream getObjectInputStream(String bucketName, String fileKey) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Map<String, Object> createUploadToken(UploadTokenParam param) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public CObjectMetadata getObjectMetadata(String bucketName, String fileKey) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    protected String generatePresignedUrl(String bucketName, String fileKey, int expireInSeconds) {
+        if (!exists(bucketName, fileKey)) {
+            throw new JeesuiteBaseException("bucket["+bucketName+"] fileKey["+fileKey+"] not exists");
+        }
+        try {
+            String url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
+                    .method(Method.GET)
+                    .bucket(bucketName)
+                    .object(fileKey)
+                    .expiry(expireInSeconds, TimeUnit.SECONDS)
+                    .build());
+            return url;
+        }  catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
+    }
+    
+    @Override
+    public BucketConfig getBucketConfig(String bucketName) {
+        if (!existsBucket(bucketName)) {
+            return null;
+        }
+        boolean isPrivate=false;
+        try {
+            String bucketPolicy = minioClient.getBucketPolicy(GetBucketPolicyArgs.builder()
+                    .bucket(bucketName)
+                    .build());
+            isPrivate = StringUtils.isEmpty(bucketPolicy) ? true : false;
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
 
 
-	@Override
-	protected String buildBucketUrlPrefix(String bucketName) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+        BucketConfig config = new BucketConfig(bucketName, isPrivate, null);
+        return config;
+    }
+    
+    @Override
+    public byte[] getObjectBytes(String bucketName, String fileKey) {
+        try {
+            GetObjectResponse is = minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(fileKey)
+                    .build());
+            byte[] bytes = IOUtils.toByteArray(is);
+            is.close();
+            return bytes;
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
+    }
+    
+    @Override
+    public InputStream getObjectInputStream(String bucketName, String fileKey) {
+        try {
+            return minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(fileKey)
+                    .build());
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
+    }
 
-	@Override
-	protected String generatePresignedUrl(String bucketName, String fileKey, int expireInSeconds) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public Map<String, Object> createUploadToken(UploadTokenParam param) {
+        //TODO 怎么生成token
+        Map<String, Object> result= Maps.newHashMap();
+        return result;
+    }
+    
+    @Override
+    public CObjectMetadata getObjectMetadata(String bucketName, String fileKey) {
+        CObjectMetadata metadata = null;
+        try {
+            StatObjectResponse stat = minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(fileKey)
+                    .build());
+            metadata = new CObjectMetadata();
+            if (stat != null) {
+                metadata.setCustomMetadatas(stat.userMetadata());
+                metadata.setFilesize(stat.size());
+            }
+            return metadata;
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
+    }
+            
 	
 	@Override
 	public void close() {}
