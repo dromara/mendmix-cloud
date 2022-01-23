@@ -22,7 +22,7 @@ public class BizSystem {
 	private Integer status;
 
 	
-	private List<BizSystemDomain> domains;
+	private List<BizSystemPortal> portals;
 	
 	private List<BizSystemModule> modules;
 	
@@ -59,12 +59,13 @@ public class BizSystem {
 		this.status = status;
 	}
 
-	public List<BizSystemDomain> getDomains() {
-		return domains;
+
+	public List<BizSystemPortal> getPortals() {
+		return portals;
 	}
 
-	public void setDomains(List<BizSystemDomain> domains) {
-		this.domains = domains;
+	public void setPortals(List<BizSystemPortal> portals) {
+		this.portals = portals;
 	}
 
 	public List<BizSystemModule> getModules() {

@@ -334,6 +334,13 @@ public class GenericApiRequest {
 			this.mediaType = FROM_URLENCODED_MEDIA_TYPE;
 			return this;
 		}
+		
+		public Builder backendInternalCall() {
+			addHeader(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
+			addHeader(CustomRequestHeaders.HEADER_IGNORE_TENANT, Boolean.TRUE.toString());
+			addHeader(CustomRequestHeaders.HEADER_IGNORE_AUTH, Boolean.TRUE.toString());
+			return addHeader(CustomRequestHeaders.HEADER_INTERNAL_REQUEST, Boolean.TRUE.toString());
+		}
 
 		public GenericApiRequest build() {
 			if (mediaType == null) {

@@ -39,7 +39,7 @@ public abstract class SecurityDecisionProvider {
 	}
 	
 	public int sessionExpireIn(){
-		return 7200;
+		return 1800;
 	}
 	
 	public String cookieDomain(){

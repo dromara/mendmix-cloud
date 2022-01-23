@@ -123,6 +123,17 @@ public class WebUtils {
 		return urlSegs[1];
 	}
 	
+	public static  String getOriginDomain(HttpServletRequest request) {
+		String originUrl = request.getHeader("Origin");
+		if(originUrl == null) {
+			originUrl = request.getHeader("Referer");
+		}
+		if(originUrl != null) {
+			return getDomain(originUrl);
+		}
+		return request.getServerName();
+	}
+	
 	public static  String getBaseUrl(String url) {
 		String[] segs = StringUtils.split(url,"/");
 		return segs[0] + "//" + segs[1];

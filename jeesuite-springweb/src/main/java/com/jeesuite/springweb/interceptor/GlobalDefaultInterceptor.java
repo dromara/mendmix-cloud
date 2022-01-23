@@ -101,12 +101,12 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			
 			//行为日志
 			if(requestLogEnabled){
-				boolean logging = !requestLogGetIngore || !request.getMethod().equals(RequestMethod.GET.name());
-				if(config != null && !logging){
-					logging = config.actionLog();
+				boolean logging = config == null ? true : config.actionLog();;
+				if(logging){
+					logging = !requestLogGetIngore || !request.getMethod().equals(RequestMethod.GET.name());
 				}
 				if(logging) {
-					RequestLogCollector.onRequestStart(request,config);
+					RequestLogCollector.onRequestStart(request).apiMeta(config);
 				}
 			}
 		}

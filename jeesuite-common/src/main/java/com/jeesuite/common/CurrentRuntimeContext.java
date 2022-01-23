@@ -112,6 +112,15 @@ public class CurrentRuntimeContext {
 		return getContextVal(CustomRequestHeaders.HEADER_TENANT_ID, validate);
 	}
 	
+	public static void setPlatformType(String platformType){
+		setContextVal(CustomRequestHeaders.HEADER_PLATFORM_TYPE, platformType);
+	}
+	
+	
+	public static String getPlatformType() {
+		return getContextVal(CustomRequestHeaders.HEADER_PLATFORM_TYPE, false);
+	}
+	
 	public static void setClientType(String clientType){
 		setContextVal(CustomRequestHeaders.HEADER_CLIENT_TYPE, clientType);
 	}

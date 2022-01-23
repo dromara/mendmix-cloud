@@ -10,12 +10,20 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.springweb.client.GenericApiRequest;
+import com.jeesuite.springweb.exporter.AppMetadataHolder;
+import com.jeesuite.springweb.model.AppMetadata;
 import com.jeesuite.zuul.api.SystemMgtApi;
 import com.jeesuite.zuul.model.BizSystemModule;
+import com.jeesuite.zuul.model.BizSystemPortal;
 
 /**
  * <br>
@@ -26,12 +34,18 @@ import com.jeesuite.zuul.model.BizSystemModule;
  * @date 2019年12月3日
  */
 public class CurrentSystemHolder {
+	
+	private static Logger log = LoggerFactory.getLogger("com.jeesuite.zuul");
+
 
 	private static AtomicReference<Map<String, BizSystemModule>> routeModuleMappings = new AtomicReference<>();
 
 	private static List<BizSystemModule> localModules;
 
 	private static List<String> routeNames;
+	
+	private static Map<String, Map<String, ApiInfo>> moduleApiInfos = new HashMap<>();
+	
 
 	public static BizSystemModule getModule(String route) {
 		BizSystemModule module = routeModuleMappings.get().get(route);
@@ -60,8 +74,12 @@ public class CurrentSystemHolder {
 			return new ArrayList<>(0);
 		return new ArrayList<>(routeModuleMappings.get().values());
 	}
+	
+	public static BizSystemPortal getSystemPortal(String host) {
+		return null;
+	}
 
-	private static synchronized void load() {
+	public static synchronized void load() {
 		if (localModules == null) {
 			loadLocalRouteModules();
 		}
@@ -100,6 +118,12 @@ public class CurrentSystemHolder {
 			}
 			
 			module.buildAnonUriMatcher();
+			//
+			if(moduleApiInfos.containsKey(module.getServiceId())) {
+				module.setApiInfos(moduleApiInfos.get(module.getServiceId()));
+			}else {
+				new Thread(() -> initModuleApiInfos(module)).start();
+			}
 			_modules.put(module.getRouteName(), module);
 			
 		}
@@ -126,4 +150,42 @@ public class CurrentSystemHolder {
 		}
 
 	}
+	
+	private static void initModuleApiInfos(BizSystemModule module) {
+		try {
+			String url;
+			if(module.getServiceId().startsWith("http")) {
+				url = String.format("%s/metadata", module.getServiceId());
+			}else {
+				url = String.format("http://%s/metadata", module.getServiceId());
+			}
+			AppMetadata appMetadata;
+			if(GlobalRuntimeContext.APPID.equals(module.getRouteName())) {
+				appMetadata = AppMetadataHolder.getMetadata();
+			}else {			
+				appMetadata = new GenericApiRequest.Builder().requestUrl(url).responseClass(AppMetadata.class).backendInternalCall().build().waitResponse();
+			}
+			Map<String, ApiInfo> apiInfos = new HashMap<>(appMetadata.getApis().size());
+			String uri;
+			for (ApiInfo api : appMetadata.getApis()) {
+				if(GlobalRuntimeContext.APPID.equals(module.getRouteName())) {
+					uri = String.format("%s/%s", GlobalRuntimeContext.getContextPath(), api.getUrl());
+				}else {
+					uri = String.format("%s/%s/%s", GlobalRuntimeContext.getContextPath(), module.getRouteName(), api.getUrl());
+				}
+				uri = uri.replace("//", "/");
+				apiInfos.put(uri, api);
+			}
+			module.setApiInfos(apiInfos);
+			moduleApiInfos.put(module.getServiceId(), apiInfos);
+		} catch (Exception e) {
+			if(e instanceof JeesuiteBaseException && ((JeesuiteBaseException)e).getCode() == 404) {
+				module.setApiInfos(new HashMap<>(0));
+				moduleApiInfos.put(module.getServiceId(), module.getApiInfos());
+			}else {
+				log.warn(">> initModuleApiInfos error -> serviceId:{},error:{}",module.getServiceId(),e.getMessage());
+			}
+		}
+	}
+			
 }

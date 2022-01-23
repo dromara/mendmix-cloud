@@ -13,8 +13,10 @@ import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.model.WrapperResponse;
 import com.jeesuite.zuul.FilterConstants;
+import com.jeesuite.zuul.filter.post.ResponseLogHandler;
 import com.jeesuite.zuul.filter.post.ResponseRewriteHandler;
 import com.jeesuite.zuul.filter.pre.GlobalHeaderHandler;
+import com.jeesuite.zuul.filter.pre.RequestLogHandler;
 import com.jeesuite.zuul.filter.pre.SignatureRequestHandler;
 import com.jeesuite.zuul.model.BizSystemModule;
 import com.netflix.zuul.ZuulFilter;
@@ -35,6 +37,9 @@ public abstract class AbstractZuulFilter extends ZuulFilter {
 			this.filterOrder = 0;
 			//
 			handlers.add(new GlobalHeaderHandler());
+			if(ResourceUtils.getBoolean("jeesuite.actionLog.collector.enabled")) {
+				handlers.add(new RequestLogHandler());
+			}
 			Map<String, String> configs = ResourceUtils.getMappingValues("jeesuite.openapi.secret.mapping");
 			if(!configs.isEmpty()) {
 				handlers.add(new SignatureRequestHandler(configs));
@@ -42,6 +47,9 @@ public abstract class AbstractZuulFilter extends ZuulFilter {
 		}else if("post".equals(filterType)) {
 			this.filterOrder = 9;
 			//
+			if(ResourceUtils.getBoolean("jeesuite.actionLog.collector.enabled")) {
+				handlers.add(new ResponseLogHandler());
+			}
 			if(ResourceUtils.getBoolean("jeesuite.response.rewrite.enabled", true)) {
 				handlers.add(new ResponseRewriteHandler());
 			}

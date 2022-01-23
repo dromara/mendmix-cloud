@@ -1,11 +1,10 @@
-package com.jeesuite.springboot.autoconfigure;
+package com.jeesuite.zuul.autoconfigure;
 
 import java.text.SimpleDateFormat;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
-import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -17,15 +16,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.springboot.autoconfigure.feign.CustomLoadBalancerFeignClient;
+import com.jeesuite.common2.task.GlobalInternalScheduleService;
 import com.jeesuite.springweb.advice.ResonseRewriteAdvice;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
 import com.jeesuite.springweb.exception.GlobalExceptionHandler;
 
-import feign.Client;
-
 @Configuration
-public class BaseWebConfiguration {
+public class BaseSupportConfiguration {
 
 	@Bean("restTemplate")
 	@LoadBalanced
@@ -33,12 +30,7 @@ public class BaseWebConfiguration {
 		int readTimeout = ResourceUtils.getInt("jeesuite.httpclient.readTimeout.ms", 30000);
 		return SimpleRestTemplateBuilder.build(readTimeout);
 	}
-	
-	@Bean
-	@ConditionalOnProperty(value = "jeesuite.feign.custom-loadbalance-mapping.enabled",havingValue = "true")
-	public Client feignClient(LoadBalancerClient loadBalancer) {
-		return new CustomLoadBalancerFeignClient(loadBalancer);
-	}
+
 	
 	@Bean
 	public GlobalExceptionHandler globalExceptionHandler() {
@@ -51,6 +43,10 @@ public class BaseWebConfiguration {
 		return new ResonseRewriteAdvice();
 	}
 	
+	@Bean
+	public GlobalInternalScheduleService GlobalInternalScheduleService() {
+		return new GlobalInternalScheduleService();
+	}
 	
 	@Bean
     @Primary

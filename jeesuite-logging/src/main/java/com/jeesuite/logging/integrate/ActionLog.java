@@ -2,12 +2,17 @@ package com.jeesuite.logging.integrate;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.jeesuite.common.annotation.ApiMetadata;
+import com.jeesuite.common.model.ApiInfo;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.DateUtils;
+import com.jeesuite.logging.helper.LogMessageFormat;
 
 /**
  * 操作日志
@@ -23,20 +28,23 @@ public class ActionLog implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	
+	public static final String IGNORE_FLAG = "[ignore]";
+	
 	private String appId;
 	private String env;
 	private String tenantId;
+	private String platformType;
 	private String clientType;
 	private String actionName;
 	private String actionKey;
 	private String userId;
 	private String userName;
-	private String originAppId;
+	private String moduleId;
 	private String requestIp;
 	@JsonFormat(pattern=DateUtils.TIMESTAMP_PATTERN,timezone = "GMT+8")
 	private Date requestAt;
 	private int responseCode;
-	private Map<String, String> requestParameters;
+	private String queryParameters;
 	private Object requestData;
 	private Object responseData;
 	private Integer useTime;
@@ -114,17 +122,21 @@ public class ActionLog implements Serializable{
 	public void setUserName(String userName) {
 		this.userName = userName;
 	}
-	/**
-	 * @return the originAppId
-	 */
-	public String getOriginAppId() {
-		return originAppId;
+	
+	public String getPlatformType() {
+		return platformType;
 	}
-	/**
-	 * @param originAppId the originAppId to set
-	 */
-	public void setOriginAppId(String originAppId) {
-		this.originAppId = originAppId;
+	
+	public void setPlatformType(String platformType) {
+		this.platformType = platformType;
+	}
+	
+	public String getModuleId() {
+		return moduleId;
+	}
+	
+	public void setModuleId(String moduleId) {
+		this.moduleId = moduleId;
 	}
 	/**
 	 * @return the requestIp
@@ -169,11 +181,12 @@ public class ActionLog implements Serializable{
 		this.responseCode = responseCode;
 	}
 	
-	public Map<String, String> getRequestParameters() {
-		return requestParameters;
+	
+	public String getQueryParameters() {
+		return queryParameters;
 	}
-	public void setRequestParameters(Map<String, String> requestParameters) {
-		this.requestParameters = requestParameters;
+	public void setQueryParameters(String queryParameters) {
+		this.queryParameters = queryParameters;
 	}
 	public Object getRequestData() {
 		return requestData;
@@ -218,6 +231,41 @@ public class ActionLog implements Serializable{
 		this.exceptions = exceptions;
 	}
 	
-	
+	public ActionLog apiMeta(ApiInfo apiMeta) {
+    	if(apiMeta != null) {
+			setActionName(apiMeta.getName());
+			if(!apiMeta.isRequestLog())setRequestData(IGNORE_FLAG);
+			if(!apiMeta.isResponseLog())setResponseData(IGNORE_FLAG);
+		}
+    	return this;
+    }
+    
+    public ActionLog apiMeta(ApiMetadata apiMeta) {
+    	if(apiMeta != null) {
+    		setActionName(apiMeta.actionName());
+			if(!apiMeta.requestLog())setRequestData(IGNORE_FLAG);
+			if(!apiMeta.responseLog())setResponseData(IGNORE_FLAG);
+		}
+    	return this;
+    }
+    
+    public ActionLog actionName(String actionName) {
+    	setActionName(actionName);
+    	return this;
+    }
+    
+    public ActionLog currentUser(AuthUser currentUser) {
+    	if(currentUser != null){
+			setUserId(currentUser.getId());
+			setUserName(currentUser.getName());
+		}
+    	return this;
+    }
+    
+    public ActionLog exception(Exception e) {
+    	setExceptions(StringUtils.defaultIfBlank(e.getMessage(), LogMessageFormat.buildExceptionMessages(e)));
+    	setResponseCode(500);
+    	return this;
+    }
 
 }

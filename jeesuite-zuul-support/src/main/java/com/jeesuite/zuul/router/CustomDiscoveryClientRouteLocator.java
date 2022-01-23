@@ -35,7 +35,7 @@ import com.jeesuite.zuul.model.BizSystemModule;
  * @version 1.0.0
  * @date 2019年9月29日
  */
-public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocator implements ApplicationContextAware {
+public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocator  {
 
 	private final static Logger logger = LoggerFactory.getLogger(CustomDiscoveryClientRouteLocator.class);
 
@@ -50,10 +50,6 @@ public class CustomDiscoveryClientRouteLocator extends DiscoveryClientRouteLocat
 		this.properties = properties;
 	}
 
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
-	}
 
 	@Override
 	protected LinkedHashMap<String, ZuulRoute> locateRoutes() {

@@ -2,6 +2,9 @@ package com.jeesuite.springweb;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.Ordered;
@@ -24,7 +27,7 @@ import com.jeesuite.spring.SpringInstanceProvider;
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class SpringContextManager implements ApplicationContextAware,DisposableBean{
+public class SpringContextManager implements ApplicationContextAware,BeanDefinitionRegistryPostProcessor,DisposableBean{
 
 	@Override
 	public void destroy() throws Exception {
@@ -36,5 +39,11 @@ public class SpringContextManager implements ApplicationContextAware,DisposableB
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
 	}
+
+	@Override
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {}
+
+	@Override
+	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {}
 
 }

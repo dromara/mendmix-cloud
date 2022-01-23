@@ -89,6 +89,7 @@ public class GlobalExceptionHandler {
 				response.setStatus(500);
 			}
 		}
+		response.addIntHeader(CustomRequestHeaders.HEADER_EXCEPTION_CODE, resp.getCode());
 		//
 		RequestLogCollector.onResponseEnd(response, e);
 		

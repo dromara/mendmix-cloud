@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.spring.ApplicationStartedListener;
@@ -28,6 +30,7 @@ import com.jeesuite.spring.InstanceFactory;
  * @version 1.0.0
  * @date Jan 8, 2022
  */
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalInternalScheduleService implements InitializingBean, DisposableBean ,ApplicationStartedListener{
 
 	private static Logger log = LoggerFactory.getLogger("global.internal.task");

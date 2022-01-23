@@ -1,11 +1,13 @@
 package com.jeesuite.zuul.model;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.PathMatcher;
 
 public class BizSystemModule {
@@ -23,6 +25,8 @@ public class BizSystemModule {
     
     @JsonIgnore
     private PathMatcher anonUriMatcher;
+    
+    private Map<String, ApiInfo> apiInfos;
 
 
 	public String getId() {
@@ -82,6 +86,18 @@ public class BizSystemModule {
 
 	public void setAnonUriMatcher(PathMatcher anonUriMatcher) {
 		this.anonUriMatcher = anonUriMatcher;
+	}
+	
+	public void setApiInfos(Map<String, ApiInfo> apiInfos) {
+		this.apiInfos = apiInfos;
+	}
+	
+	public Map<String, ApiInfo> getApiInfos() {
+		return apiInfos;
+	}
+
+	public ApiInfo getApiInfo(String uri) {
+		return apiInfos == null ? null : apiInfos.get(uri);
 	}
 
 	public void buildAnonUriMatcher() {

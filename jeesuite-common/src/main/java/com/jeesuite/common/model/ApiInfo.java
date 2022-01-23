@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jeesuite.springweb.model;
+package com.jeesuite.common.model;
 
 import com.jeesuite.common.constants.PermissionLevel;
 
@@ -29,6 +29,9 @@ public class ApiInfo {
 	private String method;
 	private String name;
 	private PermissionLevel permissionType;
+	private boolean actionLog;
+	private boolean requestLog;
+	private boolean responseLog;
 	
 	public String getUrl() {
 		return url;
@@ -55,6 +58,24 @@ public class ApiInfo {
 
 	public void setPermissionType(PermissionLevel permissionType) {
 		this.permissionType = permissionType;
+	}
+	public boolean isActionLog() {
+		return actionLog;
+	}
+	public void setActionLog(boolean actionLog) {
+		this.actionLog = actionLog;
+	}
+	public boolean isRequestLog() {
+		return requestLog;
+	}
+	public void setRequestLog(boolean requestLog) {
+		this.requestLog = requestLog;
+	}
+	public boolean isResponseLog() {
+		return responseLog;
+	}
+	public void setResponseLog(boolean responseLog) {
+		this.responseLog = responseLog;
 	}
 
 }

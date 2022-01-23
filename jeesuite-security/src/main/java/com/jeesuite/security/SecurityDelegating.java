@@ -37,6 +37,7 @@ import com.jeesuite.spring.InstanceFactory;
  */
 public class SecurityDelegating {
 	
+	private static final int SESSION_RNEWAL_BEFORE_MILLS = 5 * 60 * 1000;
 	private SecurityDecisionProvider decisionProvider;
 	private SecuritySessionManager sessionManager;
 	private SecurityResourceManager resourceManager;
@@ -150,6 +151,10 @@ public class SecurityDelegating {
 			if(StringUtils.isNotBlank(session.getTenantId())) {
 				CurrentRuntimeContext.setTenantId(session.getTenantId());
 			}
+			//续租
+			if(session.getExpiredAt() - System.currentTimeMillis() < SESSION_RNEWAL_BEFORE_MILLS) {
+				getInstance().sessionManager.storageLoginSession(session);
+			}
 		}
 		
 		return session;
@@ -167,6 +172,10 @@ public class SecurityDelegating {
 	public static UserSession getCurrentSession(){
 		UserSession session = getInstance().sessionManager.getSession();
 		return session;
+	}
+	
+	public static String getCurrentSessionId(){
+		return getInstance().sessionManager.getSessionId();
 	}
 	
 	public static UserSession genUserSession(String sessionId){

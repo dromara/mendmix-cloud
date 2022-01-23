@@ -16,6 +16,12 @@
 			<artifactId>jeesuite-common</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.jeesuite</groupId>
+			<artifactId>jeesuite-common2</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>com.jeesuite</groupId>
@@ -79,6 +85,13 @@
 			<groupId>org.apache.tomcat.embed</groupId>
 			<artifactId>tomcat-embed-core</artifactId>
 			<version>9.0.21</version>
+			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.jeesuite</groupId>
+			<artifactId>jeesuite-logging</artifactId>
+			<version>${project.version}</version>
 			<optional>true</optional>
 		</dependency>
 

@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.async.StandardThreadExecutor;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.model.AuthUser;
@@ -60,17 +59,14 @@ public class RequestLogCollector {
 		return context.get();
 	}
 
-	public static void onRequestStart(HttpServletRequest request,ApiMetadata apiMeta){
+	public static ActionLog onRequestStart(HttpServletRequest request){
 		ActionLog actionLog = new ActionLog();
 		actionLog.setEnv(GlobalRuntimeContext.ENV);
-		actionLog.setAppId(GlobalRuntimeContext.APPID);
+		actionLog.setAppId(GlobalRuntimeContext.SYSTEM_ID);
 		actionLog.setRequestAt(new Date());
 		actionLog.setRequestIp(IpUtils.getIpAddr(request));
-		if(apiMeta != null) {
-			actionLog.setActionName(apiMeta.actionName());
-		}
 		actionLog.setActionKey(request.getRequestURI());
-		actionLog.setOriginAppId(CurrentRuntimeContext.getInvokeAppId());
+		actionLog.setModuleId(GlobalRuntimeContext.APPID);
 		actionLog.setRequestId(CurrentRuntimeContext.getRequestId());
 		actionLog.setTenantId(CurrentRuntimeContext.getTenantId());
 		actionLog.setClientType(CurrentRuntimeContext.getClientType());
@@ -83,16 +79,9 @@ public class RequestLogCollector {
 		if(context.get() == null){
 			context.set(actionLog);
 		}
+		return actionLog;
 	}
 	
-	public static void onBizException(String errorMsg){
-		if(context.get() == null)return;
-    	ActionLog actionLog = context.get();
-    	if(actionLog == null)return;
-    	actionLog.setResponseCode(500);
-		actionLog.setResponseData(errorMsg);
-	}
-    
     public static void onResponseEnd(HttpServletResponse response,Throwable throwable){
     	if(context.get() == null) {
     		if(throwable != null) {

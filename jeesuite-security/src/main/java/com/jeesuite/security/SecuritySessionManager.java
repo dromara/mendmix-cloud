@@ -117,7 +117,7 @@ public class SecuritySessionManager {
 		return storageManager.getCache(cacheName).getMapValue(sessionId, name);
 	}
 
-	private String getSessionId() {
+	public String getSessionId() {
 		HttpServletRequest request = CurrentRuntimeContext.getRequest();
 		return getSessionId(request);
 	}

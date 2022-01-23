@@ -28,6 +28,7 @@ import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.util.BeanUtils;
+import com.jeesuite.common.util.ParameterUtils;
 
 @Aspect
 public class RequestLoggingInterceptor {
@@ -67,7 +68,7 @@ public class RequestLoggingInterceptor {
 			}
 		}
 
-		Map<String, String> parameters = null;
+		Map<String, Object> parameters = null;
 		Object body = null;
 
 		if (requestLog) {
@@ -96,7 +97,7 @@ public class RequestLoggingInterceptor {
 			}
 		}
 
-		actionLog.setRequestParameters(parameters);
+		actionLog.setQueryParameters(ParameterUtils.mapToQueryParams(parameters));
 		actionLog.setRequestData(body);
 
 		Object result = null;

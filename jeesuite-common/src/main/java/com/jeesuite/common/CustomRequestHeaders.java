@@ -7,6 +7,7 @@ public class CustomRequestHeaders {
 		public static final String HEADER_REAL_IP = "x-real-ip";
 		public static final String HEADER_FROWARDED_FOR = "x-forwarded-for";
 		public static final String HEADER_INVOKE_TOKEN = "x-invoke-token";
+		public static final String HEADER_ACCESS_TOKEN = "x-access-token";
 		public static final String HEADER_AUTH_USER = "x-auth-user";
 		public static final String HEADER_TENANT_ID = "x-tenant-id";
 		public static final String HEADER_CLIENT_TYPE = "x-client-type";
@@ -30,4 +31,5 @@ public class CustomRequestHeaders {
 		public static final String HEADER_IGNORE_TENANT = "x-ignore-tenant";
 		public static final String HEADER_IGNORE_AUTH = "x-ignore-auth";
 		public static final String HEADER_CLUSTER_ID = "x-cluster-id";
+		public static final String HEADER_EXCEPTION_CODE = "x-exception-code";
 }

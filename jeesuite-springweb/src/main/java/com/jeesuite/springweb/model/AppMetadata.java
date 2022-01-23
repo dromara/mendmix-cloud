@@ -3,6 +3,8 @@ package com.jeesuite.springweb.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.jeesuite.common.model.ApiInfo;
+
 public class AppMetadata {
 
 	private String name;
