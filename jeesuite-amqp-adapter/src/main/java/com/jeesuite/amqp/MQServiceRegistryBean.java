@@ -20,7 +20,6 @@ import com.jeesuite.amqp.rocketmq.RocketProducerAdapter;
 import com.jeesuite.amqp.rocketmq.RocketmqConsumerAdapter;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 import com.jeesuite.spring.helper.SpringAopHelper;
 
 public class MQServiceRegistryBean implements InitializingBean,DisposableBean,ApplicationContextAware,PriorityOrdered {
@@ -92,7 +91,7 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
+		InstanceFactory.setApplicationContext(applicationContext);
 	}
 	
 	@Override

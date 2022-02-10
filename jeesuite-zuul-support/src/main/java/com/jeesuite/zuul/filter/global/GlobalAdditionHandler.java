@@ -15,7 +15,7 @@ import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.WebUtils;
-import com.jeesuite.logging.integrate.RequestLogCollector;
+import com.jeesuite.logging.integrate.ActionLogCollector;
 import com.jeesuite.security.AuthAdditionHandler;
 import com.jeesuite.security.model.UserSession;
 import com.jeesuite.zuul.CurrentSystemHolder;
@@ -75,7 +75,7 @@ public class GlobalAdditionHandler implements AuthAdditionHandler {
 			logging = !ignoreReadMethodLog || !request.getMethod().equals(RequestMethod.GET.name());
 		}
 		if(logging){
-			RequestLogCollector.onRequestStart(request).apiMeta(apiInfo);
+			ActionLogCollector.onRequestStart(request).apiMeta(apiInfo);
 		}
 	
 	}

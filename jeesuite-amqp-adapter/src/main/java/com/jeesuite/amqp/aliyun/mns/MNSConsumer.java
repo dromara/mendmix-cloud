@@ -78,7 +78,7 @@ public class MNSConsumer implements InitializingBean,DisposableBean,PriorityOrde
 	}
 	
 	private void initTopicHanlders(){
-		Map<String, MNSQueueProcessHanlder> interfaces = InstanceFactory.getInstanceProvider().getInterfaces(MNSQueueProcessHanlder.class);
+		Map<String, MNSQueueProcessHanlder> interfaces = InstanceFactory.getBeansOfType(MNSQueueProcessHanlder.class);
 		if(interfaces == null || interfaces.isEmpty())return; 
 		for (MNSQueueProcessHanlder hanlder : interfaces.values()) {
 			for (String topicName : hanlder.topicNames()) {	

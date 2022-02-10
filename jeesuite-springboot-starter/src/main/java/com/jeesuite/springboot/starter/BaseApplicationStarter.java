@@ -29,8 +29,7 @@ public class BaseApplicationStarter{
 		System.out.println("..................Service starts successfully (port:"+ResourceUtils.getProperty("server.port")+")..................");
 		System.out.println("...............................................................");
 
-		Map<String, ApplicationStartedListener> interfaces = InstanceFactory.getInstanceProvider()
-				.getInterfaces(ApplicationStartedListener.class);
+		Map<String, ApplicationStartedListener> interfaces = InstanceFactory.getBeansOfType(ApplicationStartedListener.class);
 		if (interfaces != null) {
 			for (ApplicationStartedListener listener : interfaces.values()) {
 				System.out.println(">>>begin to execute listener:" + listener.getClass().getName());
@@ -40,7 +39,7 @@ public class BaseApplicationStarter{
 		}
 		
 		//执行异步初始化
-		Map<String, AsyncInitializer> asyncInitializers = InstanceFactory.getInstanceProvider().getInterfaces(AsyncInitializer.class);
+		Map<String, AsyncInitializer> asyncInitializers = InstanceFactory.getBeansOfType(AsyncInitializer.class);
 			if(asyncInitializers != null){
 			for (AsyncInitializer initializer : asyncInitializers.values()) {
 				System.out.println(">>>begin to execute AsyncInitializer:" + initializer.getClass().getName());

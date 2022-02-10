@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.logging.integrate.RequestLogCollector;
+import com.jeesuite.logging.integrate.ActionLogCollector;
 import com.jeesuite.springweb.model.WrapperResponseEntity;
 
 @ControllerAdvice
@@ -91,7 +91,7 @@ public class GlobalExceptionHandler {
 		}
 		response.addIntHeader(CustomRequestHeaders.HEADER_EXCEPTION_CODE, resp.getCode());
 		//
-		RequestLogCollector.onResponseEnd(response, e);
+		ActionLogCollector.onResponseEnd(response, e);
 		
 		return resp;
 	}

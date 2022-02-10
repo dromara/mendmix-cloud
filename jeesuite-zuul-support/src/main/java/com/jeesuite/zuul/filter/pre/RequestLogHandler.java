@@ -9,7 +9,7 @@ import com.google.common.io.CharStreams;
 import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.logging.integrate.ActionLog;
-import com.jeesuite.logging.integrate.RequestLogCollector;
+import com.jeesuite.logging.integrate.ActionLogCollector;
 import com.jeesuite.zuul.filter.FilterHandler;
 import com.jeesuite.zuul.model.BizSystemModule;
 import com.netflix.zuul.context.RequestContext;
@@ -19,7 +19,7 @@ public class RequestLogHandler implements FilterHandler {
 	@Override
 	public Object process(RequestContext ctx, HttpServletRequest request, BizSystemModule module) {
 		
-		ActionLog actionLog = RequestLogCollector.currentActionLog();
+		ActionLog actionLog = ActionLogCollector.currentActionLog();
 		if(actionLog == null)return null;
 		actionLog.setModuleId(module.getServiceId());
 		

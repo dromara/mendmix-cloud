@@ -20,9 +20,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.datasource.AbstractDataSource;
 
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.model.RoundRobinSelecter;
 import com.jeesuite.common.util.BeanUtils;
 import com.jeesuite.common.util.ResourceUtils;
@@ -30,7 +30,6 @@ import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.datasource.builder.DruidDataSourceBuilder;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
  * 自动路由多数据源（读写分离/多租户）
@@ -143,7 +142,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.context = applicationContext;
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
+		InstanceFactory.setApplicationContext(context);
 	}
 
 

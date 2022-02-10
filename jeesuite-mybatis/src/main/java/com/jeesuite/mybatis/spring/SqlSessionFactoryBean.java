@@ -23,7 +23,6 @@ import org.springframework.core.io.Resource;
 
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 
 /**
  * @description <br>
@@ -60,7 +59,7 @@ public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryB
 	
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
+		InstanceFactory.setApplicationContext(applicationContext);
 	}
 	
 	

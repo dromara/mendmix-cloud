@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.logging.integrate.ActionLog;
-import com.jeesuite.logging.integrate.RequestLogCollector;
+import com.jeesuite.logging.integrate.ActionLogCollector;
 import com.jeesuite.zuul.filter.FilterHandler;
 import com.jeesuite.zuul.model.BizSystemModule;
 import com.netflix.util.Pair;
@@ -20,7 +20,7 @@ public class ResponseLogHandler implements FilterHandler {
 		int statusCode = ctx.getResponseStatusCode();
 		if(statusCode != 200)return null;
 		
-		ActionLog actionLog = RequestLogCollector.currentActionLog();
+		ActionLog actionLog = ActionLogCollector.currentActionLog();
 		if(actionLog == null)return null;
 		
 		List<Pair<String, String>> headers = ctx.getOriginResponseHeaders();

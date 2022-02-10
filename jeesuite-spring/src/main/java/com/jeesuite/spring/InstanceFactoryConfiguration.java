@@ -30,7 +30,7 @@ public class InstanceFactoryConfiguration implements ApplicationContextAware,Pri
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(applicationContext));
+		InstanceFactory.setApplicationContext(applicationContext);
 	}
 
 	@Override

@@ -48,7 +48,7 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 	@Override
 	public void afterPropertiesSet() throws Exception {
 
-		Map<String, SubTimerTask> taskMap = InstanceFactory.getInstanceProvider().getInterfaces(SubTimerTask.class);
+		Map<String, SubTimerTask> taskMap = InstanceFactory.getBeansOfType(SubTimerTask.class);
 		if (taskMap == null || taskMap.isEmpty())
 			return;
 		//

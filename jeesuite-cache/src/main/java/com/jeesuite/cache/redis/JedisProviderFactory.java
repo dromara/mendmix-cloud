@@ -54,7 +54,7 @@ public class JedisProviderFactory {
 	}
 	
 	public static boolean containsGroup(String groupName){
-		if(jedisProviders.isEmpty() && InstanceFactory.getInstanceProvider() != null){
+		if(jedisProviders.isEmpty()){
 			try {initFactoryFromSpring();} catch (Exception e) {}
 		}
 		return jedisProviders.containsKey(groupName);
@@ -88,9 +88,7 @@ public class JedisProviderFactory {
 	private synchronized static void initFactoryFromSpring() {
 		if(inited)return;
 		if(defaultJedisProvider == null){
-			//阻塞，直到spring初始化完成
-			InstanceFactory.waitUtilInitialized();
-			Map<String, JedisProvider> interfaces = InstanceFactory.getInstanceProvider().getInterfaces(JedisProvider.class);
+			Map<String, JedisProvider> interfaces = InstanceFactory.getBeansOfType(JedisProvider.class);
 			
 			if(interfaces != null && interfaces.size() >0){				
 				Iterator<JedisProvider> iterator = interfaces.values().iterator();

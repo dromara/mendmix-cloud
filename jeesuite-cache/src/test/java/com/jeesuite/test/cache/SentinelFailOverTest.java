@@ -16,7 +16,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.jeesuite.cache.command.RedisString;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -29,7 +28,7 @@ public class SentinelFailOverTest implements ApplicationContextAware{
 
 	@Override
 	public void setApplicationContext(ApplicationContext arg0) throws BeansException {	
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(arg0));
+		InstanceFactory.setApplicationContext(arg0);
 	}
 	
 	@Test

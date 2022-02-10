@@ -33,7 +33,6 @@ import com.jeesuite.mybatis.test.entity.UserEntity;
 import com.jeesuite.mybatis.test.mapper.SnsAccounyBindingEntityMapper;
 import com.jeesuite.mybatis.test.mapper.UserEntityMapper;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -46,7 +45,7 @@ public class BaseMybatisTest implements ApplicationContextAware{
 
 	@Override
 	public void setApplicationContext(ApplicationContext arg0) throws BeansException {	
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(arg0));
+		InstanceFactory.setApplicationContext(arg0);
 	}
 	
 	@Before

@@ -21,7 +21,6 @@ import com.jeesuite.mybatis.datasource.DataSourceConfig;
 import com.jeesuite.mybatis.datasource.DataSoureConfigHolder;
 import com.jeesuite.mybatis.spring.SqlSessionFactoryBean;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 import com.jeesuite.spring.helper.BeanRegistryHelper;
 import com.jeesuite.spring.helper.BeanRegistryHelper.BeanValue;
 
@@ -43,7 +42,7 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 
 	@Override
 	public void setApplicationContext(ApplicationContext context) throws BeansException {
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
+		InstanceFactory.setApplicationContext(context);
 	}
 	
 	@Override

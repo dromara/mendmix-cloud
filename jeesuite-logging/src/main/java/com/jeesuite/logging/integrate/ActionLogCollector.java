@@ -29,13 +29,13 @@ import com.jeesuite.spring.InstanceFactory;
  * 行为日志采集
  * 
  * <br>
- * Class Name   : RequestLogCollector
+ * Class Name   : ActionLogCollector
  *
  * @author jiangwei
  * @version 1.0.0
  * @date 2019年8月22日
  */
-public class RequestLogCollector {
+public class ActionLogCollector {
 	
 	private static Logger log = LoggerFactory.getLogger("request.logger.level");
 	
@@ -61,11 +61,10 @@ public class RequestLogCollector {
 
 	public static ActionLog onRequestStart(HttpServletRequest request){
 		ActionLog actionLog = new ActionLog();
-		actionLog.setEnv(GlobalRuntimeContext.ENV);
 		actionLog.setAppId(GlobalRuntimeContext.SYSTEM_ID);
 		actionLog.setRequestAt(new Date());
 		actionLog.setRequestIp(IpUtils.getIpAddr(request));
-		actionLog.setActionKey(request.getRequestURI());
+		actionLog.setActionKey(String.format("%s_%s", request.getMethod(),request.getRequestURI()));
 		actionLog.setModuleId(GlobalRuntimeContext.APPID);
 		actionLog.setRequestId(CurrentRuntimeContext.getRequestId());
 		actionLog.setTenantId(CurrentRuntimeContext.getTenantId());
@@ -120,7 +119,6 @@ public class RequestLogCollector {
     
     public static void onSystemBackendTaskStart(String taskKey,String taskName){
     	ActionLog actionLog = new ActionLog();
-    	actionLog.setEnv(GlobalRuntimeContext.ENV);
 		actionLog.setAppId(GlobalRuntimeContext.APPID);
 		actionLog.setRequestAt(new Date());
 		actionLog.setRequestId(TokenGenerator.generate());

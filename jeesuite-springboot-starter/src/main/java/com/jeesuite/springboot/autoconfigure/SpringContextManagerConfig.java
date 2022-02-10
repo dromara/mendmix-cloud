@@ -1,15 +1,13 @@
-package com.jeesuite.zuul.autoconfigure;
+package com.jeesuite.springboot.autoconfigure;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
 import com.jeesuite.springweb.SpringContextManager;
 
-@Configuration("zuulSpringContextManagerConfig")  
+@Configuration  
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@ConditionalOnMissingBean(SpringContextManager.class)
 public class SpringContextManagerConfig extends SpringContextManager{
 
 }

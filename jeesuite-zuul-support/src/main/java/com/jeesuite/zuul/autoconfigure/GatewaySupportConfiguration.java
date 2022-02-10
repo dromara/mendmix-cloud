@@ -22,7 +22,8 @@ import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
 import com.jeesuite.springweb.exception.GlobalExceptionHandler;
 
 @Configuration
-public class BaseSupportConfiguration {
+@ConditionalOnMissingBean(GlobalExceptionHandler.class)
+public class GatewaySupportConfiguration {
 
 	@Bean("restTemplate")
 	@LoadBalanced

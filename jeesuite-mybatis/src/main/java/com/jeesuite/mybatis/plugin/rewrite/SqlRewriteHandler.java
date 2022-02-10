@@ -324,7 +324,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				equalsTo.setRightExpression(new StringValue("_PERMISSION_NOT_MATCH_"));
 				return equalsTo;
 			}
-			newExpression = handleColumnDataPermCondition(table, originWhere, column,values);
+			newExpression = handleColumnDataPermCondition(table, newExpression, column,values);
 		}
 		
 		return newExpression;

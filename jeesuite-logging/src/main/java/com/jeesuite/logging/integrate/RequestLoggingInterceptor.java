@@ -47,7 +47,7 @@ public class RequestLoggingInterceptor {
 	@Around("pointcut()")
 	public Object around(ProceedingJoinPoint pjp) throws Throwable {
 
-		ActionLog actionLog = RequestLogCollector.currentActionLog();
+		ActionLog actionLog = ActionLogCollector.currentActionLog();
 
 		if (actionLog == null) {
 			return pjp.proceed();

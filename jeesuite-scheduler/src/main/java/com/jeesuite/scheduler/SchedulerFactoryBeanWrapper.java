@@ -37,7 +37,6 @@ import org.springframework.util.ClassUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.scheduler.annotation.ScheduleConf;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 import com.jeesuite.spring.helper.SpringAopHelper;
 
 /**
@@ -88,7 +87,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.context = applicationContext;
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
+		InstanceFactory.setApplicationContext(context);
 	}
 	
 	@Override
@@ -147,7 +146,6 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			JobContext.getContext().submitSyncTask(new Runnable() {
 				@Override
 				public void run() {	
-					InstanceFactory.waitUtilInitialized();
 					job.afterInitialized();
 					if(job.isExecuteOnStarted()){						
 						logger.info("<<Job[{}] execute on startup....",job.jobName);

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common2.task.GlobalInternalScheduleService;
 import com.jeesuite.springboot.autoconfigure.feign.CustomLoadBalancerFeignClient;
+import com.jeesuite.springweb.SpringContextManager;
 import com.jeesuite.springweb.advice.ResonseRewriteAdvice;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
 import com.jeesuite.springweb.exception.GlobalExceptionHandler;
@@ -53,10 +54,9 @@ public class BaseSupportConfiguration {
 	}
 	
 	@Bean
-	public GlobalInternalScheduleService GlobalInternalScheduleService() {
+	public GlobalInternalScheduleService globalInternalScheduleService() {
 		return new GlobalInternalScheduleService();
 	}
-	
 	
 	@Bean
     @Primary

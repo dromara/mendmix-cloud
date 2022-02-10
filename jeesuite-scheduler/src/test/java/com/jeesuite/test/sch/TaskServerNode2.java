@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 
 
 public class TaskServerNode2 {
@@ -17,7 +16,7 @@ public class TaskServerNode2 {
 
         final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("test-schduler.xml");
 
-        InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
+        InstanceFactory.setApplicationContext(context);
         
         logger.info("TASK started....");
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {

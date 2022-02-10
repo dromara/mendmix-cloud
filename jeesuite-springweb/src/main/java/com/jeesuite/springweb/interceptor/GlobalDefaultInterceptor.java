@@ -22,7 +22,7 @@ import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.common.util.WebUtils;
-import com.jeesuite.logging.integrate.RequestLogCollector;
+import com.jeesuite.logging.integrate.ActionLogCollector;
 
 /**
  * 
@@ -106,7 +106,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 					logging = !requestLogGetIngore || !request.getMethod().equals(RequestMethod.GET.name());
 				}
 				if(logging) {
-					RequestLogCollector.onRequestStart(request).apiMeta(config);
+					ActionLogCollector.onRequestStart(request).apiMeta(config);
 				}
 			}
 		}
@@ -123,7 +123,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
-		RequestLogCollector.onResponseEnd(response, ex);
+		ActionLogCollector.onResponseEnd(response, ex);
 		ThreadLocalContext.unset();
 	}
 	

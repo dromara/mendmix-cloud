@@ -111,7 +111,7 @@ public class CacheHandler implements InterceptorHandler {
 		
 		dataSourceGroupName = context.getGroupName();
 		
-		Map<String, DataSource> dataSources = InstanceFactory.getInstanceProvider().getInterfaces(DataSource.class);
+		Map<String, DataSource> dataSources = InstanceFactory.getBeansOfType(DataSource.class);
 		if(dataSources.size() == 1) {
 			dataSource = new ArrayList<>(dataSources.values()).get(0);
 		}else {

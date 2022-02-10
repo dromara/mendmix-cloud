@@ -31,7 +31,6 @@ public class ActionLog implements Serializable{
 	public static final String IGNORE_FLAG = "[ignore]";
 	
 	private String appId;
-	private String env;
 	private String tenantId;
 	private String platformType;
 	private String clientType;
@@ -56,18 +55,6 @@ public class ActionLog implements Serializable{
 	}
 	public void setAppId(String appId) {
 		this.appId = appId;
-	}
-	/**
-	 * @return the env
-	 */
-	public String getEnv() {
-		return env;
-	}
-	/**
-	 * @param env the env to set
-	 */
-	public void setEnv(String env) {
-		this.env = env;
 	}
 
 	/**

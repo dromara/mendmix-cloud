@@ -22,7 +22,6 @@ import com.jeesuite.cache.redis.sentinel.JedisSentinelProvider;
 import com.jeesuite.cache.redis.standalone.JedisStandaloneProvider;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
@@ -112,7 +111,7 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 	public void setApplicationContext(ApplicationContext context) throws BeansException {
 		this.context = context;
 		//
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
+		InstanceFactory.setApplicationContext(context);;
 	}
 	
 	

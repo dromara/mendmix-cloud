@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Configuration;
 import com.jeesuite.mybatis.datasource.DataSourceConfig;
 import com.jeesuite.mybatis.datasource.MultiRouteDataSource;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.spring.SpringInstanceProvider;
 
 
 @Configuration
@@ -25,7 +24,7 @@ public class DefaultDataSourceConfiguration implements ApplicationContextAware{
 
 	@Override
 	public void setApplicationContext(ApplicationContext context) throws BeansException {
-		InstanceFactory.setInstanceProvider(new SpringInstanceProvider(context));
+		InstanceFactory.setApplicationContext(context);
 	}
 	
 	@Bean("dataSource")
