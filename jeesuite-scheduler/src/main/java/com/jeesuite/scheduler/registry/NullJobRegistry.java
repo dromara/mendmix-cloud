@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.google.common.eventbus.Subscribe;
+import com.jeesuite.scheduler.JobContext;
 import com.jeesuite.scheduler.model.JobConfig;
 import com.jeesuite.scheduler.monitor.MonitorCommond;
 
@@ -35,6 +36,7 @@ public class NullJobRegistry extends AbstarctJobRegistry {
 	public void setRuning(String jobName, Date fireTime) {
 		JobConfig config = schedulerConfgs.get(jobName);
 		config.setRunning(true);
+		config.setCurrentNodeId(JobContext.getContext().getNodeId());
 		config.setLastFireTime(fireTime);
 	}
 

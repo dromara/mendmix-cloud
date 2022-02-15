@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.constants.MatchPolicy;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.model.OrderBy;
 import com.jeesuite.common.model.OrderBy.OrderType;
 import com.jeesuite.common.model.PageParams;
@@ -36,12 +38,14 @@ import com.jeesuite.mybatis.plugin.InvocationVals;
 import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
+import net.sf.jsqlparser.expression.operators.relational.LikeExpression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
@@ -67,6 +71,11 @@ import net.sf.jsqlparser.statement.select.UnionOp;
  */
 public class SqlRewriteHandler implements InterceptorHandler {
 
+	/**
+	 * 
+	 */
+	private static final String QUERY_FUZZY_CHAR = "%";
+
 	private final static Logger logger = LoggerFactory.getLogger("com.jeesuite.mybatis.plugin");
 
 	public static final String FRCH_PREFIX = "__frch_";
@@ -82,6 +91,10 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private boolean isFieldSharddingTenant;
 	private String tenantColumnName;
 	private String tenantPropName;
+	
+	private String orgColumnName;
+	private String orgPropName;
+	private List<String> orgSharddingMappedStatements = new ArrayList<>();
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
@@ -89,6 +102,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		isFieldSharddingTenant = MybatisConfigs.isFieldSharddingTenant(context.getGroupName());
 		softDeleteColumn = MybatisConfigs.getSoftDeleteColumn(context.getGroupName());
 		softDeleteFalseValue = MybatisConfigs.getSoftDeletedFalseValue(context.getGroupName());
+		orgColumnName = MybatisConfigs.getOrgColumnName(context.getGroupName());
 		
 		Properties properties = ResourceUtils.getAllProperties("jeesuite.mybatis.dataPermission.mappings");
 		properties.forEach( (k,v) -> {
@@ -97,38 +111,10 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		} );
 		
 		final List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
+		//组织部门
+		initColumnConfig(mappers, orgColumnName, orgSharddingMappedStatements);
 		//软删除
-		if(softDeleteColumn != null) {
-			List<String> softDeleteTables = new ArrayList<>();
-			for (MapperMetadata mapper : mappers) {
-				if(!mapper.getEntityMetadata().getColumns().stream().anyMatch(o -> o.getColumn().equals(softDeleteColumn))) {
-					continue;
-				}
-				softDeleteTables.add(mapper.getTableName());
-				if(!dataProfileMappings.containsKey(mapper.getTableName())) {
-					dataProfileMappings.put(mapper.getTableName(), new LinkedHashMap<>());
-				}
-				dataProfileMappings.get(mapper.getTableName()).put(softDeleteColumn, softDeleteColumn);
-			}
-			//
-			for (MapperMetadata mapper : mappers) {
-				if(softDeleteTables.contains(mapper.getTableName())) {
-					softDeleteMappedStatements.add(mapper.getMapperClass().getName());
-				}else {
-					Set<String> querys = mapper.getQueryTableMappings().keySet();
-					List<String> tables;
-					for (String query : querys) {
-						tables = mapper.getQueryTableMappings().get(query);
-						for (String table : tables) {
-							if(softDeleteTables.contains(table)) {
-								softDeleteMappedStatements.add(query);
-								break;
-							}
-						}
-					}
-				}
-			}
-		}
+		initColumnConfig(mappers, softDeleteColumn, softDeleteMappedStatements);
 		//字段隔离租户模式
 		if (isFieldSharddingTenant) {
 			String tenantField = MybatisConfigs.getTenantSharddingField(context.getGroupName());
@@ -153,6 +139,44 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 		
 		logger.info("dataProfileMappings >> {}",dataProfileMappings);
+	}
+	
+	private void initColumnConfig(List<MapperMetadata> mappers,String column,List<String> mapperNames) {
+		if(column == null)return;
+		List<String> softDeleteTables = new ArrayList<>();
+		ColumnMetadata columnMetadata;
+		for (MapperMetadata mapper : mappers) {
+			columnMetadata = mapper.getEntityMetadata().getColumns().stream().filter(o -> o.getColumn().equals(column)).findFirst().orElse(null);
+			if(columnMetadata == null) {
+				continue;
+			}
+			if(column.equals(orgColumnName)) {
+				orgPropName = columnMetadata.getProperty();
+			}
+			softDeleteTables.add(mapper.getTableName());
+			if(!dataProfileMappings.containsKey(mapper.getTableName())) {
+				dataProfileMappings.put(mapper.getTableName(), new LinkedHashMap<>());
+			}
+			dataProfileMappings.get(mapper.getTableName()).put(column, column);
+		}
+		//
+		for (MapperMetadata mapper : mappers) {
+			if(softDeleteTables.contains(mapper.getTableName())) {
+				mapperNames.add(mapper.getMapperClass().getName());
+			}else {
+				Set<String> querys = mapper.getQueryTableMappings().keySet();
+				List<String> tables;
+				for (String query : querys) {
+					tables = mapper.getQueryTableMappings().get(query);
+					for (String table : tables) {
+						if(softDeleteTables.contains(table)) {
+							mapperNames.add(query);
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	@Override
@@ -234,7 +258,15 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			if(dataMapping == null)dataMapping = new HashMap<>(1);
 			dataMapping.put(softDeleteColumn, new String[] {softDeleteFalseValue});
 		}
-		if(!softDelete && dataMapping == null && !sharddingTenant) {
+		
+		boolean orgShardding = orgSharddingMappedStatements.contains(invocation.getMapperNameSpace()) 
+				|| orgSharddingMappedStatements.contains(invocation.getMappedStatement().getId());
+		if(orgShardding) {
+			if(dataMapping == null)dataMapping = new HashMap<>(1);
+			dataMapping.put(orgColumnName, new String[] {orgColumnName});
+		}
+		
+		if(!softDelete && !orgShardding && dataMapping == null && !sharddingTenant) {
 			if(pageParam == null || (pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty())) {
 				return;
 			}
@@ -315,7 +347,20 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}else {
 				if(!dataMapping.containsKey(fieldName))continue;
 				column = columnMapping.get(fieldName);
-				values = dataMapping.get(fieldName);
+				if(orgPropName != null && orgPropName.equalsIgnoreCase(fieldName)) {
+					AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+					if(currentUser == null || StringUtils.isBlank(currentUser.getDeptId())) {
+						throw new JeesuiteBaseException("无法获取当前用户部门");
+					}
+					values = dataMapping.get(fieldName);
+					if(MatchPolicy.exact.name().equals(values[0])) {
+						values = new String[] {currentUser.getDeptId()};
+					}else {
+						values = new String[] {currentUser.getDeptId() + QUERY_FUZZY_CHAR};
+					}
+				}else {
+					values = dataMapping.get(fieldName);
+				}
 			}
 			//如果某个匹配字段为空直接返回null，不在查询数据库
 			if(values == null || values.length == 0) {
@@ -334,16 +379,23 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		Expression newExpression = null;
 		Column column = new Column(table, columnName);
 		if (values.length == 1) {
-			EqualsTo equalsTo = new EqualsTo();
-			equalsTo.setLeftExpression(column);
-			equalsTo.setRightExpression(new StringValue(values[0]));
+			BinaryExpression expression;
+			if(values[0].endsWith(QUERY_FUZZY_CHAR)) {
+				expression = new LikeExpression();
+				expression.setLeftExpression(column);
+				expression.setRightExpression(new StringValue(values[0]));
+			}else {
+				expression = new EqualsTo();
+				expression.setLeftExpression(column);
+				expression.setRightExpression(new StringValue(values[0]));
+			}
 			if(orginExpression == null) {
-				newExpression = equalsTo;
+				newExpression = expression;
 			}else {
 				if(columnName.equalsIgnoreCase(softDeleteColumn)) {
-					newExpression = new AndExpression(orginExpression,equalsTo);
+					newExpression = new AndExpression(orginExpression,expression);
 				}else {
-					newExpression = new AndExpression(equalsTo,orginExpression);
+					newExpression = new AndExpression(expression,orginExpression);
 				}
 			}
 		} else {

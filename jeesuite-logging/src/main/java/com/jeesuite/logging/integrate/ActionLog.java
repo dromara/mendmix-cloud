@@ -61,7 +61,7 @@ public class ActionLog implements Serializable{
 	 * @return the actionName
 	 */
 	public String getActionName() {
-		return actionName;
+		return StringUtils.defaultIfBlank(actionName, actionKey);
 	}
 	/**
 	 * @param actionName the actionName to set

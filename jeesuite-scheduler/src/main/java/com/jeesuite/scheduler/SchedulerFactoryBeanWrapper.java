@@ -34,6 +34,7 @@ import org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.util.ClassUtils;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.scheduler.annotation.ScheduleConf;
 import com.jeesuite.spring.InstanceFactory;
@@ -98,6 +99,9 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		}
 		
 		logger.info(">>JobContextNodeId:{}",JobContext.getContext().getNodeId());
+		if(groupName == null) {
+			setGroupName(GlobalRuntimeContext.APPID);
+		}
 		Validate.notBlank(groupName);
 		
 		DefaultListableBeanFactory acf = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();

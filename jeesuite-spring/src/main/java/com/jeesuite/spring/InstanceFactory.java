@@ -28,8 +28,13 @@ public class InstanceFactory {
 	 * @param beanClass 对象的类
 	 * @return 类型为T的对象实例
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> T getInstance(Class<T> beanClass) {
-		return (T) applicationContext.getBean(beanClass);
+		String[] beanNames = applicationContext.getBeanNamesForType(beanClass);
+		if (beanNames.length == 0) {
+			return null;
+		}
+		return (T) applicationContext.getBean(beanNames[0]);
 	}
 
 	/**

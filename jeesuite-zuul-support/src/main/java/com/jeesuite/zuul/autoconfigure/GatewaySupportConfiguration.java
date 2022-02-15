@@ -45,7 +45,7 @@ public class GatewaySupportConfiguration {
 	}
 	
 	@Bean
-	public GlobalInternalScheduleService GlobalInternalScheduleService() {
+	public GlobalInternalScheduleService globalInternalScheduleService() {
 		return new GlobalInternalScheduleService();
 	}
 	

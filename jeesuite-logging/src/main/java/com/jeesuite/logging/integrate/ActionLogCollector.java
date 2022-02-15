@@ -1,6 +1,7 @@
 package com.jeesuite.logging.integrate;
 
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.CurrentRuntimeContext;
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.async.StandardThreadExecutor;
@@ -121,7 +123,7 @@ public class ActionLogCollector {
     	ActionLog actionLog = new ActionLog();
 		actionLog.setAppId(GlobalRuntimeContext.APPID);
 		actionLog.setRequestAt(new Date());
-		actionLog.setRequestId(TokenGenerator.generate());
+		actionLog.setRequestId(StringUtils.remove(UUID.randomUUID().toString(), GlobalConstants.MID_LINE));
 		actionLog.setActionName(taskName);
 		actionLog.setUserName(TIMER_TASK);
 		actionLog.setActionKey(taskKey);

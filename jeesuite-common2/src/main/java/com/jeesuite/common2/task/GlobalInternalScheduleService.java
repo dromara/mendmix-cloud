@@ -37,6 +37,16 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 
 	private List<SubTimerTaskStat> taskStats = new ArrayList<>();
 	private ScheduledExecutorService executor;
+	
+	public GlobalInternalScheduleService() {}
+	
+	public GlobalInternalScheduleService(List<SubTimerTask> tasks) {
+		for (SubTimerTask task : tasks) {
+			taskStats.add(new SubTimerTaskStat(task));
+		}
+	}
+
+
 
 	@Override
 	public void destroy() throws Exception {
@@ -49,12 +59,13 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 	public void afterPropertiesSet() throws Exception {
 
 		Map<String, SubTimerTask> taskMap = InstanceFactory.getBeansOfType(SubTimerTask.class);
-		if (taskMap == null || taskMap.isEmpty())
-			return;
-		//
-		for (SubTimerTask task : taskMap.values()) {
-			taskStats.add(new SubTimerTaskStat(task));
+		if (taskMap != null) {
+			for (SubTimerTask task : taskMap.values()) {
+				taskStats.add(new SubTimerTaskStat(task));
+			}
 		}
+		
+		if(taskStats.isEmpty())return;
 
 		executor = Executors.newScheduledThreadPool(1, new StandardThreadFactory("globalInternalScheduler"));
 		executor.scheduleWithFixedDelay(new Runnable() {

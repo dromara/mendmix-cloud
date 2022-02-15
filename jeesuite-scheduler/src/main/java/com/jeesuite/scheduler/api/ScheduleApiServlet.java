@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.google.common.io.CharStreams;
 import com.jeesuite.common.util.JsonUtils;
-import com.jeesuite.common.util.TokenGenerator;
+import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.scheduler.JobContext;
 import com.jeesuite.scheduler.model.JobConfig;
 import com.jeesuite.scheduler.model.JobGroupInfo;
@@ -46,9 +46,11 @@ public class ScheduleApiServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
 		String act = req.getPathInfo().substring(1);
-		
+	
 		String respJson = null;
-		if("status".equals(act)) {
+		if(!WebUtils.isInternalRequest(req)) {
+			respJson = "{\"code\": 403}";
+		}else if("status".equals(act)) {
 			JobGroupInfo info = new JobGroupInfo();
 			info.setName(JobContext.getContext().getGroupName());
 			info.setClusterNodes(new ArrayList<>(JobContext.getContext().getActiveNodes()));
@@ -57,9 +59,6 @@ public class ScheduleApiServlet extends HttpServlet {
 			info.setJobs(jobs);
 			respJson = JsonUtils.toJson(info);
 		} else if("POST".equals(req.getMethod())){
-			String token = req.getParameter("token");
-			TokenGenerator.validate(token, true);
-			
 			String postJson = CharStreams.toString(new InputStreamReader(req.getInputStream(), "UTF-8"));
 			MonitorCommond cmd = JsonUtils.toObject(postJson, MonitorCommond.class);
 			cmd.setJobGroup(JobContext.getContext().getGroupName());

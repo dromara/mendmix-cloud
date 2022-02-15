@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.jeesuite.scheduler.registry;
 
 import java.util.ArrayList;
@@ -26,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.scheduler.JobContext;
@@ -42,7 +40,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 
 	private static final Logger logger = LoggerFactory.getLogger("com.jeesuite.scheduler.registry");
 
-	public static final String ROOT = "/schedulers/";
+	public static final String ROOT = String.format("/applications/%s/", GlobalRuntimeContext.ENV);
 
 	private String zkServers;
 
@@ -118,10 +116,10 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 		conf.setModifyTime(currentTimeMillis);
 
 		if (groupPath == null) {
-			groupPath = ROOT + conf.getGroupName();
+			groupPath = ROOT + conf.getGroupName() + "/schedulers";
 		}
 		if (nodeStateParentPath == null) {
-			nodeStateParentPath = groupPath + "/nodes";
+			nodeStateParentPath = ROOT + conf.getGroupName() + "/nodes";
 		}
 
 		String path = getPath(conf);
