@@ -3,7 +3,6 @@ package com.jeesuite.zuul.autoconfigure;
 import java.text.SimpleDateFormat;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,8 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common2.task.GlobalInternalScheduleService;
-import com.jeesuite.springweb.advice.ResonseRewriteAdvice;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
+import com.jeesuite.springweb.enhancer.ResonseBodyEnhancerAdvice;
 import com.jeesuite.springweb.exception.GlobalExceptionHandler;
 
 @Configuration
@@ -39,9 +38,8 @@ public class GatewaySupportConfiguration {
 	}
 	
 	@Bean
-	@ConditionalOnProperty(value = "jeesuite.response.rewrite.enabled",havingValue = "true",matchIfMissing = true)
-	public ResonseRewriteAdvice resonseRewriteAdvice() {
-		return new ResonseRewriteAdvice();
+	public ResonseBodyEnhancerAdvice resonseBodyEnhancerAdvice() {
+		return new ResonseBodyEnhancerAdvice();
 	}
 	
 	@Bean

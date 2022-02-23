@@ -1,12 +1,17 @@
 package com.jeesuite.springweb.servlet;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
+import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.io.IOUtils;
 
 /**
  * 
@@ -16,56 +21,52 @@ import org.apache.commons.lang3.StringEscapeUtils;
  */
 public class CustomHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
-	private byte[] streams;
-    public CustomHttpServletRequestWrapper(HttpServletRequest request,byte[] streams) {  
-        super(request);  
-        this.streams = streams;
-    }  
-    
-    
-    @Override
+	private final byte[] body;
+
+	public CustomHttpServletRequestWrapper(HttpServletRequest request) throws IOException {
+		super(request);
+		body = IOUtils.toByteArray(request.getInputStream());
+	}
+
+	@Override
+	public BufferedReader getReader() throws IOException {
+		return new BufferedReader(new InputStreamReader(getInputStream()));
+	}
+
+	@Override
 	public ServletInputStream getInputStream() throws IOException {
-		return new CustomServletInputStreamWrapper(streams); 
+
+		if (body == null || body.length == 0)
+			return null;
+
+		final ByteArrayInputStream bais = new ByteArrayInputStream(body);
+
+		return new ServletInputStream() {
+
+			@Override
+			public int read() throws IOException {
+				return bais.read();
+			}
+
+			@Override
+			public boolean isFinished() {
+				return false;
+			}
+
+			@Override
+			public boolean isReady() {
+				return false;
+			}
+
+			@Override
+			public void setReadListener(ReadListener readListener) {}
+		};
 	}
 
-	@Override
-	public int getContentLength() {
-		return streams.length; 
+	public String getBody() {
+		if (body == null || body.length == 0)
+			return null;
+		return new String(body, StandardCharsets.UTF_8);
 	}
 
-	@Override
-	public long getContentLengthLong() {
-		return streams.length; 
-	}
-      
-      
-     @Override    
-     public String getParameter(String name) {    
-          String value = super.getParameter(name);    
-            if (value != null) {    
-                value = StringEscapeUtils.escapeEcmaScript(value);    
-            }    
-            return value;    
-     }    
-       
-     @Override  
-    public String[] getParameterValues(String name) {  
-         String[] values = super.getParameterValues(name);  
-         if(values != null && values.length > 0){  
-             for(int i =0; i< values.length ;i++){  
-                 values[i] = StringEscapeUtils.escapeEcmaScript(values[i]);  
-             }  
-         }  
-        return values;  
-     }  
-       
-     @Override    
-     public String getHeader(String name) {    
-        
-            String value = super.getHeader(name);    
-            if (value != null) {    
-                value = StringEscapeUtils.escapeEcmaScript(value);    
-            }    
-            return value;    
-        }  
 }

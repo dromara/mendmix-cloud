@@ -19,9 +19,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common2.task.GlobalInternalScheduleService;
 import com.jeesuite.springboot.autoconfigure.feign.CustomLoadBalancerFeignClient;
-import com.jeesuite.springweb.SpringContextManager;
-import com.jeesuite.springweb.advice.ResonseRewriteAdvice;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
+import com.jeesuite.springweb.enhancer.ResonseBodyEnhancerAdvice;
 import com.jeesuite.springweb.exception.GlobalExceptionHandler;
 
 import feign.Client;
@@ -37,7 +36,7 @@ public class BaseSupportConfiguration {
 	}
 	
 	@Bean
-	@ConditionalOnProperty(value = "jeesuite.feign.custom-loadbalance-mapping.enabled",havingValue = "true")
+	@ConditionalOnProperty(value = "jeesuite.feign.proxy.enabled",havingValue = "true")
 	public Client feignClient(LoadBalancerClient loadBalancer) {
 		return new CustomLoadBalancerFeignClient(loadBalancer);
 	}
@@ -49,8 +48,8 @@ public class BaseSupportConfiguration {
 	
 	@Bean
 	@ConditionalOnProperty(value = "jeesuite.response.rewrite.enabled",havingValue = "true",matchIfMissing = true)
-	public ResonseRewriteAdvice resonseRewriteAdvice() {
-		return new ResonseRewriteAdvice();
+	public ResonseBodyEnhancerAdvice resonseRewriteAdvice() {
+		return new ResonseBodyEnhancerAdvice();
 	}
 	
 	@Bean

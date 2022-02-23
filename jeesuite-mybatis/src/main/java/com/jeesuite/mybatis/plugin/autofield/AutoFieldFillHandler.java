@@ -113,6 +113,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {
+		if(invocation.isSelect())return null;
 		if(methodFieldMappings.isEmpty())return null;
 		
         final MappedStatement orignMappedStatement = invocation.getMappedStatement();
