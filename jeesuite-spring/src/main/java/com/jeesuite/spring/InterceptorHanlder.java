@@ -16,7 +16,7 @@ public interface InterceptorHanlder {
 
 	void preHandler(Method method,Object[] args);
 	
-	void postHandler(Method method,Object[] args,Exception ex);
+	void postHandler(Method method,Object result,Exception ex);
 	
 	void destory();
 }

@@ -33,7 +33,7 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 	}
 
 	@Override
-	public void postHandler(Method method, Object[] args, Exception ex) {}
+	public void postHandler(Method method, Object result, Exception ex) {}
 
 	@Override
 	public void destory() {
