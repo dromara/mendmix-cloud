@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.model.ApiInfo;
+import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.gateway.zuul.filter.FilterHandler;
 import com.jeesuite.logging.integrate.ActionLog;
@@ -15,6 +16,8 @@ import com.netflix.zuul.context.RequestContext;
 
 public class ResponseLogHandler implements FilterHandler {
 
+	private boolean ignoreBody = ResourceUtils.getBoolean("jeesuite.actionLog.responseBody.ignore",true);
+	
 	@Override
 	public Object process(RequestContext ctx, HttpServletRequest request, BizSystemModule module) {
 		
@@ -31,6 +34,8 @@ public class ResponseLogHandler implements FilterHandler {
 				break;
 			}
 		}
+		
+		if(ignoreBody)return null;
 		
 		ApiInfo apiInfo = module.getApiInfo(request.getRequestURI());
         if(apiInfo != null && !apiInfo.isResponseLog()) {

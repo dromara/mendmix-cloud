@@ -5,8 +5,6 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -22,8 +20,6 @@ import com.jeesuite.springweb.model.WrapperResponseEntity;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-
-	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private static Method rollbackCacheMethod;
 
@@ -90,6 +86,7 @@ public class GlobalExceptionHandler {
 			}
 		}
 		response.addIntHeader(CustomRequestHeaders.HEADER_EXCEPTION_CODE, resp.getCode());
+		response.addHeader(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
 		//
 		ActionLogCollector.onResponseEnd(response, e);
 		
