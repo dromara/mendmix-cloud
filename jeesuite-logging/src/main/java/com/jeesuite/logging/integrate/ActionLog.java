@@ -5,13 +5,11 @@ import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.model.AuthUser;
-import com.jeesuite.common.util.DateUtils;
 import com.jeesuite.logging.helper.LogMessageFormat;
 
 /**
@@ -40,7 +38,6 @@ public class ActionLog implements Serializable{
 	private String userName;
 	private String moduleId;
 	private String requestIp;
-	@JsonFormat(pattern=DateUtils.TIMESTAMP_PATTERN,timezone = "GMT+8")
 	private Date requestAt;
 	private int responseCode;
 	private String queryParameters;

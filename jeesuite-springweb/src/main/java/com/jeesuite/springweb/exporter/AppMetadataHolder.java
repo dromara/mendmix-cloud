@@ -141,7 +141,7 @@ public class AppMetadataHolder {
 					} else {
 						apiInfo.setPermissionType(methodMetadata.permissionLevel());
 					}
-					metadata.getApis().add(apiInfo);
+					metadata.addApi(apiInfo);
 				}
 			} catch (Exception e) {
 				System.err.println("error className:" + className);

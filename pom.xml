@@ -73,7 +73,7 @@
 		<module>jeesuite-springweb</module>
 		<module>jeesuite-security</module>
 		<module>jeesuite-logging</module>
-		<module>jeesuite-zuul-support</module>
+		<module>jeesuite-gateway-adapter</module>
 		<module>jeesuite-amqp-adapter</module> 
 		<module>jeesuite-cos-adapter</module> 
 	</modules>

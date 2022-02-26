@@ -1,7 +1,10 @@
 package com.jeesuite.springweb.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.jeesuite.common.model.ApiInfo;
 
@@ -12,7 +15,7 @@ public class AppMetadata {
 	private String module;
 	private String serviceId;
 	private List<String> dependencyServices = new ArrayList<>(0);
-	private List<ApiInfo> apis = new ArrayList<>();
+	private Map<String,ApiInfo> apis = new HashMap<>();
 	/**
 	 * @return the name
 	 */
@@ -66,16 +69,20 @@ public class AppMetadata {
 	/**
 	 * @return the apis
 	 */
-	public List<ApiInfo> getApis() {
-		return apis;
+	public Collection<ApiInfo> getApis() {
+		return apis.values();
 	}
 	/**
 	 * @param apis the apis to set
 	 */
 	public void setApis(List<ApiInfo> apis) {
-		this.apis = apis;
+		for (ApiInfo api : apis) {
+			addApi(api);
+		}
 	}
 	
-	
+	public void addApi(ApiInfo api) {
+		this.apis.put(api.getUrl(), api);
+	}
 
 }

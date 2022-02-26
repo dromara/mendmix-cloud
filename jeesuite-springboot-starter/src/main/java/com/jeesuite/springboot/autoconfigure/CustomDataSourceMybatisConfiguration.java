@@ -104,6 +104,8 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		propertyPairs.put("mapperLocations", new BeanValue(value));
 		value = ResourceUtils.getProperty(propKeyPrefix + "mybatis.type-aliases-package");
 		propertyPairs.put("typeAliasesPackage", new BeanValue(value));
+		value = ResourceUtils.getProperty(propKeyPrefix + "mybatis.type-handlers-package");
+		if(value != null)propertyPairs.put("typeHandlersPackage", new BeanValue(value));
 		propertyPairs.put("dataSource", new BeanValue(dataSourceBeanName, true));
 		BeanRegistryHelper.register(registry, sessionFactoryBeanName, sessionFactoryClass, argValues, propertyPairs);
 		

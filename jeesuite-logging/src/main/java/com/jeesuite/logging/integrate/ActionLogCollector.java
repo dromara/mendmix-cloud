@@ -2,6 +2,9 @@ package com.jeesuite.logging.integrate;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor.DiscardPolicy;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,14 +19,12 @@ import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.async.StandardThreadExecutor;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.HttpUtils;
 import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.spring.InstanceFactory;
 
 
@@ -47,13 +48,18 @@ public class ActionLogCollector {
 	private static ThreadLocal<ActionLog> context = new ThreadLocal<>();
 	
 	private static LogStorageProvider storageProvider;
-	private static StandardThreadExecutor asyncSendExecutor;
+	private static ThreadPoolExecutor asyncSendExecutor;
 	
 	
 	static {
 		storageProvider = InstanceFactory.getInstance(LogStorageProvider.class);
-		if(storageProvider != null || StringUtils.isNotBlank(ACT_LOG_ADD_URL)) {			
-			asyncSendExecutor = new StandardThreadExecutor(1, 10,60, TimeUnit.SECONDS, 5000,new StandardThreadFactory("log-asyncSendExecutor"));
+		if(storageProvider != null || StringUtils.isNotBlank(ACT_LOG_ADD_URL)) {	
+			int nTreads = ResourceUtils.getInt("log.push.threads", 10);
+			asyncSendExecutor = new ThreadPoolExecutor(2, nTreads,
+                    0L, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<Runnable>(5000),
+                    new StandardThreadFactory("logPushExecutor"),
+                    new DiscardPolicy());
 		}
 	}
 
