@@ -47,7 +47,9 @@ public class MybatisConfigs {
 	public static final String INTERCEPTOR_HANDLERCLASS = "jeesuite.mybatis.interceptorHandlerClass";
 	public static final String SOFT_DELETE_COLUMN_NAME = "jeesuite.mybatis.softDelete.columnName";
 	public static final String SOFT_DELETE_FALSE_VALUE = "jeesuite.mybatis.softDelete.falseValue";
-	public static final String ORG_COLUMN_NAME = "jeesuite.mybatis.organization.columnName";
+	public static final String OWNER_COLUMN_NAME = "jeesuite.mybatis.permission.owner.columnName";
+	public static final String DEPT_COLUMN_NAME = "jeesuite.mybatis.permission.dept-owner.columnName";
+	public static final String OWNER_PERM_KEY = "jeesuite.mybatis.permission.owner.permKey";
 	
 	private static Map<String, Properties> groupProperties = new HashMap<>();
 	
@@ -104,8 +106,16 @@ public class MybatisConfigs {
 		return getProperty(group,SOFT_DELETE_FALSE_VALUE,"0");
 	}
 	
-	public static String getOrgColumnName(String group) {
-		return getProperty(group,ORG_COLUMN_NAME,null);
+	public static String getOwnerPermKey(String group){
+		return getProperty(group,OWNER_PERM_KEY, "_owner_perm_key");
+	}
+	
+	public static String getOwnerColumnName(String group) {
+		return getProperty(group,OWNER_COLUMN_NAME,null);
+	}
+	
+	public static String getDeptColumnName(String group) {
+		return getProperty(group,DEPT_COLUMN_NAME,null);
 	}
 	
 	public static boolean isFieldSharddingTenant(String group) {

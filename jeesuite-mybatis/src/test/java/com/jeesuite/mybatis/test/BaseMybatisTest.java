@@ -23,10 +23,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.jeesuite.common.CurrentRuntimeContext;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.model.OrderBy;
 import com.jeesuite.common.model.Page;
 import com.jeesuite.common.model.PageParams;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
+import com.jeesuite.mybatis.OwnerPermType;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor.PageDataLoader;
 import com.jeesuite.mybatis.test.entity.UserEntity;
@@ -51,7 +53,13 @@ public class BaseMybatisTest implements ApplicationContextAware{
 	@Before
 	public void init(){
 		CurrentRuntimeContext.setTenantId("1");
+		AuthUser user = new AuthUser();
+		user.setId("user01");
+		user.setDeptId("dept01");
+		CurrentRuntimeContext.setAuthUser(user);
 		MybatisRuntimeContext.addDataProfileMappings("type", "0");
+		MybatisRuntimeContext.addDataProfileMappings("_owner_perm_key", OwnerPermType.deptEq.name());
+		
 	}
 	
 	@Test

@@ -11,6 +11,7 @@
     <result column="mobile" jdbcType="CHAR" property="mobile" />
     <result column="email" jdbcType="VARCHAR" property="email" />
     <result column="company_id" jdbcType="VARCHAR" property="companyId" />
+    <result column="dept_id" jdbcType="VARCHAR" property="deptId" />
     <result column="type" jdbcType="SMALLINT" property="type" />
     <result column="status" jdbcType="SMALLINT" property="status" />
    <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" />

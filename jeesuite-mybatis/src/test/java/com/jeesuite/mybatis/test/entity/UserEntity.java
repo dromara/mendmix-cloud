@@ -1,13 +1,10 @@
 package com.jeesuite.mybatis.test.entity;
 
-import java.util.Map;
-
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.persistence.Version;
 
 @Table(name = "users")
@@ -31,16 +28,15 @@ public class UserEntity extends TestBaseEntity {
     @Column(name = "company_id")
     private String companyId;
     
+    @Column(name = "dept_id")
+    private String deptId;
+    
     @Version
     private int version;
 
     @Column(name = "is_deleted")
     private Boolean deleted;
     
-
-    @Transient
-    Map<String, String[]> dataProfileValues;
-
     /**
      * @return id
      */
@@ -143,13 +139,13 @@ public class UserEntity extends TestBaseEntity {
 	public void setCompanyId(String companyId) {
 		this.companyId = companyId;
 	}
-
-	public Map<String, String[]> getDataProfileValues() {
-		return dataProfileValues;
+	
+	public String getDeptId() {
+		return deptId;
 	}
 
-	public void setDataProfileValues(Map<String, String[]> dataProfileValues) {
-		this.dataProfileValues = dataProfileValues;
+	public void setDeptId(String deptId) {
+		this.deptId = deptId;
 	}
 
 	public int getVersion() {
