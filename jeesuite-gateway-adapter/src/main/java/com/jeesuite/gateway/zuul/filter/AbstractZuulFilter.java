@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpMethod;
 
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.gateway.FilterConstants;
 import com.jeesuite.gateway.model.BizSystemModule;
@@ -18,7 +19,6 @@ import com.jeesuite.gateway.zuul.filter.post.ResponseRewriteHandler;
 import com.jeesuite.gateway.zuul.filter.pre.GlobalHeaderHandler;
 import com.jeesuite.gateway.zuul.filter.pre.RequestLogHandler;
 import com.jeesuite.gateway.zuul.filter.pre.SignatureRequestHandler;
-import com.jeesuite.springweb.model.WrapperResponse;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 

@@ -11,9 +11,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.WebUtils;
-import com.jeesuite.springweb.model.WrapperResponse;
 
 /**
  * @description <br>

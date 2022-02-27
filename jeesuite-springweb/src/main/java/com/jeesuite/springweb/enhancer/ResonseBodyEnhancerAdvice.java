@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import com.jeesuite.common.CustomRequestHeaders;
+import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ResourceUtils;
-import com.jeesuite.springweb.model.WrapperResponse;
 
 @ControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)

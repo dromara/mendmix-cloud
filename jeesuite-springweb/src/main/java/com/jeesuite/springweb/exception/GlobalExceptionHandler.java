@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.logging.integrate.ActionLogCollector;
-import com.jeesuite.springweb.model.WrapperResponseEntity;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(Exception.class)
 	@ResponseBody
-	public WrapperResponseEntity exceptionHandler(Exception e, HttpServletResponse response) {
+	public WrapperResponse<?> exceptionHandler(Exception e, HttpServletResponse response) {
 
 		// 缓存回滚
 		if (rollbackCacheMethod != null) {
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
 			}
 		}
 
-		WrapperResponseEntity resp = new WrapperResponseEntity();
+		WrapperResponse<?> resp = new WrapperResponse<>();
 		
 		e = (Exception) getActualThrowable(e);
 		if (e instanceof JeesuiteBaseException) {
