@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.constants.MatchPolicy;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.model.OrderBy;
 import com.jeesuite.common.model.OrderBy.OrderType;
@@ -28,9 +29,9 @@ import com.jeesuite.common.model.PageParams;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.MybatisConfigs;
 import com.jeesuite.mybatis.MybatisRuntimeContext;
-import com.jeesuite.mybatis.OwnerPermType;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.crud.CrudMethods;
+import com.jeesuite.mybatis.kit.MybatisSqlUtils;
 import com.jeesuite.mybatis.metadata.ColumnMetadata;
 import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
@@ -40,8 +41,10 @@ import com.jeesuite.mybatis.plugin.JeesuiteMybatisInterceptor;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
@@ -81,29 +84,28 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private Map<String, LinkedHashMap<String,String>> dataPermMappings = new HashMap<>();
 	
 	private List<String> softDeleteMappedStatements = new ArrayList<>();
-	private String softDeleteColumn;
+	private String softDeleteColumnName;
+	private String softDeletePropName;
 	private String softDeleteFalseValue;
 	
 	private boolean isFieldSharddingTenant;
 	private String tenantColumnName;
 	private String tenantPropName;
 	
-	private String ownerPermKey;
+	private String orgBasePermKey;
 	private String deptColumnName;
-	private List<String> deptPermMappedStatements = new ArrayList<>();
-	//
+	private String deptPropName;
 	private String ownerColumnName;
-	private List<String> ownerPermMappedStatements = new ArrayList<>();
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
 	
 		isFieldSharddingTenant = MybatisConfigs.isFieldSharddingTenant(context.getGroupName());
-		softDeleteColumn = MybatisConfigs.getSoftDeleteColumn(context.getGroupName());
+		softDeleteColumnName = MybatisConfigs.getSoftDeleteColumn(context.getGroupName());
 		softDeleteFalseValue = MybatisConfigs.getSoftDeletedFalseValue(context.getGroupName());
-		ownerPermKey = MybatisConfigs.getOwnerPermKey(context.getGroupName());
 		deptColumnName = MybatisConfigs.getDeptColumnName(context.getGroupName());
 		ownerColumnName = MybatisConfigs.getOwnerColumnName(context.getGroupName());
+		orgBasePermKey = MybatisConfigs.getCurrentOrgPermKey(context.getGroupName());
 		
 		Properties properties = ResourceUtils.getAllProperties("jeesuite.mybatis.permission.table-column-mappings");
 		properties.forEach( (k,v) -> {
@@ -111,21 +113,11 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			buildTableDataPermissionMapping(tableName, v.toString());
 		} );
 		
+		
+		
 		final List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
-		//部门
-		List<String> filterTables = ResourceUtils.getList("jeesuite.mybatis.permission.dept-owner.tables");
-		if(filterTables.isEmpty() || "*".equals(filterTables.get(0))) {
-			filterTables = null;
-		}
-		initColumnConfig(mappers, deptColumnName,filterTables, deptPermMappedStatements);
-		//创建人
-		filterTables = ResourceUtils.getList("jeesuite.mybatis.permission.owner.tables");
-		if(filterTables.isEmpty() || "*".equals(filterTables.get(0))) {
-			filterTables = null;
-		}
-		initColumnConfig(mappers, ownerColumnName,filterTables, ownerPermMappedStatements);
 		//软删除
-		initColumnConfig(mappers, softDeleteColumn, null,softDeleteMappedStatements);
+		initColumnConfig(mappers, softDeleteColumnName, softDeleteMappedStatements);
 		//字段隔离租户模式
 		if (isFieldSharddingTenant) {
 			String tenantField = MybatisConfigs.getTenantSharddingField(context.getGroupName());
@@ -152,28 +144,28 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		logger.info("dataProfileMappings >> {}",dataPermMappings);
 	}
 	
-	private void initColumnConfig(List<MapperMetadata> mappers,String column,List<String> filterTables,List<String> mappedStatements) {
+	private void initColumnConfig(List<MapperMetadata> mappers,String column,List<String> mapperNames) {
 		if(column == null)return;
 		List<String> tmpTables = new ArrayList<>();
 		ColumnMetadata columnMetadata;
 		for (MapperMetadata mapper : mappers) {
-			if(filterTables != null && !filterTables.contains(mapper.getTableName())) {
-				continue;
-			}
 			columnMetadata = mapper.getEntityMetadata().getColumns().stream().filter(o -> o.getColumn().equals(column)).findFirst().orElse(null);
 			if(columnMetadata == null) {
 				continue;
+			}
+			if(column.equals(softDeleteColumnName)) {
+				softDeletePropName = columnMetadata.getProperty();
 			}
 			tmpTables.add(mapper.getTableName());
 			if(!dataPermMappings.containsKey(mapper.getTableName())) {
 				dataPermMappings.put(mapper.getTableName(), new LinkedHashMap<>());
 			}
-			dataPermMappings.get(mapper.getTableName()).put(column, column);
+			dataPermMappings.get(mapper.getTableName()).put(columnMetadata.getProperty(), column);
 		}
 		//
 		for (MapperMetadata mapper : mappers) {
 			if(tmpTables.contains(mapper.getTableName())) {
-				mappedStatements.add(mapper.getMapperClass().getName());
+				mapperNames.add(mapper.getMapperClass().getName());
 			}else {
 				Set<String> querys = mapper.getQueryTableMappings().keySet();
 				List<String> tables;
@@ -181,7 +173,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 					tables = mapper.getQueryTableMappings().get(query);
 					for (String table : tables) {
 						if(tmpTables.contains(table)) {
-							mappedStatements.add(query);
+							mapperNames.add(query);
 							break;
 						}
 					}
@@ -267,21 +259,26 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				|| softDeleteMappedStatements.contains(invocation.getMappedStatement().getId());
 		if(softDelete) {
 			if(dataMapping == null)dataMapping = new HashMap<>(1);
-			dataMapping.put(softDeleteColumn, new String[] {softDeleteFalseValue});
-		}
-		
-		boolean ownerShardding = ownerPermMappedStatements.contains(invocation.getMapperNameSpace()) 
-				|| ownerPermMappedStatements.contains(invocation.getMappedStatement().getId()) 
-				|| deptPermMappedStatements.contains(invocation.getMapperNameSpace()) 
-				|| deptPermMappedStatements.contains(invocation.getMappedStatement().getId());
-		if(ownerShardding) {
-			if(dataMapping == null)dataMapping = new HashMap<>(1);
-			if(!dataMapping.containsKey(ownerPermKey)) {
-				dataMapping.put(ownerPermKey, new String[] {OwnerPermType.ownerEq.name()});
-			}
+			dataMapping.put(softDeletePropName, new String[] {softDeleteFalseValue});
 		}
 
-		if(!softDelete && !ownerShardding && dataMapping == null && !sharddingTenant) {
+		if(deptPropName != null && dataMapping != null && dataMapping.containsKey(orgBasePermKey)) {
+			String departmentId = CurrentRuntimeContext.getAndValidateCurrentUser().getDeptId();
+			if(StringUtils.isBlank(departmentId)) {
+				throw new JeesuiteBaseException("当前登录用户部门ID为空");
+			}
+			String[] values = dataMapping.get(orgBasePermKey);
+			if(values != null && values.length > 0) {
+				if(MatchPolicy.exact.name().equals(values[0])) {
+					dataMapping.put(deptPropName, new String[] {departmentId + QUERY_FUZZY_CHAR});
+				}else {
+					dataMapping.put(deptPropName, new String[] {departmentId});
+				}
+			}else {
+				dataMapping.put(deptPropName, new String[] {departmentId});
+			}
+		}
+		if(!softDelete && dataMapping == null && !sharddingTenant) {
 			if(pageParam == null || (pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty())) {
 				return;
 			}
@@ -347,39 +344,18 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		if(!dataPermMappings.containsKey(table.getName())) {
 			return originWhere;
 		}
-		
+		Set<String> fieldNames;
 		Expression newExpression = originWhere;
 		String column;
 		String[] values;
-		if(dataMapping.containsKey(ownerPermKey)) {
-			String ownerType = dataMapping.get(ownerPermKey)[0];
-			AuthUser currentUser = CurrentRuntimeContext.getAndValidateCurrentUser();
-			if(OwnerPermType.ownerEq.name().equals(ownerType)) {
-				column = ownerColumnName;
-				values = new String[] {currentUser.getId()};
-			}else {
-				if(StringUtils.isBlank(currentUser.getDeptId())) {
-					throw new JeesuiteBaseException("无法获取当前用户部门");
-				}
-				column = deptColumnName;
-				if(OwnerPermType.deptEq.name().equals(ownerType)) {
-					values = new String[] {currentUser.getDeptId()};
-				}else if(OwnerPermType.deptSub.name().equals(ownerType)) {
-					values = new String[] {currentUser.getDeptId() + QUERY_FUZZY_CHAR};
-				}else {
-					throw new JeesuiteBaseException("不支持ownerType:" + ownerType);
-				}
-			}
-			newExpression = handleColumnDataPermCondition(table, newExpression, column,values);
-			if(column.equals(ownerColumnName)) {
-				return newExpression;
-			}
-		}
-		
-		Set<String> fieldNames;
 		Map<String, String> columnMapping = dataPermMappings.get(table.getName());
 		fieldNames = columnMapping.keySet();
+		boolean withSoftDelete = false;
 		for (String fieldName : fieldNames) {
+			if(fieldName.equals(softDeletePropName)) {
+				withSoftDelete = true;
+				continue;
+			}
 			if(sharddingTenant && fieldName.equals(tenantPropName)) {
 				column = tenantColumnName;
 				String currentTenantId = CurrentRuntimeContext.getTenantId();
@@ -398,6 +374,24 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				return equalsTo;
 			}
 			newExpression = handleColumnDataPermCondition(table, newExpression, column,values);
+		}
+		
+		//当前创建人
+		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+		if (currentUser != null) {
+			EqualsTo equalsTo = new EqualsTo();
+			equalsTo.setLeftExpression(new Column(table, ownerColumnName));
+			// TODO 需要按ID匹配否则出现同名
+			equalsTo.setRightExpression(new StringValue(currentUser.getName()));
+			//
+			newExpression = new OrExpression(new Parenthesis(newExpression), equalsTo);
+		}
+		//软删除
+		if (withSoftDelete) {
+			EqualsTo equalsTo = new EqualsTo();
+			equalsTo.setLeftExpression(new Column(table, softDeleteColumnName));
+			equalsTo.setRightExpression(new StringValue(softDeleteFalseValue));
+			newExpression = new AndExpression(new Parenthesis(newExpression), equalsTo);
 		}
 		
 		return newExpression;
@@ -420,7 +414,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			if(orginExpression == null) {
 				newExpression = expression;
 			}else {
-				if(columnName.equalsIgnoreCase(softDeleteColumn)) {
+				if(columnName.equalsIgnoreCase(softDeleteColumnName)) {
 					newExpression = new AndExpression(orginExpression,expression);
 				}else {
 					newExpression = new AndExpression(expression,orginExpression);
@@ -466,8 +460,12 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		String[] tmpArr;
 		for (String rule : rules) {
 			tmpArr = rule.split(":");
-			String columnName = tmpArr.length == 2 ? tmpArr[1] : rule;
-			dataPermMappings.get(tableName).put(tmpArr[0], columnName);
+			String columnName = tmpArr[0];
+			String propName = tmpArr.length == 2 ? tmpArr[1] : MybatisSqlUtils.underscoreToCamelCase(columnName);
+			dataPermMappings.get(tableName).put(propName, columnName);
+			if(deptPropName == null && columnName.equals(deptColumnName)) {
+				deptPropName = propName;
+			}
 		}
 	}
 

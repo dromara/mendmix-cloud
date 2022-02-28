@@ -137,6 +137,21 @@ public class MybatisSqlUtils {
 		return tables;
 	}
 	
+	public static String underscoreToCamelCase(String para){
+		if(!para.contains("_"))return para.toLowerCase();
+        StringBuilder result=new StringBuilder();
+        String a[]=para.toLowerCase().split("_");
+        for(String s:a){
+            if(result.length()==0){
+                result.append(s.toLowerCase());
+            }else{
+                result.append(s.substring(0, 1).toUpperCase());
+                result.append(s.substring(1).toLowerCase());
+            }
+        }
+        return result.toString();
+    }
+	
 	public static void main(String[] args) throws SQLException {
 		String sql = "select * from users 	 <where>    <if test=\"name != null\">          AND name = #{name}      </if>    <if test=\"mobile != null\">          AND mobile = #{mobile}      </if></where>";
 		

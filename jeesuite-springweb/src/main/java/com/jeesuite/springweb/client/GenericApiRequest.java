@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
 import com.alibaba.fastjson.JSON;
@@ -17,6 +16,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.util.BeanUtils;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ParameterUtils;
