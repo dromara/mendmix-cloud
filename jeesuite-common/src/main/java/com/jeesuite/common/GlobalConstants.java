@@ -16,6 +16,9 @@ public class GlobalConstants {
 	public final static String PARAM_DATA = "data";
 	public final static String PARAM_SIGN = "sign";
 	
+	public static final String PLACEHOLDER_PREFIX = "${";
+	public static final String PLACEHOLDER_SUFFIX = "}";
+	
     public static final String MSG_401_UNAUTHORIZED = "{\"code\": 401,\"msg\":\"401 Unauthorized\"}";
 	
 	public static final String MSG_403_FORBIDDEEN = "{\"code\": 403,\"msg\":\"403 forbidden\"}";

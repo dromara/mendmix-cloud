@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
+import com.jeesuite.common.GlobalConstants;
+
 /**
  * 资源文件加载工具类
  * @description <br>
@@ -39,9 +41,7 @@ public final class ResourceUtils {
 	
 	public static String CONFIG_DELIMITERS = ",; \t\n";
 	public static final String NULL_VALUE_PLACEHOLDER = "_NULL_PLACEHOLDER_";
-	public static final String PLACEHOLDER_PREFIX = "${";
-	public static final String PLACEHOLDER_SUFFIX = "}";
-
+	
 	private static String profile;
 	private static String profileFile;
 	private static Properties profileProperties;
@@ -89,7 +89,7 @@ public final class ResourceUtils {
 			List<Object> keys = new ArrayList<>(allProperties.keySet());
 			for (Object key : keys) {
 				if(key == null || allProperties.getProperty(key.toString()) == null)continue;
-				if(allProperties.getProperty(key.toString()).contains(PLACEHOLDER_PREFIX)){
+				if(allProperties.getProperty(key.toString()).contains(GlobalConstants.PLACEHOLDER_PREFIX)){
 					String value = replaceRefValue(allProperties.getProperty(key.toString()));
 					if(StringUtils.isNotBlank(value))allProperties.setProperty(key.toString(), value);
 				}
@@ -447,7 +447,7 @@ public final class ResourceUtils {
 	 */
     public static String replaceRefValue(Properties properties,String value ) {
 		
-    	if(!value.contains(PLACEHOLDER_PREFIX)){
+    	if(!value.contains(GlobalConstants.PLACEHOLDER_PREFIX)){
     		return value;
     	}
     	
@@ -459,12 +459,12 @@ public final class ResourceUtils {
 			seg = StringUtils.trimToNull(segments[i]);
 			if(StringUtils.isBlank(seg))continue;
 			
-			if(seg.contains(PLACEHOLDER_SUFFIX)){	
-				String refKey = seg.substring(0, seg.indexOf(PLACEHOLDER_SUFFIX)).trim();
+			if(seg.contains(GlobalConstants.PLACEHOLDER_SUFFIX)){	
+				String refKey = seg.substring(0, seg.indexOf(GlobalConstants.PLACEHOLDER_SUFFIX)).trim();
 				//其他非${}的占位符如：{{host}}
 				String withBraceString = null;
 				if(seg.contains("{")){
-					withBraceString = seg.substring(seg.indexOf(PLACEHOLDER_SUFFIX)+1);
+					withBraceString = seg.substring(seg.indexOf(GlobalConstants.PLACEHOLDER_SUFFIX)+1);
 				}
 				
 				//如果包含默认值，如：${host:127.0.0.1}
@@ -483,7 +483,7 @@ public final class ResourceUtils {
 				}
 				
 				if(StringUtils.isBlank(refValue)){
-					finalValue.append(PLACEHOLDER_PREFIX + refKey + PLACEHOLDER_SUFFIX);
+					finalValue.append(GlobalConstants.PLACEHOLDER_PREFIX + refKey + GlobalConstants.PLACEHOLDER_SUFFIX);
 				}else{
 					finalValue.append(refValue);
 				}

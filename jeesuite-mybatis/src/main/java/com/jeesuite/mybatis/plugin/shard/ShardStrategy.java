@@ -3,8 +3,6 @@
  */
 package com.jeesuite.mybatis.plugin.shard;
 
-import java.util.List;
-
 /**
  * 数据库分库策略接口
  * @description <br>
@@ -33,17 +31,6 @@ public interface ShardStrategy<T> {
 	 * @param value
 	 * @return 数据库index
 	 */
-	public int assigned(Object value);
-	
-	/**
-	 * 忽略分库表名列表
-	 * @return
-	 */
-	public List<String> ignoreTables();
-	
-	/**
-	 * 是否全局
-	 * @return
-	 */
-	public boolean isGlobal();
+	public int sharding(Object value);
+
 }

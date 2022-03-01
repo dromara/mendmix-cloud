@@ -341,7 +341,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	}
 	
 	private Expression handleTableDataPermission(Expression originWhere,Table table,Map<String, String[]> dataMapping,boolean sharddingTenant) {
-		if(!dataPermMappings.containsKey(table.getName())) {
+		if(dataMapping == null || !dataPermMappings.containsKey(table.getName())) {
 			return originWhere;
 		}
 		Set<String> fieldNames;
@@ -351,6 +351,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		Map<String, String> columnMapping = dataPermMappings.get(table.getName());
 		fieldNames = columnMapping.keySet();
 		boolean withSoftDelete = false;
+		boolean withPermiCondition = false;
 		for (String fieldName : fieldNames) {
 			if(fieldName.equals(softDeletePropName)) {
 				withSoftDelete = true;
@@ -365,6 +366,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				if(!dataMapping.containsKey(fieldName))continue;
 				column = columnMapping.get(fieldName);
 				values = dataMapping.get(fieldName);
+				//
+				if(!withPermiCondition)withPermiCondition = true;
 			}
 			//如果某个匹配字段为空直接返回null，不在查询数据库
 			if(values == null || values.length == 0) {
@@ -377,14 +380,16 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 		
 		//当前创建人
-		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
-		if (currentUser != null) {
-			EqualsTo equalsTo = new EqualsTo();
-			equalsTo.setLeftExpression(new Column(table, ownerColumnName));
-			// TODO 需要按ID匹配否则出现同名
-			equalsTo.setRightExpression(new StringValue(currentUser.getName()));
-			//
-			newExpression = new OrExpression(new Parenthesis(newExpression), equalsTo);
+		if(withPermiCondition && ownerColumnName != null) {
+			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+			if (currentUser != null) {
+				EqualsTo equalsTo = new EqualsTo();
+				equalsTo.setLeftExpression(new Column(table, ownerColumnName));
+				// TODO 需要按ID匹配否则出现同名
+				equalsTo.setRightExpression(new StringValue(currentUser.getName()));
+				//
+				newExpression = new OrExpression(new Parenthesis(newExpression), equalsTo);
+			}
 		}
 		//软删除
 		if (withSoftDelete) {
