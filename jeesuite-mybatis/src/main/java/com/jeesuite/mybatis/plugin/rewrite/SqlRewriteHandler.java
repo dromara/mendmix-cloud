@@ -341,7 +341,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	}
 	
 	private Expression handleTableDataPermission(Expression originWhere,Table table,Map<String, String[]> dataMapping,boolean sharddingTenant) {
-		if(dataMapping == null || !dataPermMappings.containsKey(table.getName())) {
+		if(!dataPermMappings.containsKey(table.getName())) {
 			return originWhere;
 		}
 		Set<String> fieldNames;
@@ -363,7 +363,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				if(currentTenantId == null)throw new JeesuiteBaseException("无法获取当前租户ID");
 				values = new String[] {currentTenantId};
 			}else {
-				if(!dataMapping.containsKey(fieldName))continue;
+				if(dataMapping == null || !dataMapping.containsKey(fieldName))continue;
 				column = columnMapping.get(fieldName);
 				values = dataMapping.get(fieldName);
 				//
