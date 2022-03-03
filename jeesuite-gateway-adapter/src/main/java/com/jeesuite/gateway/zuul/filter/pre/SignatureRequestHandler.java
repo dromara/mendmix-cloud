@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.ParameterUtils;
 import com.jeesuite.gateway.model.BizSystemModule;
@@ -29,8 +30,8 @@ import com.netflix.zuul.context.RequestContext;
  */
 public class SignatureRequestHandler implements FilterHandler{
 
-	private static final String X_SIGN_HEADER = "x-sign";
-	private static final String APP_ID_HEADER = "appId";
+	private static final String X_SIGN_HEADER = "x-open-sign";
+	private static final String APP_ID_HEADER = "x-open-appId";
 	private static final String TIMESTAMP_HEADER = "timestamp";
 	
 	private Map<String, String> appIdSecretMappings = new HashMap<String, String>();
@@ -43,6 +44,11 @@ public class SignatureRequestHandler implements FilterHandler{
 	@Override
 	public Object process(RequestContext ctx, HttpServletRequest request, BizSystemModule module) {
 		
+		ApiInfo apiInfo = module.getApiInfo(request.getRequestURI());
+        if(apiInfo == null || !apiInfo.isOpenApi()) {
+        	throw new JeesuiteBaseException("该接口未开放访问权限");
+        }
+        
 		String sign = request.getHeader(X_SIGN_HEADER);
 		if(StringUtils.isBlank(sign))return null;
 		String timestamp = request.getHeader(TIMESTAMP_HEADER);

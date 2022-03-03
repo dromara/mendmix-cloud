@@ -388,7 +388,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				// TODO 需要按ID匹配否则出现同名
 				equalsTo.setRightExpression(new StringValue(currentUser.getName()));
 				//
-				newExpression = new OrExpression(new Parenthesis(newExpression), equalsTo);
+				newExpression = newExpression == null ? equalsTo : new OrExpression(new Parenthesis(newExpression), equalsTo);
 			}
 		}
 		//软删除
@@ -396,7 +396,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			EqualsTo equalsTo = new EqualsTo();
 			equalsTo.setLeftExpression(new Column(table, softDeleteColumnName));
 			equalsTo.setRightExpression(new StringValue(softDeleteFalseValue));
-			newExpression = new AndExpression(new Parenthesis(newExpression), equalsTo);
+			newExpression = newExpression == null ? equalsTo : new AndExpression(new Parenthesis(newExpression), equalsTo);
 		}
 		
 		return newExpression;

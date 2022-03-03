@@ -32,6 +32,7 @@ public class ApiInfo {
 	private boolean actionLog;
 	private boolean requestLog;
 	private boolean responseLog;
+	private boolean openApi;
 	
 	public String getUrl() {
 		return url;
@@ -77,5 +78,12 @@ public class ApiInfo {
 	public void setResponseLog(boolean responseLog) {
 		this.responseLog = responseLog;
 	}
+	public boolean isOpenApi() {
+		return openApi;
+	}
+	public void setOpenApi(boolean openApi) {
+		this.openApi = openApi;
+	}
+	
 
 }

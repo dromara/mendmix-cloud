@@ -62,4 +62,6 @@ public @interface ApiMetadata {
 	 */
 	boolean responseKeep() default false;
 	
+	boolean openApi() default false;
+	
 }

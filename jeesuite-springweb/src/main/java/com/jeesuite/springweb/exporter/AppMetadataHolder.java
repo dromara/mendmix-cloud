@@ -128,6 +128,7 @@ public class AppMetadataHolder {
 						apiInfo.setActionLog(methodMetadata.actionLog());
 						apiInfo.setRequestLog(methodMetadata.requestLog());
 						apiInfo.setResponseLog(methodMetadata.responseLog());
+						apiInfo.setOpenApi(methodMetadata.openApi());
 					}
 
 					if (methodMetadata != null && StringUtils.isNotBlank(methodMetadata.actionName())) {
