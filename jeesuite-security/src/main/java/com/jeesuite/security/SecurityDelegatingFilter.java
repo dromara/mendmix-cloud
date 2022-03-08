@@ -76,14 +76,16 @@ public class SecurityDelegatingFilter implements Filter {
 		}
 		
 		if(additionHandler != null) {
-			additionHandler.beforeAuthorization(request, response);
+			additionHandler.beforeAuthentication(request, response);
 		}
 		
 		CurrentRuntimeContext.init(request, response);
 
 		UserSession userSession = null;
 		try {
-			userSession = SecurityDelegating.doAuthorization();
+			if(additionHandler == null || !additionHandler.customAuthentication(request)) {
+				userSession = SecurityDelegating.doAuthorization();
+			}
 		} catch (UnauthorizedException e) {
 			if(WebUtils.isAjax(request)){				
 				WebUtils.responseOutJson(response, MSG_401_UNAUTHORIZED);
@@ -113,7 +115,7 @@ public class SecurityDelegatingFilter implements Filter {
 		}
 		//
 		if(additionHandler != null) {
-			additionHandler.afterAuthorization(userSession);
+			additionHandler.afterAuthentication(userSession);
 		}
 		
 		chain.doFilter(req, res);

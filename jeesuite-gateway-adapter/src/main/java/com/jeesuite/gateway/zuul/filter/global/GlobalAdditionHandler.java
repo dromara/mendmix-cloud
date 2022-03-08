@@ -12,10 +12,14 @@ import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.model.ApiInfo;
+import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.gateway.CurrentSystemHolder;
+import com.jeesuite.gateway.FilterConstants;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.gateway.model.BizSystemPortal;
 import com.jeesuite.logging.integrate.ActionLogCollector;
@@ -26,7 +30,7 @@ import com.jeesuite.security.model.UserSession;
  * 
  * 
  * <br>
- * Class Name   : GlobalAuthAdditionHandler
+ * Class Name   : GlobalAdditionHandler
  *
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @version 1.0.0
@@ -38,8 +42,10 @@ public class GlobalAdditionHandler implements AuthAdditionHandler {
 	
 	private boolean ignoreReadMethodLog = ResourceUtils.getBoolean("jeesuite.actionLog.readMethod.ignore", true);
 	
+	private List<String> anonymousIpWhilelist = ResourceUtils.getList("jeesuite.acl.anonymous-ip-whilelist");
+	
 	@Override
-	public void beforeAuthorization(HttpServletRequest request, HttpServletResponse response) {
+	public void beforeAuthentication(HttpServletRequest request, HttpServletResponse response) {
 		//
 		
 		//客户端标识
@@ -62,9 +68,21 @@ public class GlobalAdditionHandler implements AuthAdditionHandler {
 		headerValue = request.getHeader(CustomRequestHeaders.HEADER_PLATFORM_TYPE);
 		CurrentRuntimeContext.setPlatformType(StringUtils.defaultIfBlank(headerValue, platformType));
 	}
+	
+	@Override
+	public boolean customAuthentication(HttpServletRequest request) {
+		boolean pass = isIpWhilelistAccess(request);
+		if(!pass) {
+			pass = isInternalTrustedAccess(request);
+		}
+		if(!pass) {
+			pass = isCrossClusterTrustedAccess(request);
+		}
+		return pass;
+	}
 
 	@Override
-	public void afterAuthorization(UserSession userSession) {
+	public void afterAuthentication(UserSession userSession) {
 		if(!actionLogEnabled)return;
 		HttpServletRequest request = CurrentRuntimeContext.getRequest();
 		BizSystemModule module = CurrentSystemHolder.getModule(currentRouteName(request.getRequestURI()));
@@ -93,5 +111,57 @@ public class GlobalAdditionHandler implements AuthAdditionHandler {
 		}
 		return GlobalRuntimeContext.APPID;
 	}
+	
+	/**
+	 * 匿名访问白名单
+	 * @param request
+	 * @return
+	 */
+	private boolean isIpWhilelistAccess(HttpServletRequest request) {
 
+		if(!anonymousIpWhilelist.isEmpty()) {
+			String clientIp = IpUtils.getIpAddr(request);
+			if(anonymousIpWhilelist.contains(clientIp))return true;
+		}
+		
+		return false;
+	}
+	
+	private boolean isInternalTrustedAccess(HttpServletRequest request) {
+		String header = request.getHeader(CustomRequestHeaders.HEADER_IGNORE_AUTH);
+		String header1 = request.getHeader(CustomRequestHeaders.HEADER_INTERNAL_REQUEST);
+		if(Boolean.parseBoolean(header) && Boolean.parseBoolean(header1)) {
+			if(validateInvokeToken(request)) {
+				ThreadLocalContext.set(FilterConstants.CONTEXT_TRUSTED_REQUEST, Boolean.TRUE);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private boolean isCrossClusterTrustedAccess(HttpServletRequest request) {
+		boolean crossCluster = false;
+		try {
+			String clusterName = request.getHeader(CustomRequestHeaders.HEADER_CLUSTER_ID);
+			if(StringUtils.isNotBlank(clusterName)) {
+				if(validateInvokeToken(request)) {
+					ThreadLocalContext.set(FilterConstants.CONTEXT_TRUSTED_REQUEST, Boolean.TRUE);
+					crossCluster = true;
+				}
+			}
+		} catch (Exception e) {}
+		
+		return crossCluster;
+	}
+	
+	private boolean validateInvokeToken(HttpServletRequest request) {
+		String token = request.getHeader(CustomRequestHeaders.HEADER_INVOKE_TOKEN);
+		if(StringUtils.isBlank(token))return false;
+		try {
+			TokenGenerator.validate(token, true);
+			return true;
+		} catch (Exception e) {}
+		
+		return false;
+	}
 }

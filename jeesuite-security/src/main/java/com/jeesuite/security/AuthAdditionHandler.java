@@ -7,7 +7,9 @@ import com.jeesuite.security.model.UserSession;
 
 public interface AuthAdditionHandler {
 
-	void beforeAuthorization(HttpServletRequest request,HttpServletResponse response);
+	void beforeAuthentication(HttpServletRequest request,HttpServletResponse response);
 	
-	void afterAuthorization(UserSession userSession);
+	boolean customAuthentication(HttpServletRequest request);
+	
+	void afterAuthentication(UserSession userSession);
 }
