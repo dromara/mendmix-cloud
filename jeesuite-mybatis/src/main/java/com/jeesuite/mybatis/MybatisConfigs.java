@@ -107,7 +107,7 @@ public class MybatisConfigs {
 	}
 	
 	public static String getCurrentOrgPermKey(String group){
-		return getProperty(group,ORG_BASE_PERM_KEY, "currentOrgPerm");
+		return getProperty(group,ORG_BASE_PERM_KEY, "organization");
 	}
 	
 	public static String getOwnerColumnName(String group) {

@@ -59,7 +59,7 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		user.setName("admin");
 		CurrentRuntimeContext.setAuthUser(user);
 		MybatisRuntimeContext.addDataProfileMappings("type", "0");
-		MybatisRuntimeContext.addDataProfileMappings("currentOrgPerm", MatchPolicy.exact.name());
+		MybatisRuntimeContext.addDataProfileMappings("organization", MatchPolicy.exact.name());
 		
 	}
 	

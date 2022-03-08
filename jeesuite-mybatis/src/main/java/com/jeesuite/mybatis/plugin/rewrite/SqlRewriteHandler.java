@@ -188,7 +188,10 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		if(invocation.getMappedStatement().getId().endsWith(CrudMethods.selectByPrimaryKey.name())) {
 			return null;
 		}
-		Map<String, String[]> dataMappings = MybatisRuntimeContext.getDataProfileMappings();
+		Map<String, String[]> dataMappings = null;
+		if(!dataPermMappings.isEmpty()) {
+			dataMappings = MybatisRuntimeContext.getDataProfileMappings();
+		}
 		//
 		rewriteSql(invocation, dataMappings);
 		
