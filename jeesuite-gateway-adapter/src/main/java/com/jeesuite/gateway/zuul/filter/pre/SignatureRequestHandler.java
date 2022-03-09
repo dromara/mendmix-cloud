@@ -14,6 +14,7 @@ import com.jeesuite.common.util.ParameterUtils;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.gateway.zuul.filter.AbstractZuulFilter;
 import com.jeesuite.gateway.zuul.filter.FilterHandler;
+import com.jeesuite.gateway.zuul.filter.global.GlobalAdditionHandler;
 import com.jeesuite.springweb.servlet.HttpServletRequestReader;
 import com.netflix.zuul.context.RequestContext;
 
@@ -30,7 +31,7 @@ import com.netflix.zuul.context.RequestContext;
  */
 public class SignatureRequestHandler implements FilterHandler{
 
-	private static final String X_SIGN_HEADER = "x-open-sign";
+	public static final String X_SIGN_HEADER = "x-open-sign";
 	private static final String APP_ID_HEADER = "x-open-appId";
 	private static final String TIMESTAMP_HEADER = "timestamp";
 	
@@ -39,6 +40,7 @@ public class SignatureRequestHandler implements FilterHandler{
 
 	public SignatureRequestHandler(Map<String, String> configs) {
 		this.appIdSecretMappings = configs;
+		GlobalAdditionHandler.setOpenApiEnabled(true);
 	}
 
 	@Override

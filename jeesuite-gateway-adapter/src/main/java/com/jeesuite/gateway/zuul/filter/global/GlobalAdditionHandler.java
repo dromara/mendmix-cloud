@@ -22,6 +22,7 @@ import com.jeesuite.gateway.CurrentSystemHolder;
 import com.jeesuite.gateway.FilterConstants;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.gateway.model.BizSystemPortal;
+import com.jeesuite.gateway.zuul.filter.pre.SignatureRequestHandler;
 import com.jeesuite.logging.integrate.ActionLogCollector;
 import com.jeesuite.security.AuthAdditionHandler;
 import com.jeesuite.security.model.UserSession;
@@ -37,6 +38,8 @@ import com.jeesuite.security.model.UserSession;
  * @date Jan 23, 2022
  */
 public class GlobalAdditionHandler implements AuthAdditionHandler {
+	
+	private static boolean openApiEnabled;
 
 	private boolean actionLogEnabled = ResourceUtils.getBoolean("jeesuite.actionLog.collector.enabled", false);
 	
@@ -44,6 +47,10 @@ public class GlobalAdditionHandler implements AuthAdditionHandler {
 	
 	private List<String> anonymousIpWhilelist = ResourceUtils.getList("jeesuite.acl.anonymous-ip-whilelist");
 	
+	public static void setOpenApiEnabled(boolean openApiEnabled) {
+		GlobalAdditionHandler.openApiEnabled = openApiEnabled;
+	}
+
 	@Override
 	public void beforeAuthentication(HttpServletRequest request, HttpServletResponse response) {
 		//
@@ -71,7 +78,10 @@ public class GlobalAdditionHandler implements AuthAdditionHandler {
 	
 	@Override
 	public boolean customAuthentication(HttpServletRequest request) {
-		boolean pass = isIpWhilelistAccess(request);
+		boolean pass = openApiEnabled && request.getHeader(SignatureRequestHandler.X_SIGN_HEADER) != null;
+		if(!pass) {
+			pass = isIpWhilelistAccess(request);
+		}
 		if(!pass) {
 			pass = isInternalTrustedAccess(request);
 		}

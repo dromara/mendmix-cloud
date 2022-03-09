@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.constants.PermissionLevel;
 import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.security.model.ApiPermission;
@@ -56,7 +57,7 @@ public class SecurityResourceManager {
 
 	private SecurityDecisionProvider decisionProvider;
 
-	private ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1);
+	private ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1,new StandardThreadFactory("apiPermRefreshExecutor"));
 
 	private String cacheName = "permres";
 	private SecurityStorageManager storageManager;

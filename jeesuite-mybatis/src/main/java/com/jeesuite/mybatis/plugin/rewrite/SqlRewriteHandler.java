@@ -96,6 +96,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private String deptColumnName;
 	private String deptPropName;
 	private String ownerColumnName;
+	private List<String> deptMappedStatements = new ArrayList<>();
 
 	@Override
 	public void start(JeesuiteMybatisInterceptor context) {
@@ -116,6 +117,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		
 		
 		final List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
+		//
+		initColumnConfig(mappers, deptColumnName, deptMappedStatements);
 		//软删除
 		initColumnConfig(mappers, softDeleteColumnName, softDeleteMappedStatements);
 		//字段隔离租户模式
@@ -266,19 +269,22 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 
 		if(deptPropName != null && dataMapping != null && dataMapping.containsKey(orgBasePermKey)) {
-			String departmentId = CurrentRuntimeContext.getAndValidateCurrentUser().getDeptId();
-			if(StringUtils.isBlank(departmentId)) {
-				throw new JeesuiteBaseException("当前登录用户部门ID为空");
-			}
-			String[] values = dataMapping.get(orgBasePermKey);
-			if(values != null && values.length > 0) {
-				if(MatchPolicy.exact.name().equals(values[0])) {
-					dataMapping.put(deptPropName, new String[] {departmentId + QUERY_FUZZY_CHAR});
+			if(deptMappedStatements.contains(invocation.getMapperNameSpace()) 
+					|| deptMappedStatements.contains(invocation.getMappedStatement().getId())) {
+				String departmentId = CurrentRuntimeContext.getAndValidateCurrentUser().getDeptId();
+				if(StringUtils.isBlank(departmentId)) {
+					throw new JeesuiteBaseException("当前登录用户部门ID为空");
+				}
+				String[] values = dataMapping.get(orgBasePermKey);
+				if(values != null && values.length > 0) {
+					if(MatchPolicy.exact.name().equals(values[0])) {
+						dataMapping.put(deptPropName, new String[] {departmentId + QUERY_FUZZY_CHAR});
+					}else {
+						dataMapping.put(deptPropName, new String[] {departmentId});
+					}
 				}else {
 					dataMapping.put(deptPropName, new String[] {departmentId});
 				}
-			}else {
-				dataMapping.put(deptPropName, new String[] {departmentId});
 			}
 		}
 		if(!softDelete && dataMapping == null && !sharddingTenant) {
