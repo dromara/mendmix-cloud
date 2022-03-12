@@ -2,6 +2,7 @@ package com.jeesuite.common;
 
 public class GlobalConstants {
 	//
+	public static final String ASTERISK = ".";
 	public static final String DOT = ".";
 	public static final String COLON = ":";
 	public static final String MID_LINE = "-";

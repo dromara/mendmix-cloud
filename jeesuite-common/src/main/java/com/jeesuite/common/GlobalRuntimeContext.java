@@ -14,7 +14,7 @@ public class GlobalRuntimeContext {
 	
 	private static WorkIdGenerator workIdGenerator;
 	
-	public static volatile int workId;
+	private static volatile int workId;
 	
 	private static final List<String> tenantIds = new ArrayList<>();
 

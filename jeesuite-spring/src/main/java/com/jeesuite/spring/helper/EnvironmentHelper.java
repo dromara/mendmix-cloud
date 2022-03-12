@@ -1,10 +1,20 @@
+/*
+ * Copyright 2016-2020 www.jeesuite.com.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jeesuite.spring.helper;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
@@ -12,58 +22,70 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.util.WhoUseMeReporter;
 
 public class EnvironmentHelper {
 	
-
 	private static Environment environment;
 	
-	public static synchronized void init(ApplicationContext context) {
-		if(environment != null){
-			return;
+	public static synchronized void init(ApplicationContext applicationContext) {
+		if(EnvironmentHelper.environment != null)return;
+		environment = applicationContext.getEnvironment();
+		if(environment == null)environment = applicationContext.getBean(Environment.class);
+		if(environment != null) {
+			//先加载本地配置
+			ResourceUtils.getAllProperties();
+			//合并配置
+			mergeEnvironmentProperties();
+			//
+			String nodeId = GlobalRuntimeContext.getNodeName();
+			String workId = String.valueOf(GlobalRuntimeContext.getWorkId());
+			ResourceUtils.add("application.nodeId", nodeId);
+			ResourceUtils.add("application.workId", workId);
+			System.setProperty("application.nodeId", nodeId);
+			System.setProperty("application.workId", workId);
+			//
+			ResourceUtils.printAllConfigs();
 		}
-		environment = context.getEnvironment();
-		ResourceUtils.merge(getAllProperties(null));
-		//
-		if(!ResourceUtils.getBoolean("jeesuite.config.enabled", true)) {
-			ResourceUtils.printConfigs(ResourceUtils.getAllProperties());
-		}
+		
+		WhoUseMeReporter.report();
 	}
+	
 
 	public static String getProperty(String key){
 		return environment == null ? null : environment.getProperty(key);
 	}
 
+	
 	public static boolean containsProperty(String key){
 		return environment == null ? false : environment.containsProperty(key);
 	}
 	
-	
-	public static Map<String, Object> getAllProperties(String prefix){
+
+	private static void mergeEnvironmentProperties(){
 		MutablePropertySources propertySources = ((ConfigurableEnvironment)environment).getPropertySources();
 		
-		Map<String, Object> properties = new LinkedHashMap<String, Object>();
+		int count;
 		for (PropertySource<?> source : propertySources) {
 			if(source.getName().startsWith("servlet") || source.getName().startsWith("system")){
 				continue;
 			}
+			if(source.getName().contains("applicationConfig: [classpath")) {
+				continue;
+			}
+			count = 0;
 			if (source instanceof EnumerablePropertySource) {
 				for (String name : ((EnumerablePropertySource<?>) source) .getPropertyNames()) {
-					boolean match = StringUtils.isEmpty(prefix);
-					if(!match){
-						match = name.startsWith(prefix);
-					}
-					if(match){						
-						Object value = source.getProperty(name);
-						if(value != null){
-							properties.put(name, value);
-						}
+					Object value = source.getProperty(name);
+					if(value != null){
+						ResourceUtils.add(name, value.toString());
+						count++;
 					}
 				}
 			}
+			System.out.println(">>merge PropertySource:" + source.getName() + ",nums:" + count);
 		}
-		return Collections.unmodifiableMap(properties);
 	}
-
 }

@@ -2,6 +2,7 @@ package com.jeesuite.spring;
 
 import java.util.Map;
 
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 
 import com.jeesuite.spring.helper.EnvironmentHelper;
@@ -66,5 +67,9 @@ public class InstanceFactory {
 	public static <T> Map<String,  T> getBeansOfType(Class<T> clazz){
 		return applicationContext.getBeansOfType(clazz);
 	}
+	
+	public static DefaultListableBeanFactory getBeanFactory(){
+        return (DefaultListableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
+    }
 
 }

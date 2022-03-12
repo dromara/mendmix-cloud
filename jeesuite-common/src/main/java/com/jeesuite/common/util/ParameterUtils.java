@@ -28,8 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.jeesuite.common.util.BeanUtils;
-
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
@@ -95,7 +93,12 @@ public class ParameterUtils {
 	}
 	
 	public static String objectToQueryParams(Object param){
-		Map<String, Object> map = BeanUtils.beanToMap(param);
+		Map<String, Object> map;
+		if(param instanceof Map) {
+			map = (Map<String, Object>) param;
+		}else {
+			map = BeanUtils.beanToMap(param);
+		}
 		return mapToQueryParams(map);
 	}
 	
@@ -135,7 +138,13 @@ public class ParameterUtils {
                 	sb1.append(BRACKET_SUFFIX);
                 	value = sb1.toString();
                 }
+            }else if(!BeanUtils.isSimpleDataType(value)){
+            	value = objectToQueryParams(value);
+				if(value != null){
+					value = JSON_PREFIX + value + JSON_SUFFIX;
+				}
             }
+			
 			if(value != null){
 				sb.append(key).append(EQUALS_STR).append(value).append(CONTACT_STR);	
 			}

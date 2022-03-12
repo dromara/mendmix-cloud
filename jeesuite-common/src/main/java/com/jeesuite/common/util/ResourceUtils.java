@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016-2020 www.jeesuite.com.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jeesuite.common.util;
 
 import java.io.File;
@@ -9,7 +24,6 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -22,12 +36,9 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.yaml.snakeyaml.Yaml;
-
-import com.jeesuite.common.GlobalConstants;
 
 /**
  * 资源文件加载工具类
@@ -37,59 +48,47 @@ import com.jeesuite.common.GlobalConstants;
  */
 public final class ResourceUtils {
 	
-	private static List<String> sensitiveKeys = new ArrayList<>(Arrays.asList("password","key","secret","token","credentials"));
 	
 	public static String CONFIG_DELIMITERS = ",; \t\n";
 	public static final String NULL_VALUE_PLACEHOLDER = "_NULL_PLACEHOLDER_";
-	
+	public static final String PLACEHOLDER_PREFIX = "${";
+	public static final String PLACEHOLDER_SUFFIX = "}";
+
 	private static String profile;
 	private static String profileFile;
 	private static Properties profileProperties;
 	
 	private final static Properties allProperties = new Properties();
 	
+	
 	static {
-		loadLocalConfg();
+		loadLocalConfigs();
 	}
 	
-	private static void loadLocalConfg() {
+	private static void loadLocalConfigs() {
 		try {
+			profile = System.getProperty("spring.profiles.active");
 			URL url = Thread.currentThread().getContextClassLoader().getResource("");
 			if(url == null)url = ResourceUtils.class.getResource("");
 			
 			Map<String, List<String>> allFileMap = new HashMap<>();
 			if(url != null){
 				if (url.getProtocol().equals("file")) {	
-					System.out.println(">>loadPropertiesFromFile,origin:"+url.getPath());
 					File parent = new File(url.getPath());
 					if(!parent.exists()){
 						System.err.println(">>loadPropertiesFromFile_error,dir not found");
 					}else{					
-						loadPropertiesFromFile(parent,allFileMap);
-						//
-						Set<String> fileExts = allFileMap.keySet();
-						for (String key : fileExts) {
-							parseConfigSortFiles(allFileMap.get(key), key, null);
-						}
+						loadPropertiesFromFile(parent);
 					}
 				}else if (url.getProtocol().equals("jar")) {					
 					loadPropertiesFromJarFile(url,allFileMap);
-				}
-			}
-			//加载外部文件
-			String extPropertyDir = System.getProperty("ext.config.dir");
-			if(StringUtils.isNotBlank(extPropertyDir)){
-				System.out.println(">>load from extPropertyDir:" + extPropertyDir);
-				File file = new File(extPropertyDir);
-				if(file.exists()){
-					loadPropertiesFromFile(file,allFileMap);
 				}
 			}
 			//
 			List<Object> keys = new ArrayList<>(allProperties.keySet());
 			for (Object key : keys) {
 				if(key == null || allProperties.getProperty(key.toString()) == null)continue;
-				if(allProperties.getProperty(key.toString()).contains(GlobalConstants.PLACEHOLDER_PREFIX)){
+				if(allProperties.getProperty(key.toString()).contains(PLACEHOLDER_PREFIX)){
 					String value = replaceRefValue(allProperties.getProperty(key.toString()));
 					if(StringUtils.isNotBlank(value))allProperties.setProperty(key.toString(), value);
 				}
@@ -106,7 +105,6 @@ public final class ResourceUtils {
 
 	private static void loadPropertiesFromJarFile(URL url,Map<String, List<String>> allFileMap) throws UnsupportedEncodingException, IOException {
 		
-		System.out.println(">>loadPropertiesFromJarFile,origin:" + url.toString());
 		String jarFilePath = url.getFile();	
 		if(jarFilePath.contains("war!")){
 			jarFilePath = StringUtils.splitByWholeSeparator(jarFilePath, "war!")[0] + "war";
@@ -115,7 +113,6 @@ public final class ResourceUtils {
 		}
 		jarFilePath = jarFilePath.substring("file:".length());
 		jarFilePath = java.net.URLDecoder.decode(jarFilePath, "UTF-8");
-		System.out.println(">>loadPropertiesFromJarFile,real:" + jarFilePath);
 		JarFile jarFile = new JarFile(jarFilePath);
 		
 		String fileExt = null;
@@ -127,7 +124,7 @@ public final class ResourceUtils {
 				if(entry.getName().endsWith("pom.properties"))continue;
 				fileExt = entry.getName().substring(entry.getName().lastIndexOf("."));
 				if(!allFileMap.containsKey(fileExt)){
-					allFileMap.put(fileExt, new ArrayList<>());
+					allFileMap.put(fileExt, new ArrayList<String>());
 				}
 				allFileMap.get(fileExt).add(entry.getName());
 			}
@@ -141,25 +138,30 @@ public final class ResourceUtils {
 		jarFile.close();
 	}
 	
-	private static void loadPropertiesFromFile(File parent,Map<String, List<String>> allFileMap) throws FileNotFoundException, IOException{
+	private static void loadPropertiesFromFile(File parent) throws FileNotFoundException, IOException{
+		Map<String, List<String>> allFileMap = new HashMap<>();
 		File[] files = parent.listFiles();
 		if(files == null)return;
 		String fileExt = null;
 		for (File file : files) {
 			if(file.isDirectory()){
-				loadPropertiesFromFile(file,allFileMap);
-			}else{
-				String path = file.getPath();
-				if(path.endsWith(".properties") || path.endsWith(".yaml") || path.endsWith(".yml")){
-					if(path.contains("i18n"))continue;
-					if(path.endsWith("pom.properties"))continue;
-					fileExt = path.substring(path.lastIndexOf("."));
-					if(!allFileMap.containsKey(fileExt)){
-						allFileMap.put(fileExt, new ArrayList<>());
-					}
-					allFileMap.get(fileExt).add(path);
-				}
+			  continue;
 			}
+			String path = file.getPath();
+			if(path.endsWith(".properties") || path.endsWith(".yaml") || path.endsWith(".yml")){
+				if(path.contains("i18n"))continue;
+				if(path.endsWith("pom.properties"))continue;
+				fileExt = path.substring(path.lastIndexOf("."));
+				if(!allFileMap.containsKey(fileExt)){
+					allFileMap.put(fileExt, new ArrayList<String>());
+				}
+				allFileMap.get(fileExt).add(path);
+			}
+		}
+		
+		Set<String> fileExts = allFileMap.keySet();
+		for (String key : fileExts) {
+			parseConfigSortFiles(allFileMap.get(key), key, null);
 		}
 	}
 
@@ -185,22 +187,27 @@ public final class ResourceUtils {
 				}
 			}
 			
+			if(profile != null) {
+				String suffix = "-" + profile + fileExt;
+				for (String file : fileList) {
+					if(file.endsWith(suffix)) {
+						profileFile = file;
+						profileProperties = filePropMap.get(file);
+					}
+				}
+			}
+			
 			String fileName;
 			for (String file : fileList) {
-				if(profile != null && file.endsWith("-" + profile + fileExt)) {
-					profileFile = file;
-					profileProperties = filePropMap.get(file);
+				if(file.contains("/")) {
+					fileName = file.substring(file.lastIndexOf("/") + 1);
 				}else {
-					if(file.contains("/")) {
-						fileName = file.substring(file.lastIndexOf("/") + 1);
-					}else {
-						fileName = file.substring(file.lastIndexOf(File.separator) + 1);
-					}
-					if(fileName.startsWith("application-"))continue;
-					if(fileName.startsWith("bootstrap-"))continue;
-					allProperties.putAll(filePropMap.get(file));
-					System.out.println(">>load properties from file:" + file);
+					fileName = file.substring(file.lastIndexOf(File.separator) + 1);
 				}
+				if(fileName.startsWith("application-"))continue;
+				if(fileName.startsWith("bootstrap-"))continue;
+				allProperties.putAll(filePropMap.get(file));
+				System.out.println(">>load properties from file:" + file);
 			}
 		}
 	}
@@ -233,7 +240,6 @@ public final class ResourceUtils {
 		return properties;
 	}
 
-
 	/**
 	 * 获取所有配置的副本
 	 * @return
@@ -254,7 +260,7 @@ public final class ResourceUtils {
 	 * 按key模糊匹配配置列表
 	 */
 	public static Properties getAllProperties(String keyPattern,boolean matchPrefix) {
-
+		
 		Properties properties = new Properties();
 		Set<Entry<Object, Object>> entrySet = allProperties.entrySet();
 		boolean match = false;
@@ -273,14 +279,6 @@ public final class ResourceUtils {
 			}
 		}
 		return properties;
-	}
-	
-	public static List<String>  getPropertyNames(String prefix){
-		return allProperties.keySet()
-				            .stream() //
-				            .filter(key -> key.toString().startsWith(prefix)) //
-				            .map(key -> key.toString()) //
-				            .collect(Collectors.toList());
 	}
 	
 	public static String getProperty(String key) {
@@ -346,7 +344,8 @@ public final class ResourceUtils {
 	}
 	
 	public static boolean getBoolean(String key,boolean defalutValue){
-		return containsProperty(key) ? Boolean.parseBoolean(getProperty(key)) : defalutValue;
+		String value = getProperty(key);
+		return value != null ? Boolean.parseBoolean(value) : defalutValue;
 	}
 	
 	public static List<String> getList(String key){
@@ -366,12 +365,12 @@ public final class ResourceUtils {
 	public static Map<String, String> getMappingValues(String prefix){
 		Properties properties = getAllProperties(prefix);
 		Map<String, String> result = new HashMap<>(properties.size());
-		properties.forEach( (k,v) -> {
-			if(v != null) {
-				String[] arr = StringUtils.split(k.toString(), "[]");
-				result.put(arr[1], v.toString());
-			}
-		} );
+		Set<Entry<Object, Object>> entries = properties.entrySet();
+		for (Entry<Object, Object> entry : entries) {
+			if(entry.getValue() == null || StringUtils.isBlank(entry.getValue().toString()))continue;
+			String[] arr = StringUtils.split(entry.getKey().toString(), "[]");
+			result.put(arr[1], entry.getValue().toString());
+		}
 		return result;
 	}
 	
@@ -406,9 +405,27 @@ public final class ResourceUtils {
 	}
 	
 	public static boolean  containsProperty(String key){
-		if(System.getProperties().containsKey(key))return true;
-		if(System.getenv().containsKey(key))return true;
 		return allProperties.containsKey(key);
+	}
+	
+	public static boolean  containsAnyProperty(String...keys){
+		for (String key : keys) {
+			if(allProperties.containsKey(key))return true;
+		}
+		return false;
+	}
+	
+	public static List<String>  getPropertyNames(String prefix){
+		List<String> result=new ArrayList<>();
+		Enumeration<Object> keys = allProperties.keys();
+		while (keys.hasMoreElements()) {
+			Object r = keys.nextElement();
+			if (r.toString().startsWith(prefix)) {
+				result.add(r.toString());
+			}
+		}
+		return result;
+
 	}
 	
 	public static <T> T getBean(String prefix,Class<T> clazz) {
@@ -447,7 +464,7 @@ public final class ResourceUtils {
 	 */
     public static String replaceRefValue(Properties properties,String value ) {
 		
-    	if(!value.contains(GlobalConstants.PLACEHOLDER_PREFIX)){
+    	if(!value.contains(PLACEHOLDER_PREFIX)){
     		return value;
     	}
     	
@@ -459,12 +476,12 @@ public final class ResourceUtils {
 			seg = StringUtils.trimToNull(segments[i]);
 			if(StringUtils.isBlank(seg))continue;
 			
-			if(seg.contains(GlobalConstants.PLACEHOLDER_SUFFIX)){	
-				String refKey = seg.substring(0, seg.indexOf(GlobalConstants.PLACEHOLDER_SUFFIX)).trim();
+			if(seg.contains(PLACEHOLDER_SUFFIX)){	
+				String refKey = seg.substring(0, seg.indexOf(PLACEHOLDER_SUFFIX)).trim();
 				//其他非${}的占位符如：{{host}}
 				String withBraceString = null;
 				if(seg.contains("{")){
-					withBraceString = seg.substring(seg.indexOf(GlobalConstants.PLACEHOLDER_SUFFIX)+1);
+					withBraceString = seg.substring(seg.indexOf(PLACEHOLDER_SUFFIX)+1);
 				}
 				
 				//如果包含默认值，如：${host:127.0.0.1}
@@ -483,7 +500,7 @@ public final class ResourceUtils {
 				}
 				
 				if(StringUtils.isBlank(refValue)){
-					finalValue.append(GlobalConstants.PLACEHOLDER_PREFIX + refKey + GlobalConstants.PLACEHOLDER_SUFFIX);
+					finalValue.append(PLACEHOLDER_PREFIX + refKey + PLACEHOLDER_SUFFIX);
 				}else{
 					finalValue.append(refValue);
 				}
@@ -504,16 +521,35 @@ public final class ResourceUtils {
 		return finalValue.toString();
 	}
     
+    public static void printAllConfigs() {
+    	List<String> sortKeys = new ArrayList<>();
+		Set<Entry<Object, Object>> entrySet = allProperties.entrySet();
+		for (Entry<Object, Object> entry : entrySet) {
+			String key = entry.getKey().toString();
+			sortKeys.add(key);
+		}
+		Collections.sort(sortKeys);
+		System.out.println("==================final config list start==================");
+		String value;
+		for (String key : sortKeys) {
+			value = SafeStringUtils.hideSensitiveKeyValue(key, getProperty(key));
+			System.out.println(String.format("%s = %s", key,value ));
+		}
+		System.out.println("==================final config list end====================");
+    }
+    
     private static String replaceRefValue(String value){
     	return replaceRefValue(allProperties, value);
     }
     
     private static void parseYamlInnerMap(String keyPrefix,Properties result,Map<String, Object> yamlData){
+    	if(yamlData == null)return ;
 		Object value;
 		String currentKey;
 		for (Object key : yamlData.keySet()) {
 			currentKey = keyPrefix == null ? key.toString() : keyPrefix + "." + key.toString();
 			value = yamlData.get(key);
+			if(value == null)continue;
 			if(value instanceof Map){
 				parseYamlInnerMap(currentKey, result, (Map)value);
 			}else{
@@ -523,33 +559,5 @@ public final class ResourceUtils {
 		
 	}
     
-    public static void printConfigs(Properties properties){
-		List<String> sortKeys = new ArrayList<>();
-		Set<Entry<Object, Object>> entrySet = properties.entrySet();
-		for (Entry<Object, Object> entry : entrySet) {
-			String key = entry.getKey().toString();
-			sortKeys.add(key);
-		}
-		Collections.sort(sortKeys);
-		System.out.println("==================final config list start==================");
-		String value;
-		for (String key : sortKeys) {
-			value = hideSensitive(key, properties.getProperty(key));
-			System.out.println(String.format("%s = %s", key,value ));
-		}
-		System.out.println("==================final config list end====================");
-		
-	}
-	
-	private static String hideSensitive(String key,String orign){
-		if(StringUtils.isAnyBlank(key,orign))return "";
-		boolean is = false;
-		for (String k : sensitiveKeys) {
-			if(is = key.toLowerCase().contains(k))break;
-		}
-		int length = orign.length();
-		if(is && length > 1)return orign.substring(0, length/2).concat("****");
-		return orign;
-	}
-	
+    
 }
