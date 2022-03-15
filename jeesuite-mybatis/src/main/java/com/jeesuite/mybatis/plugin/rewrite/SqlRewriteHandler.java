@@ -83,6 +83,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	
 	private Map<String, LinkedHashMap<String,String>> dataPermMappings = new HashMap<>();
 	
+	private boolean dynaDataPermEnabled = false;
+	
 	private List<String> softDeleteMappedStatements = new ArrayList<>();
 	private String softDeleteColumnName;
 	private String softDeletePropName;
@@ -114,7 +116,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			buildTableDataPermissionMapping(tableName, v.toString());
 		} );
 		
-		
+		dynaDataPermEnabled = !dataPermMappings.isEmpty();
 		
 		final List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		//
@@ -192,7 +194,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			return null;
 		}
 		Map<String, String[]> dataMappings = null;
-		if(!dataPermMappings.isEmpty()) {
+		if(dynaDataPermEnabled) {
 			dataMappings = MybatisRuntimeContext.getDataProfileMappings();
 		}
 		//
