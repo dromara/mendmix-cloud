@@ -174,6 +174,7 @@ public class CurrentSystemHolder {
 					uri = String.format("%s/%s/%s", GlobalRuntimeContext.getContextPath(), module.getRouteName(), api.getUrl());
 				}
 				uri = uri.replace("//", "/");
+				api.setUrl(uri);
 				apiInfos.put(uri, api);
 			}
 			module.setApiInfos(apiInfos);
