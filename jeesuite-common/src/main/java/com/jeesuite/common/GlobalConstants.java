@@ -2,7 +2,7 @@ package com.jeesuite.common;
 
 public class GlobalConstants {
 	//
-	public static final String ASTERISK = ".";
+	public static final String ASTERISK = "*";
 	public static final String DOT = ".";
 	public static final String COLON = ":";
 	public static final String MID_LINE = "-";
@@ -23,4 +23,11 @@ public class GlobalConstants {
     public static final String MSG_401_UNAUTHORIZED = "{\"code\": 401,\"msg\":\"401 Unauthorized\"}";
 	
 	public static final String MSG_403_FORBIDDEEN = "{\"code\": 403,\"msg\":\"403 forbidden\"}";
+	
+    public static final String IGNORE_PLACEHOLER = "[Ignore]";
+	
+	public static final String CRYPT_PREFIX = "{Cipher}";
+	
+	public static final String DEFAULT_EXT_FIELDS_NAME = "extFields";
+	public static final String DEFAULT_EXT_VALUES_NAME = "extValues";
 }

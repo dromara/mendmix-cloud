@@ -1,6 +1,11 @@
 package com.jeesuite.springboot.starter;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.DefaultApplicationArguments;
 
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.async.AsyncInitializer;
@@ -12,7 +17,19 @@ import com.jeesuite.spring.InstanceFactory;
 public class BaseApplicationStarter{
 
 
-	protected static long before() {
+	protected static long before(String...args) {
+		if(args != null) {
+			ApplicationArguments arguments = new DefaultApplicationArguments(args);
+			Set<String> optionNames = arguments.getOptionNames();
+			
+			for (String name : optionNames) {
+				List<String> values = arguments.getOptionValues(name);
+				if(values != null && !values.isEmpty()) {
+					System.setProperty(name, values.get(0));
+					System.out.println(String.format("add ApplicationArguments: %s = %s", name, values.get(0)));
+				}
+			}
+		}
 		LogProfileManager.initialize();
 		System.setProperty("client.nodeId", GlobalRuntimeContext.getNodeName());
 		return System.currentTimeMillis();

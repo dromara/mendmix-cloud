@@ -15,8 +15,10 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.ibatis.mapping.MappedStatement;
 
 import com.jeesuite.common.CurrentRuntimeContext;
+import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.guid.GUID;
 import com.jeesuite.mybatis.MybatisConfigs;
+import com.jeesuite.mybatis.core.BaseEntity;
 import com.jeesuite.mybatis.core.InterceptorHandler;
 import com.jeesuite.mybatis.metadata.MapperMetadata;
 import com.jeesuite.mybatis.parser.MybatisMapperParser;
@@ -41,6 +43,8 @@ import com.jeesuite.spring.InstanceFactory;
 public class AutoFieldFillHandler implements InterceptorHandler {
 
 	private static final String INSERT_LIST_METHOD_NAME = "insertList";
+	private static final String ATTR_CONTEXT_NAME = "__attr_cxt_name";
+	private static final String ATTR_VALUE_CONTEXT_NAME = "__attrval_cxt_name:%s:%s";
 
 	private static Map<String, Field[]> methodFieldMappings = new HashMap<>();
 	
@@ -95,12 +99,12 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 			}
 	
 			String keyPrefix = mm.getMapperClass().getName() + ".";
-			if(anyNotNull(createdFields)) {
+			if(hasAnyValue(createdFields)) {
 	        	methodFieldMappings.put(keyPrefix + "insert", createdFields);
 	        	methodFieldMappings.put(keyPrefix + "insertSelective", createdFields);
 	        	methodFieldMappings.put(keyPrefix + INSERT_LIST_METHOD_NAME, createdFields);
 	        }
-			if(anyNotNull(updatedFields)) {
+			if(hasAnyValue(updatedFields)) {
 	        	methodFieldMappings.put(keyPrefix + "updateByPrimaryKey", updatedFields);
 	        	methodFieldMappings.put(keyPrefix + "updateByPrimaryKeySelective", updatedFields);
 	        	methodFieldMappings.put(keyPrefix + "updateByPrimaryKeyWithVersion", updatedFields);
@@ -114,14 +118,17 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 	@Override
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		if(invocation.isSelect())return null;
-		if(methodFieldMappings.isEmpty())return null;
+		Object parameter = invocation.getParameter();
+		//动态拓展字段
+		boolean dynaFieldEnabled = ThreadLocalContext.exists(ATTR_CONTEXT_NAME);
+		
+		if(!dynaFieldEnabled && methodFieldMappings.isEmpty())return null;
 		
         final MappedStatement orignMappedStatement = invocation.getMappedStatement();
         
         Field[] fields = methodFieldMappings.get(orignMappedStatement.getId());
 		if(fields == null) return null;
-		
-		Object parameter = invocation.getParameter();
+
 		if(orignMappedStatement.getId().endsWith(INSERT_LIST_METHOD_NAME)) {
 			if(parameter instanceof Map) {
 				try {
@@ -165,14 +172,11 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 		if(fields.length > 3 && fields[3] != null && (tmpVal = CurrentRuntimeContext.getTenantId()) != null && isNullValue(parameter, fields[3])) {
 			try {fields[3].set(parameter, tmpVal);} catch (Exception e) {}
 		}
+		
+		//
+		setDynaFieldValues(parameter);
 	}
-	
-	private boolean anyNotNull(Field[] fields) {
-		for (Field field : fields) {
-			if(field != null)return true;
-		}
-		return false;
-	}
+
 	
 	private boolean isNullValue(Object obj,Field field) {
 		try {
@@ -181,6 +185,83 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 		} catch (Exception e) {
 			return true;
 		}
+	}
+	
+	
+	private boolean hasAnyValue(Field[] fields) {
+		for (Field field : fields) {
+			if(field != null)return true;
+		}
+		return false;
+	}
+	
+	public void setFieldValue(Object target ,Field field,Object value) {
+		try {
+			field.set(target, value);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private Object readFieldValue(final Object target, final String fieldName) {
+		Field field;
+		try {
+			Class<?> clazz = target.getClass();
+			field = FieldUtils.getDeclaredField(clazz, fieldName, true);
+			while(field == null && clazz.getSuperclass() != null) {
+				clazz = clazz.getSuperclass();
+				field = FieldUtils.getDeclaredField(clazz, fieldName, true);
+			}
+			if(field == null)return null;
+			return field.get(target);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	
+	private void setDynaFieldValues(Object entity) {
+		Map<String, String> dynaValueMap = tryGetDynaAttrValues(entity);
+		if(dynaValueMap != null) {
+			dynaValueMap.forEach( (k,v) -> {
+				try {
+					FieldUtils.writeDeclaredField(entity, k, v, true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} );
+		}
+	}
+	
+	private Map<String, String> tryGetDynaAttrValues(Object parameter){
+		
+		if(parameter instanceof BaseEntity == false)return null;
+		
+		Class<?> entityClass = parameter.getClass();
+		if(!ThreadLocalContext.exists(ATTR_CONTEXT_NAME))return null;
+		
+		String key;
+		Map<String, String> dynaValueMap;
+		//
+		Object id = readFieldValue(parameter, "id");
+		if(id != null) {
+			key = String.format(ATTR_VALUE_CONTEXT_NAME, entityClass.getSimpleName(),id);
+			dynaValueMap = ThreadLocalContext.get(key);
+			if(dynaValueMap != null) {
+				ThreadLocalContext.remove(key);
+				return dynaValueMap;
+			}
+		}
+		
+		for (int i = 0; i < 10; i++) {
+			key = String.format(ATTR_VALUE_CONTEXT_NAME, entityClass.getSimpleName(),i);
+			dynaValueMap = ThreadLocalContext.get(key);
+			if(dynaValueMap != null) {
+				ThreadLocalContext.remove(key);
+				return dynaValueMap;
+			}
+		}
+		return null;
 	}
 
 	@Override
