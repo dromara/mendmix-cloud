@@ -10,30 +10,19 @@
 
 
 	<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
-		<property name="maxTotal" value="${redis.pool.maxTotal}" />
-		<property name="maxIdle" value="${redis.pool.maxIdle}" />
-		<property name="minIdle" value="${redis.pool.minIdle}" />
+		<property name="maxTotal" value="5" />
+		<property name="maxIdle" value="1" />
+		<property name="minIdle" value="0" />
 	</bean>
 
-	<bean class="com.jeesuite.cache.redis.JedisProviderFactoryBean">
-		<property name="jedisPoolConfig" ref="jedisPoolConfig" />
-		<!-- mode(standalone:单机模式，sentinel：哨兵模式(主从),cluster：集群模式，shard：分片模式) -->
-		<property name="mode" value="${redis.mode}" />
-		<!-- 多个用“,”隔开 -->
-		<property name="servers" value="${redis.servers}" />
-		<property name="password" value="${redis.password}" />
-		<property name="timeout" value="${redis.conn.timeout}" />
-		<!-- sentinel模式才需要该属性 -->
-		<property name="masterName" value="${redis.masterName}" />
-		<property name="tenantModeEnabled" value="${jeesuite.cache.tenantModeEnabled}" />
-	</bean>
+	
 
 
-	<!-- <bean id="jedisConnectionFactory"
+	<bean id="jedisConnectionFactory"
 		class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"
 		destroy-method="destroy">
-		<property name="hostName" value="127.0.0.1" />
-		<property name="port" value="6379" />
+		<property name="hostName" value="${redis.servers}" />
+		<property name="port" value="${redis.port:6379}" />
 		<property name="timeout" value="15000" />
 		<property name="database" value="0" />
 		<property name="password" value="${redis.password}" />
@@ -53,5 +42,10 @@
 
 	<bean id="stringRedisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">
 		<property name="connectionFactory" ref="jedisConnectionFactory" />
-	</bean> -->
+	</bean> 
+	
+	<bean id="redisCacheAdapter" class="com.jeesuite.cache.adapter.RedisCacheAdapter">
+	   <constructor-arg index="0" ref="redisTemplate" />
+	   <constructor-arg index="1" ref="stringRedisTemplate" />
+	</bean>
 </beans>

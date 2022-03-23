@@ -29,11 +29,7 @@ public class GlobalRuntimeContext {
 	static {
 		String env = ResourceUtils.getAnyProperty("spring.profiles.active","jeesuite.config.profile");
 		ENV = StringUtils.isBlank(env) ? "local" : env;
-		APPID = ResourceUtils.getProperty("spring.application.name");
-		if(StringUtils.isBlank(APPID)){
-			throw new IllegalArgumentException("config Property[spring.application.name] is required");
-		}
-		
+		APPID = ResourceUtils.getProperty("spring.application.name","unknow-service");
 		String[] strings = StringUtils.split(APPID, "-");
 		MODULE_NAME = strings.length > 1 ? strings[1] : strings[0];
 		if(ResourceUtils.containsProperty("system.id")) {

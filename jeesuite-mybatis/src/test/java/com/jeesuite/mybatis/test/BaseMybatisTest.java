@@ -164,7 +164,7 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		Map<String, Object> param = new HashMap<>();
 		param.put("status", 1);
 		
-		userMapper.testQuery1(param);
+		userMapper.findByStatus((short)1);
 	}
 	
 	

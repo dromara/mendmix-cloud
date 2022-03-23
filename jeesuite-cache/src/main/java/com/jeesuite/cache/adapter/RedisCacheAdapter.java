@@ -19,9 +19,21 @@ public class RedisCacheAdapter implements CacheAdapter{
 	private RedisTemplate<String, Object> redisTemplate;
 	private StringRedisTemplate stringRedisTemplate;
 	
+	
+	
+	public RedisCacheAdapter() {}
+
 	public RedisCacheAdapter(RedisTemplate<String, Object> redisTemplate, StringRedisTemplate stringRedisTemplate) {
 		super();
 		this.redisTemplate = redisTemplate;
+		this.stringRedisTemplate = stringRedisTemplate;
+	}
+	
+	public void setRedisTemplate(RedisTemplate<String, Object> redisTemplate) {
+		this.redisTemplate = redisTemplate;
+	}
+
+	public void setStringRedisTemplate(StringRedisTemplate stringRedisTemplate) {
 		this.stringRedisTemplate = stringRedisTemplate;
 	}
 
