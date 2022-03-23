@@ -76,6 +76,7 @@ public class MybatisMapperParser {
 							classNameToResourcePath)[1];
 					mapperClass = mapperPackage + "."
 							+ mapperClass.substring(1).substring(0, mapperClass.lastIndexOf(".") - 1);
+					mapperClass  = ClassUtils.convertResourcePathToClassName(mapperClass);
 					entityInfos.put(mapperClass, new MapperMetadata(mapperClass));
 				}
 			}

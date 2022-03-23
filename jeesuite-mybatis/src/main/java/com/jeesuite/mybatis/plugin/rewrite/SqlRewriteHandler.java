@@ -83,7 +83,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	
 	private Map<String, LinkedHashMap<String,String>> dataPermMappings = new HashMap<>();
 	
-	private boolean dynaDataPermEnabled = false;
+	private static boolean dynaDataPermEnabled = false;
 	
 	private List<String> softDeleteMappedStatements = new ArrayList<>();
 	private String softDeleteColumnName;
@@ -483,6 +483,12 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				deptPropName = propName;
 			}
 		}
+	}
+	
+	
+
+	public static boolean isDynaDataPermEnabled() {
+		return dynaDataPermEnabled;
 	}
 
 	@Override

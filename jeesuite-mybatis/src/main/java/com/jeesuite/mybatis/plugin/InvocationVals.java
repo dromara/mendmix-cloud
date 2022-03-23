@@ -10,9 +10,11 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
 
 import com.jeesuite.common.model.PageParams;
+import com.jeesuite.mybatis.MybatisRuntimeContext;
 import com.jeesuite.mybatis.plugin.cache.QueryCacheMethodMetadata;
 import com.jeesuite.mybatis.plugin.pagination.PageExecutor;
 import com.jeesuite.mybatis.plugin.pagination.PaginationHandler;
+import com.jeesuite.mybatis.plugin.rewrite.SqlRewriteHandler;
 
 public class InvocationVals {
 
@@ -140,5 +142,9 @@ public class InvocationVals {
 		return sqlRewrited;
 	}
 
+	public boolean isDynaDataPermEnabled() {
+		return SqlRewriteHandler.isDynaDataPermEnabled() 
+				&& MybatisRuntimeContext.getDataProfileMappings() != null;
+	}
 
 }

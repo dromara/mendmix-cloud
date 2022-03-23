@@ -6,7 +6,6 @@ package com.jeesuite.mybatis.kit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,6 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.util.BeanUtils;
-import com.jeesuite.mybatis.plugin.cache.CacheHandler;
 
 /**
  * @description <br>
@@ -113,15 +111,5 @@ public class CacheKeyUtils {
 		sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();
 	}
-	
-	 
-	public static void main(String[] args) {
-		String keyPattern = "key:%s_%s_%s";
-		Map<String, Object> param = new HashMap<>();
-		param.put("a", "1");
-		param.put("b", "2");
-		param.put("c", "3");
-		String key = CacheHandler.genarateQueryCacheKey(keyPattern, param);
-		System.out.println(key);
-	} 
+
 }

@@ -37,6 +37,7 @@ import com.jeesuite.cache.CacheUtils;
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ReflectUtils;
@@ -186,7 +187,7 @@ public class CacheHandler implements InterceptorHandler {
 				return null;
 			}
 			
-			cacheKey = genarateQueryCacheKey(metadata.keyPattern, invocationVal.getParameter());
+			cacheKey = genarateQueryCacheKey(metadata.keyPattern, invocationVal.getParameter(),invocationVal.isDynaDataPermEnabled());
 			invocationVal.setQueryCacheMetadata(metadata,cacheKey);
 
 			//并发控制防止缓存穿透
@@ -274,13 +275,13 @@ public class CacheHandler implements InterceptorHandler {
                     
 					if(metadata.isPk){
 						//唯一索引（业务上）
-						cacheUniqueSelectRef(result, mt, cacheKey);
+						cacheUniqueSelectRef(invocationVal,result, mt, cacheKey);
 					}else if(metadata.groupRalated){//结果为集合的情况，增加key到cacheGroup
 						CacheUtils.addListItems(metadata.cacheGroupKey, cacheKey);
 					}
 				}else{
 					//之前没有按主键的缓存，增加按主键缓存
-					String idCacheKey = genarateQueryCacheKey(getQueryByPkMethodCache(mt.getId()).keyPattern,result);
+					String idCacheKey = genarateQueryCacheKey(getQueryByPkMethodCache(mt.getId()).keyPattern,result,invocationVal.isDynaDataPermEnabled());
 					
 					if(idCacheKey != null && cacheKey != null){
 						if(!CacheUtils.exists(idCacheKey)){						
@@ -303,7 +304,7 @@ public class CacheHandler implements InterceptorHandler {
 				}else {
 					if(updatePkCacheMethods.containsKey(mt.getId())){
 						UpdateByPkCacheMethodMetadata updateMethodCache = updatePkCacheMethods.get(mt.getId());
-						String idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,invocationVal.getParameter());
+						String idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,invocationVal.getParameter(),invocationVal.isDynaDataPermEnabled());
 						CacheUtils.remove(idCacheKey);
 					}else {
 						//针对按条件更新或者删除的方法，按查询条件查询相关内容，然后清理对应主键缓存内容
@@ -347,7 +348,7 @@ public class CacheHandler implements InterceptorHandler {
 	 * @param mt
 	 * @param cacheKey
 	 */
-	private void cacheUniqueSelectRef(Object object, MappedStatement mt, String cacheKey) {
+	private void cacheUniqueSelectRef(InvocationVals invocationVal,Object object, MappedStatement mt, String cacheKey) {
 		Collection<QueryCacheMethodMetadata> mcs = queryCacheMethods.get(mt.getId().substring(0, mt.getId().lastIndexOf(InvocationVals.DOT))).values();
 		outter:for (QueryCacheMethodMetadata methodCache : mcs) {
 			if(!methodCache.isSecondQueryById())continue;
@@ -358,7 +359,7 @@ public class CacheHandler implements InterceptorHandler {
 					cacheFieldValues[i] = ReflectUtils.getObjectValue(object, methodCache.fieldNames[i]);
 					if(cacheFieldValues[i] == null)continue outter;
 				}
-				String fieldCacheKey = genarateQueryCacheKey(methodCache.keyPattern , cacheFieldValues);
+				String fieldCacheKey = genarateQueryCacheKey(methodCache.keyPattern , cacheFieldValues,invocationVal.isDynaDataPermEnabled());
 				
 				cacheFieldRefKey(fieldCacheKey,cacheKey, methodCache.getExpire());
 				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process addRefCache -> mapperId:{},cacheKey:{},refkey:{}",mt.getId(),fieldCacheKey,cacheKey);
@@ -510,7 +511,7 @@ public class CacheHandler implements InterceptorHandler {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static String genarateQueryCacheKey(String keyPattern,Object param){
+	public static String genarateQueryCacheKey(String keyPattern,Object param,boolean userScope){
 		String text;
 		try {
 			Object[] args;
@@ -539,14 +540,28 @@ public class CacheHandler implements InterceptorHandler {
 				args = new String[]{CacheKeyUtils.objcetToString(param)};
 			}
 			
-			text = StringUtils.join(args,"-");
+			text = StringUtils.join(args,GlobalConstants.UNDER_LINE);
 		} catch (Exception e) {
 			text = JsonUtils.toJson(param);
 			e.printStackTrace();
 		}
 		if(text.length() > 64)text = DigestUtils.md5(text);
 
-		return String.format(keyPattern, text);
+		String key = String.format(keyPattern, text);
+		
+		StringBuilder sb = null;
+		String tenantId = CurrentRuntimeContext.getTenantId();
+		if(tenantId != null) {
+			if(sb == null)sb = new StringBuilder();
+			sb.append(tenantId).append(GlobalConstants.COLON);
+		}
+		
+		AuthUser currentUser;
+		if(userScope && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
+			sb.append(currentUser.getId()).append(GlobalConstants.COLON);
+		}
+		
+		return sb == null ? key : sb.append(key).toString();
 	}
 	
 
@@ -793,6 +808,6 @@ public class CacheHandler implements InterceptorHandler {
 
 	@Override
 	public int interceptorOrder() {
-		return 4;
+		return 1;
 	}
 }
