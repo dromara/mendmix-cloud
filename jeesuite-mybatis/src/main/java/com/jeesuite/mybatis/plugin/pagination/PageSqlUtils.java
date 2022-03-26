@@ -2,6 +2,7 @@ package com.jeesuite.mybatis.plugin.pagination;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -22,7 +23,11 @@ public class PageSqlUtils {
 
 	private static final String SQL_COUNT_PREFIX = "SELECT count(1) ";
 	
-	private static final String[] UNION_KEYS = new String[] {" union "," UNION "};
+	private static final String[] unionKeys = new String[] {" union "," UNION "};
+
+    private static String[] groupByKeys = new String[] {" GROUP BY "," group by "};
+	
+	private static Pattern nestSelectPattern = Pattern.compile("\\(\\s{0,}(select|SELECT)\\s+");
 	
 	private static final String COMMON_COUNT_SQL_TEMPLATE = "SELECT count(1) FROM (%s) tmp";
 	
@@ -48,7 +53,9 @@ public class PageSqlUtils {
 	
 	public static String getCountSql(String sql){
 		sql = sql.replaceAll(REGEX_N_T_S, StringUtils.SPACE).split(SQL_ORDER_PATTERN)[0];
-		if(StringUtils.containsAny(sql, UNION_KEYS)) {
+		if(StringUtils.containsAny(sql, unionKeys) 
+				|| StringUtils.containsAny(sql, groupByKeys) 
+				|| nestSelectPattern.matcher(sql).find()) {
 			sql = String.format(COMMON_COUNT_SQL_TEMPLATE, sql);
 		}else {
 			sql = sql.replaceFirst(SQL_SELECT_PATTERN, SQL_COUNT_PREFIX);
