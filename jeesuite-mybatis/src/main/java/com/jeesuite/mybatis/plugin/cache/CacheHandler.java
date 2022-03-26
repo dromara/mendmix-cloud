@@ -548,20 +548,18 @@ public class CacheHandler implements InterceptorHandler {
 		if(text.length() > 64)text = DigestUtils.md5(text);
 
 		String key = String.format(keyPattern, text);
-		
-		StringBuilder sb = null;
+		StringBuilder sb = new StringBuilder(key);
 		String tenantId = CurrentRuntimeContext.getTenantId();
 		if(tenantId != null) {
-			if(sb == null)sb = new StringBuilder();
-			sb.append(tenantId).append(GlobalConstants.COLON);
+			sb.append(GlobalConstants.AT).append(tenantId);
 		}
 		
 		AuthUser currentUser;
-		if(userScope && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
-			sb.append(currentUser.getId()).append(GlobalConstants.COLON);
+		if(invocationVal.isDynaDataPermEnaled() && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
+			sb.append(GlobalConstants.AT).append(currentUser.getId());
 		}
 		
-		return sb == null ? key : sb.append(key).toString();
+		return sb.toString();
 	}
 	
 
