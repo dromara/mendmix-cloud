@@ -3,6 +3,7 @@ package com.jeesuite.springweb.enhancer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.MethodParameter;
@@ -22,6 +23,7 @@ import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.spring.InstanceFactory;
 
 @ControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)
@@ -40,6 +42,10 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
 	public void afterPropertiesSet() throws Exception {
 		if(ResourceUtils.getBoolean("jeesuite.response.rewrite.enabled", true)) {
 			register(new ResponseRewrite());
+		}
+		Map<String, ResponseBodyEnhancer> beans = InstanceFactory.getBeansOfType(ResponseBodyEnhancer.class);
+		for (ResponseBodyEnhancer enhancer : beans.values()) {
+			register(enhancer);
 		}
 	}
 	

@@ -20,6 +20,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -34,6 +35,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdvice;
 
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.spring.InstanceFactory;
 
 /**
  * 
@@ -59,8 +61,9 @@ public class RequestBodyEnhancerAdvice implements RequestBodyAdvice,Initializing
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if(ResourceUtils.getBoolean("jeesuite.response.rewrite.enabled", true)) {
-			
+		Map<String, RequestBodyEnhancer> beans = InstanceFactory.getBeansOfType(RequestBodyEnhancer.class);
+		for (RequestBodyEnhancer enhancer : beans.values()) {
+			register(enhancer);
 		}
 	}
 	
