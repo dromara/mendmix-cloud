@@ -100,6 +100,7 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 			for (InterceptorHandler handler : interceptorHandlers) {
 				result = handler.onInterceptor(invocationVal);
 				if(result != null) {
+					proceed = handler.getClass() == SqlRewriteHandler.class;
 					break;
 				}
 			}

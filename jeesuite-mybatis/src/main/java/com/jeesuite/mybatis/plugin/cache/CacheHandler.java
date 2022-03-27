@@ -555,7 +555,7 @@ public class CacheHandler implements InterceptorHandler {
 		}
 		
 		AuthUser currentUser;
-		if(invocationVal.isDynaDataPermEnaled() && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
+		if(userScope && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
 			sb.append(GlobalConstants.AT).append(currentUser.getId());
 		}
 		
