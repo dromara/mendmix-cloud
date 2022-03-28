@@ -11,7 +11,7 @@ import com.jeesuite.mybatis.datasource.DatabaseType;
 
 public class PageSqlUtils {
 	
-	private static final String REGEX_N_T_S = "\\n+|\\t+\\s{2,}";
+	private static final String NEXT_LINE_CHARS = "\r\n\t";
 
 	private static final String PAGE_SIZE_PLACEHOLDER = "#{pageSize}";
 
@@ -47,12 +47,11 @@ public class PageSqlUtils {
 	public static String getLimitSQL(DatabaseType dbType,String sql,PageParams pageParams){
 		return getLimitSQL(dbType, sql)//
 				.replace(OFFSET_PLACEHOLDER, String.valueOf(pageParams.offset()))//
-				.replace(PAGE_SIZE_PLACEHOLDER, String.valueOf(pageParams.getPageSize()))//
-				.replaceAll(REGEX_N_T_S, StringUtils.SPACE);
+				.replace(PAGE_SIZE_PLACEHOLDER, String.valueOf(pageParams.getPageSize()));
 	}
 	
 	public static String getCountSql(String sql){
-		sql = sql.replaceAll(REGEX_N_T_S, StringUtils.SPACE).split(SQL_ORDER_PATTERN)[0];
+		sql = StringUtils.replaceChars(sql, NEXT_LINE_CHARS, StringUtils.SPACE).split(SQL_ORDER_PATTERN)[0];
 		if(StringUtils.containsAny(sql, unionKeys) 
 				|| StringUtils.containsAny(sql, groupByKeys) 
 				|| nestSelectPattern.matcher(sql).find()) {
