@@ -119,11 +119,14 @@ public class InvocationVals {
 	}
 
 
-	public void setQueryCacheMetadata(QueryCacheMethodMetadata queryMethodMetadata,String cacheKey) {
+	public void setQueryCacheMetadata(QueryCacheMethodMetadata queryMethodMetadata) {
 		this.queryMethodMetadata = queryMethodMetadata;
+	}
+	
+
+	public void setCacheKey(String cacheKey) {
 		this.cacheKey = cacheKey;
 	}
-
 
 	public String getMapperNameSpace() {
 		return mapperNameSpace;

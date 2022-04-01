@@ -163,7 +163,7 @@ public class MybatisMapperParser {
 				// "<![CDATA["+child.getStringBody()+"]]");
 				// }
 			}
-			data = data.replaceAll("\\n+|\\t+", "");
+			data = StringUtils.replaceChars(data, "\r\n\t", " ");
 			if (StringUtils.isNotBlank(data)) {
 				sql.append(data).append("\t").append("\n");
 			}

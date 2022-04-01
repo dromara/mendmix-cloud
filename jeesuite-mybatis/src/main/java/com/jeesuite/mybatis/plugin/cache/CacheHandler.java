@@ -186,9 +186,9 @@ public class CacheHandler implements InterceptorHandler {
 			if(metadata == null) {
 				return null;
 			}
-			
-			cacheKey = genarateQueryCacheKey(metadata.keyPattern, invocationVal.getParameter(),invocationVal.isDynaDataPermEnabled());
-			invocationVal.setQueryCacheMetadata(metadata,cacheKey);
+			invocationVal.setQueryCacheMetadata(metadata);
+			cacheKey = genarateQueryCacheKey(invocationVal,metadata.keyPattern, invocationVal.getParameter());
+			invocationVal.setCacheKey(cacheKey);
 
 			//并发控制防止缓存穿透
 			if(!metadata.concurrency){
@@ -281,7 +281,7 @@ public class CacheHandler implements InterceptorHandler {
 					}
 				}else{
 					//之前没有按主键的缓存，增加按主键缓存
-					String idCacheKey = genarateQueryCacheKey(getQueryByPkMethodCache(mt.getId()).keyPattern,result,invocationVal.isDynaDataPermEnabled());
+					String idCacheKey = genarateQueryCacheKey(invocationVal,getQueryByPkMethodCache(mt.getId()).keyPattern,result);
 					
 					if(idCacheKey != null && cacheKey != null){
 						if(!CacheUtils.exists(idCacheKey)){						
@@ -304,7 +304,7 @@ public class CacheHandler implements InterceptorHandler {
 				}else {
 					if(updatePkCacheMethods.containsKey(mt.getId())){
 						UpdateByPkCacheMethodMetadata updateMethodCache = updatePkCacheMethods.get(mt.getId());
-						String idCacheKey = genarateQueryCacheKey(updateMethodCache.keyPattern,invocationVal.getParameter(),invocationVal.isDynaDataPermEnabled());
+						String idCacheKey = genarateQueryCacheKey(invocationVal,updateMethodCache.keyPattern,invocationVal.getParameter());
 						CacheUtils.remove(idCacheKey);
 					}else {
 						//针对按条件更新或者删除的方法，按查询条件查询相关内容，然后清理对应主键缓存内容
@@ -359,7 +359,7 @@ public class CacheHandler implements InterceptorHandler {
 					cacheFieldValues[i] = ReflectUtils.getObjectValue(object, methodCache.fieldNames[i]);
 					if(cacheFieldValues[i] == null)continue outter;
 				}
-				String fieldCacheKey = genarateQueryCacheKey(methodCache.keyPattern , cacheFieldValues,invocationVal.isDynaDataPermEnabled());
+				String fieldCacheKey = genarateQueryCacheKey(invocationVal,methodCache.keyPattern , cacheFieldValues);
 				
 				cacheFieldRefKey(fieldCacheKey,cacheKey, methodCache.getExpire());
 				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process addRefCache -> mapperId:{},cacheKey:{},refkey:{}",mt.getId(),fieldCacheKey,cacheKey);
@@ -511,7 +511,7 @@ public class CacheHandler implements InterceptorHandler {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static String genarateQueryCacheKey(String keyPattern,Object param,boolean userScope){
+	public static String genarateQueryCacheKey(InvocationVals invocationVal,String keyPattern,Object param){
 		String text;
 		try {
 			Object[] args;
@@ -547,7 +547,12 @@ public class CacheHandler implements InterceptorHandler {
 		}
 		if(text.length() > 64)text = DigestUtils.md5(text);
 
-		String key = String.format(keyPattern, text);
+		String key = String.format(keyPattern, text);	
+		QueryCacheMethodMetadata methodMetadata = invocationVal.getQueryMethodMetadata();
+		if(methodMetadata == null || methodMetadata.isPk || methodMetadata.uniqueIndex) {
+			return key;
+		}
+		
 		StringBuilder sb = new StringBuilder(key);
 		String tenantId = CurrentRuntimeContext.getTenantId();
 		if(tenantId != null) {
@@ -555,7 +560,7 @@ public class CacheHandler implements InterceptorHandler {
 		}
 		
 		AuthUser currentUser;
-		if(userScope && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
+		if(invocationVal.isDynaDataPermEnabled() && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
 			sb.append(GlobalConstants.AT).append(currentUser.getId());
 		}
 		
