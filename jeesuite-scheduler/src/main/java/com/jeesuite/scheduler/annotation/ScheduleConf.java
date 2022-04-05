@@ -21,12 +21,7 @@ import java.lang.annotation.Target;
 @Inherited
 @Documented
 public @interface ScheduleConf {
-	/**
-	 * 任务名称
-	 * @return
-	 */
-	String jobName();
-	
+
 	/**
 	 * 重试次数
 	 * @return

@@ -3,6 +3,7 @@ package com.jeesuite.springweb.exception;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpStatus;
@@ -77,7 +78,8 @@ public class GlobalExceptionHandler {
 		}
 
 		//默认情况http code都转换为200，异常信息由异常体传递
-		if(Boolean.parseBoolean(CurrentRuntimeContext.getRequest().getHeader(CustomRequestHeaders.HEADER_HTTP_STATUS_KEEP))){
+		HttpServletRequest request = CurrentRuntimeContext.getRequest();
+		if(request != null && Boolean.parseBoolean(request.getHeader(CustomRequestHeaders.HEADER_HTTP_STATUS_KEEP))){
 			int errorCode = resp.getCode();
 			if(errorCode >= 400 && errorCode<=500){
 				response.setStatus(errorCode);

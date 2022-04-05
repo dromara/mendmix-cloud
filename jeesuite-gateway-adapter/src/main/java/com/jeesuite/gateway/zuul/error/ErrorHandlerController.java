@@ -16,7 +16,6 @@ public class ErrorHandlerController implements ErrorController {
 
 	private static Logger log = LoggerFactory.getLogger("com.jeesuite");
 
-	@Override
 	public String getErrorPath() {
 		return "/error";
 	}

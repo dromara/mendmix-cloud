@@ -218,13 +218,16 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
                         MetadataReader reader = readerFactory.getMetadataReader(resource);
                         String className = reader.getClassMetadata().getClassName();
                         Class<?> clazz = Class.forName(className);
+                        
+                        String jobName;
                         if(clazz.isAnnotationPresent(ScheduleConf.class)){
                         	ScheduleConf annotation = clazz.getAnnotation(ScheduleConf.class);
+                        	jobName = StringUtils.uncapitalize(clazz.getSimpleName());
                         	AbstractJob job = (AbstractJob) context.getBean(clazz);
                         	job.setCronExpr(annotation.cronExpr());
                         	job.setExecuteOnStarted(annotation.executeOnStarted());
-                        	job.setGroup(groupName);
-                        	job.setJobName(annotation.jobName());
+                        	job.setGroup(groupName);                       	
+							job.setJobName(jobName);
                         	job.setRetries(annotation.retries());
                         	if(!schedulers.contains(job)){                        		
                         		schedulers.add(job);

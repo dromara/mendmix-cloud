@@ -23,7 +23,7 @@ public class FilterRegConfig {
 		registration.setFilter(filter);
 	    registration.addUrlPatterns("/*");
 	    registration.setName("authFilter");
-	    registration.setOrder(1);
+	    registration.setOrder(0);
 	    return registration;
 	} 
 	
