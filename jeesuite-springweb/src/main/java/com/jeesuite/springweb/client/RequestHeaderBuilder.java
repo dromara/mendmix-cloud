@@ -7,7 +7,6 @@ import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.TokenGenerator;
-import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.spring.InstanceFactory;
 
 public class RequestHeaderBuilder {
@@ -19,7 +18,7 @@ public class RequestHeaderBuilder {
 	}
 	
 	public static Map<String, String> getHeaders(){
-		Map<String, String> headers = WebUtils.getCustomHeaders();
+		Map<String, String> headers = CurrentRuntimeContext.getCustomHeaders();
 		//
 		Map<String, String> appHeaders = null;
 		if(headerProvider != null)appHeaders = headerProvider.headers();

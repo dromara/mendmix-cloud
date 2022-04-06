@@ -120,11 +120,10 @@ public class SecurityDelegating {
 	 * @param userId
 	 * @param uri
 	 */
-	public static UserSession doAuthorization() throws UnauthorizedException,ForbiddenAccessException{
+	public static UserSession doAuthorization(String method,String uri) throws UnauthorizedException,ForbiddenAccessException{
 		
 		UserSession session = getCurrentSession();
-		String uri = CurrentRuntimeContext.getRequest().getRequestURI();
-		
+
 		boolean isAdmin = session != null && session.getUser() != null 
 				&& session.getUser().isAdmin();
 		
@@ -133,7 +132,7 @@ public class SecurityDelegating {
 				throw new UnauthorizedException();
 			}
 			
-			String permissionKey = ApiPermssionCheckHelper.buildPermissionKey(CurrentRuntimeContext.getRequest().getMethod(), uri);
+			String permissionKey = ApiPermssionCheckHelper.buildPermissionKey(method,uri);
 			PermissionLevel permissionLevel = ApiPermssionCheckHelper.matchPermissionLevel(getInstance().resourceManager, permissionKey);
 			
 			//如果需鉴权
@@ -198,7 +197,7 @@ public class SecurityDelegating {
 	}
 
     public static void doLogout(){
-    	getInstance().sessionManager.destroySessionAndCookies(CurrentRuntimeContext.getRequest(), CurrentRuntimeContext.getResponse());
+    	getInstance().sessionManager.destroySessionAndCookies();
 	}
     
     public static void setSessionAttribute(String name, Object object) {

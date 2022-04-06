@@ -22,9 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.util.BeanUtils;
@@ -53,7 +54,7 @@ public class RequestLoggingInterceptor {
 			return pjp.proceed();
 		}
 
-		HttpServletRequest request = CurrentRuntimeContext.getRequest();
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 
 		Method method = ((MethodSignature) pjp.getSignature()).getMethod();
 

@@ -18,9 +18,6 @@ public class ThreadLocalContext {
 
 	private static ThreadLocal<Map<String, Object>> context = new ThreadLocal<>();
 	
-	public static final String REQUEST_KEY = "_ctx_request_";
-	public static final String RESPONSE_KEY = "_ctx_response_";
-	
 	public static void set(String key,Object value){
 		if(value == null)return;
 		getContextMap().put(key, value);

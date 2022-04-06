@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
-import com.jeesuite.gateway.zuul.error.ErrorHandlerController;
+import com.jeesuite.gateway.error.ErrorHandlerController;
 import com.jeesuite.gateway.zuul.router.CustomDiscoveryClientRouteLocator;  
   
 @Configuration  

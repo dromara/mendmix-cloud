@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jeesuite.common.CustomRequestHeaders;
-import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.http.HttpMethod;
 
 
@@ -181,22 +178,6 @@ public class WebUtils {
 		
 		return baseUrl;
 	}
-	
-	public static Map<String, String> getCustomHeaders(){
-		Map<String, String> headers = new HashMap<>();
-		HttpServletRequest request = ThreadLocalContext.get(ThreadLocalContext.REQUEST_KEY);
-		if(request == null)return headers;
-		Enumeration<String> headerNames = request.getHeaderNames();
-		 while(headerNames.hasMoreElements()){
-			 String headerName = headerNames.nextElement().toLowerCase();
-			 if(headerName.startsWith(CustomRequestHeaders.HEADER_PREFIX)){				 
-				 String headerValue = request.getHeader(headerName);
-				 if(headerValue != null)headers.put(headerName, headerValue);
-			 }
-		 }
-		 return headers;
-	}
-	
 	
 	public static final boolean isMultipartContent(HttpServletRequest request) {
 		if (!HttpMethod.POST.name().equalsIgnoreCase(request.getMethod())) {

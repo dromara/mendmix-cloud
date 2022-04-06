@@ -12,8 +12,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.model.WrapperResponse;
@@ -78,7 +79,7 @@ public class GlobalExceptionHandler {
 		}
 
 		//默认情况http code都转换为200，异常信息由异常体传递
-		HttpServletRequest request = CurrentRuntimeContext.getRequest();
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 		if(request != null && Boolean.parseBoolean(request.getHeader(CustomRequestHeaders.HEADER_HTTP_STATUS_KEEP))){
 			int errorCode = resp.getCode();
 			if(errorCode >= 400 && errorCode<=500){

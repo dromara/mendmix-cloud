@@ -1,4 +1,4 @@
-package com.jeesuite.gateway.zuul.filter.global;
+package com.jeesuite.gateway.zuul.auth;
 
 import java.util.List;
 
@@ -7,6 +7,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
@@ -37,7 +39,7 @@ import com.jeesuite.security.model.UserSession;
  * @version 1.0.0
  * @date Jan 23, 2022
  */
-public class GlobalAdditionHandler implements AuthAdditionHandler {
+public class ZuulAuthAdditionHandler implements AuthAdditionHandler {
 	
 	private static boolean openApiEnabled;
 
@@ -48,7 +50,7 @@ public class GlobalAdditionHandler implements AuthAdditionHandler {
 	private List<String> anonymousIpWhilelist = ResourceUtils.getList("jeesuite.acl.anonymous-ip-whilelist");
 	
 	public static void setOpenApiEnabled(boolean openApiEnabled) {
-		GlobalAdditionHandler.openApiEnabled = openApiEnabled;
+		ZuulAuthAdditionHandler.openApiEnabled = openApiEnabled;
 	}
 
 	@Override
@@ -94,7 +96,7 @@ public class GlobalAdditionHandler implements AuthAdditionHandler {
 	@Override
 	public void afterAuthentication(UserSession userSession) {
 		if(!actionLogEnabled)return;
-		HttpServletRequest request = CurrentRuntimeContext.getRequest();
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 		BizSystemModule module = CurrentSystemHolder.getModule(currentRouteName(request.getRequestURI()));
 		
 		ApiInfo apiInfo = module.getApiInfo(request.getRequestURI());

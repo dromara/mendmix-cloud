@@ -72,7 +72,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			throws Exception {
 
 		if(!integratedGatewayDeploy) {
-			CurrentRuntimeContext.init(request, response);
+			CurrentRuntimeContext.init(request);
 			//
 			if(invokeTokenCheckEnabled){	
 				String uri = request.getRequestURI();

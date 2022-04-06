@@ -15,7 +15,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-common</artifactId>
@@ -49,6 +49,12 @@
 		<dependency>
 			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-security</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.jeesuite</groupId>
+			<artifactId>jeesuite-logging</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
@@ -92,10 +98,18 @@
 			<optional>true</optional>
 		</dependency>
 
+		<!-- gateway -->
 		<dependency>
-			<groupId>com.jeesuite</groupId>
-			<artifactId>jeesuite-logging</artifactId>
-			<version>${project.version}</version>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-gateway-server</artifactId>
+			<version>3.1.1</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<version>3.4.16</version>
 			<optional>true</optional>
 		</dependency>
 

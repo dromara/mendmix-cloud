@@ -1,22 +1,23 @@
-package com.jeesuite.gateway.zuul.filter.pre;
+package com.jeesuite.gateway.filter.pre;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.server.ServerWebExchange;
 
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.DigestUtils;
+import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ParameterUtils;
+import com.jeesuite.gateway.FilterConstants;
+import com.jeesuite.gateway.filter.FilterHandler;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.gateway.zuul.auth.ZuulAuthAdditionHandler;
 import com.jeesuite.gateway.zuul.filter.AbstractZuulFilter;
-import com.jeesuite.gateway.zuul.filter.FilterHandler;
-import com.jeesuite.springweb.servlet.HttpServletRequestReader;
-import com.netflix.zuul.context.RequestContext;
 
 
 /**
@@ -31,9 +32,6 @@ import com.netflix.zuul.context.RequestContext;
  */
 public class SignatureRequestHandler implements FilterHandler{
 
-	public static final String X_SIGN_HEADER = "x-open-sign";
-	private static final String APP_ID_HEADER = "x-open-appId";
-	private static final String TIMESTAMP_HEADER = "timestamp";
 	
 	private Map<String, String> appIdSecretMappings = new HashMap<String, String>();
 	
@@ -44,17 +42,20 @@ public class SignatureRequestHandler implements FilterHandler{
 	}
 
 	@Override
-	public Object process(RequestContext ctx, HttpServletRequest request, BizSystemModule module) {
+	public ServerWebExchange process(ServerWebExchange exchange, BizSystemModule module) {
 		
-		ApiInfo apiInfo = module.getApiInfo(request.getRequestURI());
+		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getPath().value());
         if(apiInfo == null || !apiInfo.isOpenApi()) {
         	throw new JeesuiteBaseException("该接口未开放访问权限");
         }
         
-		String sign = request.getHeader(X_SIGN_HEADER);
+        HttpHeaders headers = exchange.getRequest().getHeaders();
+		String sign = headers.getFirst(FilterConstants.X_SIGN_HEADER);
 		if(StringUtils.isBlank(sign))return null;
-		String timestamp = request.getHeader(TIMESTAMP_HEADER);
-		String appId = request.getHeader(APP_ID_HEADER);
+		if(StringUtils.isBlank(sign))return null;
+		String timestamp = headers.getFirst(FilterConstants.TIMESTAMP_HEADER);
+		String appId = headers.getFirst(FilterConstants.APP_ID_HEADER);
+		
 		
 		if(StringUtils.isAnyBlank(timestamp,appId)) {
 			throw new JeesuiteBaseException("认证头信息不完整");
@@ -66,18 +67,19 @@ public class SignatureRequestHandler implements FilterHandler{
 			throw new JeesuiteBaseException("appId不存在");
 		}
 		
-		Map<String, Object> requestDatas = new HttpServletRequestReader(request).getRequestDatas();
+		Object body = exchange.getAttribute(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
 		
-		String signBaseString = StringUtils.trimToEmpty(ParameterUtils.mapToQueryParams(requestDatas))  + timestamp + secret;
+		Map<String, Object> map = JsonUtils.toHashMap(body.toString(), Object.class);
+		String signBaseString = StringUtils.trimToEmpty(ParameterUtils.mapToQueryParams(map))  + timestamp + secret;
 		String expectSign = DigestUtils.md5(signBaseString);
 		
 		if(!expectSign.equals(sign)) {
 			throw new JeesuiteBaseException("签名错误");
 		}
 		
-		ctx.set(AbstractZuulFilter.CTX_IGNORE_AUTH, Boolean.TRUE);
+		exchange.getAttributes().put(AbstractZuulFilter.CTX_IGNORE_AUTH, Boolean.TRUE);
 		
-		return null;
+		return exchange;
 	}
 
 	@Override

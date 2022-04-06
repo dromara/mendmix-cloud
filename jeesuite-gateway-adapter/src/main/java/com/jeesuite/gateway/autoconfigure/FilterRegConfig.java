@@ -8,7 +8,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import com.jeesuite.gateway.zuul.filter.global.GlobalAdditionHandler;
+import com.jeesuite.gateway.zuul.auth.ZuulAuthAdditionHandler;
 import com.jeesuite.security.SecurityDelegatingFilter;  
   
 @Configuration  
@@ -19,7 +19,7 @@ public class FilterRegConfig {
 	public FilterRegistrationBean<SecurityDelegatingFilter> securityDelegatingFilter() {
 	    FilterRegistrationBean<SecurityDelegatingFilter> registration = new FilterRegistrationBean<>();
 	    SecurityDelegatingFilter filter = new SecurityDelegatingFilter();
-	    filter.setAdditionHandler(new GlobalAdditionHandler());
+	    filter.setAdditionHandler(new ZuulAuthAdditionHandler());
 		registration.setFilter(filter);
 	    registration.addUrlPatterns("/*");
 	    registration.setName("authFilter");

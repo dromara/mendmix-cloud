@@ -31,10 +31,10 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdvice;
 
-import com.jeesuite.common.CurrentRuntimeContext;
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.InstanceFactory;
 
 /**
@@ -85,7 +85,7 @@ public class RequestBodyEnhancerAdvice implements RequestBodyAdvice,Initializing
 	public Object afterBodyRead(Object body, HttpInputMessage inputMessage, MethodParameter parameter, Type targetType,
 			Class<? extends HttpMessageConverter<?>> converterType) {
 		
-		HttpServletRequest request = CurrentRuntimeContext.getRequest();
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 		for (RequestBodyEnhancer enhancer : enhancers) {
 			body = enhancer.process(request,body, parameter);
 		}

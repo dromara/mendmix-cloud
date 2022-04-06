@@ -92,9 +92,8 @@ public class ActionLogCollector {
     public static void onResponseEnd(HttpServletResponse response,Throwable throwable){
     	if(context.get() == null) {
     		if(throwable != null) {
-    			String requestURI = CurrentRuntimeContext.getRequest().getRequestURI();
     			if (throwable instanceof JeesuiteBaseException) {
-    				log.warn("bizError -> request:{},message:{}",requestURI,throwable.getMessage());
+    				log.warn("bizError -> message:{}",throwable.getMessage());
     			}else {
     				log.error("systemError",throwable);
     			}

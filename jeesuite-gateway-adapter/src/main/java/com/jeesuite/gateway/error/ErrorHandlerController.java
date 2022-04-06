@@ -1,4 +1,4 @@
-package com.jeesuite.gateway.zuul.error;
+package com.jeesuite.gateway.error;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

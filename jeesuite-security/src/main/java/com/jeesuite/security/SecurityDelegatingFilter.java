@@ -79,12 +79,12 @@ public class SecurityDelegatingFilter implements Filter {
 			additionHandler.beforeAuthentication(request, response);
 		}
 		
-		CurrentRuntimeContext.init(request, response);
+		CurrentRuntimeContext.init(request);
 
 		UserSession userSession = null;
 		try {
 			if(additionHandler == null || !additionHandler.customAuthentication(request)) {
-				userSession = SecurityDelegating.doAuthorization();
+				userSession = SecurityDelegating.doAuthorization(request.getMethod(),request.getRequestURI());
 			}
 		} catch (UnauthorizedException e) {
 			if(WebUtils.isAjax(request)){				
