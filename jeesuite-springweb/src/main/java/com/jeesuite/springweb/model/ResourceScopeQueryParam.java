@@ -7,7 +7,7 @@ public class ResourceScopeQueryParam {
 
 	private String tenantId;
 	private String clientType;
-	private String userType;
+	private String resourceType;
 	private String userId;
 	private String departmentId;
 	private String type;
@@ -28,12 +28,13 @@ public class ResourceScopeQueryParam {
 		this.clientType = clientType;
 	}
 
-	public String getUserType() {
-		return userType;
+
+	public String getResourceType() {
+		return resourceType;
 	}
 
-	public void setUserType(String userType) {
-		this.userType = userType;
+	public void setResourceType(String resourceType) {
+		this.resourceType = resourceType;
 	}
 
 	public String getUserId() {
@@ -69,7 +70,6 @@ public class ResourceScopeQueryParam {
 		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 		if(currentUser != null) {
 			param.userId = currentUser.getId();
-			param.userType = currentUser.getType();
 		}
 		return param;
 	}

@@ -44,7 +44,7 @@ public class RwRouteHandler implements InterceptorHandler {
 			}
 		}else{
 			logger.debug("Method[{}] use Master Strategy..",ms.getId());
-			MybatisRuntimeContext.userMaster();;
+			MybatisRuntimeContext.userMaster();
 		}
 		
 		return null;

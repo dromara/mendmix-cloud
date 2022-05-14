@@ -2,20 +2,11 @@ package com.jeesuite.security;
 
 import java.io.Serializable;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpCookie;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseCookie.ResponseCookieBuilder;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
-import org.springframework.util.MultiValueMap;
 
 import com.jeesuite.common.GlobalRuntimeContext;
-import com.jeesuite.common.ThreadLocalContext;
+import com.jeesuite.security.context.ReactiveRequestContextAdapter;
+import com.jeesuite.security.context.ServletRequestContextAdapter;
 import com.jeesuite.security.model.UserSession;
 
 /**
@@ -27,53 +18,36 @@ import com.jeesuite.security.model.UserSession;
  */
 public class SecuritySessionManager {
 
-	private static final String CTX_REQUEST_NAME = "ctx_request_obj";
 	private final static String SESSION_UID_CACHE_KEY = "uid:%s";
 	private static String cacheName = "session";
 
-	private static String cookieDomain;
-	private static String headerTokenName;
-	private static String sessionIdName;
-	private static boolean keepCookie;
-	private static int sessionExpireIn = 0;
+	private volatile String cookieDomain;
+	private String headerTokenName;
+	private String sessionIdName;
+	private boolean keepCookie;
+	private int sessionExpireIn = 0;
 	
 	private boolean isDevTestEnv = "dev|local|test".contains(GlobalRuntimeContext.ENV);
 
 	private SecurityStorageManager storageManager;
 	
-	public static void init(HttpServletRequest request,HttpServletResponse response) {
-		if (cookieDomain == null) {
-			cookieDomain = request.getServerName();
-			if (request.getServerPort() != 80 && request.getServerPort() != 443) {
-				cookieDomain = cookieDomain + ":" + request.getServerPort();
-			}
-		}
-		ThreadLocalContext.set(CTX_REQUEST_NAME, new RequestResponsePair(request, response, true));
-	}
-	
-	public static void init(ServerHttpRequest request,ServerHttpResponse response) {
-		if (cookieDomain == null) {
-			cookieDomain = request.getRemoteAddress().getHostName();
-			if (request.getLocalAddress().getPort() != 80 && request.getLocalAddress().getPort() != 443) {
-				cookieDomain = cookieDomain + ":" + request.getLocalAddress().getPort();
-			}
-		}
-		ThreadLocalContext.set(CTX_REQUEST_NAME, new RequestResponsePair(request, response, false));
-	}
-	
-	private RequestResponsePair getRequestResponsePair() {
-		return ThreadLocalContext.get(CTX_REQUEST_NAME);
-	}
+	private RequestContextAdapter requestContextAdapter;
 
 	public SecuritySessionManager(SecurityDecisionProvider decisionProvider,SecurityStorageManager storageManager) {
 		this.storageManager = storageManager;
-		cookieDomain = decisionProvider.cookieDomain();
-		sessionIdName = decisionProvider.sessionIdName();
-		headerTokenName = decisionProvider.headerTokenName();
-		keepCookie = decisionProvider.keepCookie();
-		sessionExpireIn = decisionProvider.sessionExpireIn();
+		this.cookieDomain = decisionProvider.cookieDomain();
+		this.sessionIdName = decisionProvider.sessionIdName();
+		this.headerTokenName = decisionProvider.headerTokenName();
+		this.keepCookie = decisionProvider.keepCookie();
+		this.sessionExpireIn = decisionProvider.sessionExpireIn();
 		//
-		this.storageManager.addCahe(cacheName, sessionExpireIn);
+		this.storageManager.addCahe(cacheName, this.sessionExpireIn);
+		//
+		if(decisionProvider.isServletType()) {
+			requestContextAdapter = new ServletRequestContextAdapter();
+		}else {
+			requestContextAdapter = new ReactiveRequestContextAdapter();
+		}
 	}
 
 	public UserSession getLoginSession(String sessionId) {
@@ -95,10 +69,11 @@ public class SecuritySessionManager {
 		} 
 		if (createIfAbsent && session == null) {
 			session = UserSession.create();
-			if(sessionId != null &&isDevTestEnv) {
+			if(sessionId != null && isDevTestEnv) {
 				session.setSessionId(sessionId);
 			}
-			getRequestResponsePair().addSessionCookies(session.getSessionId(), sessionExpireIn);
+			int expire = keepCookie ? sessionExpireIn : -1;
+			requestContextAdapter.addCookie(cookieDomain, cookieDomain, session.getSessionId(), expire);
 			//
 			storageLoginSession(session);
 		}
@@ -146,88 +121,24 @@ public class SecuritySessionManager {
 		return storageManager.getCache(cacheName).getMapValue(sessionId, name);
 	}
 
+
 	public String getSessionId() {
-		return getRequestResponsePair().getSessionId();
-	}
-
-	
-
-	public String destroySessionAndCookies() {
-
-		String sessionId = getRequestResponsePair().getSessionId();
-		if (StringUtils.isNotBlank(sessionId)) {
-			removeLoginSession(sessionId);
-			//
-			getRequestResponsePair().addSessionCookies(StringUtils.EMPTY, 0);
+		String sessionId = requestContextAdapter.getHeader(headerTokenName);
+		if (StringUtils.isNotBlank(sessionId) && sessionId.length() >= 32) {
+			return sessionId;
 		}
+		sessionId = requestContextAdapter.getCookie(sessionIdName);
 		return sessionId;
 	}
 
-	
-	private static class RequestResponsePair {
-		Object request;
-		Object response;
-		boolean servlet;
-		
-		public RequestResponsePair(Object request, Object response, boolean servlet) {
-			super();
-			this.request = request;
-			this.response = response;
-			this.servlet = servlet;
+	public String destroySessionAndCookies() {
+		String sessionId = getSessionId();
+		if (StringUtils.isNotBlank(sessionId)) {
+			removeLoginSession(sessionId);
+			//
+			requestContextAdapter.addCookie(cookieDomain, cookieDomain, StringUtils.EMPTY, 0);
 		}
-		
-		public void addSessionCookies(String sessionId,int expire) {
-			if(servlet) {
-				Cookie cookie = new Cookie(sessionIdName, sessionId);
-				cookie.setDomain(cookieDomain);
-				cookie.setPath("/");
-				cookie.setHttpOnly(true);
-				if (expire == 0 || !keepCookie) {
-					cookie.setMaxAge(expire);
-				}
-			}else {
-				ResponseCookieBuilder cookieBuilder = ResponseCookie.from(sessionIdName, sessionId).domain(cookieDomain).httpOnly(true);
-				if (expire == 0 || !keepCookie) {
-					cookieBuilder.maxAge(expire);
-				}
-				((ServerHttpResponse)response).addCookie(cookieBuilder.build());
-			}
-		}
-		
-		
-		public String getSessionId() {
-			String sessionId = null;
-			if(servlet) {
-				HttpServletRequest servletRequest = (HttpServletRequest) request;
-				sessionId = servletRequest.getHeader(headerTokenName);
-				if (StringUtils.isNotBlank(sessionId) && sessionId.length() >= 32) {
-					return sessionId;
-				}
-				final Cookie[] oCookies = servletRequest.getCookies();
-				if (oCookies != null) {
-					String name;
-					for (final Cookie item : oCookies) {
-						name = item.getName();
-						if (sessionIdName.equals(name)) {
-							return item.getValue();
-						}
-					}
-				}
-			}else {
-				ServerHttpRequest httpRequest = (ServerHttpRequest) request;
-				sessionId = httpRequest.getHeaders().getFirst(headerTokenName);
-				if (StringUtils.isNotBlank(sessionId) && sessionId.length() >= 32) {
-					return sessionId;
-				}
-				MultiValueMap<String, HttpCookie> cookies = httpRequest.getCookies();
-				if(cookies != null && cookies.containsKey(sessionIdName)) {
-					return cookies.get(sessionIdName).get(0).getValue();
-				}
-			}
-
-			return sessionId;
-		}
-
+		return sessionId;
 	}
 
 }

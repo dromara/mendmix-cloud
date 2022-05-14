@@ -26,12 +26,12 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.exception.ForbiddenAccessException;
 import com.jeesuite.common.exception.UnauthorizedException;
 import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.WebUtils;
+import com.jeesuite.security.context.ServletRequestContextAdapter;
 import com.jeesuite.security.model.UserSession;
 
 /**
@@ -74,12 +74,12 @@ public class SecurityDelegatingFilter implements Filter {
 			chain.doFilter(req, res);
 			return;
 		}
+		//
+		ServletRequestContextAdapter.init(request, response);
 		
 		if(additionHandler != null) {
 			additionHandler.beforeAuthentication(request, response);
 		}
-		
-		CurrentRuntimeContext.init(request);
 
 		UserSession userSession = null;
 		try {

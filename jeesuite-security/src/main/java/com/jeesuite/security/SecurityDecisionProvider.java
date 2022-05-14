@@ -62,6 +62,10 @@ public abstract class SecurityDecisionProvider {
 		return true;
 	}
 	
+	public boolean isServletType() {
+		return true;
+	}
+	
 	public CacheType cacheType(){
 		if(CacheType.redis.name().equals(ResourceUtils.getProperty(SecurityConstants.CONFIG_STORAGE_TYPE))){
 			return CacheType.redis;

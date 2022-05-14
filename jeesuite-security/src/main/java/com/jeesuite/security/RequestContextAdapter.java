@@ -15,29 +15,20 @@
  */
 package com.jeesuite.security;
 
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
-
-import reactor.core.publisher.Mono;
-
 /**
  * 
  * <br>
- * Class Name   : ReactiveFilter
+ * Class Name   : RequestContextAdapter
  *
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @version 1.0.0
- * @date Apr 5, 2022
+ * @date May 14, 2022
  */
-public class ReactiveSecurityDelegatingFilter implements WebFilter {
+public interface RequestContextAdapter {
 
+	String getHeader(String headerName);
 	
-	@Override
-	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-		ServerHttpRequest request = exchange.getRequest();
-		return null;
-	}
-
+	String getCookie(String cookieName);
+	
+	void addCookie(String domain,String cookieName,String cookieValue,int expire);
 }
