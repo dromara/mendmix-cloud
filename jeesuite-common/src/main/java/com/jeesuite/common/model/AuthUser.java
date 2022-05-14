@@ -25,6 +25,7 @@ public class AuthUser {
 	private String name;
 	private String type;//用户类型类型
 	private String deptId;
+	private String postId;
 	private String principalType;
 	private String principalId;
 	private boolean admin;
@@ -55,6 +56,12 @@ public class AuthUser {
 		this.deptId = deptId;
 	}
 	
+	public String getPostId() {
+		return postId;
+	}
+	public void setPostId(String postId) {
+		this.postId = postId;
+	}
 	public String getPrincipalType() {
 		return principalType;
 	}
@@ -82,6 +89,7 @@ public class AuthUser {
 		builder.append(trimToPlaceHolder(name)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(type)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(deptId)).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(postId)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(principalType)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(principalId)).append(CONTACT_CHAR);
 		builder.append(admin).append(CONTACT_CHAR);
@@ -98,9 +106,10 @@ public class AuthUser {
 		user.setName(placeHolderToNull(splits[1]));
 		user.setType(placeHolderToNull(splits[2]));
 		user.setDeptId(placeHolderToNull(splits[3]));
-		user.setPrincipalType(placeHolderToNull(splits[4]));
-		user.setPrincipalId(placeHolderToNull(splits[5]));
-		user.setAdmin(Boolean.parseBoolean(splits[6]));
+		user.setPostId(placeHolderToNull(splits[4]));
+		user.setPrincipalType(placeHolderToNull(splits[5]));
+		user.setPrincipalId(placeHolderToNull(splits[6]));
+		user.setAdmin(Boolean.parseBoolean(splits[7]));
 		
 		return user;
 	}

@@ -14,6 +14,7 @@ public class GlobalConstants {
 	public static final String PARAM_RETURN_URL = "returnUrl";
 	public static final String PARAM_AUTH_CODE = "auth_code";
 	public static final String PARAM_CODE = "code";
+	public final static String PARAM_MSG = "msg";
 	public final static String PARAM_DATA = "data";
 	public final static String PARAM_SIGN = "sign";
 	

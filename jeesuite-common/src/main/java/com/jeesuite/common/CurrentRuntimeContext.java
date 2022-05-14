@@ -1,10 +1,9 @@
 package com.jeesuite.common;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.exception.UnauthorizedException;
 import com.jeesuite.common.model.AuthUser;
-import com.jeesuite.common.util.SimpleCryptUtils;
 
 /**
  * 当前上下文 <br>
@@ -26,54 +24,30 @@ public class CurrentRuntimeContext {
 
 	private final static Logger logger = LoggerFactory.getLogger("com.jeesuite");
 	
-	private static String[] contextHeaders = new String[] { 
+	private static List<String> contextHeaders = Arrays.asList( 
 			CustomRequestHeaders.HEADER_FROWARDED_FOR,
 			CustomRequestHeaders.HEADER_TENANT_ID,
 			CustomRequestHeaders.HEADER_CLIENT_TYPE, 
 			CustomRequestHeaders.HEADER_PLATFORM_TYPE,
 			CustomRequestHeaders.HEADER_INVOKER_APP_ID, 
 			CustomRequestHeaders.HEADER_REQUEST_ID 
-	};
+	);
 
-	public static void init(HttpServletRequest request) {
-
-		ThreadLocalContext.unset();
-        //
-		String headerVal;
-		for (String headerName : contextHeaders) {
-			headerVal = request.getHeader(headerName);
-			if (headerVal != null) {
-				setContextVal(headerName, headerVal);
-			}
-		}
-		//
-		headerVal = request.getHeader(CustomRequestHeaders.HEADER_AUTH_USER);
-		AuthUser user = AuthUser.decode(headerVal);
-		if (user != null) {
-			ThreadLocalContext.set(CustomRequestHeaders.HEADER_AUTH_USER, user);
-		}
-		//
-		headerVal = request.getHeader(CustomRequestHeaders.HEADER_VERIFIED_MOBILE);
-		if (headerVal != null) {
-			ThreadLocalContext.set(CustomRequestHeaders.HEADER_VERIFIED_MOBILE, SimpleCryptUtils.decrypt(headerVal));
-		}
-	}
-
-	public static void init(Map<String, List<String>> headers) {
+	public static void addContextHeaders(Map<String, String> headers) {
 		
 		ThreadLocalContext.unset();
 		String headerVal;
 		for (String headerName : contextHeaders) {
 			if (!headers.containsKey(headerName))
 				continue;
-			headerVal = headers.get(headerName).get(0);
+			headerVal = headers.get(headerName);
 			if (headerVal != null) {
 				setContextVal(headerName, headerVal);
 			}
 		}
         //
 		if (headers.containsKey(CustomRequestHeaders.HEADER_AUTH_USER)) {
-			headerVal = headers.get(CustomRequestHeaders.HEADER_AUTH_USER).get(0);
+			headerVal = headers.get(CustomRequestHeaders.HEADER_AUTH_USER);
 			AuthUser user = AuthUser.decode(headerVal);
 			if (user != null) {
 				ThreadLocalContext.set(CustomRequestHeaders.HEADER_AUTH_USER, user);
@@ -81,6 +55,16 @@ public class CurrentRuntimeContext {
 		}
 	}
 
+	public static void addContextHeader(String name,String value) {
+		if(contextHeaders.contains(name)){
+			setContextVal(name, value);
+		}else if(CustomRequestHeaders.HEADER_AUTH_USER.equals(name)) {
+			AuthUser user = AuthUser.decode(value);
+			if (user != null) {
+				ThreadLocalContext.set(CustomRequestHeaders.HEADER_AUTH_USER, user);
+			}
+		}
+	}
 
 	public static Map<String, String> getCustomHeaders() {
 		Map<String, String> map = new HashMap<>();
@@ -196,6 +180,7 @@ public class CurrentRuntimeContext {
 		return value;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <V> V getContextVal(String headerName, Class<V> vClass, boolean validate) {
 		String value = getContextVal(headerName, validate);
 		if (StringUtils.isBlank(value))

@@ -33,6 +33,7 @@ public class ThreadLocalContext {
 		return context.get().containsKey(key);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static <T> T get(String key){
 		if(context.get() == null)return null;
 		return (T) context.get().get(key);
