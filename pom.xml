@@ -57,6 +57,7 @@
 		<java.version>1.8</java.version>
 		<spring.version>5.3.18</spring.version>
 		<spring-cloud.version>2021.0.1</spring-cloud.version>
+		<spring-cloud-component.version>3.1.1</spring-cloud-component.version>
 		<spring-boot.version>2.6.6</spring-boot.version>
 		<spring-cloud-netflix.version>2.2.10.RELEASE</spring-cloud-netflix.version>
 		<kafka.version>2.3.1</kafka.version>
@@ -185,6 +186,12 @@
 			</dependency>
 
 			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+
+			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
 				<version>${spring-cloud-netflix.version}</version>
@@ -205,13 +212,13 @@
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-commons</artifactId>
-				<version>3.1.1</version>
+				<version>${spring-cloud-component.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-openfeign-core</artifactId>
-				<version>3.1.1</version>
+				<version>${spring-cloud-component.version}</version>
 			</dependency>
 
 		</dependencies>

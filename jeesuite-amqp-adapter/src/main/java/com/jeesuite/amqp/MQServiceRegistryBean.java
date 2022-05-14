@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016-2020 www.jeesuite.com.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jeesuite.amqp;
 
 import java.util.HashMap;
@@ -8,14 +23,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import com.jeesuite.amqp.memoryqueue.MemoryQueueProducerAdapter;
 import com.jeesuite.amqp.qcloud.cmq.CMQConsumerAdapter;
 import com.jeesuite.amqp.qcloud.cmq.CMQProducerAdapter;
+import com.jeesuite.amqp.redis.RedisConsumerAdapter;
+import com.jeesuite.amqp.redis.RedisProducerAdapter;
 import com.jeesuite.amqp.rocketmq.RocketProducerAdapter;
 import com.jeesuite.amqp.rocketmq.RocketmqConsumerAdapter;
 import com.jeesuite.common.JeesuiteBaseException;
@@ -29,6 +48,9 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 	private ApplicationContext applicationContext;
 	private MQConsumer consumer;
 	private MQProducer producer;
+	
+	@Autowired(required = false)
+	private StringRedisTemplate redisTemplate;
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
@@ -53,6 +75,8 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 			producer = new CMQProducerAdapter();
 		}else if("memoryqueue".equals(providerName)){
 			producer = new MemoryQueueProducerAdapter();
+		}else if("redis".equals(providerName)){
+			producer = new RedisProducerAdapter(redisTemplate);
 		}else{
 			throw new JeesuiteBaseException("NOT_SUPPORT[providerName]:" + providerName);
 		}
@@ -79,6 +103,8 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 				consumer = new CMQConsumerAdapter(messageHandlerMaps);
 			}else if("memoryqueue".equals(providerName)){
 				MemoryQueueProducerAdapter.setMessageHandlers(messageHandlerMaps);
+			}else if("redis".equals(providerName)){
+				consumer = new RedisConsumerAdapter(redisTemplate, messageHandlerMaps);
 			}else{
 				throw new JeesuiteBaseException("NOT_SUPPORT[providerName]:" + providerName);
 			}

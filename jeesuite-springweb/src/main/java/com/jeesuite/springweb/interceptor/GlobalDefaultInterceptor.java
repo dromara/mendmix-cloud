@@ -1,5 +1,6 @@
 package com.jeesuite.springweb.interceptor;
 
+import java.util.Enumeration;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +19,7 @@ import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.exception.ForbiddenAccessException;
+import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
@@ -40,11 +42,11 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	
 	private boolean isLocalEnv = "local".equals(GlobalRuntimeContext.ENV);
 	//调用token检查
-	private boolean invokeTokenCheckEnabled = ResourceUtils.getBoolean("jeesuite.request.invoke-token.enabled", !isLocalEnv);
+	private boolean invokeTokenCheckEnabled = ResourceUtils.getBoolean("jeesuite.acl.invoke-token.enabled", !isLocalEnv);
 	//行为日志采集
-	private boolean requestLogEnabled = ResourceUtils.getBoolean("jeesuite.request.log.enabled", false);
+	private boolean requestLogEnabled = ResourceUtils.getBoolean("jeesuite.actionlog.enabled", false);
 	//
-	private boolean requestLogGetIngore = ResourceUtils.getBoolean("jeesuite.request.log.getMethod.ignore", true);
+	private boolean requestLogGetIngore = ResourceUtils.getBoolean("jeesuite.actionlog.getMethod.ignore", true);
 	
 	private boolean integratedGatewayDeploy = false;
 
@@ -53,14 +55,14 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	
 	public GlobalDefaultInterceptor() {
 		try {
-			Class.forName("org.springframework.cloud.netflix.zuul.EnableZuulProxy");
+			Class.forName("org.springframework.cloud.gateway.filter.GlobalFilter");
 			integratedGatewayDeploy = true;
 		} catch (Exception e) {}
 		String contextPath = GlobalRuntimeContext.getContextPath();
 		if(invokeTokenCheckEnabled) {
 			invoketokenCheckIgnoreUriMather.addUriPattern(contextPath, "/error");
 		}
-		List<String> ignoreUris = ResourceUtils.getList("jeesuite.request.invoke-token.ignore-uris");
+		List<String> ignoreUris = ResourceUtils.getList("jeesuite.acl.invoke-token.ignore-uris");
 		for (String uri : ignoreUris) {
 			invoketokenCheckIgnoreUriMather.addUriPattern(contextPath, uri);
 		}
@@ -72,7 +74,12 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			throws Exception {
 
 		if(!integratedGatewayDeploy) {
-			CurrentRuntimeContext.init(request);
+			Enumeration<String> headerNames = request.getHeaderNames();
+			String headerName;
+			while(headerNames.hasMoreElements()) {
+				headerName = headerNames.nextElement();
+				CurrentRuntimeContext.addContextHeader(headerName,request.getHeader(headerName));
+			}
 			//
 			if(invokeTokenCheckEnabled){	
 				String uri = request.getRequestURI();
@@ -106,7 +113,8 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 					logging = !requestLogGetIngore || !request.getMethod().equals(RequestMethod.GET.name());
 				}
 				if(logging) {
-					ActionLogCollector.onRequestStart(request).apiMeta(config);
+					String ipAddr = IpUtils.getIpAddr(request);
+					ActionLogCollector.onRequestStart(request.getMethod(),request.getRequestURI(),ipAddr).apiMeta(config).addContext();
 				}
 			}
 		}
@@ -123,7 +131,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
-		ActionLogCollector.onResponseEnd(response, ex);
+		ActionLogCollector.onResponseEnd(response.getStatus(), ex);
 		ThreadLocalContext.unset();
 	}
 	

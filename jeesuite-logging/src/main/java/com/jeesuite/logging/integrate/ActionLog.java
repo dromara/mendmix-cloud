@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.model.AuthUser;
@@ -29,6 +30,7 @@ public class ActionLog implements Serializable{
 	public static final String IGNORE_FLAG = "[ignore]";
 	
 	private String appId;
+	private String env;
 	private String tenantId;
 	private String platformType;
 	private String clientType;
@@ -53,7 +55,13 @@ public class ActionLog implements Serializable{
 	public void setAppId(String appId) {
 		this.appId = appId;
 	}
-
+	
+	public String getEnv() {
+		return env;
+	}
+	public void setEnv(String env) {
+		this.env = env;
+	}
 	/**
 	 * @return the actionName
 	 */
@@ -249,6 +257,11 @@ public class ActionLog implements Serializable{
     public ActionLog exception(Exception e) {
     	setExceptions(StringUtils.defaultIfBlank(e.getMessage(), LogMessageFormat.buildExceptionMessages(e)));
     	setResponseCode(500);
+    	return this;
+    }
+    
+    public ActionLog addContext() {
+    	ThreadLocalContext.set(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME,this);
     	return this;
     }
 

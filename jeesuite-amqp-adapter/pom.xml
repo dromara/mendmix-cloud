@@ -8,7 +8,7 @@
 	    <version>13</version>
 	</parent>
 	<artifactId>jeesuite-amqp-adapter</artifactId>
-	<version>1.3.9-SNAPSHOT</version>
+	<version>1.4.0</version>
 	<description>MQ适配器，支持各种云厂商云MQ，已经原生kafka,RocketMQ,RabbitMQ等</description>
 
 	<dependencies>
@@ -77,6 +77,13 @@
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
 			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-redis</artifactId>
+			<version>2.3.4.RELEASE</version>
+			<optional>true</optional>
 		</dependency>
 
 	</dependencies>

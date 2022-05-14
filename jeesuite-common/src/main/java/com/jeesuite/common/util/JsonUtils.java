@@ -15,36 +15,93 @@
  */
 package com.jeesuite.common.util;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonParser;
+import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
-import com.jeesuite.common.json.JsonMapper;
+import com.jeesuite.common.GlobalConstants;
 
 public class JsonUtils {
 	
 	
-	private static JsonMapper jsonMapper = JsonMapper.getDefault();
+	private static ObjectMapper jsonMapper = null;
 	
+	private static String JSON_OBJECT_PREFIX = "{";
+	
+	private static String JSON_ARRAY_PREFIX = "[";
+	
+	
+	public static void setObjectMapper(ObjectMapper jsonMapper) {
+		JsonUtils.jsonMapper = jsonMapper;
+	}
+
 	public static ObjectMapper getMapper(){
-		return jsonMapper.getMapper();
+		if(jsonMapper != null)return jsonMapper;
+		synchronized (JsonUtils.class) {
+			if(jsonMapper != null)return jsonMapper;
+			if(jsonMapper == null) {
+				jsonMapper = new ObjectMapper();
+				//设置输入时忽略在JSON字符串中存在但Java对象实际没有的属性
+				jsonMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+				jsonMapper.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, false);
+				jsonMapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
+				jsonMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+				jsonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+				jsonMapper.disable(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS);
+				jsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+				jsonMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
+			}
+		}
+		return jsonMapper;
+	}
+	
+	public static boolean isJsonString(String str) {
+		return isJsonObjectString(str) || isJsonArrayString(str);
+	}
+	
+    public static boolean isJsonObjectString(String str) {
+		return StringUtils.trimToEmpty(str).startsWith(JSON_OBJECT_PREFIX);
+	}
+    
+    public static boolean isJsonArrayString(String str) {
+    	return StringUtils.trimToEmpty(str).startsWith(JSON_ARRAY_PREFIX);
 	}
 	
 	public static String toJson(Object object) {
-		return jsonMapper.toJson(object);
+		try {
+			return getMapper().writeValueAsString(object);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
+	
+	public static byte[] toJsonBytes(Object object) {
+		return toJson(object).getBytes(StandardCharsets.UTF_8);
+	}
+	
 	/**
 	 * 不含值为null的属性
 	 * @param object
 	 * @return
 	 */
 	public static String toJsonIgnoreNullField(Object object) {
-		return JsonMapper.nonNullMapper().toJson(object);
+		return toJson(object);
 	}
 	
 	/**
@@ -61,33 +118,63 @@ public class JsonUtils {
 	}
 	
 	public static <T> T toObject(String jsonString, Class<T> clazz) {
-		return  jsonMapper.toObject(jsonString, clazz);
+		if (StringUtils.isEmpty(jsonString)) {
+			return null;
+		}
+		try {
+			return getMapper().readValue(jsonString, clazz);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public static <T> T toObject(String jsonString, TypeReference<T> valueTypeRef) {
+		if (StringUtils.isEmpty(jsonString)) {
+			return null;
+		}
 		try {
-		  JsonParser parser = jsonMapper.getMapper().createParser(jsonString);
-		  return  jsonMapper.getMapper().readValue(parser, valueTypeRef);
-		} catch (Exception e) {
+			return getMapper().readValue(jsonString, valueTypeRef);
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 	
 	public static <T> List<T> toList(String jsonString, Class<T> clazz) {
-		return jsonMapper.toList(jsonString, clazz);
+		if (StringUtils.isEmpty(jsonString)) {
+			return null;
+		}
+
+		JavaType javaType = getMapper().getTypeFactory().constructParametricType(ArrayList.class, clazz);
+		return toObject(jsonString, javaType);
 	}
 	
 	public static <K,V> Map<K, V> toHashMap(String jsonString, Class<K> keyType, Class<V> valueType) {
-		return jsonMapper.toHashMap(jsonString, keyType, valueType);
+		if (StringUtils.isEmpty(jsonString)) {
+			return null;
+		}
+		JavaType javaType = getMapper().getTypeFactory().constructParametricType(HashMap.class, keyType,valueType);
+		return toObject(jsonString, javaType);
 	}
 	
 	public static <V> Map<String, V> toHashMap(String jsonString, Class<V> valueType) {
-		return jsonMapper.toHashMap(jsonString, String.class, valueType);
+		return toHashMap(jsonString, String.class, valueType);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T toObject(String jsonString, JavaType javaType) {
+		if (StringUtils.isEmpty(jsonString)) {
+			return null;
+		}
+		try {
+			return (T) getMapper().readValue(jsonString, javaType);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public static JsonNode getNode(String jsonString,String nodeName){
 		try {
-			JsonNode node = jsonMapper.getMapper().readTree(jsonString);	
+			JsonNode node = getMapper().readTree(jsonString);	
 			return nodeName == null ? node : node.get(nodeName);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -112,7 +199,7 @@ public class JsonUtils {
 	 */
 	public static String getJsonNodeValue(JsonNode node, String attrs) {  
 		//ObjectNode,ArrayNode
-        int index = attrs.indexOf('.');  
+        int index = attrs.indexOf(GlobalConstants.DOT);  
         JsonNode subNode = null;
         if (index == -1) {  
             if (node != null) {  
@@ -145,12 +232,15 @@ public class JsonUtils {
     }  
 	
 	public static void main(String[] args) {
-		String json = "{\"topDept\":{\"deptId\":\"00000030\",\"deptName\":\"事业部\"},\"data\":[{\"orgId\":\"1000\",\"orgName\":\"统一框架模板项目租户\",\"orgType\":\"supplier\",\"depts\":[{\"deptId\":\"00000030\",\"deptName\":\"事业部\"},{\"deptId\":\"00027675\",\"deptName\":\"中科云谷\"}]}]}";
-		String value = getJsonNodeValue(json, "topDept.deptName");
-		System.out.println(value);
+		String json = "{\"id\":1300,\"details\":{\"type\":\"catalog\",\"code\":\"monitor\",\"depts\":{\"code\":\"monitor\",\"children\":[{\"deptId\":\"00000030\",\"deptName\":\"事业部\"},{\"deptId\":\"00027675\",\"deptName\":\"中科云谷\"}]}}}";
+		String value = getJsonNodeValue(json, "id");
+		System.out.println("id:" + value);
 		
-		value = getJsonNodeValue(json, "data.depts");
-		System.out.println(value);
+		value = getJsonNodeValue(json, "details.type");
+		System.out.println("details.type:" + value);
+		
+		value = getJsonNodeValue(json, "details.depts.children");
+		System.out.println("details.depts.children:" + value);
 		
 	}
 }

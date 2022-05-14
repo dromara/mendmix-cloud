@@ -1,53 +1,41 @@
 package com.jeesuite.gateway.autoconfigure;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
-import com.jeesuite.gateway.zuul.auth.ZuulAuthAdditionHandler;
-import com.jeesuite.security.SecurityDelegatingFilter;  
+import com.jeesuite.gateway.GatewayConstants;
+import com.jeesuite.gateway.security.GatewayReactiveCustomAuthnHandler;
+import com.jeesuite.security.ReactiveSecurityDelegatingFilter;  
   
 @Configuration  
-public class FilterRegConfig {  
-
+public class FilterRegConfig {
 	
 	@Bean
-	public FilterRegistrationBean<SecurityDelegatingFilter> securityDelegatingFilter() {
-	    FilterRegistrationBean<SecurityDelegatingFilter> registration = new FilterRegistrationBean<>();
-	    SecurityDelegatingFilter filter = new SecurityDelegatingFilter();
-	    filter.setAdditionHandler(new ZuulAuthAdditionHandler());
-		registration.setFilter(filter);
-	    registration.addUrlPatterns("/*");
-	    registration.setName("authFilter");
-	    registration.setOrder(0);
-	    return registration;
-	} 
-	
-	@Bean
-	@ConditionalOnProperty(value = "jeesuite.request.cors.enabled", havingValue = "true",matchIfMissing = false)
-	public FilterRegistrationBean<CorsFilter> corsFilter() {
-	    FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>();
-	    
-	    CorsConfiguration configuration = new CorsConfiguration();
-		configuration.addAllowedOrigin("*");
-		configuration.addAllowedHeader("*");
-		configuration.addAllowedMethod("*");
-		configuration.setAllowCredentials(true);
-		configuration.applyPermitDefaultValues();
+	@Order(Ordered.HIGHEST_PRECEDENCE)
+	@ConditionalOnProperty(name = "application.cors.enabled",havingValue = "true")
+	public CorsWebFilter corsWebFilter() {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", configuration);
 
-	    registration.setFilter(new CorsFilter(source));
-	    registration.addUrlPatterns("/*");
-	    registration.setName("corsFilter");
-	    registration.setOrder(0);
-	    
-	    return registration;
+		CorsConfiguration corsConfiguration = new CorsConfiguration();
+		corsConfiguration.addAllowedHeader("*");
+		corsConfiguration.addAllowedMethod("*");
+		corsConfiguration.addAllowedOriginPattern("*");
+		corsConfiguration.setAllowCredentials(true);
+
+		source.registerCorsConfiguration("/**", corsConfiguration);
+
+		return new CorsWebFilter(source);
 	}
- 
 	
+	@Bean
+	@Order(Ordered.HIGHEST_PRECEDENCE + 1)
+	public ReactiveSecurityDelegatingFilter securityDelegatingFilter() {
+		return new ReactiveSecurityDelegatingFilter(new GatewayReactiveCustomAuthnHandler(), GatewayConstants.PATH_PREFIX);
+	}
 }  

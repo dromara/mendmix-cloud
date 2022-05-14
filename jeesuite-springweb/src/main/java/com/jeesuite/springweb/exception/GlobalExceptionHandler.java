@@ -6,6 +6,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,6 +17,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.jeesuite.common.CustomRequestHeaders;
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.logging.integrate.ActionLogCollector;
@@ -62,11 +64,18 @@ public class GlobalExceptionHandler {
 			resp.setCode(1001);
 			resp.setMsg(e.getMessage());
 		} else if(e instanceof MethodArgumentNotValidException){
+			resp.setCode(400);
 			List<ObjectError> errors = ((MethodArgumentNotValidException)e).getBindingResult().getAllErrors();
-			StringBuffer errorMsg=new StringBuffer();
-	        errors.stream().forEach(x -> errorMsg.append(x.getDefaultMessage()).append(";"));
-	        resp.setCode(400);
-			resp.setMsg(errorMsg.toString());
+			
+			String fieldName;
+			StringBuilder fieldNames = new StringBuilder();
+			for (ObjectError error : errors) {
+				String errMsg =  error.getDefaultMessage();
+				fieldName = parseFieldName(error);
+				fieldNames.append(fieldName).append(",");
+			}
+			resp.setBizCode("error.parameter.notValid");
+			resp.setMsg("参数错误["+fieldNames.toString()+"]");
 		} else {
 			Throwable parent = e.getCause();
 			if (parent instanceof IllegalStateException) {
@@ -91,7 +100,7 @@ public class GlobalExceptionHandler {
 		response.addIntHeader(CustomRequestHeaders.HEADER_EXCEPTION_CODE, resp.getCode());
 		response.addHeader(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
 		//
-		ActionLogCollector.onResponseEnd(response, e);
+		ActionLogCollector.onResponseEnd(response.getStatus(), e);
 		
 		return resp;
 	}
@@ -102,5 +111,16 @@ public class GlobalExceptionHandler {
 			cause = cause.getCause();
 		}
 		return cause;
+	}
+	
+	private String parseFieldName(ObjectError error) {
+		String[] codes = error.getCodes();
+		if(codes.length >= 2) {
+			return StringUtils.split(codes[1], GlobalConstants.DOT)[1];
+		}
+		if(codes.length >= 1) {
+			return StringUtils.split(codes[0], GlobalConstants.DOT)[2];
+		}
+		return error.getCode();
 	}
 }

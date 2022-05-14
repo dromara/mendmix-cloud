@@ -47,11 +47,11 @@ public class SecurityDelegatingFilter implements Filter {
 	
 	private static String apiUriSuffix = ResourceUtils.getProperty("api.uri.suffix");
 	
-	private AuthAdditionHandler additionHandler;
+	private CustomAuthnHandler customAuthnHandler;
 	
 	
-	public void setAdditionHandler(AuthAdditionHandler additionHandler) {
-		this.additionHandler = additionHandler;
+	public void setAdditionHandler(CustomAuthnHandler customAuthnHandler) {
+		this.customAuthnHandler = customAuthnHandler;
 	}
 
 	@Override
@@ -77,13 +77,13 @@ public class SecurityDelegatingFilter implements Filter {
 		//
 		ServletRequestContextAdapter.init(request, response);
 		
-		if(additionHandler != null) {
-			additionHandler.beforeAuthentication(request, response);
+		if(customAuthnHandler != null) {
+			customAuthnHandler.beforeAuthentication(request);
 		}
 
 		UserSession userSession = null;
 		try {
-			if(additionHandler == null || !additionHandler.customAuthentication(request)) {
+			if(customAuthnHandler == null || !customAuthnHandler.customAuthentication(request)) {
 				userSession = SecurityDelegating.doAuthorization(request.getMethod(),request.getRequestURI());
 			}
 		} catch (UnauthorizedException e) {
@@ -114,8 +114,8 @@ public class SecurityDelegatingFilter implements Filter {
 			return;
 		}
 		//
-		if(additionHandler != null) {
-			additionHandler.afterAuthentication(userSession);
+		if(customAuthnHandler != null) {
+			customAuthnHandler.afterAuthentication(request,userSession);
 		}
 		
 		chain.doFilter(req, res);

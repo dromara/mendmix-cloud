@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.model.ApiInfo;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.gateway.CurrentSystemHolder;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.security.SecurityDecisionProvider;
@@ -12,6 +14,18 @@ import com.jeesuite.security.model.ApiPermission;
 
 public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionProvider {
 	
+	
+	@Override
+	public boolean isServletType() {
+		return false;
+	}
+
+	@Override
+	public AuthUser validateUser(String type, String name, String password) throws JeesuiteBaseException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	@Override
 	public List<ApiPermission> getAllApiPermissions() {
 		List<BizSystemModule> modules = CurrentSystemHolder.getModules();

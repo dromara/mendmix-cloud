@@ -17,7 +17,7 @@ public class IpUtils {
 	public static final String HEADER_FROWARDED_FOR = "x-forwarded-for";
 	public static final String LOCAL_BACK_IP = "127.0.0.1";
 	public static final String LOCAL_HOST = "localhost";
-	private static final String UNKNOWN = "unknown";
+	public static final String UNKNOWN = "unknown";
 	private static volatile String localIp;
 	private static Pattern ipPattern = Pattern.compile("(\\d{1,3}\\.)+\\d{1,3}");
 	private static final String[] lanIpPrefixs = new String[]{"127.","192.168","10.","100.64.","172."};

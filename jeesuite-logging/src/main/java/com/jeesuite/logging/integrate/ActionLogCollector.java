@@ -1,31 +1,28 @@
 package com.jeesuite.logging.integrate;
 
 import java.util.Date;
-import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.DiscardPolicy;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.ThreadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.CurrentRuntimeContext;
-import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.model.AuthUser;
-import com.jeesuite.common.util.HttpUtils;
-import com.jeesuite.common.util.IpUtils;
-import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.util.TokenGenerator;
+import com.jeesuite.logging.helper.LogMessageFormat;
 import com.jeesuite.spring.InstanceFactory;
+
 
 
 /**
@@ -40,131 +37,142 @@ import com.jeesuite.spring.InstanceFactory;
  */
 public class ActionLogCollector {
 	
-	private static Logger log = LoggerFactory.getLogger("request.logger.level");
-	
-	private static final String ACT_LOG_ADD_URL = ResourceUtils.getProperty("log.push.url");
-	private static final String TIMER_TASK = "timerTask";
 
-	private static ThreadLocal<ActionLog> context = new ThreadLocal<>();
+	private static Logger log = LoggerFactory.getLogger("global.request.logger");
 	
-	private static LogStorageProvider storageProvider;
+	public static final String CURRENT_LOG_CONTEXT_NAME = "ctx_cur_log";
+	
+	private static final String TIMER_TASK = "timerTask";
+	private static final String TIMER_TASK_ALIAS = "定时任务";
+	private static final String ACTION_KEY_FORMAT = "%s_%s";
+	private static boolean taskLogEnabled = ResourceUtils.getBoolean("application.task.log.enabled");
+
+	private static String topicName = ResourceUtils.getProperty("actionlog.kafka.topic",String.format("%s-request-log", GlobalRuntimeContext.APPID));
+
 	private static ThreadPoolExecutor asyncSendExecutor;
-	
+
+	private static LogStorageProvider logStorageProvider;
 	
 	static {
-		storageProvider = InstanceFactory.getInstance(LogStorageProvider.class);
-		if(storageProvider != null || StringUtils.isNotBlank(ACT_LOG_ADD_URL)) {	
-			int nTreads = ResourceUtils.getInt("log.push.threads", 10);
-			asyncSendExecutor = new ThreadPoolExecutor(2, nTreads,
+		logStorageProvider = InstanceFactory.getInstance(LogStorageProvider.class);
+		if(logStorageProvider != null) {
+			int maxThreads = ResourceUtils.getInt("actionlog.push.threads",5);
+			int maxQueueSize = ResourceUtils.getInt("actionlog.push.queue.size",2000);
+			asyncSendExecutor  = new ThreadPoolExecutor(3, maxThreads,
                     0L, TimeUnit.MILLISECONDS,
-                    new LinkedBlockingQueue<Runnable>(5000),
+                    new LinkedBlockingQueue<Runnable>(maxQueueSize),
                     new StandardThreadFactory("logPushExecutor"),
                     new DiscardPolicy());
 		}
 	}
+	
 
-	public static ActionLog currentActionLog() {
-		return context.get();
-	}
-
-	public static ActionLog onRequestStart(HttpServletRequest request){
+	public static ActionLog onRequestStart(String httpMethod,String uri,String requestIp){
 		ActionLog actionLog = new ActionLog();
-		actionLog.setAppId(GlobalRuntimeContext.SYSTEM_ID);
-		actionLog.setRequestAt(new Date());
-		actionLog.setRequestIp(IpUtils.getIpAddr(request));
-		actionLog.setActionKey(String.format("%s_%s", request.getMethod(),request.getRequestURI()));
+		actionLog.setActionKey(String.format(ACTION_KEY_FORMAT,httpMethod, uri));
+		actionLog.setRequestIp(requestIp);
+		actionLog.setEnv(GlobalRuntimeContext.ENV);
+		actionLog.setAppId(StringUtils.defaultIfBlank(GlobalRuntimeContext.SYSTEM_ID, GlobalRuntimeContext.APPID));
 		actionLog.setModuleId(GlobalRuntimeContext.APPID);
+		actionLog.setRequestAt(new Date());
 		actionLog.setRequestId(CurrentRuntimeContext.getRequestId());
-		actionLog.setTenantId(CurrentRuntimeContext.getTenantId());
-		actionLog.setClientType(CurrentRuntimeContext.getClientType());
 		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 		if(currentUser != null){
 			actionLog.setUserId(currentUser.getId());
 			actionLog.setUserName(currentUser.getName());
 		}
-		
-		if(context.get() == null){
-			context.set(actionLog);
-		}
+		actionLog.setClientType(CurrentRuntimeContext.getClientType());
+		actionLog.setPlatformType(CurrentRuntimeContext.getPlatformType());
+		actionLog.setTenantId(CurrentRuntimeContext.getTenantId());
+
 		return actionLog;
 	}
 	
-    public static void onResponseEnd(HttpServletResponse response,Throwable throwable){
-    	if(context.get() == null) {
+	public static void onResponseEnd(int httpStatus,Throwable throwable){
+		ActionLog actionLog = ThreadLocalContext.get(CURRENT_LOG_CONTEXT_NAME);
+		onResponseEnd(actionLog, httpStatus, throwable);
+	}
+    
+    public static void onResponseEnd(ActionLog actionLog,int httpStatus,Throwable throwable){
+    	if(actionLog == null) {
     		if(throwable != null) {
     			if (throwable instanceof JeesuiteBaseException) {
-    				log.warn("bizError -> message:{}",throwable.getMessage());
+    				log.warn("bizError"+LogMessageFormat.buildLogTail(null)+":{}",LogMessageFormat.buildExceptionMessages(throwable));
     			}else {
-    				log.error("systemError",throwable);
+    				log.error("systemError" + LogMessageFormat.buildLogTail(null),throwable);
     			}
     		}
     		return;
     	}
-    	ActionLog actionLog = context.get();
-    	if(actionLog == null)return;
+
     	actionLog.setResponseAt(new Date());
-    	actionLog.setResponseCode(response.getStatus());
+    	if(actionLog.getResponseCode() <= 0) {
+    		actionLog.setResponseCode(httpStatus);
+    	}
     	if(throwable != null) {
-    		log.error("requestError:{}",actionLog.getExceptions());
+    		if (throwable instanceof JeesuiteBaseException) {
+				log.warn("bizError"+LogMessageFormat.buildLogTail(actionLog.getActionKey())+":{}",LogMessageFormat.buildExceptionMessages(throwable));
+			}else {
+				log.error("systemError" + LogMessageFormat.buildLogTail(actionLog.getActionKey()),throwable);
+			}
 		}else  if(log.isDebugEnabled()) {
-			String requestLogMessage = RequestLogBuilder.responseLogMessage(actionLog.getResponseCode(), actionLog.getResponseData());
+			String requestLogMessage = RequestLogBuilder.responseLogMessage(actionLog.getResponseCode(), null, actionLog.getResponseData());
 			log.debug(requestLogMessage);
 		}
+    	
     	try {	
-    		asyncSendExecutor.execute(new Runnable() {
-				@Override
-				public void run() {
-					saveLog(actionLog);
-				}
-			});
+    		if(httpStatus != 404) {
+    			asyncPushLog(actionLog);
+        	}
 		} catch (Exception e) {
-		}finally {
-			context.remove();
 		}
     }
     
     
     public static void onSystemBackendTaskStart(String taskKey,String taskName){
+    	if(!taskLogEnabled)return;
     	ActionLog actionLog = new ActionLog();
 		actionLog.setAppId(GlobalRuntimeContext.APPID);
+		actionLog.setEnv(GlobalRuntimeContext.ENV);
 		actionLog.setRequestAt(new Date());
-		actionLog.setRequestId(StringUtils.remove(UUID.randomUUID().toString(), GlobalConstants.MID_LINE));
+		actionLog.setRequestId(TokenGenerator.generate());
 		actionLog.setActionName(taskName);
-		actionLog.setUserName(TIMER_TASK);
 		actionLog.setActionKey(taskKey);
-		if(context.get() == null){
-			context.set(actionLog);
-		}
+		actionLog.setUserId(TIMER_TASK);
+		actionLog.setUserName(TIMER_TASK_ALIAS);
+		actionLog.setTenantId(CurrentRuntimeContext.getTenantId());
+		ThreadLocalContext.set(CURRENT_LOG_CONTEXT_NAME, actionLog);
 		ThreadContext.put(LogConstants.LOG_CONTEXT_REQUEST_ID, actionLog.getRequestId());
 	}
     
     public static void onSystemBackendTaskEnd(Throwable throwable){
-    	if(context.get() == null)return;
-    	ActionLog actionLog = context.get();
+    	ActionLog actionLog = ThreadLocalContext.get(CURRENT_LOG_CONTEXT_NAME);
     	if(actionLog == null)return;
     	try {	
     		actionLog.setResponseCode(throwable == null ? 200 : 500);
     		actionLog.setResponseAt(new Date());
+    		if(throwable != null) {
+    			actionLog.setExceptions(ExceptionUtils.getMessage(throwable));
+    		}
     		//send to logserver 
-    		asyncSendExecutor.execute(new Runnable() {
-				@Override
-				public void run() {
-					saveLog(actionLog);
-				}
-			});
+    		asyncPushLog(actionLog);
 		} catch (Exception e) {
-		}finally {
-			context.remove();
 		}
     }
+    
+    public static ActionLog currentActionLog() {
+    	return ThreadLocalContext.get(CURRENT_LOG_CONTEXT_NAME);
+    }
+    
 
-    private static void saveLog(ActionLog actionLog){
-    	if(storageProvider != null) {
-    		storageProvider.storage(actionLog);
-    	}else {
-    		HttpUtils.postJson(ACT_LOG_ADD_URL, JsonUtils.toJson(actionLog));
-    	}
-    	
+    private static void asyncPushLog(ActionLog actionLog){
+        if(asyncSendExecutor == null)return;
+		asyncSendExecutor.execute(new Runnable() {
+			@Override
+			public void run() {
+				logStorageProvider.storage(actionLog);
+			}
+		});
     }
 
     public static void destroy(){
@@ -172,5 +180,5 @@ public class ActionLogCollector {
     		asyncSendExecutor.shutdown();
     	}
     }
-
+    
 }

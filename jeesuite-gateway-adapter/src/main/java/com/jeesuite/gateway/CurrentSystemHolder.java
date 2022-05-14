@@ -15,13 +15,13 @@ import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
+import com.jeesuite.common.http.HttpRequestEntity;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.gateway.api.SystemMgtApi;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.gateway.model.BizSystemPortal;
 import com.jeesuite.spring.InstanceFactory;
-import com.jeesuite.springweb.client.GenericApiRequest;
 import com.jeesuite.springweb.exporter.AppMetadataHolder;
 import com.jeesuite.springweb.model.AppMetadata;
 
@@ -117,7 +117,7 @@ public class CurrentSystemHolder {
 				routeNames.add(module.getRouteName());
 			}
 			
-			module.buildAnonUriMatcher();
+			module.buildAnonymousUriMatcher();
 			//
 			if(moduleApiInfos.containsKey(module.getServiceId())) {
 				module.setApiInfos(moduleApiInfos.get(module.getServiceId()));
@@ -154,16 +154,12 @@ public class CurrentSystemHolder {
 	private static void initModuleApiInfos(BizSystemModule module) {
 		try {
 			String url;
-			if(module.getServiceId().startsWith("http")) {
-				url = String.format("%s/metadata", module.getServiceId());
-			}else {
-				url = String.format("http://%s/metadata", module.getServiceId());
-			}
 			AppMetadata appMetadata;
 			if(GlobalRuntimeContext.APPID.equals(module.getRouteName())) {
 				appMetadata = AppMetadataHolder.getMetadata();
-			}else {			
-				appMetadata = new GenericApiRequest.Builder().requestUrl(url).responseClass(AppMetadata.class).backendInternalCall().build().waitResponse();
+			}else {	
+				url = module.getMetadataUri();
+				appMetadata = HttpRequestEntity.get(url).body(AppMetadata.class).backendInternalCall().execute().toObject(AppMetadata.class);
 			}
 			Map<String, ApiInfo> apiInfos = new HashMap<>(appMetadata.getApis().size());
 			String uri;

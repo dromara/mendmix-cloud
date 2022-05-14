@@ -40,7 +40,7 @@ public class HttpClientLoggingInterceptor implements ClientHttpRequestIntercepto
     private ClientHttpResponse traceResponse(ClientHttpResponse response) throws IOException {
         if(log.isTraceEnabled()){         
         	CloneHttpResponse cloneResponse = new CloneHttpResponse(response);
-        	String responseLog = RequestLogBuilder.responseLogMessage(cloneResponse.getStatusCode().value(), cloneResponse.bodyString());
+        	String responseLog = RequestLogBuilder.responseLogMessage(cloneResponse.getStatusCode().value(),response.getHeaders(), cloneResponse.bodyString());
         	log.trace(responseLog);
             return cloneResponse;
         }

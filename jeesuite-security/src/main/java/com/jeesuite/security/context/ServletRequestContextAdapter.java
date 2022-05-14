@@ -41,6 +41,7 @@ public class ServletRequestContextAdapter implements RequestContextAdapter {
 	private static final String _CTX_REQUEST_KEY = "_ctx_request_key";
 
 	public static void init(HttpServletRequest request,HttpServletResponse response) {
+		ThreadLocalContext.unset();
 		ThreadLocalContext.set(_CTX_REQUEST_KEY, request);
 		ThreadLocalContext.set(_CTX_RESPONSE_KEY, response);
 		//
