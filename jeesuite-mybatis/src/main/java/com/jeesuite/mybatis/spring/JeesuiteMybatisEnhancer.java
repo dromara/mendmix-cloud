@@ -18,6 +18,7 @@ package com.jeesuite.mybatis.spring;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,13 +60,22 @@ public class JeesuiteMybatisEnhancer {
 		} else {
 			new GeneralSqlGenerator(group, configuration).generate();
 		}
+
+		// pageHelper
+		try {
+			Class<?> pageHelperClazz = Class.forName("com.github.pagehelper.PageInterceptor");
+			Interceptor pageInterceptor = (Interceptor) pageHelperClazz.newInstance();
+			configuration.addInterceptor(pageInterceptor);
+		} catch (Exception e) {
+		}
+		
 		// 注册拦截器
 		String[] hanlderNames = MybatisConfigs.getHandlerNames(group);
 		JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor(group, hanlderNames);
 		configuration.addInterceptor(interceptor);
 		interceptor.afterRegister();
-		
-		logger.info(">> JeesuiteMybatisEnhancer finshed -> group:{},hanlderNames:{}",group,hanlderNames);
+
+		logger.info(">> JeesuiteMybatisEnhancer finshed -> group:{},hanlderNames:{}", group, hanlderNames);
 
 	}
 }
