@@ -23,8 +23,8 @@ import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
 import com.jeesuite.common.CustomRequestHeaders;
+import com.jeesuite.common.http.CustomRequestHostHolder;
 import com.jeesuite.common.util.SimpleCryptUtils;
-import com.jeesuite.springweb.client.CustomRequestHostHolder;
 import com.jeesuite.springweb.client.RequestHeaderBuilder;
 
 import feign.Client;

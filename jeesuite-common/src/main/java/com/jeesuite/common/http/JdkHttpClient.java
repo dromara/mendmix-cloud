@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016-2020 www.jeesuite.com.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jeesuite.common.http;
 
 import java.io.IOException;
@@ -40,7 +55,7 @@ public class JdkHttpClient implements HttpClientProvider {
 	public static final String CONTENT_TYPE_FROM_URLENCODED_UTF8 = CONTENT_TYPE_FROM_URLENCODED_PREFIX + CHARSET_UTF8;
 	
 	@Override
-	public HttpResponseEntity execute(String uri, HttpRequestEntity requestEntity) throws IOException {
+	public HttpResponseEntity execute(HttpRequestEntity requestEntity) throws IOException {
 		
 		HttpURLConnection connection = null;
 		OutputStream out = null;
@@ -48,7 +63,7 @@ public class JdkHttpClient implements HttpClientProvider {
 		String charset = requestEntity.getCharset();
 		String queryParam = buildQuery(requestEntity.getQueryParams(), charset);
 		
-		URL url = buildQueryParamUrl(uri, queryParam);
+		URL url = buildQueryParamUrl(requestEntity.getUri(), queryParam);
 		
 		try {
 			connection = buildConnection(url,requestEntity);
@@ -75,7 +90,7 @@ public class JdkHttpClient implements HttpClientProvider {
 							byte[] textBytes;
 							if(entryValue instanceof FileItem) {
 								curFileItem = (FileItem)entryValue;
-								if (curFileItem.getContent() == null) {
+								if (curFileItem.getSize() == 0) {
 									continue;
 								}
 								textBytes = getFileEntry(entry.getKey(), curFileItem.getFileName(), curFileItem.getMimeType(), charset);
@@ -86,7 +101,9 @@ public class JdkHttpClient implements HttpClientProvider {
 							out.write(entryBoundaryBytes);
 							out.write(textBytes);
 							if(curFileItem != null) {
-								out.write(curFileItem.getContent());
+								for (int i = 0; i < curFileItem.getChunkNum(); i++) {
+									out.write(curFileItem.getContent());
+								}
 							}
 						}
 						// 添加请求结束标志
@@ -112,6 +129,7 @@ public class JdkHttpClient implements HttpClientProvider {
 			if (connection != null) {
 				connection.disconnect();
 			}
+			requestEntity.unset();
 		}
 	}
 	
@@ -153,14 +171,13 @@ public class JdkHttpClient implements HttpClientProvider {
 		for (Entry<String, Object> entry : entries) {
 			String name = entry.getKey();
 			String value = Objects.toString(entry.getValue(), null);
-			// 忽略参数名或参数值为空的参数
 			if (StringUtils.isAnyEmpty(name, value))continue;
 			if (hasParam) {
-			   query.append("&");
+				query.append("&");
 			} else {
-			   hasParam = true;
+				hasParam = true;
 			}
-            query.append(name).append("=").append(URLEncoder.encode(value, charset));
+			query.append(name).append("=").append(URLEncoder.encode(value, charset));
 		}
 
 		return query.toString();

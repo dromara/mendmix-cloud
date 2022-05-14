@@ -1,6 +1,5 @@
 package test;
 
-import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.http.HttpRequestEntity;
 import com.jeesuite.common.http.HttpResponseEntity;
 import com.jeesuite.common.util.HttpUtils;
@@ -20,8 +19,8 @@ public class HttpUtilsTest {
 		entity = HttpUtils.postJson("http://openapi.mytest.com/api/commonlog/custom_log/list?_logType=mq_produce_logs", json);
 		System.out.println(entity);
 		
-		HttpRequestEntity requestEntity = HttpRequestEntity.create(HttpMethod.GET).basicAuth("admin", "123456");
-		entity = HttpUtils.execute("http://10.2.3.163:8761/", requestEntity);
+		HttpRequestEntity requestEntity = HttpRequestEntity.get("http://").basicAuth("admin", "123456");
+		entity = HttpUtils.execute(requestEntity);
 		System.out.println(entity);
 	}
 

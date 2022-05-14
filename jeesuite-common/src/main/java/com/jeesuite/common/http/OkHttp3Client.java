@@ -7,6 +7,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.jeesuite.common.http.HttpRequestEntity.FileItem;
 
 import okhttp3.ConnectionPool;
@@ -45,82 +47,88 @@ public class OkHttp3Client implements HttpClientProvider{
 	}
 	
 	@Override
-	public HttpResponseEntity execute(String uri, HttpRequestEntity requestEntity) throws IOException {
+	public HttpResponseEntity execute(HttpRequestEntity requestEntity) throws IOException {
 		
-		HttpUrl.Builder urlBuilder = HttpUrl.parse(uri).newBuilder();
-		if (requestEntity.getQueryParams() != null) {
-			for (String key : requestEntity.getQueryParams().keySet()) {
-				urlBuilder.addQueryParameter(key, requestEntity.getQueryParams().get(key).toString());
-			}
-		}
-		
-		okhttp3.Headers.Builder headerBuilder = new Headers.Builder();
-		if (requestEntity.getHeaders() != null) {
-			for (String key : requestEntity.getHeaders().keySet()) {
-				headerBuilder.add(key, requestEntity.getHeaders().get(key).toString());
-			}
-		}
-		
-		if(requestEntity.getBasicAuth() != null) {
-			headerBuilder.add("Authorization", requestEntity.getBasicAuth().getEncodeBasicAuth());
-		}
-		
-		okhttp3.Request.Builder requestBuilder = new Request.Builder().headers(headerBuilder.build())
-				.url(urlBuilder.build());
-		
-		if(HttpMethod.POST == requestEntity.getMethod()) {
-			RequestBody body = null;
-			if(requestEntity.getBody() != null) {
-				body = FormBody.create(contentType2MediaType(requestEntity.getContentType()), requestEntity.getBody());
-			} else if(requestEntity.getFormParams() != null) {
-				Set<Entry<String, Object>> formEntries = requestEntity.getFormParams().entrySet();
-				Object entryValue;
-				if(requestEntity.isMultipart()) {
-					MultipartBody.Builder builder = new MultipartBody.Builder();
-					for (Entry<String, Object> entry : formEntries) {
-						entryValue = entry.getValue();
-						if(entryValue == null)continue;
-						if(entryValue instanceof FileItem) {
-							FileItem fileItem = (FileItem)entryValue;
-							byte[] content = fileItem.getContent();
-							MediaType contentType = null;
-							if(fileItem.getMimeType() != null) {
-								contentType = MediaType.parse(fileItem.getMimeType());
-							}
-							//MultipartBody.
-							builder.addFormDataPart(entry.getKey(), fileItem.getFileName(), RequestBody.create(contentType,content));
-						}else {
-							builder.addFormDataPart(entry.getKey(), entryValue.toString());
-						}
-					}
-					body = builder.build();
-				}else {
-					FormBody.Builder builder = new FormBody.Builder();
-					for (Entry<String, Object> entry : formEntries) {
-						if(entry.getValue() == null)continue;
-						builder.add(entry.getKey(), entry.getValue().toString());
-					}
-					body = builder.build();
+		try {
+			HttpUrl.Builder urlBuilder = HttpUrl.parse(requestEntity.getUri()).newBuilder();
+			if (requestEntity.getQueryParams() != null) {
+				for (String key : requestEntity.getQueryParams().keySet()) {
+					urlBuilder.addQueryParameter(key, requestEntity.getQueryParams().get(key).toString());
 				}
 			}
 			
-			if(body != null) {
-				requestBuilder.post(body);
+			okhttp3.Headers.Builder headerBuilder = new Headers.Builder();
+			if (requestEntity.getHeaders() != null) {
+				for (String key : requestEntity.getHeaders().keySet()) {
+					headerBuilder.add(key, requestEntity.getHeaders().get(key).toString());
+				}
 			}
+			
+			if(requestEntity.getBasicAuth() != null) {
+				headerBuilder.add("Authorization", requestEntity.getBasicAuth().getEncodeBasicAuth());
+			}
+			
+			okhttp3.Request.Builder requestBuilder = new Request.Builder().headers(headerBuilder.build())
+					.url(urlBuilder.build());
+			
+			if(HttpMethod.POST == requestEntity.getMethod()) {
+				RequestBody body = null;
+				if(requestEntity.getBody() != null) {
+					body = FormBody.create(contentType2MediaType(requestEntity.getContentType()), requestEntity.getBody());
+				} else if(requestEntity.getFormParams() != null) {
+					Set<Entry<String, Object>> formEntries = requestEntity.getFormParams().entrySet();
+					Object entryValue;
+					if(requestEntity.isMultipart()) {
+						MultipartBody.Builder builder = new MultipartBody.Builder();
+						for (Entry<String, Object> entry : formEntries) {
+							entryValue = entry.getValue();
+							if(entryValue == null)continue;
+							if(entryValue instanceof FileItem) {
+								FileItem fileItem = (FileItem)entryValue;
+								
+								MediaType contentType = null;
+								if(fileItem.getMimeType() != null) {
+									contentType = MediaType.parse(fileItem.getMimeType());
+								}
+								RequestBody requestBody;
+								requestBody = RequestBody.create(contentType, fileItem.getContent());
+								builder.addFormDataPart(entry.getKey(), fileItem.getFileName(), requestBody);
+							}else {
+								builder.addFormDataPart(entry.getKey(), entryValue.toString());
+							}
+						}
+						body = builder.build();
+					}else {
+						FormBody.Builder builder = new FormBody.Builder();
+						for (Entry<String, Object> entry : formEntries) {
+							if(entry.getValue() == null)continue;
+							builder.add(entry.getKey(), entry.getValue().toString());
+						}
+						body = builder.build();
+					}
+				}
+				
+				if(body != null) {
+					requestBuilder.post(body);
+				}
+			}
+			
+			HttpResponseEntity responseEntity = new HttpResponseEntity();
+			
+			Request request = requestBuilder.build();
+			Response response = httpClient.newCall(request).execute();
+			responseEntity.setStatusCode(response.code());
+			if (response.body() != null) {
+				responseEntity.setBody(response.body().string());
+			}
+			if (!response.isSuccessful()) {
+				responseEntity.setMessage(StringUtils.defaultIfBlank(response.message(), responseEntity.getBody()));
+			}
+			
+			return responseEntity;
+		} finally {
+			requestEntity.unset();
 		}
-		
-		HttpResponseEntity responseEntity = new HttpResponseEntity();
-		
-		Response response = httpClient.newCall(requestBuilder.build()).execute();
-		responseEntity.setStatusCode(response.code());
-		if (response.body() != null) {
-			responseEntity.setBody(response.body().string());
-		}
-		if (!response.isSuccessful()) {
-			responseEntity.setMessage(response.message());
-		}
-		
-		return responseEntity;
 	}
 	
 	private static MediaType contentType2MediaType(String contentType) {

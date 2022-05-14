@@ -32,14 +32,20 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.crypt.Base64;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.common.util.BeanUtils;
+import com.jeesuite.common.util.HttpUtils;
+import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.MimeTypeUtils;
 import com.jeesuite.common.util.MimeTypeUtils.FileMeta;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.util.TokenGenerator;
+
 /**
  * 
  * 
@@ -51,6 +57,7 @@ import com.jeesuite.common.util.ResourceUtils;
  */
 public class HttpRequestEntity {
 
+	private String uri;
 	private HttpMethod method;
 	private String charset;
 	private String contentType;
@@ -69,7 +76,44 @@ public class HttpRequestEntity {
 		return new HttpRequestEntity().method(method);
 	}
 	
+	public static HttpRequestEntity post(String uri){
+		return new HttpRequestEntity().method(HttpMethod.POST).uri(uri);
+	}
 	
+	public static HttpRequestEntity get(String uri){
+		return new HttpRequestEntity().method(HttpMethod.GET).uri(uri);
+	}
+	
+	public HttpRequestEntity backendInternalCall() {
+		header(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
+		header(CustomRequestHeaders.HEADER_IGNORE_TENANT, Boolean.TRUE.toString());
+		header(CustomRequestHeaders.HEADER_IGNORE_AUTH, Boolean.TRUE.toString());
+		return header(CustomRequestHeaders.HEADER_INTERNAL_REQUEST, Boolean.TRUE.toString());
+	}
+	
+	public HttpRequestEntity useContext() {
+		if(!headers.containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)){			 
+			header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generateWithSign());
+		 }
+		AuthUser currentUser;
+		if (!headers.containsKey(CustomRequestHeaders.HEADER_AUTH_USER) 
+				&& (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
+			header(CustomRequestHeaders.HEADER_AUTH_USER, currentUser.toEncodeString());
+		}
+		String systemId = CurrentRuntimeContext.getSystemId();
+		if (systemId != null) {
+			header(CustomRequestHeaders.HEADER_SYSTEM_ID, systemId);
+		}
+
+		String tenantId = CurrentRuntimeContext.getTenantId(false);
+		if (tenantId != null) {
+			header(CustomRequestHeaders.HEADER_TENANT_ID, tenantId);
+		}
+		header(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
+
+	      
+		return this;
+	}
 
 	public String getCharset() {
 		if(charset == null) {
@@ -86,12 +130,14 @@ public class HttpRequestEntity {
 	public HttpMethod getMethod() {
 		return method;
 	}
-	
-	public HttpRequestEntity backendInternalCall() {
-		header(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
-		header(CustomRequestHeaders.HEADER_IGNORE_TENANT, Boolean.TRUE.toString());
-		header(CustomRequestHeaders.HEADER_IGNORE_AUTH, Boolean.TRUE.toString());
-		return header(CustomRequestHeaders.HEADER_INTERNAL_REQUEST, Boolean.TRUE.toString());
+
+	public String getUri() {
+		return uri;
+	}
+
+	public HttpRequestEntity uri(String uri) {
+		this.uri = uri;
+		return this;
 	}
 
 	public HttpRequestEntity method(HttpMethod method) {
@@ -178,6 +224,21 @@ public class HttpRequestEntity {
 		return this;
 	}
 	
+	public HttpRequestEntity fileParam(String name,String originalFilename,byte[] data,String mimeType) {
+		if(this.formParams == null)this.formParams = new HashMap<>();
+		this.formParams.put(name, new FileItem(originalFilename, data, mimeType));
+		if(contentType == null) {
+			contentType = HttpClientProvider.CONTENT_TYPE_FROM_MULTIPART_UTF8;
+		}
+		if(!multipart) {
+			multipart = true;
+			boundary = String.valueOf(System.nanoTime()); // 随机分隔线
+			contentType = contentType + ";boundary=" + boundary;
+		}
+		return this;
+	}
+	
+	@SuppressWarnings("unchecked")
 	public HttpRequestEntity formParams(Object formdata) {
 		if (formdata instanceof Map) {
 			this.formParams = (Map<String, Object>) formdata;
@@ -200,11 +261,16 @@ public class HttpRequestEntity {
 		return body;
 	}
 
-	public HttpRequestEntity body(String body) {
-        if(method != HttpMethod.POST) {
+	public HttpRequestEntity body(Object body) {
+        if(method != HttpMethod.POST || body == null) {
 			return null;
 		}
-		this.body = body;
+        if(body instanceof String) {
+        	this.body = body.toString();
+        }else {
+        	this.body = JsonUtils.toJson(body);
+        }
+		
 		return this;
 	}
 	
@@ -240,6 +306,10 @@ public class HttpRequestEntity {
 		}
 
 		return charset;
+	}
+	
+	public HttpResponseEntity execute() {
+		return HttpUtils.execute(this);
 	}
 	
 	public void unset() {
@@ -323,11 +393,7 @@ public class HttpRequestEntity {
 		 */
 		public FileItem(File file) {
 			this.file = file;
-			this.fileName = file.getName();
-			if(file.getName().contains(GlobalConstants.DOT)) {
-				String extension = fileName.substring(fileName.lastIndexOf(GlobalConstants.DOT) + 1).toLowerCase();
-				this.mimeType = MimeTypeUtils.getFileMimeType(extension);
-			}
+			setFileName(file.getName());
 			setSize(file.length());
 		}
 
@@ -347,9 +413,9 @@ public class HttpRequestEntity {
 		 * @param content 文件字节流
 		 */
 		public FileItem(String fileName, byte[] content) {
-			this.fileName = fileName;
 			this.content = content;
 			this.size = content.length;
+			setFileName(fileName);
 		}
 
 		/**
@@ -361,14 +427,18 @@ public class HttpRequestEntity {
 		 */
 		public FileItem(String fileName, byte[] content, String mimeType) {
 			this(fileName, content);
-			this.mimeType = mimeType;
+			if(mimeType != null) {
+				this.mimeType = mimeType;
+			}
 		}
 		
 		
 
 		public FileItem(String originalFilename,InputStream inputStream, String mimeType,  long size) {
-			this.fileName = originalFilename;
-			this.mimeType = mimeType;
+			setFileName(originalFilename);
+			if(mimeType != null) {
+				this.mimeType = mimeType;
+			}
 			setSize(size);
 			//写入临时文件
 			if(chunkNum > 1) {
@@ -397,9 +467,6 @@ public class HttpRequestEntity {
 		}
 
 		public String getFileName() {
-			if(this.fileName == null) {
-				this.fileName = "1.txt";
-			}
 			return this.fileName;
 		}
 
@@ -424,6 +491,15 @@ public class HttpRequestEntity {
 		
 		public int getChunkNum() {
 			return chunkNum;
+		}
+		
+
+		public void setFileName(String fileName) {
+			this.fileName = fileName;
+			if(fileName.contains(GlobalConstants.DOT)) {
+				String extension = fileName.substring(fileName.lastIndexOf(GlobalConstants.DOT) + 1).toLowerCase();
+				this.mimeType = MimeTypeUtils.getFileMimeType(extension);
+			}
 		}
 
 		private void setSize(long size) {

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016-2020 www.jeesuite.com.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jeesuite.common.util;
 
 import java.io.File;
@@ -7,10 +22,12 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.http.ApacheHttpClient;
+import com.jeesuite.common.http.CustomRequestHostHolder;
 import com.jeesuite.common.http.HttpClientProvider;
-import com.jeesuite.common.http.HttpMethod;
 import com.jeesuite.common.http.HttpRequestEntity;
 import com.jeesuite.common.http.HttpResponseEntity;
 import com.jeesuite.common.http.JdkHttpClient;
@@ -28,7 +45,7 @@ public class HttpUtils {
 	private static HttpClientProvider provider;
 	
 	static {
-		String providerType = ResourceUtils.getProperty("jeesuite.httputil.provider");
+		String providerType = ResourceUtils.getProperty("application.httputil.provider");
 		try {
 			if(providerType == null || providerType.equals("okHttp3")) {
 				Class.forName("okhttp3.OkHttpClient");
@@ -39,6 +56,7 @@ public class HttpUtils {
 			try {
 				if(providerType == null || providerType.equals("httpClient")) {
 					Class.forName("org.apache.http.impl.client.CloseableHttpClient");
+					Class.forName("org.apache.http.entity.mime.MultipartEntityBuilder");
 					provider = new ApacheHttpClient();
 				}
 			} catch (Exception e) {}
@@ -53,50 +71,38 @@ public class HttpUtils {
 	private HttpUtils() {}
 	
 	public static HttpResponseEntity get(String url) {
-		try {
-			return provider.execute(url, HttpRequestEntity.create(HttpMethod.GET));
-		} catch (IOException e) {
-			return new HttpResponseEntity(400, e.getMessage());
-		}
+		return execute(HttpRequestEntity.get(url));
 	}
 	
 	public static HttpResponseEntity postJson(String url,String json) {
-		HttpRequestEntity requestEntity = HttpRequestEntity.create(HttpMethod.POST);
-		try {
-			requestEntity.body(json);
-			return provider.execute(url, requestEntity);
-		} catch (IOException e) {
-			return new HttpResponseEntity(400, e.getMessage());
-		}
+		HttpRequestEntity requestEntity = HttpRequestEntity.post(url);
+		return execute(requestEntity);
 	}
 	
 	public static HttpResponseEntity postJson(String url,String json,String charset) {
 		String contentType = HttpClientProvider.CONTENT_TYPE_JSON_PREFIX + charset;
-		HttpRequestEntity requestEntity = HttpRequestEntity.create(HttpMethod.POST).contentType(contentType);
-		try {
-			requestEntity.body(json);
-			return provider.execute(url, requestEntity);
-		} catch (IOException e) {
-			return new HttpResponseEntity(400, e.getMessage());
-		}
+		HttpRequestEntity requestEntity = HttpRequestEntity.post(url).contentType(contentType);
+		return execute(requestEntity);
 	}
 	
-	public static HttpResponseEntity execute(String url,HttpRequestEntity requestEntity) {
+	public static HttpResponseEntity execute(HttpRequestEntity requestEntity) {
 		try {
-			return provider.execute(url, requestEntity);
+			if(StringUtils.isBlank(requestEntity.getUri())) {
+				throw new IllegalArgumentException("request uri is missing");
+			}
+			String url = CustomRequestHostHolder.resolveUrl(requestEntity.getUri());
+			return provider.execute(requestEntity);
 		} catch (IOException e) {
+			e.printStackTrace();
 			return new HttpResponseEntity(400, e.getMessage());
 		}
 	}
+
 	
 	public static HttpResponseEntity uploadFile(String url,String fieldName,File file){
-		HttpRequestEntity requestEntity = HttpRequestEntity.create(HttpMethod.POST);
-		try {
-			requestEntity.fileParam(fieldName, file);
-			return provider.execute(url, requestEntity);
-		} catch (IOException e) {
-			return new HttpResponseEntity(400, e.getMessage());
-		}
+		HttpRequestEntity requestEntity = HttpRequestEntity.post(url);
+		requestEntity.fileParam(fieldName, file);
+		return execute(requestEntity);
 	}
 	
 	public static String downloadFile(String fileURL, String saveDir){
