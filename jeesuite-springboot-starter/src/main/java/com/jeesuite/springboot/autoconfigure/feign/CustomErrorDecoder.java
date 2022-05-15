@@ -21,7 +21,7 @@ import feign.codec.ErrorDecoder;
 @ConditionalOnClass(feign.RequestInterceptor.class)
 public class CustomErrorDecoder implements ErrorDecoder {
 
-	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.core.rpc");
+	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.rpc");
 	
 	@Override
 	public Exception decode(String methodKey, Response response) {

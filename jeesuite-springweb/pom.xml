@@ -80,7 +80,6 @@
 			<groupId>io.swagger</groupId>
 			<artifactId>swagger-annotations</artifactId>
 			<version>1.5.20</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>

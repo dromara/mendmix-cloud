@@ -11,6 +11,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.mybatis.datasource.DataSourceConfig;
 import com.jeesuite.mybatis.datasource.DataSoureConfigHolder;
+import com.jeesuite.mybatis.datasource.MultiRouteDataSource;
 import com.jeesuite.mybatis.spring.SqlSessionFactoryBean;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.spring.helper.BeanRegistryHelper;
@@ -35,6 +37,7 @@ import com.jeesuite.spring.helper.BeanRegistryHelper.BeanValue;
  * @date 2021-03-18
  */
 @Configuration
+@ConditionalOnClass({MultiRouteDataSource.class})
 @ConditionalOnMissingClass({"org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration"})
 public class CustomDataSourceMybatisConfiguration implements ApplicationContextAware, BeanDefinitionRegistryPostProcessor {
 

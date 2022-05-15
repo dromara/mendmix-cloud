@@ -39,7 +39,6 @@ public class GatewayConfigs extends AppConfigs {
 	
 	public static final boolean openEnabled = ResourceUtils.getBoolean("jeesuite.openapi.enabled", false);
 	
-	public static final String anonymousUris = ResourceUtils.getProperty("jeesuite.acl.anonymousUris");
 	public static final List<String> ignoreRewriteRoutes = ResourceUtils.getList("jeesuite.response.rewrite.ignore-routes");
 	
 }

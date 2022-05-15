@@ -19,8 +19,10 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.context.annotation.Configuration;
 
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.http.CustomRequestHostHolder;
@@ -41,6 +43,8 @@ import feign.Response;
  * @version 1.0.0
  * @date 2019年12月19日
  */
+@Configuration
+@ConditionalOnProperty(value = "jeesuite.feign.custom-client.enabled",havingValue = "true")
 public class CustomLoadBalancerFeignClient implements Client{
 
   

@@ -36,12 +36,6 @@
 
 		<dependency>
 			<groupId>com.jeesuite</groupId>
-			<artifactId>jeesuite-cache</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.jeesuite</groupId>
 			<artifactId>jeesuite-springweb</artifactId>
 			<version>${project.version}</version>
 		</dependency>

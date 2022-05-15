@@ -111,9 +111,6 @@ public class CurrentSystemHolder {
 			// 网关特殊处理
 			if (isGateway) {
 				module.setRouteName(GlobalRuntimeContext.APPID);
-				if(module.getAnonymousUris() == null) {
-					module.setAnonymousUris(GatewayConfigs.anonymousUris);
-				}
 			} else {
 				routeNames.add(module.getRouteName());
 			}
