@@ -40,9 +40,9 @@ import org.springframework.web.server.ServerWebExchange;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.gateway.GatewayConfigs;
 import com.jeesuite.gateway.filter.PostFilterHandler;
 import com.jeesuite.gateway.model.BizSystemModule;
-import com.jeesuite.springweb.GlobalConfigs;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -55,7 +55,7 @@ import reactor.core.publisher.Mono;
  */
 public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 
-	private static Logger logger = LoggerFactory.getLogger("com.zvosframework.adapter.gateway");
+	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.gateway");
 
 	private static final String GZIP_ENCODE = "gzip";
 
@@ -106,7 +106,7 @@ public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 			buildNewResponse = !exchange.getRequest().getHeaders().containsKey(CustomRequestHeaders.HEADER_RESP_KEEP);
 		}
 
-		if (!buildNewResponse && GlobalConfigs.requestLogEnabled) {
+		if (!buildNewResponse && GatewayConfigs.actionLogEnabled) {
 			ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getPath().value());
 			buildNewResponse = apiInfo != null && apiInfo.isActionLog() && apiInfo.isResponseLog();
 		}

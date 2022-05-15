@@ -125,7 +125,7 @@ public class HttpResponseEntity {
 		return value;
 	}
 	
-	public <T> T toBean(Class<T> clazz,String selectNode) {
+	public <T> T toObject(Class<T> clazz,String selectNode) {
 		String json = JsonUtils.getJsonNodeValue(getUnwrapBody(), selectNode);
 		return JsonUtils.toObject(json, clazz);
 	}

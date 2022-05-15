@@ -27,14 +27,13 @@ import org.springframework.cloud.gateway.filter.NettyWriteResponseFilter;
 import org.springframework.core.Ordered;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.gateway.GatewayConfigs;
 import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.filter.post.ResponseLogHandler;
 import com.jeesuite.gateway.filter.post.ResponseRewriteHandler;
 import com.jeesuite.gateway.filter.post.RewriteBodyServerHttpResponse;
 import com.jeesuite.gateway.helper.RuequestHelper;
 import com.jeesuite.gateway.model.BizSystemModule;
-import com.jeesuite.springweb.GlobalConfigs;
 
 import reactor.core.publisher.Mono;
 
@@ -56,11 +55,11 @@ public abstract class AbstracResponseFilter implements GlobalFilter, Ordered, In
 	public AbstracResponseFilter(PostFilterHandler...filterHandlers) {
 		
 		List<PostFilterHandler> handlers = new ArrayList<>();
-		if(GlobalConfigs.requestLogEnabled) {
+		if(GatewayConfigs.actionLogEnabled) {
 			handlers.add(new ResponseLogHandler());
 		}
 		//
-		if(ResourceUtils.getBoolean("jeesuite.response.rewrite.enbaled",true)) {
+		if(GatewayConfigs.respRewriteEnabled) {
 			handlers.add(new ResponseRewriteHandler());
 		}
 

@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
@@ -111,7 +112,7 @@ public class CurrentSystemHolder {
 			if (isGateway) {
 				module.setRouteName(GlobalRuntimeContext.APPID);
 				if(module.getAnonymousUris() == null) {
-					module.setAnonymousUris(ResourceUtils.getProperty("jeesuite.request.anonymous-uris"));
+					module.setAnonymousUris(GatewayConfigs.anonymousUris);
 				}
 			} else {
 				routeNames.add(module.getRouteName());
@@ -133,20 +134,24 @@ public class CurrentSystemHolder {
 
 	private static void loadLocalRouteModules() {
 		localModules = new ArrayList<>();
-		Properties properties = ResourceUtils.getAllProperties("zuul.routes.");
+		Properties properties = ResourceUtils.getAllProperties("spring.cloud.gateway.routes");
 		Set<Entry<Object, Object>> entrySet = properties.entrySet();
-
+		
 		BizSystemModule module;
+		String prefix;
+		PredicateDefinition pathPredicate;
 		for (Entry<Object, Object> entry : entrySet) {
-			String key = entry.getKey().toString();
-			if (!key.endsWith(".path"))
-				continue;
-			String prefix = key.replace(".path", "");
-			module = new BizSystemModule();
-			module.setRouteName(entry.getValue().toString().substring(1).replace("/**", ""));
-			module.setServiceId(properties.getProperty(prefix + ".serviceId"));
-			module.setAnonymousUris(properties.getProperty(prefix + ".anonymousUris"));
-			localModules.add(module);
+			if(entry.getKey().toString().endsWith(".id")) {
+				prefix = entry.getKey().toString().replace(".id", "");
+				module = new BizSystemModule();
+				module.setServiceId(entry.getValue().toString());
+				module.setProxyUri(properties.getProperty(prefix + ".uri"));
+				pathPredicate = new PredicateDefinition(properties.getProperty(prefix + ".predicates[0]"));
+				String routePath = pathPredicate.getArgs().get("_genkey_0").replace(GatewayConstants.PATH_PREFIX, "");
+				module.setRouteName(StringUtils.split(routePath.substring(1), "/")[0]);
+				module.setAnonymousUris(properties.getProperty(prefix + ".anonymousUris"));
+				localModules.add(module);
+			}
 		}
 
 	}

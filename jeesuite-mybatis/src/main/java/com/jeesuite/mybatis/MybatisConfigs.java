@@ -129,7 +129,7 @@ public class MybatisConfigs {
 	public static String[] getHandlerNames(String group){
         List<String> hanlders = new ArrayList<>();
         String customHandlers = getProperty(group, INTERCEPTOR_HANDLERCLASS, null);
-		if(!StringUtils.isEmpty(customHandlers)){
+		if(!org.apache.commons.lang3.StringUtils.isBlank(customHandlers)){
 			String[] customHanlderClass = StringUtils.tokenizeToStringArray(customHandlers, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 			hanlders.addAll(Arrays.asList(customHanlderClass));
 		}

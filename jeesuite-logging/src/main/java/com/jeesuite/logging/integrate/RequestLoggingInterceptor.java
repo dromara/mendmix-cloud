@@ -38,7 +38,7 @@ public class RequestLoggingInterceptor {
 
 	private Map<String, List<ParameterLogConfig>> parameterLogConfigs = new HashMap<>();
 
-	@Value("${request.log.responseBody.ignore:true}")
+	@Value("${request.actionlog.responseBody.ignore:true}")
 	private boolean ignoreResponseBody;
 
 	@Pointcut("@within(org.springframework.web.bind.annotation.RestController) || @within(org.springframework.stereotype.Controller)")

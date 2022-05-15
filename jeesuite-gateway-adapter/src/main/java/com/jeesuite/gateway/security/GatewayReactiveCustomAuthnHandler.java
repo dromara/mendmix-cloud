@@ -15,8 +15,6 @@
  */
 package com.jeesuite.gateway.security;
 
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -26,9 +24,9 @@ import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.model.ApiInfo;
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.gateway.CurrentSystemHolder;
+import com.jeesuite.gateway.GatewayConfigs;
 import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.helper.RuequestHelper;
 import com.jeesuite.gateway.model.BizSystemModule;
@@ -49,9 +47,7 @@ import com.jeesuite.security.model.UserSession;
  */
 public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHandler {
 
-	private boolean actionLogEnabled = ResourceUtils.getBoolean("jeesuite.actionlog.collector.enabled", false);
-	private boolean ignoreReadMethodLog = ResourceUtils.getBoolean("jeesuite.actionlog.readMethod.ignore", true);
-	private List<String> anonymousIpWhilelist = ResourceUtils.getList("jeesuite.acl.anonymous-ip-whilelist");
+	
 	
 	@Override
 	public void beforeAuthentication(ServerWebExchange exchange) {
@@ -84,14 +80,14 @@ public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHan
 
 	@Override
 	public void afterAuthentication(ServerWebExchange exchange,UserSession userSession) {
-		if(!actionLogEnabled)return;
+		if(!GatewayConfigs.actionLogEnabled)return;
 		ServerHttpRequest request = exchange.getRequest();
 		BizSystemModule module = CurrentSystemHolder.getModule(RuequestHelper.getCurrentRouteName(request));
 		
 		ApiInfo apiInfo = module.getApiInfo(request.getPath().value());
 		boolean logging = apiInfo != null ? apiInfo.isActionLog() : true;
 		if(logging) {
-			logging = !ignoreReadMethodLog || !request.getMethod().equals(HttpMethod.GET);
+			logging = !GatewayConfigs.actionLogGetMethodIngore || !request.getMethod().equals(HttpMethod.GET);
 		}
 		if(logging){
 			String clientIp = RuequestHelper.getIpAddr(request);
@@ -107,9 +103,9 @@ public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHan
 	 */
 	private boolean isIpWhilelistAccess(ServerHttpRequest request) {
 
-		if(!anonymousIpWhilelist.isEmpty()) {
+		if(!GatewayConfigs.anonymousIpWhilelist.isEmpty()) {
 			String clientIp = RuequestHelper.getIpAddr(request);
-			if(anonymousIpWhilelist.contains(clientIp))return true;
+			if(GatewayConfigs.anonymousIpWhilelist.contains(clientIp))return true;
 		}
 		
 		return false;

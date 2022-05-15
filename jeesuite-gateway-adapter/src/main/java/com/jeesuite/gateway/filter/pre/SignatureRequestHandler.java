@@ -16,6 +16,7 @@ import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.common.util.ParameterUtils;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.gateway.GatewayConfigs;
 import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.filter.PreFilterHandler;
 import com.jeesuite.gateway.model.BizSystemModule;
@@ -36,7 +37,7 @@ public class SignatureRequestHandler implements PreFilterHandler {
 
 	public SignatureRequestHandler() {
 		// 本地配置
-		Properties properties = ResourceUtils.getAllProperties("jeesuite.openapi.client-config.mapping");
+		Properties properties = ResourceUtils.getAllProperties(GatewayConfigs.OPENAPI_CLIENT_MAPPING_CONFIG_KEY);
 		properties.forEach((k, v) -> {
 			String appId = k.toString().split("\\[|\\]")[1];
 			appIdSecretMappings.put(appId, v.toString());

@@ -8,6 +8,7 @@ import java.util.List;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.constants.StandardEnv;
 import com.jeesuite.common.util.ResourceUtils;
 
 public class GlobalRuntimeContext {
@@ -63,6 +64,9 @@ public class GlobalRuntimeContext {
 		return Collections.unmodifiableList(tenantIds);
 	}
 	
+	public static boolean isDevEnv() {
+		return StandardEnv.local.name().equalsIgnoreCase(ENV) || StandardEnv.dev.name().equalsIgnoreCase(ENV) ; 
+	}
 
 	public static int getWorkId() {
 		if(workId > 0)return workId;

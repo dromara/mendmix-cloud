@@ -13,23 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jeesuite.springweb;
+package com.jeesuite.gateway;
+
+import java.util.List;
 
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.springweb.AppConfigs;
 
 /**
  * 
  * <br>
- * Class Name   : GlobalConfigs
+ * Class Name   : AppConfigs
  *
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @version 1.0.0
  * @date May 14, 2022
  */
-public class GlobalConfigs {
+public class GatewayConfigs extends AppConfigs {
+	
+	public static final String OPENAPI_CLIENT_MAPPING_CONFIG_KEY = "jeesuite.openapi.client-config.mapping";
 
-	public static final boolean requestLogEnabled = ResourceUtils.getBoolean("jeesuite.actionlog.enabled", false);
+	public static final boolean actionLogEnabled = ResourceUtils.getBoolean("jeesuite.actionlog.enabled", false);
+	public static final boolean actionLogGetMethodIngore = ResourceUtils.getBoolean("jeesuite.actionlog.getMethod.ignore", true);
+	public static final List<String> anonymousIpWhilelist = ResourceUtils.getList("jeesuite.acl.anonymous-ip-whilelist");
+	
 	public static final boolean openEnabled = ResourceUtils.getBoolean("jeesuite.openapi.enabled", false);
-	public static final boolean respRewriteEnabled = ResourceUtils.getBoolean("jeesuite.response.rewrite.enbaled", true);
+	
+	public static final String anonymousUris = ResourceUtils.getProperty("jeesuite.acl.anonymousUris");
+	public static final List<String> ignoreRewriteRoutes = ResourceUtils.getList("jeesuite.response.rewrite.ignore-routes");
 	
 }

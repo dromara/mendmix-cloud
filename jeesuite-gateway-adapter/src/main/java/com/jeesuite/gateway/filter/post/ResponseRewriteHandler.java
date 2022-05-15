@@ -36,7 +36,7 @@ import com.jeesuite.gateway.model.BizSystemModule;
  */
 public class ResponseRewriteHandler implements PostFilterHandler {
 	
-	private static Logger logger = LoggerFactory.getLogger("com.zvosframework.adapter.gateway");
+	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.gateway");
 	
 	private static final String DEFAULT_ERROR_MSG = "系统繁忙";
 	private static final String _MESSAGE_NAME = "message";

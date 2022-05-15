@@ -27,6 +27,7 @@ import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.constants.PermissionLevel;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.springweb.AppConfigs;
 import com.jeesuite.springweb.model.AppMetadata;
 
 import io.swagger.annotations.ApiOperation;
@@ -183,7 +184,7 @@ public class AppMetadataHolder {
 			metadata = new AppMetadata();
 			metadata.setServiceId(GlobalRuntimeContext.APPID);
 
-			String basePackage = ResourceUtils.getProperty("jeesuite.application.base-package");
+			String basePackage = AppConfigs.basePackage;
 			if (basePackage == null)
 				return metadata;
 			List<String> classNameList = scanControllerClassNames(basePackage);

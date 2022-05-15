@@ -1,14 +1,27 @@
+/*
+ * Copyright 2016-2020 www.jeesuite.com.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jeesuite.springweb.interceptor;
 
 import java.util.Enumeration;
-import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -19,12 +32,11 @@ import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.exception.ForbiddenAccessException;
-import com.jeesuite.common.util.IpUtils;
 import com.jeesuite.common.util.PathMatcher;
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common.util.TokenGenerator;
 import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.logging.integrate.ActionLogCollector;
+import com.jeesuite.springweb.AppConfigs;
 
 /**
  * 
@@ -40,14 +52,6 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 
 	private static Logger log = LoggerFactory.getLogger("com.jeesuite.springweb");
 	
-	private boolean isLocalEnv = "local".equals(GlobalRuntimeContext.ENV);
-	//调用token检查
-	private boolean invokeTokenCheckEnabled = ResourceUtils.getBoolean("jeesuite.acl.invoke-token.enabled", !isLocalEnv);
-	//行为日志采集
-	private boolean requestLogEnabled = ResourceUtils.getBoolean("jeesuite.actionlog.enabled", false);
-	//
-	private boolean requestLogGetIngore = ResourceUtils.getBoolean("jeesuite.actionlog.getMethod.ignore", true);
-	
 	private boolean integratedGatewayDeploy = false;
 
 	private PathMatcher invoketokenCheckIgnoreUriMather = new PathMatcher();
@@ -59,11 +63,10 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			integratedGatewayDeploy = true;
 		} catch (Exception e) {}
 		String contextPath = GlobalRuntimeContext.getContextPath();
-		if(invokeTokenCheckEnabled) {
+		if(AppConfigs.invokeTokenCheckEnabled) {
 			invoketokenCheckIgnoreUriMather.addUriPattern(contextPath, "/error");
 		}
-		List<String> ignoreUris = ResourceUtils.getList("jeesuite.acl.invoke-token.ignore-uris");
-		for (String uri : ignoreUris) {
+		for (String uri : AppConfigs.invokeTokenIgnoreUris) {
 			invoketokenCheckIgnoreUriMather.addUriPattern(contextPath, uri);
 		}
 		
@@ -81,7 +84,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 				CurrentRuntimeContext.addContextHeader(headerName,request.getHeader(headerName));
 			}
 			//
-			if(invokeTokenCheckEnabled){	
+			if(AppConfigs.invokeTokenCheckEnabled){	
 				String uri = request.getRequestURI();
 				if(!invoketokenCheckIgnoreUriMather.match(uri)){				
 					String authCode = request.getHeader(CustomRequestHeaders.HEADER_INVOKE_TOKEN);
@@ -94,27 +97,17 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			HandlerMethod method = (HandlerMethod)handler;
 			ApiMetadata  config = method.getMethod().getAnnotation(ApiMetadata.class);
 			if(config != null){
-
-				if(!isLocalEnv && config.IntranetAccessOnly() && !WebUtils.isInternalRequest(request)){
+				if(config.IntranetAccessOnly() && !WebUtils.isInternalRequest(request)){
 					response.setStatus(403);
+					if(log.isDebugEnabled()) {
+						WebUtils.printRequest(request);
+					}
 					throw new ForbiddenAccessException();
 				}
 	
 				//@ResponseBody and ResponseEntity的接口在postHandle addHeader不生效，因为会经过HttpMessageConverter
 				if(config.responseKeep()){
 					response.addHeader(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
-				}
-			}
-			
-			//行为日志
-			if(requestLogEnabled){
-				boolean logging = config == null ? true : config.actionLog();;
-				if(logging){
-					logging = !requestLogGetIngore || !request.getMethod().equals(RequestMethod.GET.name());
-				}
-				if(logging) {
-					String ipAddr = IpUtils.getIpAddr(request);
-					ActionLogCollector.onRequestStart(request.getMethod(),request.getRequestURI(),ipAddr).apiMeta(config).addContext();
 				}
 			}
 		}

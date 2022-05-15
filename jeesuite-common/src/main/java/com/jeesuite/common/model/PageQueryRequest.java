@@ -1,4 +1,4 @@
-package com.jeesuite.springweb.model;
+package com.jeesuite.common.model;
 
 import com.jeesuite.common.model.OrderBy;
 import com.jeesuite.common.model.PageParams;

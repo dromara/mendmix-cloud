@@ -15,18 +15,31 @@
  */
 package com.jeesuite.gateway.router;
 
-import java.util.Collection;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.springframework.beans.factory.InitializingBean;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.gateway.config.GatewayProperties;
 import org.springframework.cloud.gateway.event.EnableBodyCachingEvent;
 import org.springframework.cloud.gateway.filter.AdaptCachedBodyGlobalFilter;
+import org.springframework.cloud.gateway.filter.FilterDefinition;
+import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinitionRepository;
 import org.springframework.cloud.gateway.support.NotFoundException;
+
+import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.util.JsonUtils;
+import com.jeesuite.gateway.CurrentSystemHolder;
+import com.jeesuite.gateway.GatewayConstants;
+import com.jeesuite.gateway.model.BizSystemModule;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -40,30 +53,79 @@ import reactor.core.publisher.Mono;
  * @version 1.0.0
  * @date Apr 5, 2022
  */
-public class CustomRouteDefinitionRepository implements RouteDefinitionRepository,InitializingBean {
+public class CustomRouteDefinitionRepository implements RouteDefinitionRepository {
+
+	private final static Logger logger = LoggerFactory.getLogger("com.zvosframework.adapter.gateway");
 
 	private static AtomicReference<Map<String, RouteDefinition>> routeHub = new AtomicReference<>();
 
 	@Autowired
-    private AdaptCachedBodyGlobalFilter adaptCachedBodyGlobalFilter;
-	
+	private AdaptCachedBodyGlobalFilter adaptCachedBodyGlobalFilter;
+	@Autowired
+	private GatewayProperties gatewayProperties;
+
 	@Override
 	public Flux<RouteDefinition> getRouteDefinitions() {
-        //TODO 
-        return Flux.fromIterable(routeHub.get().values());
+		if (routeHub.get() == null) {
+			routeHub.set(new HashMap<>());
+		}
+		
+		if(routeHub.get().isEmpty()) {
+			// 本地路由
+			List<RouteDefinition> routes = gatewayProperties.getRoutes();
+			for (RouteDefinition routeDef : routes) {
+				routeHub.get().put(routeDef.getId().toLowerCase(), routeDef);
+			}
+			//
+			Map<String, BizSystemModule> modules = CurrentSystemHolder.getRouteModuleMappings();
+			for (BizSystemModule module : modules.values()) {
+				// 网关本身
+				if (GlobalRuntimeContext.APPID.equals(module.getServiceId())) {
+					continue;
+				}
+				// 本地已加载
+				if (routeHub.get().containsKey(module.getServiceId())) {
+					continue;
+				}
+				//
+				loadDynamicRouteDefinition(module);
+			}
+			
+			for (RouteDefinition route : routeHub.get().values()) {
+				EnableBodyCachingEvent enableBodyCachingEvent = new EnableBodyCachingEvent(new Object(), route.getId());
+				adaptCachedBodyGlobalFilter.onApplicationEvent(enableBodyCachingEvent);
+			}
+			logger.info("\n=============load routes==============\n{}", JsonUtils.toPrettyJson(routeHub.get().values()));
+		}
+
+		return Flux.fromIterable(routeHub.get().values());
 	}
 
 	@Override
 	public Mono<Void> save(Mono<RouteDefinition> routes) {
 
-		Map<String, RouteDefinition> map = new HashMap<>();
-		routes.flatMap(r -> {
-			map.put(r.getId(), r);
+		if (routeHub.get() == null) {
+			routeHub.set(new HashMap<>());
+		}
+		routes.flatMap(routeDef -> {
+			routeHub.get().put(routeDef.getId(), routeDef);
 			return Mono.empty();
-		});	
-		routeHub.set(map);
-	
+		});
+
 		return Mono.empty();
+	}
+
+	public void loadDynamicRouteDefinition(BizSystemModule module) {
+		RouteDefinition routeDef = new RouteDefinition();
+		routeDef.setId(module.getServiceId());
+		routeDef.setUri(URI.create(module.getProxyUri()));
+		routeDef.setPredicates(new ArrayList<>(1));
+		String uri = String.format("Path=%s/%s/**", GatewayConstants.PATH_PREFIX, module.getRouteName());
+		routeDef.getPredicates().add(new PredicateDefinition(uri));
+		routeDef.setFilters(new ArrayList<>(1));
+		int stripPrefix = StringUtils.countMatches(uri, "/") - 1;
+		routeDef.getFilters().add(new FilterDefinition("StripPrefix=" + stripPrefix));
+		routeHub.get().put(routeDef.getId(), routeDef);
 	}
 
 	@Override
@@ -77,14 +139,5 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 		});
 	}
 
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		Collection<RouteDefinition> routes = routeHub.get().values();
-		for (RouteDefinition route : routes) {
-			EnableBodyCachingEvent enableBodyCachingEvent = new EnableBodyCachingEvent(new Object(), route.getId());
-            adaptCachedBodyGlobalFilter.onApplicationEvent(enableBodyCachingEvent);
-		}
-	}
 
 }

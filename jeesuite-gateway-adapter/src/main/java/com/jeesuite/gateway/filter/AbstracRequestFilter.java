@@ -23,12 +23,12 @@ import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.common.util.JsonUtils;
+import com.jeesuite.gateway.GatewayConfigs;
 import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.filter.pre.GlobalHeaderHanlder;
 import com.jeesuite.gateway.filter.pre.RequestLogHanlder;
 import com.jeesuite.gateway.filter.pre.SignatureRequestHandler;
 import com.jeesuite.gateway.model.BizSystemModule;
-import com.jeesuite.springweb.GlobalConfigs;
 
 import reactor.core.publisher.Mono;
 
@@ -49,11 +49,11 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
     public AbstracRequestFilter(PreFilterHandler...filterHandlers) {
 		handlers.add(new GlobalHeaderHanlder());
 		
-		if(GlobalConfigs.requestLogEnabled) {
+		if(GatewayConfigs.actionLogEnabled) {
 			handlers.add(new RequestLogHanlder());
 		}
 		
-		if(GlobalConfigs.openEnabled) {
+		if(GatewayConfigs.openEnabled) {
 			handlers.add(new SignatureRequestHandler());
 		}
 

@@ -65,9 +65,6 @@ public class HuaweicloudProvider extends AbstractProvider {
 
     public HuaweicloudProvider(CosProviderConfig conf){
         super(conf);
-        if(StringUtils.isBlank(conf.getRegionName())) {
-            conf.setRegionName("cn-south-1");
-        }
         String endpoint=conf.getEndpoint();
         ObsConfiguration obsConfiguration = new ObsConfiguration();
         obsConfiguration.setEndPoint(endpoint);
@@ -175,8 +172,8 @@ public class HuaweicloudProvider extends AbstractProvider {
                 return uploadResult;
             }
         } catch (Exception e) {
-            e.printStackTrace();
             logger.error("上传文件出错, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
+            throw new JeesuiteBaseException(e.getMessage());
         }
         return null;
     }
@@ -237,8 +234,8 @@ public class HuaweicloudProvider extends AbstractProvider {
             return inputStream;
         }catch (Exception e){
             logger.error("获取流失败, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
+            throw new JeesuiteBaseException(e.getMessage());
         }
-        return null;
     }
 
     @Override
@@ -263,7 +260,6 @@ public class HuaweicloudProvider extends AbstractProvider {
         }
         result.setMimeType(objectMetadata.getContentType());
         result.setFilesize(objectMetadata.getContentLength());
-        String expires = objectMetadata.getExpires();
 
         return result;
     }
@@ -305,7 +301,7 @@ public class HuaweicloudProvider extends AbstractProvider {
 
     public boolean isBucketPrivate(String bucketName){
         if (!existsBucket(bucketName)) {
-            throw new RuntimeException("桶["+bucketName+"]不存在");
+            throw new RuntimeException("bucket["+bucketName+"]不存在");
         }
         AccessControlList acl = obsClient.getBucketAcl(bucketName);
         Set<GrantAndPermission> grants = acl.getGrants();

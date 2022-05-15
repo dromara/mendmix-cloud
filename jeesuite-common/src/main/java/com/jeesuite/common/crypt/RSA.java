@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016-2020 www.jeesuite.com.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jeesuite.common.crypt;
 
 import java.io.BufferedReader;
@@ -36,11 +51,13 @@ import javax.crypto.NoSuchPaddingException;
 
 
 public class RSA {
+	private static final String RSA_ALGORITHM = "RSA";
+
 	private static final String DEFAULT_ENCODING = "UTF-8";
 
 	private static final Charset DEFAULT_CHARSET = Charset.forName(DEFAULT_ENCODING);
 	
-	private static final String KEY_ALGORITHM = "RSA";
+	private static final String KEY_ALGORITHM = RSA_ALGORITHM;
     /** 貌似默认是RSA/NONE/PKCS1Padding，未验证 */
     private static final String CIPHER_ALGORITHM = "RSA/ECB/PKCS1Padding";
 
@@ -70,11 +87,12 @@ public class RSA {
          // 解密
          System.out.println("RSA decoded: "  + decrypt(privateKey, encodedText));
     }
-
+    
+    
     /**
      * 生成RSA密匙对
      * @param keySize
-     * @return [pubkey,prikey]
+     * @return [私钥，公钥]
      */
     public static String[] generateKeyPair(int keySize) { 
     	
@@ -94,13 +112,13 @@ public class RSA {
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();  
         // 得到公钥  
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();  
+        
         try {  
             // 得到公钥字符串  
             String publicKeyString = Base64.encodeToString(publicKey.getEncoded(),true);  
             // 得到私钥字符串  
             String privateKeyString = Base64.encodeToString(privateKey.getEncoded(),true);  
-           
-            return new String[]{publicKeyString,privateKeyString};
+            return new String[]{privateKeyString,publicKeyString};
         } catch (Exception e) {  
             throw new RuntimeException(e);
         }  
@@ -465,5 +483,92 @@ public class RSA {
     public static String decrypt(PrivateKey key, String encodedText) {
     	byte[] bytes = Base64.decode(encodedText);
     	return decrypt(key, bytes);
+    }
+
+    /**
+     * 私钥解密
+     *
+     * @param data
+     * @param privateKey
+     * @return
+     */
+    public static String privateDecrypt(String data, RSAPrivateKey privateKey) {
+        try {
+            Cipher cipher = Cipher.getInstance(RSA_ALGORITHM);
+
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            return new String(rsaSplitCodec(cipher, Cipher.DECRYPT_MODE, org.apache.commons.codec.binary.Base64.decodeBase64(data), privateKey.getModulus().bitLength()), "UTF-8");
+        } catch (Exception e) {
+            throw new RuntimeException("解密字符串[" + data + "]时遇到异常", e);
+        }
+    }
+    
+    public static String publicEncrypt(String data, RSAPublicKey publicKey) {
+    	try {
+    		Cipher cipher = Cipher.getInstance(RSA_ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            return org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(rsaSplitCodec(cipher, Cipher.ENCRYPT_MODE, data.getBytes("UTF-8"), publicKey.getModulus().bitLength()));
+		} catch (Exception e) {
+			throw new RuntimeException("加密字符串[" + data + "]时遇到异常", e);
+		}
+        
+    }
+
+    /**
+     * 生成私钥
+     *
+     * @param privateKey
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     */
+    public static RSAPrivateKey getPrivateKey(String privateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        //通过PKCS#8编码的Key指令获得私钥对象
+        KeyFactory keyFactory = KeyFactory.getInstance(RSA_ALGORITHM);
+        PKCS8EncodedKeySpec pkcs8KeySpec = new PKCS8EncodedKeySpec(org.apache.commons.codec.binary.Base64.decodeBase64(privateKey));
+        RSAPrivateKey key = (RSAPrivateKey) keyFactory.generatePrivate(pkcs8KeySpec);
+        return key;
+    }
+    
+    public static RSAPublicKey getPublicKey(String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        //通过X509编码的Key指令获得公钥对象
+        KeyFactory keyFactory = KeyFactory.getInstance(RSA_ALGORITHM);
+        X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(org.apache.commons.codec.binary.Base64.decodeBase64(publicKey));
+        RSAPublicKey key = (RSAPublicKey) keyFactory.generatePublic(x509KeySpec);
+        return key;
+    }
+
+    private static byte[] rsaSplitCodec(Cipher cipher, int opmode, byte[] datas, int keySize) {
+        int maxBlock = 0;
+        if (opmode == Cipher.DECRYPT_MODE) {
+            maxBlock = keySize / 8;
+        } else {
+            maxBlock = keySize / 8 - 11;
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        int offSet = 0;
+        byte[] buff;
+        int i = 0;
+        try {
+            while (datas.length > offSet) {
+                if (datas.length - offSet > maxBlock) {
+                    buff = cipher.doFinal(datas, offSet, maxBlock);
+                } else {
+                    buff = cipher.doFinal(datas, offSet, datas.length - offSet);
+                }
+                out.write(buff, 0, buff.length);
+                i++;
+                offSet = i * maxBlock;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("加解密阀值为[" + maxBlock + "]的数据时发生异常", e);
+        }
+        byte[] resultDatas = out.toByteArray();
+        try {
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return resultDatas;
     }
 }

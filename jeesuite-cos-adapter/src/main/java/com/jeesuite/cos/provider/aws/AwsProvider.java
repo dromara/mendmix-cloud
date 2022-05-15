@@ -47,7 +47,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.BucketCannedACL;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.s3.model.DeleteBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteBucketResponse;
 import software.amazon.awssdk.services.s3.model.GetBucketPolicyRequest;
@@ -122,7 +121,6 @@ public class AwsProvider extends AbstractProvider {
         if(StringUtils.isBlank(regionName)) {
             conf.setRegionName("china-south-1");
         }
-        String endpoint=conf.getEndpoint();
         region=Region.of(regionName);
         s3Client = S3Client.builder()
                 .region(region)
@@ -141,27 +139,7 @@ public class AwsProvider extends AbstractProvider {
                             }
                         };
                     }
-                })
-                .build();
-        S3Presigner s3Presigner= S3Presigner.builder()
-                .region(region)
-                .credentialsProvider(new AwsCredentialsProvider() {
-                    @Override
-                    public AwsCredentials resolveCredentials() {
-                        return new AwsCredentials() {
-                            @Override
-                            public String accessKeyId() {
-                                return conf.getAccessKey();
-                            }
-
-                            @Override
-                            public String secretAccessKey() {
-                                return conf.getSecretKey();
-                            }
-                        };
-                    }
-                })
-                .build();
+                }).build();
     }
 
     @Override
@@ -192,7 +170,7 @@ public class AwsProvider extends AbstractProvider {
             }else{
                 acl=BucketCannedACL.PUBLIC_READ;
             }
-            CreateBucketResponse bucket = s3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName)
+            s3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName)
                     .acl(acl).build());
             s3Client.putBucketPolicy(PutBucketPolicyRequest.builder().bucket(bucketName).policy(String.format(publicPolicyTemplate, bucketName,bucketName)).build());
         } catch (Exception e) {
@@ -226,8 +204,6 @@ public class AwsProvider extends AbstractProvider {
                 throw new JeesuiteBaseException("BucketName 不能为空");
             }
             String fileKey = object.getFileKey();
-            InputStream inputStream = object.getInputStream();
-            byte[] objectBytes = object.getBytes();
             PutObjectResponse putObjectResponse = null;
             long size=0;
             if (object.getFile() != null) {
@@ -266,6 +242,7 @@ public class AwsProvider extends AbstractProvider {
             throw e;
         } catch (Exception e) {
             LOGGER.warn("上传失败, e={}", ExceptionUtils.getMessage(e), e);
+            throw new JeesuiteBaseException(e.getMessage());
         }
         return null;
     }
@@ -290,7 +267,7 @@ public class AwsProvider extends AbstractProvider {
                     .bucket(bucketName)
                     .build();
             DeleteBucketResponse deleteBucketResponse = s3Client.deleteBucket(deleteBucketRequest);
-            return true;
+            return deleteBucketResponse.sdkHttpResponse().isSuccessful();
         } catch (Exception e) {
             LOGGER.error("删除Bucket[{}]出错, e={}", bucketName, ExceptionUtils.getMessage(e), e);
         }

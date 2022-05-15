@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jeesuite.logging.integrate;
+package com.jeesuite.common.constants;
 
-import com.jeesuite.common.model.Page;
-import com.jeesuite.common.model.PageParams;
-
-public interface LogStorageProvider {
-
-	void storage(ActionLog actionLog);
-	
-	Page<ActionLog> pageQuery(PageParams pageParam, ActionLogQueryParam queryParam);
-	
-	ActionLog getDetails(String id);
+/**
+ * 
+ * <br>
+ * Class Name   : StandardEnv
+ *
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @version 1.0.0
+ * @date May 15, 2022
+ */
+public enum StandardEnv {
+   local,dev,test,prod
 }

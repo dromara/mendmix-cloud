@@ -22,8 +22,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.common.util.JsonUtils;
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.springweb.AppConfigs;
 
 @ControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)
@@ -40,7 +40,7 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if(ResourceUtils.getBoolean("jeesuite.response.rewrite.enabled", true)) {
+		if(AppConfigs.respRewriteEnabled) {
 			register(new ResponseRewrite());
 		}
 		Map<String, ResponseBodyEnhancer> beans = InstanceFactory.getBeansOfType(ResponseBodyEnhancer.class);

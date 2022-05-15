@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common2.task.GlobalInternalScheduleService;
+import com.jeesuite.springweb.AppConfigs;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
 import com.jeesuite.springweb.enhancer.ResonseBodyEnhancerAdvice;
 import com.jeesuite.springweb.exception.GlobalExceptionHandler;
@@ -19,8 +19,7 @@ public class GatewaySupportConfiguration {
 	@Bean("restTemplate")
 	@LoadBalanced
 	RestTemplate restTemplate() {
-		int readTimeout = ResourceUtils.getInt("jeesuite.httpclient.readTimeout.ms", 30000);
-		return SimpleRestTemplateBuilder.build(readTimeout);
+		return SimpleRestTemplateBuilder.build(AppConfigs.readTimeout);
 	}
 
 	
