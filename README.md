@@ -27,6 +27,13 @@ Jeesuite寓意为java企业级应用开发套件，定位是一站式分布式�
 * [sonatype](https://oss.sonatype.org/content/repositories/releases/com/jeesuite/) 
 * [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
 
+## 关于作者
+ - 15年IT互联网老兵，熟悉微服务、k8s、云原生架构及各种分布式架构；
+ - DDD领域驱动早期实践者,2012-2014深度参与开源项目[koala企业级开发平台](https://gitee.com/openkoala/koala)；
+ - 荣获[2021年度海纳奖—分布式数据库十大优秀实践人物](https://baijiahao.baidu.com/s?id=1723175607837258012)
+
+<img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/2021-hainajiang.jpeg" width="350" height="360" />
+ 
 ## 微信交流群(如果群二维码过期，请先加作者微信[图2])
 <img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_group_qrcode.jpg" width="180" height="180" />
 <img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_qrcode.jpeg" width="180" height="180" />
