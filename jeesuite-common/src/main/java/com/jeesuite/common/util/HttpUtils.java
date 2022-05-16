@@ -90,7 +90,7 @@ public class HttpUtils {
 			if(StringUtils.isBlank(requestEntity.getUri())) {
 				throw new IllegalArgumentException("request uri is missing");
 			}
-			String url = CustomRequestHostHolder.resolveUrl(requestEntity.getUri());
+			requestEntity.uri(CustomRequestHostHolder.resolveUrl(requestEntity.getUri()));
 			return provider.execute(requestEntity);
 		} catch (IOException e) {
 			e.printStackTrace();

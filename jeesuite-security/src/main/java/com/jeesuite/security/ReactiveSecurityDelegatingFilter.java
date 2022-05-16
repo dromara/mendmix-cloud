@@ -16,7 +16,11 @@
 package com.jeesuite.security;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -30,7 +34,6 @@ import com.jeesuite.common.exception.ForbiddenAccessException;
 import com.jeesuite.common.exception.UnauthorizedException;
 import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.common.util.JsonUtils;
-import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.security.context.ReactiveRequestContextAdapter;
 import com.jeesuite.security.model.UserSession;
 
@@ -47,67 +50,80 @@ import reactor.core.publisher.Mono;
  */
 public class ReactiveSecurityDelegatingFilter implements WebFilter {
 
+	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.security");
+	
 	private static final String XML_HTTP_REQUEST = "XMLHttpRequest";
 	
-	private PathMatcher pathMatcher;
+	private List<String> matchUriPrefixs;
+	private String matchUriPrefix;
 	private ReactiveCustomAuthnHandler customAuthnHandler;
 	
-	public ReactiveSecurityDelegatingFilter(ReactiveCustomAuthnHandler customAuthnHandler,String...uriPatterns) {
+	public ReactiveSecurityDelegatingFilter(ReactiveCustomAuthnHandler customAuthnHandler,String...matchUriPrefixs) {
 		this.customAuthnHandler = customAuthnHandler;
+		if(matchUriPrefixs.length > 1) {
+			this.matchUriPrefixs = Arrays.asList(matchUriPrefixs);
+		}else {
+			this.matchUriPrefix = matchUriPrefixs[0];
+		}
+		
 	}
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 		ServerHttpRequest request = exchange.getRequest();
-		if(!pathMatcher.match(request.getPath().value())) {
-			return chain.filter(exchange);
-		}
-		
-		if(request.getMethod().equals(HttpMethod.OPTIONS)) {
-			return chain.filter(exchange);
-		}
-		
-		exchange.getAttributes().clear();
-		ReactiveRequestContextAdapter.init(request);
-		
-		if(customAuthnHandler != null) {
-			customAuthnHandler.beforeAuthentication(exchange);
-		}
-		
-		ServerHttpResponse response = exchange.getResponse();
-		
-		UserSession userSession = null;
 		try {
-			if(customAuthnHandler == null || !customAuthnHandler.customAuthentication(exchange)) {
-				userSession = SecurityDelegating.doAuthorization(request.getMethodValue(),request.getPath().value());
-			}
-		} catch (UnauthorizedException e) {
-			if(isAjax(request) || SecurityDelegating.getConfigurerProvider().error401Page() == null){	
-				byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.buildErrorResponse(e));
-				return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
-			}else{
-				response.getHeaders().setLocation(URI.create(SecurityDelegating.getConfigurerProvider().error401Page()));
+			if((matchUriPrefix != null && request.getPath().value().startsWith(matchUriPrefix)) 
+					|| (matchUriPrefixs != null && matchUriPrefixs.stream().anyMatch(o -> request.getPath().value().startsWith(o)))) {
 				return chain.filter(exchange);
 			}
-		}catch (ForbiddenAccessException e) {
-			if(isAjax(request) || SecurityDelegating.getConfigurerProvider().error403Page() == null){				
-				byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.buildErrorResponse(e));
-				return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
-			}else{
-				response.getHeaders().setLocation(URI.create(SecurityDelegating.getConfigurerProvider().error403Page()));
+			
+			if(request.getMethod().equals(HttpMethod.OPTIONS)) {
 				return chain.filter(exchange);
 			}
-		}
-		//
-		if(customAuthnHandler != null) {
-			customAuthnHandler.afterAuthentication(exchange,userSession);
-		}
-
-		try {
+			
+			exchange.getAttributes().clear();
+			ReactiveRequestContextAdapter.init(request);
+			
+			if(customAuthnHandler != null) {
+				customAuthnHandler.beforeAuthentication(exchange);
+			}
+			
+			ServerHttpResponse response = exchange.getResponse();
+			
+			UserSession userSession = null;
+			try {
+				if(customAuthnHandler == null || !customAuthnHandler.customAuthentication(exchange)) {
+					userSession = SecurityDelegating.doAuthorization(request.getMethodValue(),request.getPath().value());
+				}
+			} catch (UnauthorizedException e) {
+				if(isAjax(request) || SecurityDelegating.getConfigurerProvider().error401Page() == null){	
+					byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.buildErrorResponse(e));
+					return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
+				}else{
+					response.getHeaders().setLocation(URI.create(SecurityDelegating.getConfigurerProvider().error401Page()));
+					return chain.filter(exchange);
+				}
+			}catch (ForbiddenAccessException e) {
+				if(isAjax(request) || SecurityDelegating.getConfigurerProvider().error403Page() == null){				
+					byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.buildErrorResponse(e));
+					return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
+				}else{
+					response.getHeaders().setLocation(URI.create(SecurityDelegating.getConfigurerProvider().error403Page()));
+					return chain.filter(exchange);
+				}
+			}
+			//
+			if(customAuthnHandler != null) {
+				customAuthnHandler.afterAuthentication(exchange,userSession);
+			}
 			return chain.filter(exchange) //
 				    .doFinally(s -> {
 					   exchange.getAttributes().clear();
 				    });
+		} catch (Exception e) {
+			logger.error("_global_filter_error",e);
+			byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.buildErrorResponse(e));
+			return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
 		} finally {
 			ThreadLocalContext.unset();
 		}

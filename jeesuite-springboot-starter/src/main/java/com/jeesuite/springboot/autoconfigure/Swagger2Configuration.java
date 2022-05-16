@@ -11,6 +11,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.springweb.AppConfigs;
 
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
@@ -35,7 +36,7 @@ public class Swagger2Configuration {
 		
 		boolean enable = GlobalRuntimeContext.ENV.equals("dev") || GlobalRuntimeContext.ENV.equals("local");
 		String applicationName = ResourceUtils.getProperty("spring.application.name");
-		String basePackage = ResourceUtils.getProperty("jeesuite.application.base-package");
+		String basePackage = AppConfigs.basePackage;
 		Docket docket = new Docket(DocumentationType.SWAGGER_2)
 				.apiInfo(apiInfo(applicationName)) //
 				.enable(enable)  //

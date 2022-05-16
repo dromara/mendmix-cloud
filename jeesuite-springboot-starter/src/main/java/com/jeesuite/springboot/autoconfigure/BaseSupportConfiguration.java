@@ -2,6 +2,7 @@ package com.jeesuite.springboot.autoconfigure;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common2.task.GlobalInternalScheduleService;
+import com.jeesuite.springweb.client.LoadBalancerWrapper;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
 import com.jeesuite.springweb.enhancer.ResonseBodyEnhancerAdvice;
 import com.jeesuite.springweb.exception.GlobalExceptionHandler;
@@ -38,6 +40,11 @@ public class BaseSupportConfiguration {
 	@Bean
 	public GlobalInternalScheduleService globalInternalScheduleService() {
 		return new GlobalInternalScheduleService();
+	}
+	
+	@Bean
+	public LoadBalancerWrapper loadBalancerWrapper(DiscoveryClient discoveryClient) {
+		return new LoadBalancerWrapper(discoveryClient);
 	}
 
 }

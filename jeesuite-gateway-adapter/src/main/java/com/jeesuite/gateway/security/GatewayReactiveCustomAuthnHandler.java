@@ -59,6 +59,10 @@ public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHan
 			CurrentRuntimeContext.setClientType(portal.getClientType());
 			CurrentRuntimeContext.setPlatformType(portal.getCode());
 		}
+		
+		String routeName = RuequestHelper.getCurrentRouteName(request);
+		BizSystemModule module = CurrentSystemHolder.getModule(routeName);
+		exchange.getAttributes().put(GatewayConstants.CONTEXT_ROUTE_SERVICE, module);
 
 	}
 

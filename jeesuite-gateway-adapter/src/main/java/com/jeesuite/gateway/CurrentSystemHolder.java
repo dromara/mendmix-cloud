@@ -47,6 +47,7 @@ public class CurrentSystemHolder {
 	
 	private static Map<String, Map<String, ApiInfo>> moduleApiInfos = new HashMap<>();
 	
+	private static int fetchApiMetaRound = 0;
 
 	public static BizSystemModule getModule(String route) {
 		BizSystemModule module = routeModuleMappings.get().get(route);
@@ -119,14 +120,25 @@ public class CurrentSystemHolder {
 			//
 			if(moduleApiInfos.containsKey(module.getServiceId())) {
 				module.setApiInfos(moduleApiInfos.get(module.getServiceId()));
-			}else {
-				new Thread(() -> initModuleApiInfos(module)).start();
 			}
 			_modules.put(module.getRouteName(), module);
 			
 		}
 		routeModuleMappings.set(_modules);
-
+		//
+		//查询api信息
+		if(fetchApiMetaRound == 0){
+			new Thread(() -> {
+				while(_modules.size() > moduleApiInfos.size() && fetchApiMetaRound < 360) {
+					for (BizSystemModule module : _modules.values()) {
+						if(moduleApiInfos.containsKey(module.getServiceId()))continue;
+						initModuleApiInfos(module);
+					}
+					fetchApiMetaRound++;
+					try {Thread.sleep(10000);} catch (Exception e) {}
+				}
+			}).start();
+		}
 	}
 
 	private static void loadLocalRouteModules() {
@@ -161,7 +173,7 @@ public class CurrentSystemHolder {
 				appMetadata = AppMetadataHolder.getMetadata();
 			}else {	
 				url = module.getMetadataUri();
-				appMetadata = HttpRequestEntity.get(url).body(AppMetadata.class).backendInternalCall().execute().toObject(AppMetadata.class);
+				appMetadata = HttpRequestEntity.get(url).backendInternalCall().execute().toObject(AppMetadata.class);
 			}
 			Map<String, ApiInfo> apiInfos = new HashMap<>(appMetadata.getApis().size());
 			String uri;
@@ -177,12 +189,18 @@ public class CurrentSystemHolder {
 			}
 			module.setApiInfos(apiInfos);
 			moduleApiInfos.put(module.getServiceId(), apiInfos);
+			log.info(">>initModuleApiInfos success -> serviceId:{},nums:{}",module.getServiceId(),apiInfos.size());
 		} catch (Exception e) {
-			if(e instanceof JeesuiteBaseException && ((JeesuiteBaseException)e).getCode() == 404) {
+			boolean ignore = e instanceof ClassCastException;
+			if(!ignore && e instanceof JeesuiteBaseException) {
+				JeesuiteBaseException ex = (JeesuiteBaseException) e;
+				ignore = ex.getCode() == 404 || ex.getCode() == 401 || ex.getCode() == 403;
+			}
+			if(ignore) {
 				module.setApiInfos(new HashMap<>(0));
 				moduleApiInfos.put(module.getServiceId(), module.getApiInfos());
-			}else {
-				log.warn(">> initModuleApiInfos error -> serviceId:{},error:{}",module.getServiceId(),e.getMessage());
+			}else if(fetchApiMetaRound <= 1) {
+				log.error(">>initModuleApiInfos error -> serviceId:["+module.getServiceId()+"]",e);
 			}
 		}
 	}
