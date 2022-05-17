@@ -116,14 +116,19 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 	}
 
 	public void loadDynamicRouteDefinition(BizSystemModule module) {
+		String proxyUri = module.getProxyUri();
+		int stripPrefix = StringUtils.countMatches(module.getRouteName(), "/") + 2;
+		if(proxyUri.endsWith("/" + module.getRouteName())) {
+			proxyUri = proxyUri.substring(0,proxyUri.lastIndexOf(module.getRouteName()) - 1);
+			stripPrefix = 1;
+		}
 		RouteDefinition routeDef = new RouteDefinition();
 		routeDef.setId(module.getServiceId());
-		routeDef.setUri(URI.create(module.getProxyUri()));
+		routeDef.setUri(URI.create(proxyUri));
 		routeDef.setPredicates(new ArrayList<>(1));
-		String uri = String.format("Path=%s/%s/**", GatewayConstants.PATH_PREFIX, module.getRouteName());
-		routeDef.getPredicates().add(new PredicateDefinition(uri));
+		String pathExpr = String.format("Path=%s/%s/**", GatewayConstants.PATH_PREFIX, module.getRouteName());
+		routeDef.getPredicates().add(new PredicateDefinition(pathExpr));
 		routeDef.setFilters(new ArrayList<>(1));
-		int stripPrefix = StringUtils.countMatches(uri, "/") - 1;
 		routeDef.getFilters().add(new FilterDefinition("StripPrefix=" + stripPrefix));
 		routeHub.get().put(routeDef.getId(), routeDef);
 	}

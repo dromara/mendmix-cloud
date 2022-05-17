@@ -171,9 +171,8 @@ public class BizSystemModule {
 		}
 		if(getProxyUri().startsWith("http")) {
 			return getProxyUri();
-		}else if(getProxyUri().contains("://")) {
-			String[] parts = StringUtils.split(getProxyUri(), "/");
-			return String.format("http://%s", parts[1]);
+		}else if(getProxyUri().contains("lb://")) {
+			return getProxyUri().replace("lb://", "http://");
 		}
 		return null;
 	}
@@ -224,6 +223,5 @@ public class BizSystemModule {
 		return "BizSystemModule [serviceId=" + serviceId + ", routeName=" + routeName + ", proxyUri=" + proxyUri
 				+ ", anonymousUris=" + anonymousUris + "]";
 	}
-
 	
 }
