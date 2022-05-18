@@ -1,6 +1,10 @@
 package com.jeesuite.common.model;
 
-public class IdNamePair {
+import java.io.Serializable;
+
+public class IdNamePair implements Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	private String id;
 	private String name;

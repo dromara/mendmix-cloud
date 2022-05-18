@@ -1,11 +1,14 @@
 package com.jeesuite.common.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
-public class KeyValues {
+public class KeyValues implements Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	private String key;
 	private List<String> values;

@@ -15,14 +15,17 @@
  */
 package com.jeesuite.common.model;
 
+import java.io.Serializable;
+
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月7日
  */
-public class KeyValuePair {
+public class KeyValuePair implements Serializable {
 
-    private String key;
+	private static final long serialVersionUID = 1L;
+	private String key;
     private String value;
     
     public KeyValuePair() {}

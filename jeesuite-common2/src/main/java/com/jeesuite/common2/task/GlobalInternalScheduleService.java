@@ -12,13 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
+import com.jeesuite.common.async.AsyncInitializer;
 import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
-import com.jeesuite.spring.ApplicationStartedListener;
 import com.jeesuite.spring.InstanceFactory;
+import com.jeesuite.spring.helper.SpringAopHelper;
 
 /**
  * 
@@ -31,7 +31,7 @@ import com.jeesuite.spring.InstanceFactory;
  * @date Jan 8, 2022
  */
 @Order(Ordered.LOWEST_PRECEDENCE)
-public class GlobalInternalScheduleService implements InitializingBean, DisposableBean ,ApplicationStartedListener{
+public class GlobalInternalScheduleService implements InitializingBean, DisposableBean ,AsyncInitializer {
 
 	private static Logger log = LoggerFactory.getLogger("global.internal.task");
 
@@ -94,12 +94,11 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 		taskStat.running = true;
 		try {
 			if (log.isDebugEnabled())
-				log.debug("SubTimerTask[{}] execute Begin..", taskStat.task.getClass().getName());
+				log.debug("InternalSchedule[{}] execute Begin..", taskStat.taskName);
 			taskStat.task.doSchedule();
 			taskStat.lastFireTime = currentTime;
 		} catch (Exception e) {
-			log.error("SubTimerTask[{}] execute Error:{}", taskStat.task.getClass().getName(),
-					ExceptionUtils.getMessage(e));
+			log.error("InternalSchedule[{}] execute Error:{}", taskStat.taskName,ExceptionUtils.getMessage(e));
 		} finally {
 			taskStat.running = false;
 		}
@@ -107,11 +106,17 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 
 	private class SubTimerTaskStat {
 		SubTimerTask task;
+		String taskName;
 		boolean running = false;
 		long lastFireTime;
 
 		public SubTimerTaskStat(SubTimerTask task) {
 			this.task = task;
+			try {
+				this.taskName = SpringAopHelper.getTarget(task).getClass().getSimpleName();
+			} catch (Exception e) {
+				this.taskName = task.getClass().getSimpleName();
+			}
 			// 确保启动执行
 			this.lastFireTime = System.currentTimeMillis() - 3600 * 24 * 1000;
 		}
@@ -119,7 +124,7 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 
 
 	@Override
-	public void onApplicationStarted(ApplicationContext applicationContext) {
+	public void doInitialize() {
 		for (SubTimerTaskStat taskStat : taskStats) {
 			execSubTimerTask(taskStat);
 		}

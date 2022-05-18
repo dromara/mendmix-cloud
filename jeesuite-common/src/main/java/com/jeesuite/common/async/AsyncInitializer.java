@@ -19,10 +19,10 @@ public interface AsyncInitializer {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				asyncInitialize();
+				doInitialize();
 			}
-		}, "CacheInitializer-"+ count.getAndIncrement()).start();
+		}, "AsyncInitializer-"+ count.getAndIncrement()).start();
 	}
 	
-	void asyncInitialize();
+	void doInitialize();
 }

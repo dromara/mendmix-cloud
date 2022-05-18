@@ -26,6 +26,7 @@ public class SecuritySessionManager {
 	private String sessionIdName;
 	private boolean keepCookie;
 	private int sessionExpireIn = 0;
+	private long sessionExpireInMills = 0;
 	
 	private boolean isDevTestEnv = "dev|local|test".contains(GlobalRuntimeContext.ENV);
 
@@ -40,6 +41,7 @@ public class SecuritySessionManager {
 		this.headerTokenName = decisionProvider.headerTokenName();
 		this.keepCookie = decisionProvider.keepCookie();
 		this.sessionExpireIn = decisionProvider.sessionExpireIn();
+		this.sessionExpireInMills = this.sessionExpireIn * 1000;
 		//
 		this.storageManager.addCahe(cacheName, this.sessionExpireIn);
 		//
@@ -94,7 +96,7 @@ public class SecuritySessionManager {
 		String key = session.getSessionId();
 		storageManager.getCache(cacheName).setObject(key, session);
 		if (!session.isAnonymous()) {
-			session.setExpiredAt(System.currentTimeMillis() + sessionExpireIn * 1000);
+			session.setExpiredAt(System.currentTimeMillis() + this.sessionExpireInMills);
 			key = String.format(SESSION_UID_CACHE_KEY, session.getUser().getId());
 			storageManager.getCache(cacheName).setString(key, session.getSessionId());
 		}
@@ -109,6 +111,10 @@ public class SecuritySessionManager {
 			key = String.format(SESSION_UID_CACHE_KEY, session.getUser().getId());
 			storageManager.getCache(cacheName).remove(key);
 		}
+	}
+	
+	public long getUpdateTime(UserSession session) {
+		return session.getExpiredAt() - this.sessionExpireInMills;
 	}
 
 	public void setSessionAttribute(String name, Object object) {

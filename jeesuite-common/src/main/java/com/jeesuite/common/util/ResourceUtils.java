@@ -120,7 +120,7 @@ public final class ResourceUtils {
 		while (entries.hasMoreElements()) {  
 			JarEntry entry = entries.nextElement();
 			if(entry.getName().endsWith(".properties") || entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml")){
-				if(entry.getName().contains("i18n"))continue;
+				if(entry.getName().contains("/i18n/"))continue;
 				if(entry.getName().endsWith("pom.properties"))continue;
 				fileExt = entry.getName().substring(entry.getName().lastIndexOf("."));
 				if(!allFileMap.containsKey(fileExt)){
@@ -149,7 +149,7 @@ public final class ResourceUtils {
 			}
 			String path = file.getPath();
 			if(path.endsWith(".properties") || path.endsWith(".yaml") || path.endsWith(".yml")){
-				if(path.contains("i18n"))continue;
+				if(path.contains("/i18n/"))continue;
 				if(path.endsWith("pom.properties"))continue;
 				fileExt = path.substring(path.lastIndexOf("."));
 				if(!allFileMap.containsKey(fileExt)){

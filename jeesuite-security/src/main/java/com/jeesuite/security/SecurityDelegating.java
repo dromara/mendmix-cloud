@@ -37,7 +37,7 @@ import com.jeesuite.spring.InstanceFactory;
  */
 public class SecurityDelegating {
 	
-	private static final int SESSION_RNEWAL_BEFORE_MILLS = 5 * 60 * 1000;
+	private static final int SESSION_INTERVAL_MILLS =  60 * 1000;
 	private SecurityDecisionProvider decisionProvider;
 	private SecuritySessionManager sessionManager;
 	private SecurityResourceManager resourceManager;
@@ -123,6 +123,13 @@ public class SecurityDelegating {
 	public static UserSession doAuthorization(String method,String uri) throws UnauthorizedException,ForbiddenAccessException{
 		
 		UserSession session = getCurrentSession();
+		//续租
+		if(session != null) {
+			long interval = System.currentTimeMillis() - getInstance().sessionManager.getUpdateTime(session);
+			if(interval > SESSION_INTERVAL_MILLS) {
+				getInstance().sessionManager.storageLoginSession(session);
+			}
+		}
 
 		boolean isAdmin = session != null && session.getUser() != null 
 				&& session.getUser().isAdmin();
@@ -149,10 +156,6 @@ public class SecurityDelegating {
 			
 			if(StringUtils.isNotBlank(session.getTenantId())) {
 				CurrentRuntimeContext.setTenantId(session.getTenantId());
-			}
-			//续租
-			if(session.getExpiredAt() - System.currentTimeMillis() < SESSION_RNEWAL_BEFORE_MILLS) {
-				getInstance().sessionManager.storageLoginSession(session);
 			}
 		}
 		
