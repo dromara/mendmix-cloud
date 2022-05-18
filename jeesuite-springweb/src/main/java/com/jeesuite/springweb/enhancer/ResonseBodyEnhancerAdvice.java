@@ -20,8 +20,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import com.jeesuite.common.CustomRequestHeaders;
+import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.common.util.JsonUtils;
+import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.spring.InstanceFactory;
 import com.jeesuite.springweb.AppConfigs;
 
@@ -73,6 +75,7 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
 
     private class ResponseRewrite implements ResponseBodyEnhancer {
 
+    	private PathMatcher ignorePathMatcher = new PathMatcher(GlobalRuntimeContext.getContextPath(), "/actuator/*");
 		@Override
 		public Object process(Object body,
 	    		MethodParameter methodParameter,
@@ -92,6 +95,10 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
 	    	if(body instanceof WrapperResponse) {
 	        	return body;
 	        }
+	    	
+	    	if(ignorePathMatcher.match(request.getURI().getPath())) {
+	    		return body;
+	    	}
 	    	
 	    	if(!mediaType.includes(MediaType.APPLICATION_JSON) && !methodParameter.hasMethodAnnotation(ResponseBody.class)) {
 	    		return body;

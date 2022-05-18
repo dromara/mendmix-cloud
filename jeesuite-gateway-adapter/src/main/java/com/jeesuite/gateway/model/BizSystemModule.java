@@ -22,7 +22,7 @@ public class BizSystemModule {
     
     private String anonymousUris;
 
-    private Integer systemId;
+    private String systemId;
 
     private String name;
     
@@ -100,11 +100,11 @@ public class BizSystemModule {
 		}
 	}
 
-	public Integer getSystemId() {
+	public String getSystemId() {
 		return systemId;
 	}
 
-	public void setSystemId(Integer systemId) {
+	public void setSystemId(String systemId) {
 		this.systemId = systemId;
 	}
 

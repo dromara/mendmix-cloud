@@ -72,8 +72,8 @@ public class ReactiveSecurityDelegatingFilter implements WebFilter {
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 		ServerHttpRequest request = exchange.getRequest();
 		try {
-			if((matchUriPrefix != null && request.getPath().value().startsWith(matchUriPrefix)) 
-					|| (matchUriPrefixs != null && matchUriPrefixs.stream().anyMatch(o -> request.getPath().value().startsWith(o)))) {
+			if((matchUriPrefix != null && !request.getPath().value().startsWith(matchUriPrefix)) 
+					|| (matchUriPrefixs != null && !matchUriPrefixs.stream().anyMatch(o -> request.getPath().value().startsWith(o)))) {
 				return chain.filter(exchange);
 			}
 			

@@ -5,7 +5,7 @@ import java.util.List;
 
 public class BizSystem {
 
-	private Integer id;
+	private String id;
 	/**
 	 * 系统标识
 	 */
@@ -27,11 +27,11 @@ public class BizSystem {
 	private List<BizSystemModule> modules;
 	
 
-	public Integer getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 

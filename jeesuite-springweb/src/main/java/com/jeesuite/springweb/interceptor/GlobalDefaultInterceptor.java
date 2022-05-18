@@ -51,17 +51,12 @@ import com.jeesuite.springweb.AppConfigs;
 public class GlobalDefaultInterceptor implements HandlerInterceptor {
 
 	private static Logger log = LoggerFactory.getLogger("com.jeesuite.springweb");
-	
-	private boolean integratedGatewayDeploy = false;
 
 	private PathMatcher invoketokenCheckIgnoreUriMather = new PathMatcher();
 	
 	
 	public GlobalDefaultInterceptor() {
-		try {
-			Class.forName("org.springframework.cloud.gateway.filter.GlobalFilter");
-			integratedGatewayDeploy = true;
-		} catch (Exception e) {}
+
 		String contextPath = GlobalRuntimeContext.getContextPath();
 		if(AppConfigs.invokeTokenCheckEnabled) {
 			invoketokenCheckIgnoreUriMather.addUriPattern(contextPath, "/error");
@@ -76,20 +71,20 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 
-		if(!integratedGatewayDeploy) {
-			Enumeration<String> headerNames = request.getHeaderNames();
-			String headerName;
-			while(headerNames.hasMoreElements()) {
-				headerName = headerNames.nextElement();
-				CurrentRuntimeContext.addContextHeader(headerName,request.getHeader(headerName));
-			}
-			//
-			if(AppConfigs.invokeTokenCheckEnabled){	
-				String uri = request.getRequestURI();
-				if(!invoketokenCheckIgnoreUriMather.match(uri)){				
-					String authCode = request.getHeader(CustomRequestHeaders.HEADER_INVOKE_TOKEN);
-					TokenGenerator.validate(authCode, true);
-				}
+		ThreadLocalContext.unset();
+		
+		Enumeration<String> headerNames = request.getHeaderNames();
+		String headerName;
+		while(headerNames.hasMoreElements()) {
+			headerName = headerNames.nextElement();
+			CurrentRuntimeContext.addContextHeader(headerName,request.getHeader(headerName));
+		}
+		//
+		if(AppConfigs.invokeTokenCheckEnabled){	
+			String uri = request.getRequestURI();
+			if(!invoketokenCheckIgnoreUriMather.match(uri)){				
+				String authCode = request.getHeader(CustomRequestHeaders.HEADER_INVOKE_TOKEN);
+				TokenGenerator.validate(authCode, true);
 			}
 		}
 	

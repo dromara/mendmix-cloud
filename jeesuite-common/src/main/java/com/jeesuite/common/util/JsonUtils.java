@@ -188,6 +188,7 @@ public class JsonUtils {
 	 * @return
 	 */
 	public static String getJsonNodeValue(String jsonString, String attrs) {  
+		if(StringUtils.isBlank(jsonString))return null;
 		return getJsonNodeValue(getNode(jsonString, null), attrs);
 	}
 	

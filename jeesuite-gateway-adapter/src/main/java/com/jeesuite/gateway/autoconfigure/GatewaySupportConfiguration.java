@@ -3,6 +3,7 @@ package com.jeesuite.gateway.autoconfigure;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.jeesuite.gateway.endpoint.ActuatorController;
 import com.jeesuite.gateway.exception.ReactiveGlobalExceptionHandler;
 import com.jeesuite.gateway.router.CustomRouteDefinitionRepository;
 
@@ -17,6 +18,11 @@ public class GatewaySupportConfiguration {
 	@Bean
 	public CustomRouteDefinitionRepository customRouteDefinitionRepository() {
 		return new CustomRouteDefinitionRepository();
+	}
+	
+	@Bean
+	public ActuatorController actuatorController() {
+		return new ActuatorController();
 	}
 
 }

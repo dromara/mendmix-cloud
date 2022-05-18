@@ -68,7 +68,14 @@ public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHan
 
 	@Override
 	public boolean customAuthentication(ServerWebExchange exchange) {
+		
+		BizSystemModule module = exchange.getAttribute(GatewayConstants.CONTEXT_ROUTE_SERVICE);
 		ServerHttpRequest request = exchange.getRequest();
+		
+		if(module.getAnonUriMatcher() != null && module.getAnonUriMatcher().match(request.getPath().value())) {
+			return true;
+		}
+		
 		boolean pass = request.getHeaders().containsKey(GatewayConstants.X_SIGN_HEADER);
 		if(!pass) {
 			pass = isIpWhilelistAccess(request);

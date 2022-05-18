@@ -34,8 +34,7 @@ public class CurrentRuntimeContext {
 	);
 
 	public static void addContextHeaders(Map<String, String> headers) {
-		
-		ThreadLocalContext.unset();
+
 		String headerVal;
 		for (String headerName : contextHeaders) {
 			if (!headers.containsKey(headerName))

@@ -13,6 +13,7 @@ import com.jeesuite.common.util.ResourceUtils;
 
 public class GlobalRuntimeContext {
 	
+	public static final  long STARTUP_TIME = System.currentTimeMillis();
 	private static WorkIdGenerator workIdGenerator;
 	
 	private static volatile int workId;

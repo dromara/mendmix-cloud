@@ -3,11 +3,13 @@ package com.jeesuite.gateway.security;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.gateway.CurrentSystemHolder;
+import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.security.SecurityDecisionProvider;
 import com.jeesuite.security.model.ApiPermission;
@@ -19,10 +21,43 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 	public boolean isServletType() {
 		return false;
 	}
+	
+	
+
+	@Override
+	public List<String> anonymousUrlPatterns() {
+		List<String> urlPatterns = super.anonymousUrlPatterns();
+		return urlPatterns.stream().map(url -> GatewayConstants.PATH_PREFIX.concat(url)).collect(Collectors.toList());
+	}
+
+
+
+	@Override
+	public List<String> getUserApiPermissionUris(String userId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+	@Override
+	public String error401Page() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+	@Override
+	public String error403Page() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
 
 	@Override
 	public AuthUser validateUser(String type, String name, String password) throws JeesuiteBaseException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
