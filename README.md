@@ -4,7 +4,7 @@
  - [集成项目](https://gitee.com/vakinge/oneplatform)，[github](https://github.com/vakinge/oneplatform)
  
 ## 简介
-Jeesuite寓意为java企业级应用开发套件，定位是一站式分布式开发架构开源解决方案及快速开发平台。Jeesuite-libs为整体开发架构提供底层库支持。提供了数据库、缓存、消息中间件、分布式定时任务、SSO、文件服务、云存储等基础模块以及集成Dubbo、Spring Cloud底层支持。全部基于主流框架只做增强不做任何底层定制修改，每个组件可以独立使用。
+Jeesuite寓意为java企业级应用开发套件，定位是一站式分布式开发架构开源解决方案及云原生架构技术底座。Jeesuite-libs提供了数据库、缓存、消息中间件、分布式定时任务、安全框架、网关以及主流产商云服务快速集成能力。基于Jeesuite-libs可以不用关注技术细节快速搭建高并发高可用基于微服务的分布式架构。
 
 ## 为什么有jeesuite-libs
  - 一些框架使用起来比较复杂(譬如各种配置，各种资源管理，容错等)，针对这种情况我们做了大量二次封装旨在简化使用难度。
@@ -29,10 +29,11 @@ Jeesuite寓意为java企业级应用开发套件，定位是一站式分布式�
 
 ## 关于作者
  - 15年IT互联网老兵，熟悉微服务、k8s、云原生架构及各种分布式架构；
- - DDD领域驱动早期实践者,2012-2014深度参与开源项目[koala企业级开发平台](https://gitee.com/openkoala/koala)；
+ - DDD领域驱动早期实践者,2012-2014年作为开源项目[koala企业级开发平台](https://gitee.com/openkoala/koala)核心开发主推领域驱动设计理念；
  - 荣获[2021年度海纳奖—分布式数据库十大优秀实践人物](https://baijiahao.baidu.com/s?id=1723175607837258012)
 
 <img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/2021-hainajiang.jpeg" width="350" height="360" />
+ 
  
 ## 微信交流群(如果群二维码过期，请先加作者微信[图2])
 <img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_group_qrcode.jpg" width="180" height="180" />
