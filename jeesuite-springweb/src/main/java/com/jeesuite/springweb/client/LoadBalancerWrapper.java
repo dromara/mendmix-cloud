@@ -37,11 +37,19 @@ import com.jeesuite.spring.InstanceFactory;
  */
 public class LoadBalancerWrapper implements ProxyResolver,CommandLineRunner {
 
+	private boolean customLoadBalance;
 	private static LoadBalancerWrapper me;
 	private LoadBalancerClient loadBalancer;
 	private DiscoveryClient discoveryClient;
 
 	public LoadBalancerWrapper(DiscoveryClient discoveryClient) {
+		try {
+			Class.forName("org.springframework.web.reactive.DispatcherHandler");
+			Class.forName("reactor.core.publisher.Mono");
+			customLoadBalance = true;
+		} catch (ClassNotFoundException e) {
+			customLoadBalance = false;
+		}
 		this.discoveryClient = discoveryClient;
 		LoadBalancerWrapper.me = this;
 		CustomRequestHostHolder.setProxyResolver(this);
@@ -75,7 +83,9 @@ public class LoadBalancerWrapper implements ProxyResolver,CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		loadBalancer = InstanceFactory.getInstance(LoadBalancerClient.class);
+		if(!customLoadBalance) {			
+			loadBalancer = InstanceFactory.getInstance(LoadBalancerClient.class);
+		}
 	}
 
 	

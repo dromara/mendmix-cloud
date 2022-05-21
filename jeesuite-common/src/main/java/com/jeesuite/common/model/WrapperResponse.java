@@ -18,8 +18,6 @@ import com.jeesuite.common.util.JsonUtils;
  */
 public class WrapperResponse<T> {
 
-	private static String ERROR_JSON_TEMPLATE = "{\"code\": %s,\"msg\":\"%s\"}";
-
 	// 状态
 	private int code = 200;
 
@@ -94,12 +92,28 @@ public class WrapperResponse<T> {
 	public String toString() {
 		return JsonUtils.toJson(this);
 	}
-
-	public static String buildErrorJSON(int code, String msg) {
-		return String.format(ERROR_JSON_TEMPLATE, code, msg);
+	
+	public static WrapperResponse<Void> success(){
+		return new WrapperResponse<>();
+	}
+	
+	public static <T> WrapperResponse<T> success(T data){
+		return new WrapperResponse<T>(data);
+	}
+	
+	public static <T> WrapperResponse<T> fail(String msg){
+		return new WrapperResponse<>(500,msg);
+	}
+	
+	public static <T> WrapperResponse<T> fail(int code,String msg){
+		return new WrapperResponse<>(code,msg);
 	}
 
-	public static WrapperResponse<Void> buildErrorResponse(Exception e) {
+	public static String buildErrorJSON(int code, String msg) {
+		return JsonUtils.toJson(fail(code,msg));
+	}
+
+	public static <T> WrapperResponse<T> fail(Exception e) {
 		JeesuiteBaseException be;
 		if(e instanceof JeesuiteBaseException) {
 			be  = (JeesuiteBaseException) e;

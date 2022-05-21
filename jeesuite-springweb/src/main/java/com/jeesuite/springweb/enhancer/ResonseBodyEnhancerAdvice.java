@@ -19,12 +19,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -89,7 +91,12 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
             Class<? extends HttpMessageConverter<?>> aClass,
             ServerHttpRequest request,
             ServerHttpResponse response) {
-       
+        if(body != null && body instanceof Map) {
+        	String statusValue = Objects.toString(((Map<?, ?>)body).get("status"), null);
+        	if(String.valueOf(HttpStatus.NOT_FOUND.value()).equals(statusValue)) {
+        		return body;
+        	}
+        }
     	for (ResponseBodyEnhancer enhancer : enhancers) {
 			body = enhancer.process(body, methodParameter, mediaType, aClass,request,response);
 		}
@@ -108,11 +115,8 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
 	            ServerHttpRequest request,
 	            ServerHttpResponse response) {
 			
-			if(response.getHeaders().containsKey(CustomRequestHeaders.HEADER_RESP_KEEP)) {
-	        	return body;
-	        }
-			
-			if(request.getHeaders().containsKey(CustomRequestHeaders.HEADER_RESP_KEEP)) {
+			if(response.getHeaders().containsKey(CustomRequestHeaders.HEADER_RESP_KEEP) 
+					|| request.getHeaders().containsKey(CustomRequestHeaders.HEADER_RESP_KEEP)) {
 	        	return body;
 	        }
 	    	

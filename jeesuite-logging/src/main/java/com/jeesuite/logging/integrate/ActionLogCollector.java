@@ -47,8 +47,6 @@ public class ActionLogCollector {
 	private static final String ACTION_KEY_FORMAT = "%s_%s";
 	private static boolean taskLogEnabled = ResourceUtils.getBoolean("application.task.log.enabled");
 
-	private static String topicName = ResourceUtils.getProperty("actionlog.kafka.topic",String.format("%s-request-log", GlobalRuntimeContext.APPID));
-
 	private static ThreadPoolExecutor asyncSendExecutor;
 
 	private static LogStorageProvider logStorageProvider;

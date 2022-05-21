@@ -139,14 +139,16 @@ public class SecurityDelegating {
 				throw new UnauthorizedException();
 			}
 			
-			String permissionKey = ApiPermssionCheckHelper.buildPermissionKey(method,uri);
-			PermissionLevel permissionLevel = ApiPermssionCheckHelper.matchPermissionLevel(getInstance().resourceManager, permissionKey);
-			
-			//如果需鉴权
-			if(permissionLevel == PermissionLevel.PermissionRequired){
-				List<String> permissions = getInstance().resourceManager.getUserPermissions(session);
-				if(!ApiPermssionCheckHelper.checkPermissions(getInstance().resourceManager,permissionKey, permissions)){
-					throw new ForbiddenAccessException();
+			if(getInstance().decisionProvider.apiAuthzEnabled()) {
+				String permissionKey = ApiPermssionCheckHelper.buildPermissionKey(method,uri);
+				PermissionLevel permissionLevel = ApiPermssionCheckHelper.matchPermissionLevel(getInstance().resourceManager, permissionKey);
+				
+				//如果需鉴权
+				if(permissionLevel == PermissionLevel.PermissionRequired){
+					List<String> permissions = getInstance().resourceManager.getUserPermissions(session);
+					if(!ApiPermssionCheckHelper.checkPermissions(getInstance().resourceManager,permissionKey, permissions)){
+						throw new ForbiddenAccessException();
+					}
 				}
 			}
 		}

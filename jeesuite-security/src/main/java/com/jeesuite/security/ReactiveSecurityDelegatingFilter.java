@@ -97,7 +97,7 @@ public class ReactiveSecurityDelegatingFilter implements WebFilter {
 				}
 			} catch (UnauthorizedException e) {
 				if(isAjax(request) || SecurityDelegating.getConfigurerProvider().error401Page() == null){	
-					byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.buildErrorResponse(e));
+					byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.fail(e));
 					return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
 				}else{
 					response.getHeaders().setLocation(URI.create(SecurityDelegating.getConfigurerProvider().error401Page()));
@@ -105,7 +105,7 @@ public class ReactiveSecurityDelegatingFilter implements WebFilter {
 				}
 			}catch (ForbiddenAccessException e) {
 				if(isAjax(request) || SecurityDelegating.getConfigurerProvider().error403Page() == null){				
-					byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.buildErrorResponse(e));
+					byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.fail(e));
 					return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
 				}else{
 					response.getHeaders().setLocation(URI.create(SecurityDelegating.getConfigurerProvider().error403Page()));
@@ -124,7 +124,7 @@ public class ReactiveSecurityDelegatingFilter implements WebFilter {
 			logger.error("_global_filter_error",e);
 			ThreadLocalContext.unset();
 			exchange.getAttributes().clear();
-			byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.buildErrorResponse(e));
+			byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.fail(e));
 			return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
 		} 
 	}

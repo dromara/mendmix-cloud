@@ -84,7 +84,7 @@ public class ResponseRewriteHandler implements PostFilterHandler {
 			// 已经包含code结构不处理
 			boolean isCodeResp = originRespJSON != null
 								&& originRespJSON.containsKey(_CODE_NAME)
-							    && (originRespJSON.containsKey(_DATA_NAME) || originRespJSON.containsKey(_MSG_NAME));
+							    && (originRespJSON.size() == 1 || originRespJSON.containsKey(_DATA_NAME) || originRespJSON.containsKey(_MSG_NAME));
 			if (!isCodeResp) {
 				rebuild = true;
 				if (statusCode != 200) {

@@ -94,7 +94,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
 				logger.error("requestFilter_error",e);
 			}
 			ServerHttpResponse response = exchange.getResponse();
-			byte[] bytes = JsonUtils.toJson(WrapperResponse.buildErrorResponse(e)).getBytes(StandardCharsets.UTF_8);
+			byte[] bytes = JsonUtils.toJson(WrapperResponse.fail(e)).getBytes(StandardCharsets.UTF_8);
 			return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
 		}
     	

@@ -1,7 +1,8 @@
 package com.jeesuite.springboot.autoconfigure;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
@@ -26,13 +27,14 @@ public class BaseSupportConfiguration {
 	}
 	
 	@Bean
-	@ConditionalOnClass(name = {"javax.servlet.http.HttpServletRequest"})
+	@ConditionalOnWebApplication(type = Type.SERVLET)
 	public GlobalExceptionHandler globalExceptionHandler() {
 		return new GlobalExceptionHandler();
 	}
 	
 	@Bean
 	@ConditionalOnProperty(value = "jeesuite.response.rewrite.enabled",havingValue = "true",matchIfMissing = true)
+	@ConditionalOnWebApplication(type = Type.SERVLET)
 	public ResonseBodyEnhancerAdvice resonseRewriteAdvice() {
 		return new ResonseBodyEnhancerAdvice();
 	}
