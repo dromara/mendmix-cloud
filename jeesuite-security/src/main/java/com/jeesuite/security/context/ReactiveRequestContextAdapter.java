@@ -17,10 +17,13 @@ package com.jeesuite.security.context;
 
 import org.springframework.http.HttpCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.web.server.ServerWebExchange;
 
 import com.jeesuite.common.CurrentRuntimeContext;
 import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.security.RequestContextAdapter;
+
+import reactor.core.publisher.Mono;
 
 /**
  * 
@@ -38,7 +41,7 @@ public class ReactiveRequestContextAdapter implements RequestContextAdapter {
 	public static void init(ServerHttpRequest request) {
 		ThreadLocalContext.unset();
 		ThreadLocalContext.set(_CTX_REQUEST_KEY, request);
-		CurrentRuntimeContext.addContextHeaders(request.getHeaders().toSingleValueMap());
+		CurrentRuntimeContext.addContextHeaders(request.getHeaders().toSingleValueMap());		
 	}
 	
 	@Override
@@ -57,6 +60,11 @@ public class ReactiveRequestContextAdapter implements RequestContextAdapter {
 	@Override
 	public void addCookie(String domain, String cookieName, String cookieValue, int expire) {
 		
+	}
+	
+	private static Mono<ServerHttpRequest> getServerHttpRequest() {
+	    return Mono.deferContextual(Mono::just)
+	        .map(contextView -> contextView.get(ServerWebExchange.class).getRequest());
 	}
 
 }

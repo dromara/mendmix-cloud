@@ -19,6 +19,8 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -35,6 +37,7 @@ import com.jeesuite.springweb.interceptor.MockLoginUserInterceptor;
 import com.jeesuite.springweb.utils.UserMockUtils;
 
 @Configuration
+@ConditionalOnWebApplication(type = Type.SERVLET)
 public class CustomWebMvcConfiguration implements WebMvcConfigurer {
 
 	@Override

@@ -122,11 +122,11 @@ public class ReactiveSecurityDelegatingFilter implements WebFilter {
 				    });
 		} catch (Exception e) {
 			logger.error("_global_filter_error",e);
+			ThreadLocalContext.unset();
+			exchange.getAttributes().clear();
 			byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.buildErrorResponse(e));
 			return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
-		} finally {
-			ThreadLocalContext.unset();
-		}
+		} 
 	}
 	
 	private static boolean isAjax(ServerHttpRequest request){

@@ -32,6 +32,8 @@ import com.jeesuite.gateway.model.BizSystemModule;
  */
 public interface PreFilterHandler {
 
+	default void onStarted() {}
+	
 	Builder process(ServerWebExchange exchange,BizSystemModule module,Builder requestBuilder);
 	
 	int order();

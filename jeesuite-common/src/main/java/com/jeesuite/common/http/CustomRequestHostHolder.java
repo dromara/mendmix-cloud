@@ -47,10 +47,6 @@ public class CustomRequestHostHolder {
 		CustomRequestHostHolder.proxyResolver = proxyResolver;
 	}
 
-	public static void addMapping(String host,String mappingUrl) {
-		getBaseNameMappings().put(host, mappingUrl);
-	}
-	
 	private static Map<String, String> getBaseNameMappings() {
 		if(!baseNameMappings.isEmpty())return baseNameMappings;
 		synchronized (baseNameMappings) {
@@ -78,6 +74,14 @@ public class CustomRequestHostHolder {
 	
 	public static String getMapping(String name){
 		return getBaseNameMappings().get(name);
+	}
+	
+	public static void addMapping(String host,String mappingUrl) {
+		getBaseNameMappings().put(host.toLowerCase(), mappingUrl);
+	}
+	
+	public static boolean containsMapping(String host,String mappingUrl) {
+		return getBaseNameMappings().containsKey(host.toLowerCase());
 	}
 	
 	public static String resolveUrl(String url){

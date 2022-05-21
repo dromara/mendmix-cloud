@@ -20,7 +20,6 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.jeesuite.common.JeesuiteBaseException;
-import com.jeesuite.common.ThreadLocalContext;
 import com.jeesuite.common.model.WrapperResponse;
 import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.gateway.GatewayConfigs;
@@ -40,7 +39,9 @@ import reactor.core.publisher.Mono;
  */
 public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
 
-    static Logger logger = LoggerFactory.getLogger("com.jeesuite.gateway");
+	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.gateway");
+    
+    private static final String CACHED_REQUEST_BODY_STR_ATTR = "cachedRequestBodyStr";
     
     private List<String> ignoreUris = Arrays.asList("/actuator/health");
     
@@ -88,6 +89,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
     		}
     		exchange = exchange.mutate().request(requestBuilder.build()).build();
 		} catch (Exception e) {
+			exchange.getAttributes().clear();
 			if(e instanceof JeesuiteBaseException == false) {
 				logger.error("requestFilter_error",e);
 			}
@@ -110,14 +112,14 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
     	if(exchange.getRequest().getMethod() == HttpMethod.GET) {
     		return null;
     	}
-    	String bodyString = ThreadLocalContext.getStringValue(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
+    	String bodyString = exchange.getAttribute(CACHED_REQUEST_BODY_STR_ATTR);
     	if(bodyString != null)return bodyString;
 		DataBuffer dataBuffer = exchange.getAttribute(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
 		if(dataBuffer == null)return null;
 		CharBuffer charBuffer = StandardCharsets.UTF_8.decode(dataBuffer.asByteBuffer());
         bodyString = charBuffer.toString();
         //
-        ThreadLocalContext.set(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR, bodyString);
+        exchange.getAttributes().put(CACHED_REQUEST_BODY_STR_ATTR, bodyString);
 		return bodyString;
 	}
 }
