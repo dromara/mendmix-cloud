@@ -1,7 +1,10 @@
 package com.jeesuite.gateway;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,7 +15,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cloud.gateway.config.GatewayProperties;
+import org.springframework.cloud.gateway.filter.FilterDefinition;
 import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
+import org.springframework.cloud.gateway.route.RouteDefinition;
 
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.JeesuiteBaseException;
@@ -43,7 +49,7 @@ public class CurrentSystemHolder {
 
 	private static List<BizSystemModule> localModules;
 
-	private static List<String> routeNames;
+	private static Set<String> routeNames;
 	
 	private static Map<String, Map<String, ApiInfo>> moduleApiInfos = new HashMap<>();
 	
@@ -61,20 +67,26 @@ public class CurrentSystemHolder {
 		if (routeModuleMappings.get() == null) {
 			load();
 		}
-		return new HashMap<>(routeModuleMappings.get());
+		return Collections.unmodifiableMap(routeModuleMappings.get());
 	}
 
-	public static List<String> getRouteNames() {
-		if (routeModuleMappings.get() == null) {
-			load();
+	public static Set<String> getRouteNames() {
+		if (routeNames == null) {
+			if (routeModuleMappings.get() == null) {
+				load();
+			}
+			synchronized(CurrentSystemHolder.class) {
+				if(routeNames != null)return routeNames;
+				routeNames = new HashSet<>(routeModuleMappings.get().keySet());
+			}
 		}
 		return routeNames;
 	}
 
-	public static List<BizSystemModule> getModules() {
+	public static Collection<BizSystemModule> getModules() {
 		if (routeModuleMappings.get() == null)
 			return new ArrayList<>(0);
-		return new ArrayList<>(routeModuleMappings.get().values());
+		return Collections.unmodifiableCollection(routeModuleMappings.get().values());
 	}
 	
 	public static BizSystemPortal getSystemPortal(String host) {
@@ -82,9 +94,8 @@ public class CurrentSystemHolder {
 	}
 
 	public static synchronized void load() {
-		if (localModules == null) {
-			loadLocalRouteModules();
-		}
+		//
+		loadLocalRouteModules();
 		List<BizSystemModule> modules;
 		try {
 			modules = InstanceFactory.getInstance(SystemMgtApi.class).getSystemModules();
@@ -94,29 +105,23 @@ public class CurrentSystemHolder {
 		} catch (Exception e) {
 			modules = localModules;
 		}
-		
+		//网关本身
 		if(!modules.stream().anyMatch(o -> GlobalRuntimeContext.APPID.equalsIgnoreCase(o.getServiceId()))) {
 			BizSystemModule module = new BizSystemModule();
 			module.setServiceId(GlobalRuntimeContext.APPID);
+			module.setRouteName(GlobalRuntimeContext.APPID);
+			module.setStripPrefix(0);
 			modules.add(module);
 			localModules.add(module);
 		}
 
 		Map<String, BizSystemModule> _modules = new HashMap<>(modules.size());
-		routeNames = new ArrayList<>(modules.size());
 		for (BizSystemModule module : modules) {
 			boolean isGateway = GlobalRuntimeContext.APPID.equalsIgnoreCase(module.getServiceId());
 			if (!isGateway && StringUtils.isBlank(module.getRouteName())) {
 				continue;
 			}
-			// 网关特殊处理
-			if (isGateway) {
-				module.setRouteName(GlobalRuntimeContext.APPID);
-			} else {
-				routeNames.add(module.getRouteName());
-			}
-			
-			module.buildAnonymousUriMatcher();
+			module.finalCorrect();
 			//
 			if(moduleApiInfos.containsKey(module.getServiceId())) {
 				module.setApiInfos(moduleApiInfos.get(module.getServiceId()));
@@ -142,27 +147,55 @@ public class CurrentSystemHolder {
 	}
 
 	private static void loadLocalRouteModules() {
+		if(localModules != null)return;
 		localModules = new ArrayList<>();
+		
+		List<RouteDefinition> defaultRouteDefs = InstanceFactory.getInstance(GatewayProperties.class).getRoutes();
+		
 		Properties properties = ResourceUtils.getAllProperties("spring.cloud.gateway.routes");
 		Set<Entry<Object, Object>> entrySet = properties.entrySet();
 		
 		BizSystemModule module;
 		String prefix;
-		PredicateDefinition pathPredicate;
 		for (Entry<Object, Object> entry : entrySet) {
 			if(entry.getKey().toString().endsWith(".id")) {
 				prefix = entry.getKey().toString().replace(".id", "");
 				module = new BizSystemModule();
+				module.setDefaultRoute(true);
 				module.setServiceId(entry.getValue().toString());
 				module.setProxyUri(properties.getProperty(prefix + ".uri"));
-				pathPredicate = new PredicateDefinition(properties.getProperty(prefix + ".predicates[0]"));
-				String routePath = pathPredicate.getArgs().get("_genkey_0").replace(GatewayConstants.PATH_PREFIX, "");
-				module.setRouteName(StringUtils.split(routePath.substring(1), "/")[0]);
 				module.setAnonymousUris(properties.getProperty(prefix + ".anonymousUris"));
+				//
+				updateModuleRouteInfos(module, defaultRouteDefs);
 				localModules.add(module);
 			}
 		}
 
+	}
+	
+	/**
+	 * @param module
+	 * @param definition
+	 */
+	private static void updateModuleRouteInfos(BizSystemModule module, List<RouteDefinition> defaultRouteDefs ) {	
+		RouteDefinition routeDef = defaultRouteDefs.stream().filter(def -> StringUtils.equalsIgnoreCase(module.getServiceId(), def.getId())).findFirst().orElse(null);
+		if(routeDef == null)return;
+		FilterDefinition stripPrefixDef = routeDef.getFilters().stream().filter(p -> "StripPrefix".equals(p.getName())).findFirst().orElse(null);
+		int stripPrefix = 0;
+		if(stripPrefixDef != null) {
+			stripPrefix = Integer.parseInt(stripPrefixDef.getArgs().get("_genkey_0"));
+		}
+		module.setStripPrefix(stripPrefix);
+		PredicateDefinition pathDef = routeDef.getPredicates().stream().filter(p -> "Path".equals(p.getName())).findFirst().orElse(null);
+		if(pathDef != null) {
+			String pathPattern = pathDef.getArgs().get("_genkey_0");
+			if(!pathPattern.startsWith(GatewayConstants.PATH_PREFIX)) {
+				throw new JeesuiteBaseException("route path must startWith:" + GatewayConstants.PATH_PREFIX);
+			}
+			String[] parts = StringUtils.split(pathPattern, "/");
+			module.setRouteName(parts[1]);
+			
+		}
 	}
 	
 	private static void initModuleApiInfos(BizSystemModule module) {
@@ -176,16 +209,9 @@ public class CurrentSystemHolder {
 				appMetadata = HttpRequestEntity.get(url).backendInternalCall().execute().toObject(AppMetadata.class);
 			}
 			Map<String, ApiInfo> apiInfos = new HashMap<>(appMetadata.getApis().size());
-			String uri;
 			for (ApiInfo api : appMetadata.getApis()) {
-				if(GlobalRuntimeContext.APPID.equals(module.getRouteName())) {
-					uri = String.format("%s/%s", GlobalRuntimeContext.getContextPath(), api.getUrl());
-				}else {
-					uri = String.format("%s/%s/%s", GlobalRuntimeContext.getContextPath(), module.getRouteName(), api.getUrl());
-				}
-				uri = uri.replace("//", "/");
-				api.setUrl(uri);
-				apiInfos.put(uri, api);
+				api.setUrl(BizSystemModule.resolveApiFinalUri(module, api.getUrl()));
+				apiInfos.put(api.getUrl(), api);
 			}
 			module.setApiInfos(apiInfos);
 			moduleApiInfos.put(module.getServiceId(), apiInfos);

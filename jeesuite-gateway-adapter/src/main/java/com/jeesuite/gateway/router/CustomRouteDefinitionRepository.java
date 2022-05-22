@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,6 @@ import org.springframework.cloud.gateway.route.RouteDefinitionRepository;
 import org.springframework.cloud.gateway.support.NotFoundException;
 
 import com.jeesuite.common.GlobalRuntimeContext;
-import com.jeesuite.common.util.JsonUtils;
 import com.jeesuite.gateway.CurrentSystemHolder;
 import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.model.BizSystemModule;
@@ -95,7 +93,14 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 				EnableBodyCachingEvent enableBodyCachingEvent = new EnableBodyCachingEvent(new Object(), route.getId());
 				adaptCachedBodyGlobalFilter.onApplicationEvent(enableBodyCachingEvent);
 			}
-			logger.info("\n=============load routes==============\n{}", JsonUtils.toPrettyJson(routeHub.get().values()));
+			
+			StringBuilder logBuilder = new StringBuilder("\n=============routes map Begin==============\n");
+			for (BizSystemModule module : modules.values()) {
+				if(GlobalRuntimeContext.APPID.equals(module.getServiceId()))continue;
+				logBuilder.append(module.toString()).append("\n");
+			}
+			logBuilder.append("=============routes map End==============\n");
+			logger.info(logBuilder.toString());
 		}
 
 		return Flux.fromIterable(routeHub.get().values());
@@ -117,11 +122,7 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 
 	public void loadDynamicRouteDefinition(BizSystemModule module) {
 		String proxyUri = module.getProxyUri();
-		int stripPrefix = StringUtils.countMatches(module.getRouteName(), "/") + 2;
-		if(proxyUri.endsWith("/" + module.getRouteName())) {
-			proxyUri = proxyUri.substring(0,proxyUri.lastIndexOf(module.getRouteName()) - 1);
-			stripPrefix = 1;
-		}
+		int stripPrefix = module.getStripPrefix();
 		RouteDefinition routeDef = new RouteDefinition();
 		routeDef.setId(module.getServiceId());
 		routeDef.setUri(URI.create(proxyUri));

@@ -22,6 +22,10 @@ public class ApiPermssionCheckHelper {
 
 	private  static Map<String, Pattern> wildcardPermissionPatterns = new HashMap<>();
 	
+	public static final String WILDCARD_START = "{";
+	private static final String PATH_VARIABLE_REGEX = "\\{[^/]+?\\}";
+	private static final String LEAST_ONE_REGEX = ".+";
+	
 	/**
 	 * 判断当前检查类型
 	 * @param resourceManager
@@ -71,14 +75,12 @@ public class ApiPermssionCheckHelper {
         
         //通配符匹配
 		for (String per : permissions) {
-			if(!per.contains(SecurityResourceManager.WILDCARD_START))continue;
-			
 			Pattern pattern = wildcardPermissionPatterns.get(per);
 			if(pattern == null){
 				synchronized (wildcardPermissionPatterns) {
 					pattern = wildcardPermissionPatterns.get(per);
 					if(pattern == null){
-						pattern = Pattern.compile(per.replaceAll("\\{[^/]+?\\}", ".+"));
+						pattern = Pattern.compile(per);
 					}
 				}
 			}
@@ -92,5 +94,9 @@ public class ApiPermssionCheckHelper {
 	
 	public static String buildPermissionKey(String method, String uri) {
 		return new StringBuilder(method.toUpperCase()).append(GlobalConstants.UNDER_LINE).append(uri).toString();
+	}
+	
+	public static String pathVariableToPattern(String uri) {
+		return uri.replaceAll(PATH_VARIABLE_REGEX, LEAST_ONE_REGEX);
 	}
 }

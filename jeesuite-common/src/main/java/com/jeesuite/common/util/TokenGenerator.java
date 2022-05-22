@@ -28,9 +28,9 @@ public class TokenGenerator {
 	public static String generate(String...prefixs){
 		String str = StringUtils.replace(UUID.randomUUID().toString(), LINE_THROUGH, StringUtils.EMPTY);
 		if(prefixs != null && prefixs.length > 0 &&  StringUtils.isNotBlank(prefixs[0])){
-			str = DigestUtils.md5Short(prefixs[0]).concat(str);
+			str = prefixs[0].concat(str);
 		}
-		return new String(Base58.encode(str.getBytes()));
+		return str;
 	}
 	
 	public static String generateWithSign(){

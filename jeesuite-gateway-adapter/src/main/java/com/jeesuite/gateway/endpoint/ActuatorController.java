@@ -15,8 +15,8 @@
  */
 package com.jeesuite.gateway.endpoint;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,7 +51,7 @@ public class ActuatorController {
 		result.put("startTime", GlobalRuntimeContext.STARTUP_TIME);
 		
 		if(details) {
-			List<BizSystemModule> modules = CurrentSystemHolder.getModules();
+			Collection<BizSystemModule> modules = CurrentSystemHolder.getModules();
 			Map<String, Object> moduleStatus = new HashMap<>(modules.size());
 			for (BizSystemModule module : modules) {
 				try {

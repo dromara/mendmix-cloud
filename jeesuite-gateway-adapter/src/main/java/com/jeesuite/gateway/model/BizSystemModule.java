@@ -28,7 +28,11 @@ public class BizSystemModule {
     
     private boolean global; //
     
+    private boolean defaultRoute; //
+    
     private boolean bodyRewriteIgnore;
+    
+    private int stripPrefix = -1;
     
     @JsonIgnore
     private List<String> activeNodes;
@@ -88,7 +92,15 @@ public class BizSystemModule {
 		this.anonUriMatcher = anonUriMatcher;
 	}
 
-	public void buildAnonymousUriMatcher() {
+	public void finalCorrect() {
+		if(this.stripPrefix < 0) {
+			this.stripPrefix = StringUtils.countMatches(getRouteName(), "/") + 2;
+			if(getProxyUri().endsWith("/" + getRouteName())) {
+				proxyUri = proxyUri.substring(0,proxyUri.lastIndexOf(getRouteName()) - 1);
+				stripPrefix = 1;
+			}
+		}
+		
 		if(StringUtils.isNotBlank(this.anonymousUris)) {
 			String prefix;
 			if(GlobalRuntimeContext.APPID.equals(serviceId)) {
@@ -124,6 +136,15 @@ public class BizSystemModule {
 		this.global = global;
 	}
 	
+
+	public boolean isDefaultRoute() {
+		return defaultRoute;
+	}
+
+	public void setDefaultRoute(boolean defaultRoute) {
+		this.defaultRoute = defaultRoute;
+	}
+
 	public boolean isBodyRewriteIgnore() {
 		return bodyRewriteIgnore;
 	}
@@ -132,8 +153,16 @@ public class BizSystemModule {
 		this.bodyRewriteIgnore = bodyRewriteIgnore;
 	}
 
+	public int getStripPrefix() {
+		return stripPrefix;
+	}
+
+	public void setStripPrefix(int stripPrefix) {
+		this.stripPrefix = stripPrefix;
+	}
+
 	public String getProxyUri() {
-		if(proxyUri == null && serviceId != null) {
+		if(proxyUri == null && serviceId != null && !GlobalRuntimeContext.APPID.equals(serviceId)) {
 			if(serviceId.contains(":")) {
 				proxyUri = serviceId;
 			}else {
@@ -192,6 +221,19 @@ public class BizSystemModule {
 		}
 		return baseUri + "/actuator/health";
 	}
+	
+	public static String resolveApiFinalUri(BizSystemModule module,String uri) {
+		if(GlobalRuntimeContext.APPID.equals(module.getRouteName())) {
+			return uri;
+		}else {
+			if(module.getStripPrefix() == 1) {
+				uri = GatewayConstants.PATH_PREFIX + uri;
+			}else {
+				uri = String.format("%s/%s/%s", GatewayConstants.PATH_PREFIX,module.getRouteName(),uri);
+			}
+		}
+		return uri.replace("//", "/");
+	}
 
 	@Override
 	public int hashCode() {
@@ -220,8 +262,10 @@ public class BizSystemModule {
 
 	@Override
 	public String toString() {
-		return "BizSystemModule [serviceId=" + serviceId + ", routeName=" + routeName + ", proxyUri=" + proxyUri
-				+ ", anonymousUris=" + anonymousUris + "]";
+		return "[routeName=" + routeName + ", serviceId=" + serviceId + ", proxyUri=" + proxyUri
+				+ ", stripPrefix=" + stripPrefix + ", anonymousUris=" + anonymousUris + "]";
 	}
+
+	
 	
 }

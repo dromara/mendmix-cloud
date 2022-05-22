@@ -79,7 +79,7 @@ public abstract class SecurityDecisionProvider {
 	
 	public abstract AuthUser validateUser(String type,String name,String password) throws JeesuiteBaseException;
 	public abstract List<ApiPermission> getAllApiPermissions();
-	public abstract List<String> getUserApiPermissionUris(String userId);
+	public abstract List<ApiPermission> getUserApiPermissions(String userId);
 	public abstract String error401Page();
 	public abstract String error403Page();
 }

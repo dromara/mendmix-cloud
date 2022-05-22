@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.annotation.ApiMetadata;
 import com.jeesuite.common.constants.PermissionLevel;
@@ -46,7 +47,6 @@ import com.jeesuite.common.model.Page;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.springweb.AppConfigs;
 import com.jeesuite.springweb.model.AppMetadata;
-import com.jeesuite.springweb.utils.UserMockUtils;
 
 
 /**
@@ -63,12 +63,19 @@ public class AppMetadataHolder {
 		if (!metadata.getApis().isEmpty())
 			return;
 		
+		String contextPath = GlobalRuntimeContext.getContextPath();
 		String pathPrefix;
-		if(UserMockUtils.isEnabled()) {
-			pathPrefix = ResourceUtils.getProperty("jeesuite.request.pathPrefix", "");
+		if(ResourceUtils.containsAnyProperty("jeesuite.request.pathPrefix")) {
+			pathPrefix = ResourceUtils.getProperty("jeesuite.request.pathPrefix");
+			if(!pathPrefix.startsWith("/")) {
+				pathPrefix = "/" + pathPrefix;
+			}
+			pathPrefix = contextPath + pathPrefix;
 		}else {
-			pathPrefix = "";
+			pathPrefix = contextPath;
 		}
+		
+		Map<String, String> packagePathPrefixs = ResourceUtils.getMappingValues("jeesuite.request.pathPrefix.mapping");
 		
 		Method[] methods;
 		String baseUri;
@@ -76,20 +83,21 @@ public class AppMetadataHolder {
 		ApiMetadata classMetadata;
 		ApiMetadata methodMetadata;
 		for (String className : classNameList) {
-			//if(!className.contains(GlobalRuntimeContext.MODULE_NAME))continue;
 			try {
 				Class<?> clazz = Class.forName(className);
 				if (!clazz.isAnnotationPresent(Controller.class) && !clazz.isAnnotationPresent(RestController.class))continue;
-
+                //
+				if(packagePathPrefixs.containsKey(clazz.getPackage().getName())) {
+					baseUri = addFirstPathSeparator(packagePathPrefixs.get(clazz.getPackage().getName()));
+				}else {
+					baseUri = "";
+				}
 				RequestMapping requestMapping = AnnotationUtils.findAnnotation(clazz, RequestMapping.class);
 				if (requestMapping != null) {
-					baseUri = requestMapping.value()[0];
-					if (!baseUri.startsWith("/"))
-						baseUri = "/" + baseUri;
-					if (baseUri.endsWith("/"))
+					baseUri = baseUri + addFirstPathSeparator(requestMapping.value().length > 0 ? requestMapping.value()[0] : requestMapping.path()[0]);
+					if (baseUri.endsWith("/")) {
 						baseUri = baseUri.substring(0, baseUri.length() - 1);
-				} else {
-					baseUri = "";
+					}
 				}
 				//
 				classMetadata = clazz.getAnnotation(ApiMetadata.class);
@@ -98,6 +106,11 @@ public class AppMetadataHolder {
 				methodLoop: for (Method method : methods) {
 					methodMetadata = method.isAnnotationPresent(ApiMetadata.class)
 							? method.getAnnotation(ApiMetadata.class) : classMetadata;
+					//		
+					if(methodMetadata != null && methodMetadata.IntranetAccessOnly()){
+						continue methodLoop;		
+					}
+					
 					String apiUri = null;
 					String apiHttpMethod = null;
 					
@@ -128,10 +141,7 @@ public class AppMetadataHolder {
 					if (apiUri == null) {
 						apiUri = baseUri;
 					} else {
-						if (!apiUri.startsWith("/")) {
-							apiUri = "/" + apiUri;
-						}
-						apiUri = baseUri + apiUri;
+						apiUri = baseUri + addFirstPathSeparator(apiUri);
 					}
 					apiInfo.setUrl(pathPrefix + apiUri);
 					apiInfo.setMethod(apiHttpMethod);
@@ -245,6 +255,10 @@ public class AppMetadataHolder {
 		return metadata;
 	}
 	
+	private static String addFirstPathSeparator(String uri) {
+		if(uri.startsWith(GlobalConstants.PATH_SEPARATOR))return uri;
+		return GlobalConstants.PATH_SEPARATOR + uri;
+	}
 	
 	private static void addSingleClassName(List<String> result, String className) {
 		try {

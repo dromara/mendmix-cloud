@@ -15,7 +15,7 @@
  */
 package com.jeesuite.gateway.helper;
 
-import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
@@ -94,7 +94,7 @@ public class RuequestHelper {
 		int indexOf = StringUtils.indexOf(uri, GlobalConstants.PATH_SEPARATOR, contextPath.length());
 		uri = uri.substring(indexOf + 1);
 
-		List<String> routeNames = CurrentSystemHolder.getRouteNames();
+		Set<String> routeNames = CurrentSystemHolder.getRouteNames();
 		for (String routeName : routeNames) {
 			if (uri.startsWith(routeName + "/")) {
 				return routeName;

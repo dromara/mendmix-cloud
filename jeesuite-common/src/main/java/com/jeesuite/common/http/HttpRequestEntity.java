@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -92,7 +93,7 @@ public class HttpRequestEntity {
 	}
 	
 	public HttpRequestEntity useContext() {
-		if(!headers.containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)){			 
+		if(!getHeaders().containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)){			 
 			header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generateWithSign());
 		 }
 		AuthUser currentUser;
@@ -162,7 +163,7 @@ public class HttpRequestEntity {
 	}
 
 	public Map<String, String> getHeaders() {
-		return headers;
+		return headers == null ? (headers = new LinkedHashMap<>()) : headers;
 	}
 
 	public HttpRequestEntity headers(Map<String, String> headers) {
@@ -171,8 +172,7 @@ public class HttpRequestEntity {
 	}
 	
 	public HttpRequestEntity header(String name,String value) {
-		if(this.headers == null)this.headers = new HashMap<>(3);
-		this.headers.put(name, value);
+		this.getHeaders().put(name, value);
 		return this;
 	}
 

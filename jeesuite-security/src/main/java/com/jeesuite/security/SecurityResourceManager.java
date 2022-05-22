@@ -18,9 +18,6 @@ package com.jeesuite.security;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -29,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jeesuite.common.GlobalRuntimeContext;
-import com.jeesuite.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.jeesuite.common.constants.PermissionLevel;
 import com.jeesuite.common.util.PathMatcher;
 import com.jeesuite.security.model.ApiPermission;
@@ -46,8 +42,6 @@ public class SecurityResourceManager {
 
 	private static Logger log = LoggerFactory.getLogger("com.jeesuite.security");
 
-	public final static String WILDCARD_START = "{";
-
 	private AtomicReference<List<String>> authzUris = new AtomicReference<>();
 	private AtomicReference<List<Pattern>> authzPatterns = new AtomicReference<>();
 	private AtomicReference<List<String>> anonUris = new AtomicReference<>();
@@ -56,8 +50,6 @@ public class SecurityResourceManager {
 	private AtomicReference<List<String>> nonWildcardUris = new AtomicReference<>();
 
 	private SecurityDecisionProvider decisionProvider;
-
-	private ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1,new StandardThreadFactory("apiPermRefreshExecutor"));
 
 	private String cacheName = "permres";
 	private SecurityStorageManager storageManager;
@@ -75,15 +67,8 @@ public class SecurityResourceManager {
 		if(decisionProvider.anonymousUrlPatterns() != null){
 			anonymousUrlMatcher = new PathMatcher(GlobalRuntimeContext.getContextPath(), decisionProvider.anonymousUrlPatterns());
 		}
-		
-		if(decisionProvider.apiAuthzEnabled()) {
-			refreshExecutor.scheduleAtFixedRate(new Runnable() {
-				@Override
-				public void run() {
-					loadApiPermissions();
-				}
-			}, 10, 60, TimeUnit.SECONDS);
-		}
+		//
+		loadApiPermissions();
 	}
 
 
@@ -125,21 +110,21 @@ public class SecurityResourceManager {
 		String permissionKey;
 		Pattern pattern;
 		for (ApiPermission permission : permissions) {
-			withWildcard = permission.getUri().contains(WILDCARD_START);
+			withWildcard = permission.getUri().contains(ApiPermssionCheckHelper.WILDCARD_START);
 			permissionKey = ApiPermssionCheckHelper.buildPermissionKey(permission.getHttpMethod(), permission.getUri());
 			if (!withWildcard) {
 				_nonWildcardUris.add(permissionKey);
 			}
 			if (PermissionLevel.PermissionRequired.name().equals(permission.getGrantType())) {
 				if (withWildcard) {
-					pattern = Pattern.compile(permissionKey.replaceAll("\\{[^/]+?\\}", ".+"));
+					pattern = Pattern.compile(ApiPermssionCheckHelper.pathVariableToPattern(permissionKey));
 					_authzPatterns.add(pattern);
 				} else {
 					_authzUris.add(permissionKey);
 				}
 			} else if (PermissionLevel.Anonymous.name().equals(permission.getGrantType())) {
 				if (withWildcard) {
-					pattern = Pattern.compile(permissionKey.replaceAll("\\{[^/]+?\\}", ".+"));
+					pattern = Pattern.compile(ApiPermssionCheckHelper.pathVariableToPattern(permissionKey));
 					_anonUriPatterns.add(pattern);
 				} else {
 					_anonUris.add(permissionKey);
@@ -167,32 +152,51 @@ public class SecurityResourceManager {
 	
 	public List<String> getUserPermissions(UserSession session) {
 
-		// TODO 考虑统一用户在不同租户，不同平台,逻辑要补充
-		String cacheKey = String.format("%s_%s", StringUtils.trimToEmpty(session.getTenantId()),
-				session.getUser().getId());
-		List<String> permissionCodes = storageManager.getCache(cacheName).getObject(cacheKey);
-		if (permissionCodes != null)
+		String hashKey = "apis";
+		if(StringUtils.isNotBlank(session.getTenantId())) {
+			hashKey = "apis_" + session.getTenantId();
+		}
+		
+		List<String> permissionCodes = storageManager.getCache(cacheName).getMapValue(session.getSessionId(), hashKey);
+		if (permissionCodes != null) {
 			return permissionCodes;
-
-		permissionCodes = decisionProvider.getUserApiPermissionUris(session.getUser().getId());
-
-		if (permissionCodes == null) {
-			permissionCodes = new ArrayList<>(0);
-		} else if (!permissionCodes.isEmpty()) {
-			permissionCodes = new ArrayList<>(permissionCodes);
-			List<String> removeWildcards = new ArrayList<>();
-			for (String perm : permissionCodes) {
-				if (perm.endsWith("*")) {
-					removeWildcards.add(StringUtils.remove(perm, "*"));
-				}
-			}
-			if (!removeWildcards.isEmpty())
-				permissionCodes.addAll(removeWildcards);
 		}
 
-		storageManager.getCache(cacheName).setObject(cacheKey, permissionCodes);
+		List<ApiPermission> apiPermissions = decisionProvider.getUserApiPermissions(session.getUser().getId());
+        
+		if (apiPermissions == null) {
+			permissionCodes = new ArrayList<>(0);
+		} else if (!apiPermissions.isEmpty()) {
+			permissionCodes = new ArrayList<>(apiPermissions.size());
+			String permissionCode;
+			for(ApiPermission api : apiPermissions) {
+				permissionCode = resovlePermissionKey(api);
+				if(permissionCode == null)continue;
+				permissionCodes.add(permissionCode);
+	        }
+		}
+		storageManager.getCache(cacheName).setMapValue(session.getSessionId(), hashKey, permissionCodes);
 
 		return permissionCodes;
+	}
+	
+	private String resovlePermissionKey(ApiPermission api) {
+		if(api.getUri().contains(ApiPermssionCheckHelper.WILDCARD_START)) {
+			String uriPattern = ApiPermssionCheckHelper.pathVariableToPattern(api.getUri());
+			List<Pattern> patterns = authzPatterns.get();
+			for (Pattern pattern : patterns) {		
+				if(pattern.pattern().startsWith(api.getHttpMethod()) && pattern.pattern().endsWith(uriPattern)) {
+					return pattern.pattern();
+				}
+			}
+		}else {
+			for (String authzUri : authzUris.get()) {
+				if(authzUri.startsWith(api.getHttpMethod()) && authzUri.endsWith(api.getUri())) {
+					return authzUri;
+				}
+			}
+		}
+		return null;
 	}
 
 	public boolean isAnonymous(String uri){
@@ -211,9 +215,6 @@ public class SecurityResourceManager {
 		storageManager.getCache(cacheName).removeAll();
 	}
 
-	public void close() {
-		if (refreshExecutor != null)
-			refreshExecutor.shutdown();
-	}
+	public void close() {}
 
 }

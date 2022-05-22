@@ -131,9 +131,6 @@ public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 		try {
 			HttpHeaders headers = exchange.getResponse().getHeaders();
 			boolean isGzip = GZIP_ENCODE.equalsIgnoreCase(headers.getFirst(HttpHeaders.CONTENT_ENCODING));
-            if(logger.isDebugEnabled()) {
-            	logger.debug("handleReadResponseBody begin -> isGip:{}",isGzip);
-            }
 			byte[] content = new byte[dataBuffer.readableByteCount()];
 			dataBuffer.read(content);
 			if (isGzip) {

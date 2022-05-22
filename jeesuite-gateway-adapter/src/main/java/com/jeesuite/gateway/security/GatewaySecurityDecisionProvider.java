@@ -5,14 +5,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.jeesuite.common.async.AsyncInitializer;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.gateway.CurrentSystemHolder;
 import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.security.SecurityDecisionProvider;
+import com.jeesuite.security.SecurityDelegating;
 import com.jeesuite.security.model.ApiPermission;
 
-public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionProvider {
+public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionProvider implements AsyncInitializer {
 	
 	
 	@Override
@@ -31,7 +33,7 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 
 	@Override
 	public List<ApiPermission> getAllApiPermissions() {
-		List<BizSystemModule> modules = CurrentSystemHolder.getModules();
+		Collection<BizSystemModule> modules = CurrentSystemHolder.getModules();
 		
 		List<ApiPermission> result = new ArrayList<>();
 		Collection<ApiInfo> apis;
@@ -49,4 +51,12 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 		}
 		return result;
 	}
+
+	
+	@Override
+	public void doInitialize() {
+		SecurityDelegating.init();
+	}
+	
+	
 }

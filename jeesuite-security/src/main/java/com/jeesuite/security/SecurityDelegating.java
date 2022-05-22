@@ -60,6 +60,10 @@ public class SecurityDelegating {
 		}
 		return instance;
 	}
+	
+	public static void init() {
+		getInstance();
+	}
 
 	protected static SecurityDecisionProvider getConfigurerProvider() {
 		return getInstance().decisionProvider;
@@ -102,10 +106,11 @@ public class SecurityDelegating {
 	
 	public static UserSession updateSession(AuthUser userInfo){
 		UserSession session = getCurrentSession();
+		if(session == null)session = UserSession.create();
 		session.setUser(userInfo);
 		
 		if(getInstance().decisionProvider.kickOff()){
-			UserSession otherSession = getInstance().sessionManager.getLoginSessionByUserId(userInfo.getId());
+			UserSession otherSession = getInstance().sessionManager.getLoginSessionByUserId(userInfo);
 			if(otherSession != null && !otherSession.getSessionId().equals(session.getSessionId())){
 				getInstance().sessionManager.removeLoginSession(otherSession.getSessionId());
 			}

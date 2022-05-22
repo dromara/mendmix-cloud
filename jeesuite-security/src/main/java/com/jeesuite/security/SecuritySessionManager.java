@@ -1,10 +1,11 @@
 package com.jeesuite.security;
 
-import java.io.Serializable;
-
 import org.apache.commons.lang3.StringUtils;
 
+import com.jeesuite.common.CurrentRuntimeContext;
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.model.AuthUser;
 import com.jeesuite.security.context.ReactiveRequestContextAdapter;
 import com.jeesuite.security.context.ServletRequestContextAdapter;
 import com.jeesuite.security.model.UserSession;
@@ -18,18 +19,16 @@ import com.jeesuite.security.model.UserSession;
  */
 public class SecuritySessionManager {
 
-	private final static String SESSION_UID_CACHE_KEY = "uid:%s";
 	private static String cacheName = "session";
 
 	private volatile String cookieDomain;
 	private String headerTokenName;
 	private String sessionIdName;
+	private boolean setCookie;
 	private boolean keepCookie;
 	private int sessionExpireIn = 0;
 	private long sessionExpireInMills = 0;
 	
-	private boolean isDevTestEnv = "dev|local|test".contains(GlobalRuntimeContext.ENV);
-
 	private SecurityStorageManager storageManager;
 	
 	private RequestContextAdapter requestContextAdapter;
@@ -59,7 +58,7 @@ public class SecuritySessionManager {
 	}
 
 	public UserSession getSession() {
-		return getSession(true);
+		return getSession(setCookie);
 	}
 
 	public UserSession getSession(boolean createIfAbsent) {
@@ -71,7 +70,7 @@ public class SecuritySessionManager {
 		} 
 		if (createIfAbsent && session == null) {
 			session = UserSession.create();
-			if(sessionId != null && isDevTestEnv) {
+			if(sessionId != null && GlobalRuntimeContext.isDevEnv()) {
 				session.setSessionId(sessionId);
 			}
 			int expire = keepCookie ? sessionExpireIn : -1;
@@ -84,8 +83,8 @@ public class SecuritySessionManager {
 
 	}
 
-	public UserSession getLoginSessionByUserId(Serializable serializable) {
-		String key = String.format(SESSION_UID_CACHE_KEY, serializable);
+	public UserSession getLoginSessionByUserId(AuthUser authUser) {
+		String key = buildUserSessionUniqueKey(authUser);
 		String sessionId = storageManager.getCache(cacheName).getString(key);
 		if (StringUtils.isBlank(sessionId))
 			return null;
@@ -94,12 +93,12 @@ public class SecuritySessionManager {
 
 	public void storageLoginSession(UserSession session) {
 		String key = session.getSessionId();
-		storageManager.getCache(cacheName).setObject(key, session);
 		if (!session.isAnonymous()) {
 			session.setExpiredAt(System.currentTimeMillis() + this.sessionExpireInMills);
-			key = String.format(SESSION_UID_CACHE_KEY, session.getUser().getId());
-			storageManager.getCache(cacheName).setString(key, session.getSessionId());
+			String uniquekey = buildUserSessionUniqueKey(session.getUser());
+			storageManager.getCache(cacheName).setString(uniquekey, session.getSessionId());
 		}
+		storageManager.getCache(cacheName).setObject(key, session);
 	}
 	
 
@@ -108,7 +107,7 @@ public class SecuritySessionManager {
 		UserSession session = getLoginSession(sessionId);
 		if (session != null && !session.isAnonymous()) {
 			storageManager.getCache(cacheName).remove(key);
-			key = String.format(SESSION_UID_CACHE_KEY, session.getUser().getId());
+			key = buildUserSessionUniqueKey(session.getUser());
 			storageManager.getCache(cacheName).remove(key);
 		}
 	}
@@ -145,6 +144,23 @@ public class SecuritySessionManager {
 			requestContextAdapter.addCookie(cookieDomain, cookieDomain, StringUtils.EMPTY, 0);
 		}
 		return sessionId;
+	}
+	
+	private static String buildUserSessionUniqueKey(AuthUser authUser) {
+		StringBuilder builder = new StringBuilder();
+		builder.append(StringUtils.defaultString(authUser.getId(), authUser.getName())).append(GlobalConstants.COLON);
+		if(CurrentRuntimeContext.getSystemId() != null) {
+			builder.append(CurrentRuntimeContext.getSystemId());
+		}
+		String platformType = CurrentRuntimeContext.getPlatformType();
+		if(StringUtils.isNotBlank(platformType)) {
+			builder.append(GlobalConstants.UNDER_LINE).append(platformType);
+		}
+		String clientType = CurrentRuntimeContext.getClientType();
+		if(StringUtils.isNotBlank(clientType)) {
+			builder.append(GlobalConstants.UNDER_LINE).append(clientType);
+		}
+		return builder.toString();
 	}
 
 }

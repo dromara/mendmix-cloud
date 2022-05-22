@@ -80,12 +80,12 @@ public class RedisCache implements Cache {
 
 	@Override
 	public void setMapValue(String key,String field,Object value) {
-		new RedisHashMap(key,groupName,timeToLiveSeconds).set(field, value);
+		new RedisHashMap(buildKey(key),groupName,timeToLiveSeconds).set(field, value);
 	}
 
 	@Override
 	public <T> T getMapValue(String key, String field) {
-		return new RedisHashMap(key,groupName).getOne(field);
+		return new RedisHashMap(buildKey(key),groupName).getOne(field);
 	}
 
 
