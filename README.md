@@ -1,4 +1,5 @@
-<img src="hhttps://jeesuite.oss-cn-guangzhou.aliyuncs.com/logo1.png" width="100" height="60" />
+<img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/logo1.png" width="100" height="60" />
+
 ## 资源索引
  - [快速开始](http://docs.jeesuite.com/guide/getting-started.html)
  - [文档列表](http://docs.jeesuite.com/docments/)
