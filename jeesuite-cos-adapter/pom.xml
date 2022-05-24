@@ -8,7 +8,7 @@
 	    <version>13</version>
 	</parent>
 	<artifactId>jeesuite-cos-adapter</artifactId>
-	<version>1.4.0</version>
+	<version>1.4.1-SNAPSHOT</version>
 	<description>云存储适配器，支持七牛、腾讯云，阿里云</description>
 
 	<dependencies>

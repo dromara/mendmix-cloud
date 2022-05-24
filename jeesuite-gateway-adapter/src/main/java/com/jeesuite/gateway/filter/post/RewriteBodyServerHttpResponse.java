@@ -86,8 +86,24 @@ public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 	@Override
 	public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
 
+		DataBufferFactory bufferFactory = exchange.getResponse().bufferFactory();
 		HttpHeaders headers = exchange.getResponse().getHeaders();
+		
 		if (headers.containsKey(HttpHeaders.CONTENT_DISPOSITION)) {
+			return super.writeWith(body);
+		}
+		
+		boolean isNullBody = !headers.containsKey(HttpHeaders.TRANSFER_ENCODING) && headers.getContentLength() == 0;
+		if(isNullBody) {
+			for (PostFilterHandler handler : handlers) {
+				bodyString = handler.process(exchange, module, bodyString);
+			}
+			if(bodyString != null) {
+				byte[] bytes = bodyString.getBytes();
+				DataBuffer dataBuffer = bufferFactory.wrap(bytes);
+				headers.setContentLength(bytes.length);
+				return super.writeWith(Flux.just(dataBuffer));
+			}
 			return super.writeWith(body);
 		}
 
@@ -115,7 +131,6 @@ public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 			return super.writeWith(body);
 		}
 
-		DataBufferFactory bufferFactory = exchange.getResponse().bufferFactory();
 		if (body instanceof Flux) {
 			Flux<? extends DataBuffer> fluxBody = (Flux<? extends DataBuffer>) body;
 			return super.writeWith(fluxBody.buffer().map(dataBuffers -> {

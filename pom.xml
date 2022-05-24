@@ -84,11 +84,11 @@
 		<module>jeesuite-cache</module>
 		<module>jeesuite-scheduler</module>
 		<module>jeesuite-mybatis</module>
-		<module>jeesuite-common2</module>
-		<module>jeesuite-springboot-starter</module>
 		<module>jeesuite-springweb</module>
 		<module>jeesuite-security</module>
+		<module>jeesuite-common2</module>
 		<module>jeesuite-logging</module>
+		<module>jeesuite-springboot-starter</module>
 		<module>jeesuite-gateway-adapter</module>
 		<module>jeesuite-amqp-adapter</module>
 		<module>jeesuite-cos-adapter</module>

@@ -8,7 +8,7 @@
 	    <version>13</version>
 	</parent>
 	<artifactId>jeesuite-amqp-adapter</artifactId>
-	<version>1.4.0</version>
+	<version>1.4.1-SNAPSHOT</version>
 	<description>MQ适配器，支持各种云厂商云MQ，已经原生kafka,RocketMQ,RabbitMQ等</description>
 
 	<dependencies>

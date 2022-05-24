@@ -194,7 +194,6 @@ public class CurrentSystemHolder {
 			}
 			String[] parts = StringUtils.split(pathPattern, "/");
 			module.setRouteName(parts[1]);
-			
 		}
 	}
 	
