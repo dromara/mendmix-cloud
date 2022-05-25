@@ -23,7 +23,6 @@ import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
-import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.http.CustomRequestHostHolder;
 import com.jeesuite.common.http.ProxyResolver;
 import com.jeesuite.spring.InstanceFactory;
@@ -73,7 +72,7 @@ public class LoadBalancerWrapper implements ProxyResolver,CommandLineRunner {
 		
 	   if(selected == null)return null;
 
-   	   return new StringBuilder(selected.getHost()).append(GlobalConstants.COLON).append(selected.getPort()).toString();
+   	   return selected.getUri().toString();
 	}
 
 	@Override

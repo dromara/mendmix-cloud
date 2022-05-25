@@ -48,6 +48,7 @@ public class HttpResponseEntity {
 	private int statusCode;
 	private String body;
 	private String message;
+	private boolean jsonBody;
 	
 	
 	
@@ -70,7 +71,8 @@ public class HttpResponseEntity {
 	}
 	
 	public String getUnwrapBody() {
-		if(body != null && JsonUtils.isJsonString(body)) {
+		jsonBody = body != null && JsonUtils.isJsonString(body);
+		if(jsonBody) {
 			JsonNode jsonNode = JsonUtils.getNode(body, null);
 			//
 			if(!jsonNode.has(GlobalConstants.PARAM_CODE)) {
@@ -112,31 +114,40 @@ public class HttpResponseEntity {
 	
 	public <T> T toObject(Class<T> clazz) {
 		String json = getUnwrapBody();
+		if(!jsonBody)return null;
 		return JsonUtils.toObject(json, clazz);
 	}
 	
 	public <T> List<T> toList(Class<T> clazz) {
 		String json = getUnwrapBody();
+		if(!jsonBody)return null;
 		return JsonUtils.toList(json, clazz);
 	}
 	
 	public String toValue(String selectNode) {
-		String value = JsonUtils.getJsonNodeValue(getUnwrapBody(), selectNode);
+		String json = getUnwrapBody();
+		if(!jsonBody)return null;
+		String value = JsonUtils.getJsonNodeValue(json, selectNode);
 		return value;
 	}
 	
 	public <T> T toObject(Class<T> clazz,String selectNode) {
-		String json = JsonUtils.getJsonNodeValue(getUnwrapBody(), selectNode);
+		String json = getUnwrapBody();
+		if(!jsonBody)return null;
+		json = JsonUtils.getJsonNodeValue(json, selectNode);
 		return JsonUtils.toObject(json, clazz);
 	}
 	
 	public <T> List<T> toList(Class<T> clazz,String selectNode) {
-		String json = JsonUtils.getJsonNodeValue(getUnwrapBody(), selectNode);
+		String json = getUnwrapBody();
+		if(!jsonBody)return null;
+		json = JsonUtils.getJsonNodeValue(json, selectNode);
 		return JsonUtils.toList(json, clazz);
 	}
 	
 	public <T> Page<T> toPage(Class<T> clazz) {
 		String json = getUnwrapBody();
+		if(!jsonBody)return null;
 		return JsonUtils.toObject(json, new TypeReference<Page<T>>() {});
 	}
 	

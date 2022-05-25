@@ -5,12 +5,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.common2.task.GlobalInternalScheduleService;
+import com.jeesuite.springboot.autoconfigure.loadbalancer.CustomBlockingLoadBalancerClient;
 import com.jeesuite.springweb.client.LoadBalancerWrapper;
 import com.jeesuite.springweb.client.SimpleRestTemplateBuilder;
 import com.jeesuite.springweb.enhancer.ResonseBodyEnhancerAdvice;
@@ -24,6 +27,12 @@ public class BaseSupportConfiguration {
 	RestTemplate restTemplate() {
 		int readTimeout = ResourceUtils.getInt("jeesuite.httpclient.readTimeout.ms", 30000);
 		return SimpleRestTemplateBuilder.build(readTimeout);
+	}
+	
+	@Bean
+	@ConditionalOnProperty(value = "jeesuite.loadbalancer.customize.enabled",havingValue = "true")
+	public LoadBalancerClient blockingLoadBalancerClient(LoadBalancerClientFactory loadBalancerClientFactory) {
+		return new CustomBlockingLoadBalancerClient(loadBalancerClientFactory);
 	}
 	
 	@Bean

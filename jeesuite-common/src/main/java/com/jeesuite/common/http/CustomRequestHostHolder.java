@@ -17,8 +17,6 @@ package com.jeesuite.common.http;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -37,9 +35,10 @@ import com.jeesuite.common.util.ResourceUtils;
 public class CustomRequestHostHolder {
 
 	private static final String PATH_SEPARATOR = "/";
-	private static final String LOCALHOST = "localhost";
+	private static final String LOCALHOST = "localname";
 
-	private static Map<String, String> baseNameMappings = new HashMap<>();
+	private static Map<String, String> proxyUriMappings = new HashMap<>();
+	private static Map<String, String> contextPathMappings = new HashMap<>();
 	
 	private static ProxyResolver proxyResolver;
 	
@@ -47,57 +46,95 @@ public class CustomRequestHostHolder {
 		CustomRequestHostHolder.proxyResolver = proxyResolver;
 	}
 
-	private static Map<String, String> getBaseNameMappings() {
-		if(!baseNameMappings.isEmpty())return baseNameMappings;
-		synchronized (baseNameMappings) {
-			if(!baseNameMappings.isEmpty())return baseNameMappings;
-			Properties properties = ResourceUtils.getAllProperties("remote.baseurl.mapping");
-			Set<Map.Entry<Object, Object>> entries = properties.entrySet();
-			if (entries != null) {
-				for (Map.Entry<Object, Object> entry : entries) {
-					Object k = entry.getKey();
-					Object v = entry.getValue();
-					String[] parts = k.toString().split("\\[|\\]");
-					String lbBaseUrl = parts[1];
-					if(parts.length >= 4){
-						lbBaseUrl = lbBaseUrl + ":" + parts[3];
-					}
-					baseNameMappings.put(lbBaseUrl.toLowerCase(), v.toString().replace("http://", "").replace("https://", ""));
-				}
+	private static Map<String, String> getProxyUrlMappings() {
+		if(!proxyUriMappings.isEmpty())return proxyUriMappings;
+		synchronized (proxyUriMappings) {
+			if(!proxyUriMappings.isEmpty())return proxyUriMappings;
+			Map<String, String> mappings = ResourceUtils.getMappingValues("jeesuite.loadbalancer.customize.mapping");
+			//
+			String proxyUrl;
+			for (String serviceId : mappings.keySet()) {
+				proxyUrl = fomatProxyUrl(mappings.get(serviceId));
+				proxyUriMappings.put(serviceId.toLowerCase(), proxyUrl);
 			}
-			if(baseNameMappings.isEmpty()){
-				baseNameMappings.put("x", "0");
+			if(proxyUriMappings.isEmpty()){
+				proxyUriMappings.put("jeesuite", "jeesuite");
 			}
 		}
-		return baseNameMappings;
+		return proxyUriMappings;
 	}
 	
-	public static String getMapping(String name){
-		return getBaseNameMappings().get(name);
+	private static Map<String, String> getContextPathMappings() {
+		if(!contextPathMappings.isEmpty())return contextPathMappings;
+		synchronized (contextPathMappings) {
+			if(!contextPathMappings.isEmpty())return contextPathMappings;
+			Map<String, String> mappingValues = ResourceUtils.getMappingValues("jeesuite.loadbalancer.contextPath.mapping");
+			contextPathMappings = new HashMap<>(mappingValues.size());
+			String contextPath;
+			for (String serviceId : mappingValues.keySet()) {
+				contextPath = mappingValues.get(serviceId);
+				if(!contextPath.startsWith(GlobalConstants.PATH_SEPARATOR)) {
+					contextPath = GlobalConstants.PATH_SEPARATOR + contextPath;
+				}
+				contextPathMappings.put(serviceId, contextPath);
+			}
+			//
+			if(contextPathMappings.isEmpty()) {
+				contextPathMappings.put("jeesuite", "jeesuite");
+			}
+		}
+		return contextPathMappings;
 	}
 	
-	public static void addMapping(String host,String mappingUrl) {
-		getBaseNameMappings().put(host.toLowerCase(), mappingUrl);
+	private static String fomatProxyUrl(String mappingUrl) {
+		if(!mappingUrl.startsWith("http://") && !mappingUrl.startsWith("https://")) {
+			mappingUrl = "http://" + mappingUrl;
+		}
+		if(mappingUrl.endsWith("/")) {
+			mappingUrl = mappingUrl.substring(0,mappingUrl.length() - 1);
+		}
+		return mappingUrl;
 	}
 	
-	public static boolean containsMapping(String host,String mappingUrl) {
-		return getBaseNameMappings().containsKey(host.toLowerCase());
+	public static String getProxyUrlMapping(String name){
+		return getProxyUrlMappings().get(name.toLowerCase());
+	}
+	
+	public static void addProxyUrlMapping(String name,String mappingUrl) {
+		getProxyUrlMappings().put(name.toLowerCase(), mappingUrl);
+	}
+	
+	public static boolean containsProxyUrlMapping(String name) {
+		return getProxyUrlMappings().containsKey(name.toLowerCase());
+	}
+	
+	public static String getContextPathMapping(String name){
+		return getContextPathMappings().get(name.toLowerCase());
+	}
+	
+	public static boolean containsContextPathMapping(String name) {
+		return getContextPathMappings().containsKey(name.toLowerCase());
 	}
 	
 	public static String resolveUrl(String url){
-		String lbBaseUrl = StringUtils.split(url, PATH_SEPARATOR)[1].toLowerCase();
-		if(lbBaseUrl.startsWith(LOCALHOST))return url;
-		Map<String, String> baseNameMappings = getBaseNameMappings();
-		if(baseNameMappings.containsKey(lbBaseUrl)){
-			return url.replace(lbBaseUrl, baseNameMappings.get(lbBaseUrl));
+		String serviceId = StringUtils.split(url, PATH_SEPARATOR)[1].toLowerCase();
+		if(serviceId.startsWith(LOCALHOST))return url;
+		Map<String, String> baseNameMappings = getProxyUrlMappings();
+		String realUrl = null;
+		if(baseNameMappings.containsKey(serviceId)){
+			realUrl = baseNameMappings.get(serviceId);
+		}else if(proxyResolver != null && !serviceId.contains(GlobalConstants.DOT)) {//不是ip或者域名
+			realUrl = proxyResolver.resolve(serviceId);	
 		}
-		//不是ip或者域名
-		if(proxyResolver != null && !lbBaseUrl.contains(GlobalConstants.DOT)) {
-			String realSever = proxyResolver.resolve(lbBaseUrl);	
-			if(realSever != null) {
-				return url.replace(lbBaseUrl, realSever);
+		
+		if(realUrl != null) {
+			if(containsContextPathMapping(serviceId)) {
+				realUrl = realUrl + getContextPathMapping(serviceId);
 			}
+			String baseUrl = url.substring(0,url.indexOf(serviceId) + serviceId.length());
+			return url.replace(baseUrl, realUrl);
 		}
+
 		return url;
 	}
 }

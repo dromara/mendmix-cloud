@@ -15,13 +15,10 @@
  */
 package com.jeesuite.springboot.autoconfigure.feign;
 
-import java.util.Map;
-
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 
-import com.jeesuite.common.GlobalConstants;
-import com.jeesuite.common.util.ResourceUtils;
+import com.jeesuite.common.http.CustomRequestHostHolder;
 
 import feign.Feign.Builder;
 import feign.Target;
@@ -36,16 +33,15 @@ import feign.Target;
 @ConditionalOnClass(feign.RequestInterceptor.class)
 public class CustomFeignBuilder extends Builder {
 
-	private Map<String, String> contextPathMappings = ResourceUtils.getMappingValues("jeesuite.feign.contextPath");
-	
+
 	@Override
 	public <T> T target(Target<T> target) {
 		return super.target(new Target.HardCodedTarget<T>(target.type(), target.name(), target.url()) {
 			@Override
 			public String url() {
 				String svcName = this.name();
-				if(contextPathMappings.containsKey(svcName)) {
-					StringBuilder withContextPath = new StringBuilder(svcName).append(GlobalConstants.PATH_SEPARATOR).append(contextPathMappings.get(svcName));
+				if(CustomRequestHostHolder.containsContextPathMapping(svcName)) {
+					StringBuilder withContextPath = new StringBuilder(svcName).append(CustomRequestHostHolder.getContextPathMapping(svcName));
 					String url = super.url().replace(svcName, withContextPath);
 					return url;
 				}
