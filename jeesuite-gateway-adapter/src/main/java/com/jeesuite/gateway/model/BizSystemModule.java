@@ -1,11 +1,13 @@
 package com.jeesuite.gateway.model;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.GlobalRuntimeContext;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.PathMatcher;
@@ -33,9 +35,9 @@ public class BizSystemModule {
     private boolean bodyRewriteIgnore;
     
     private int stripPrefix = -1;
-    
+
     @JsonIgnore
-    private List<String> activeNodes;
+    private Map<Pattern, ApiInfo> wildcardUris = new HashMap<>();
     
     @JsonIgnore
     private PathMatcher anonUriMatcher;
@@ -67,14 +69,6 @@ public class BizSystemModule {
 		this.routeName = routeName;
 	}
 	
-
-	public List<String> getActiveNodes() {
-		return activeNodes;
-	}
-
-	public void setActiveNodes(List<String> activeNodes) {
-		this.activeNodes = activeNodes;
-	}
 
 	public String getAnonymousUris() {
 		return anonymousUris;
@@ -182,11 +176,32 @@ public class BizSystemModule {
 	}
 	
 	public Map<String, ApiInfo> getApiInfos() {
-		return apiInfos;
+		return apiInfos == null ? (apiInfos = new HashMap<>()) : apiInfos;
+	}
+	
+	public void addApiInfo(ApiInfo apiInfo) {
+		String resolveUri = BizSystemModule.resolveRealUri(this, apiInfo.getUrl());
+		apiInfo.setUrl(resolveUri);
+		String uniqueKey = buildUniqueKey(apiInfo.getMethod(), resolveUri);
+		getApiInfos().put(uniqueKey, apiInfo);
+		if(uniqueKey.contains("{")) {
+			Pattern pattern = Pattern.compile(uniqueKey.replace("\\{[^/]+?\\}", ".+"));
+			wildcardUris.put(pattern, apiInfo);
+		}
 	}
 
-	public ApiInfo getApiInfo(String uri) {
-		return apiInfos == null ? null : apiInfos.get(uri);
+	public ApiInfo getApiInfo(String method, String uri) {
+		String uniqueKey = buildUniqueKey(method, uri);
+		ApiInfo apiInfo = getApiInfos().get(uniqueKey);
+		if(apiInfo != null) {
+			return apiInfo;
+		}
+		for (Pattern pattern : wildcardUris.keySet()) {
+			if(pattern.matcher(uniqueKey).matches()) {
+				return wildcardUris.get(pattern);
+			}
+		}
+		return null;
 	}
 	
 	
@@ -222,7 +237,7 @@ public class BizSystemModule {
 		return baseUri + "/actuator/health";
 	}
 	
-	public static String resolveApiFinalUri(BizSystemModule module,String uri) {
+	public static String resolveRealUri(BizSystemModule module,String uri) {
 		if(GlobalRuntimeContext.APPID.equals(module.getRouteName())) {
 			return uri;
 		}else {
@@ -233,6 +248,10 @@ public class BizSystemModule {
 			}
 		}
 		return uri.replace("//", "/");
+	}
+	
+	public static String buildUniqueKey(String method, String uri) {
+		return new StringBuilder(method.toUpperCase()).append(GlobalConstants.UNDER_LINE).append(uri).toString();
 	}
 
 	@Override

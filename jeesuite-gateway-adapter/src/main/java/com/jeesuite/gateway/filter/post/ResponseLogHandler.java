@@ -58,7 +58,7 @@ public class ResponseLogHandler implements PostFilterHandler {
 		
 		if(bodyIgnore)return respBodyAsString;
 		
-		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getPath().value());
+		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),exchange.getRequest().getPath().value());
 		if(apiInfo != null && !apiInfo.isResponseLog()) {
         	return respBodyAsString;
         }

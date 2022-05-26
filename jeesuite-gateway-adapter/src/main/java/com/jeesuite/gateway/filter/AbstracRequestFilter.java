@@ -5,8 +5,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -15,13 +18,17 @@ import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.model.WrapperResponse;
+import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.JsonUtils;
+import com.jeesuite.common.util.ParameterUtils;
 import com.jeesuite.gateway.GatewayConfigs;
 import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.filter.pre.GlobalHeaderHanlder;
@@ -121,5 +128,33 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
         //
         exchange.getAttributes().put(CACHED_REQUEST_BODY_STR_ATTR, bodyString);
 		return bodyString;
+	}
+    
+    public static String getRequestHitKey(ServerWebExchange exchange) {
+		String hitKey = exchange.getAttribute(GatewayConstants.CONTEXT_REQUEST_HIT_KEY);
+		if(hitKey != null)return hitKey;
+		
+		ServerHttpRequest request = exchange.getRequest();
+		
+		StringBuilder builder = new StringBuilder();
+		builder.append(request.getMethodValue()).append(request.getPath().value());
+		
+		Map<String, Object> paramMap = new HashMap<>();
+		request.getQueryParams().forEach( (k,v) -> {
+			if(!v.isEmpty())paramMap.put(k, v.get(0));
+		} );
+		if(request.getMethod() != HttpMethod.GET) {
+			String cachingBody = getCachingBodyString(exchange);
+			if(StringUtils.isNotBlank(cachingBody) && cachingBody.length() > 2) {
+				paramMap.putAll(JsonUtils.toHashMap(cachingBody,Object.class));
+			}
+		}
+		if(!paramMap.isEmpty()) {
+			builder.append(ParameterUtils.mapToQueryParams(paramMap));
+		}
+		
+		hitKey = builder.length() <= 64 ? builder.toString() : DigestUtils.md5(builder.toString());
+		exchange.getAttributes().put(GatewayConstants.CONTEXT_REQUEST_HIT_KEY, hitKey);
+		return hitKey;
 	}
 }

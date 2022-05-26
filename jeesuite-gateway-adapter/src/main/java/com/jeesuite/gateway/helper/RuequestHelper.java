@@ -58,9 +58,6 @@ public class RuequestHelper {
 
 	public static String getIpAddr(ServerHttpRequest request) {
 
-		if (request.getRemoteAddress().getAddress().isLoopbackAddress()) {
-			return IpUtils.LOCAL_BACK_IP;
-		}
 		String ip = request.getHeaders().getFirst(IpUtils.HEADER_FROWARDED_FOR);
 		if (StringUtils.isBlank(ip) || IpUtils.UNKNOWN.equalsIgnoreCase(ip)) {
 			ip = request.getHeaders().getFirst("Proxy-Client-IP");
@@ -73,7 +70,7 @@ public class RuequestHelper {
 		 * 192.168.1.92
 		 */
 		if (ip != null && ip.length() > 15) {
-			String[] ips = StringUtils.split(ip, ",");
+			String[] ips = StringUtils.split(ip, GlobalConstants.COMMA);
 			for (String _ip : ips) {
 				ip = StringUtils.trimToNull(_ip);
 				if (!IpUtils.UNKNOWN.equalsIgnoreCase(ip)) {
@@ -81,6 +78,13 @@ public class RuequestHelper {
 				}
 			}
 		}
+		//0:0:0:0:0:0:0:1
+		if (ip != null && ip.contains(GlobalConstants.COLON)) {
+			ip = IpUtils.LOCAL_BACK_IP;
+		}else if(ip == null) {
+			ip = request.getRemoteAddress().getAddress().getHostAddress();
+		}
+		
 		return ip;
 	}
 
@@ -88,9 +92,8 @@ public class RuequestHelper {
 		return request.getHeaders().containsKey(WEBSOCKET_KEYS);
 	}
 
-	public static String getCurrentRouteName(ServerHttpRequest request) {
+	public static String resolveRouteName(String uri) {
 		String contextPath = GatewayConstants.PATH_PREFIX;
-		String uri = request.getPath().value();
 		int indexOf = StringUtils.indexOf(uri, GlobalConstants.PATH_SEPARATOR, contextPath.length());
 		uri = uri.substring(indexOf + 1);
 
@@ -102,4 +105,5 @@ public class RuequestHelper {
 		}
 		return GlobalRuntimeContext.APPID;
 	}
+	
 }

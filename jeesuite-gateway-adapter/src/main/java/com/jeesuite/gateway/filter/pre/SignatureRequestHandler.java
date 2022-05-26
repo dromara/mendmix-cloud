@@ -47,7 +47,7 @@ public class SignatureRequestHandler implements PreFilterHandler {
 	@Override
 	public Builder process(ServerWebExchange exchange, BizSystemModule module, Builder requestBuilder) {
 
-		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getPath().value());
+		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),exchange.getRequest().getPath().value());
 		if (apiInfo == null || !apiInfo.isOpenApi()) {
 			throw new JeesuiteBaseException("该接口未开放访问权限");
 		}

@@ -207,14 +207,11 @@ public class CurrentSystemHolder {
 				url = module.getMetadataUri();
 				appMetadata = HttpRequestEntity.get(url).backendInternalCall().execute().toObject(AppMetadata.class);
 			}
-			Map<String, ApiInfo> apiInfos = new HashMap<>(appMetadata.getApis().size());
 			for (ApiInfo api : appMetadata.getApis()) {
-				api.setUrl(BizSystemModule.resolveApiFinalUri(module, api.getUrl()));
-				apiInfos.put(api.getUrl(), api);
+				module.addApiInfo(api);
 			}
-			module.setApiInfos(apiInfos);
-			moduleApiInfos.put(module.getServiceId(), apiInfos);
-			log.info(">>initModuleApiInfos success -> serviceId:{},nums:{}",module.getServiceId(),apiInfos.size());
+			moduleApiInfos.put(module.getServiceId(), module.getApiInfos());
+			log.info(">>initModuleApiInfos success -> serviceId:{},nums:{}",module.getServiceId(),module.getApiInfos().size());
 		} catch (Exception e) {
 			boolean ignore = e instanceof ClassCastException;
 			if(!ignore && e instanceof JeesuiteBaseException) {

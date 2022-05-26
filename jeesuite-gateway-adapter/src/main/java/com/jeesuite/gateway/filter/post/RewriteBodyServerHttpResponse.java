@@ -123,7 +123,7 @@ public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 		}
 
 		if (!buildNewResponse && GatewayConfigs.actionLogEnabled) {
-			ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getPath().value());
+			ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),exchange.getRequest().getPath().value());
 			buildNewResponse = apiInfo != null && apiInfo.isActionLog() && apiInfo.isResponseLog();
 		}
 

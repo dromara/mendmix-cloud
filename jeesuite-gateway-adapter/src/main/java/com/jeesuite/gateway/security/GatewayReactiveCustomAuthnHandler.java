@@ -60,7 +60,7 @@ public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHan
 			CurrentRuntimeContext.setPlatformType(portal.getCode());
 		}
 		
-		String routeName = RuequestHelper.getCurrentRouteName(request);
+		String routeName = RuequestHelper.resolveRouteName(request.getPath().value());
 		BizSystemModule module = CurrentSystemHolder.getModule(routeName);
 		exchange.getAttributes().put(GatewayConstants.CONTEXT_ROUTE_SERVICE, module);
 
@@ -93,9 +93,9 @@ public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHan
 	public void afterAuthentication(ServerWebExchange exchange,UserSession userSession) {
 		if(!GatewayConfigs.actionLogEnabled)return;
 		ServerHttpRequest request = exchange.getRequest();
-		BizSystemModule module = CurrentSystemHolder.getModule(RuequestHelper.getCurrentRouteName(request));
+		BizSystemModule module = CurrentSystemHolder.getModule(RuequestHelper.resolveRouteName(request.getPath().value()));
 		
-		ApiInfo apiInfo = module.getApiInfo(request.getPath().value());
+		ApiInfo apiInfo = module.getApiInfo(request.getMethodValue(), request.getPath().value());
 		boolean logging = apiInfo != null ? apiInfo.isActionLog() : true;
 		if(logging) {
 			logging = !GatewayConfigs.actionLogGetMethodIngore || !request.getMethod().equals(HttpMethod.GET);
