@@ -15,18 +15,31 @@
  */
 package com.jeesuite.gateway.helper;
 
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.web.server.ServerWebExchange;
 
 import com.jeesuite.common.GlobalConstants;
 import com.jeesuite.common.GlobalRuntimeContext;
+import com.jeesuite.common.model.ApiInfo;
+import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.IpUtils;
+import com.jeesuite.common.util.JsonUtils;
+import com.jeesuite.common.util.ParameterUtils;
 import com.jeesuite.common.util.WebUtils;
 import com.jeesuite.gateway.CurrentSystemHolder;
 import com.jeesuite.gateway.GatewayConstants;
+import com.jeesuite.gateway.model.BizSystemModule;
 
 /**
  * 
@@ -104,6 +117,72 @@ public class RuequestHelper {
 			}
 		}
 		return GlobalRuntimeContext.APPID;
+	}
+	
+	public static BizSystemModule getCurrentModule(ServerWebExchange exchange) {
+		BizSystemModule module = exchange.getAttribute(GatewayConstants.CONTEXT_ROUTE_SERVICE);
+		if(module != null)return module;
+		String routeName = resolveRouteName(exchange.getRequest().getPath().value());
+		module = CurrentSystemHolder.getModule(routeName);
+		if(module != null) {
+			exchange.getAttributes().put(GatewayConstants.CONTEXT_ROUTE_SERVICE, module);
+		}
+		return module;
+	}
+	
+	public static ApiInfo getCurrentApi(ServerWebExchange exchange) {
+		ApiInfo api = exchange.getAttribute(GatewayConstants.CONTEXT_CURRENT_API);
+		if(api != null)return api;
+		BizSystemModule module = getCurrentModule(exchange);
+		ServerHttpRequest request = exchange.getRequest();
+		ApiInfo apiInfo = module.getApiInfo(request.getMethodValue(), request.getPath().value());
+		if(apiInfo != null) {
+			exchange.getAttributes().put(GatewayConstants.CONTEXT_CURRENT_API, apiInfo);
+		}
+		return apiInfo;
+	}
+	
+	public static String getCachingBodyString(ServerWebExchange exchange) {
+    	if(exchange.getRequest().getMethod() == HttpMethod.GET) {
+    		return null;
+    	}
+    	String bodyString = exchange.getAttribute(GatewayConstants.CACHED_REQUEST_BODY_STR_ATTR);
+    	if(bodyString != null)return bodyString;
+		DataBuffer dataBuffer = exchange.getAttribute(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
+		if(dataBuffer == null)return null;
+		CharBuffer charBuffer = StandardCharsets.UTF_8.decode(dataBuffer.asByteBuffer());
+        bodyString = charBuffer.toString();
+        //
+        exchange.getAttributes().put(GatewayConstants.CACHED_REQUEST_BODY_STR_ATTR, bodyString);
+		return bodyString;
+	}
+	
+	public static String getRequestHitKey(ServerWebExchange exchange) {
+		String hitKey = exchange.getAttribute(GatewayConstants.CONTEXT_REQUEST_HIT_KEY);
+		if(hitKey != null)return hitKey;
+		
+		ServerHttpRequest request = exchange.getRequest();
+		
+		StringBuilder builder = new StringBuilder();
+		builder.append(request.getMethodValue()).append(request.getPath().value());
+		
+		Map<String, Object> paramMap = new HashMap<>();
+		request.getQueryParams().forEach( (k,v) -> {
+			if(!v.isEmpty())paramMap.put(k, v.get(0));
+		} );
+		if(request.getMethod() != HttpMethod.GET) {
+			String cachingBody = getCachingBodyString(exchange);
+			if(StringUtils.isNotBlank(cachingBody) && cachingBody.length() > 2) {
+				paramMap.putAll(JsonUtils.toHashMap(cachingBody,Object.class));
+			}
+		}
+		if(!paramMap.isEmpty()) {
+			builder.append(ParameterUtils.mapToQueryParams(paramMap));
+		}
+		
+		hitKey = builder.length() <= 64 ? builder.toString() : DigestUtils.md5(builder.toString());
+		exchange.getAttributes().put(GatewayConstants.CONTEXT_REQUEST_HIT_KEY, hitKey);
+		return hitKey;
 	}
 	
 }

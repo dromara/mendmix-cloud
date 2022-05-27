@@ -85,7 +85,7 @@ public abstract class AbstracResponseFilter implements GlobalFilter, Ordered, In
     	}
     	
     	//
-    	BizSystemModule module = exchange.getAttribute(GatewayConstants.CONTEXT_ROUTE_SERVICE);
+    	BizSystemModule module = RuequestHelper.getCurrentModule(exchange);
     	RewriteBodyServerHttpResponse newResponse = new RewriteBodyServerHttpResponse(exchange,module);
     	return chain.filter(exchange.mutate().response(newResponse).build()).then(Mono.fromRunnable(() -> {
 			Long start = exchange.getAttribute(GatewayConstants.CONTEXT_REQUEST_START_TIME);

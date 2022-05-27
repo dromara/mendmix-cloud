@@ -55,7 +55,7 @@ public class RequestLogHanlder implements PreFilterHandler {
 		actionLog.setModuleId(module.getServiceId());
 		
 		ServerHttpRequest request = exchange.getRequest();
-		ApiInfo apiInfo = module.getApiInfo(request.getMethodValue(),request.getPath().value());
+		ApiInfo apiInfo = RuequestHelper.getCurrentApi(exchange);
         if(apiInfo != null && !apiInfo.isRequestLog()) {
         	return requestBuilder;
         }

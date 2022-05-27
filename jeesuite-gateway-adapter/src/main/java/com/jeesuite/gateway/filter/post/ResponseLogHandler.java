@@ -22,6 +22,7 @@ import com.jeesuite.common.CustomRequestHeaders;
 import com.jeesuite.common.model.ApiInfo;
 import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.gateway.filter.PostFilterHandler;
+import com.jeesuite.gateway.helper.RuequestHelper;
 import com.jeesuite.gateway.model.BizSystemModule;
 import com.jeesuite.logging.integrate.ActionLog;
 import com.jeesuite.logging.integrate.ActionLogCollector;
@@ -58,7 +59,7 @@ public class ResponseLogHandler implements PostFilterHandler {
 		
 		if(bodyIgnore)return respBodyAsString;
 		
-		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),exchange.getRequest().getPath().value());
+		ApiInfo apiInfo = RuequestHelper.getCurrentApi(exchange);
 		if(apiInfo != null && !apiInfo.isResponseLog()) {
         	return respBodyAsString;
         }

@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.web.server.ServerWebExchange;
@@ -19,6 +18,7 @@ import com.jeesuite.common.util.ResourceUtils;
 import com.jeesuite.gateway.GatewayConfigs;
 import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.filter.PreFilterHandler;
+import com.jeesuite.gateway.helper.RuequestHelper;
 import com.jeesuite.gateway.model.BizSystemModule;
 
 /**
@@ -71,7 +71,7 @@ public class SignatureRequestHandler implements PreFilterHandler {
 			throw new JeesuiteBaseException("appId不存在");
 		}
 
-		Object body = exchange.getAttribute(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
+		Object body = RuequestHelper.getCachingBodyString(exchange);
 
 		Map<String, Object> map = JsonUtils.toHashMap(body.toString(), Object.class);
 		String signBaseString = StringUtils.trimToEmpty(ParameterUtils.mapToQueryParams(map)) + timestamp + secret;

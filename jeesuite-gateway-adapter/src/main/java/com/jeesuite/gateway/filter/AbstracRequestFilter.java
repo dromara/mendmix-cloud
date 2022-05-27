@@ -1,39 +1,29 @@
 package com.jeesuite.gateway.filter;
 
-import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.http.server.reactive.ServerHttpResponse;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.jeesuite.common.JeesuiteBaseException;
 import com.jeesuite.common.model.WrapperResponse;
-import com.jeesuite.common.util.DigestUtils;
 import com.jeesuite.common.util.JsonUtils;
-import com.jeesuite.common.util.ParameterUtils;
 import com.jeesuite.gateway.GatewayConfigs;
 import com.jeesuite.gateway.GatewayConstants;
 import com.jeesuite.gateway.filter.pre.GlobalHeaderHanlder;
 import com.jeesuite.gateway.filter.pre.RequestLogHanlder;
 import com.jeesuite.gateway.filter.pre.SignatureRequestHandler;
+import com.jeesuite.gateway.helper.RuequestHelper;
 import com.jeesuite.gateway.model.BizSystemModule;
 
 import reactor.core.publisher.Mono;
@@ -47,8 +37,6 @@ import reactor.core.publisher.Mono;
 public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
 
 	private static Logger logger = LoggerFactory.getLogger("com.jeesuite.gateway");
-    
-    private static final String CACHED_REQUEST_BODY_STR_ATTR = "cachedRequestBodyStr";
     
     private List<String> ignoreUris = Arrays.asList("/actuator/health");
     
@@ -88,7 +76,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
     		return chain.filter(exchange);
     	}
     	
-    	BizSystemModule module = exchange.getAttribute(GatewayConstants.CONTEXT_ROUTE_SERVICE);
+    	BizSystemModule module = RuequestHelper.getCurrentModule(exchange);
     	try {
     		Builder requestBuilder = exchange.getRequest().mutate();
     		for (PreFilterHandler handler : handlers) {
@@ -115,46 +103,5 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
         return Ordered.HIGHEST_PRECEDENCE + 1001;
     }
     
-    public static String getCachingBodyString(ServerWebExchange exchange) {
-    	if(exchange.getRequest().getMethod() == HttpMethod.GET) {
-    		return null;
-    	}
-    	String bodyString = exchange.getAttribute(CACHED_REQUEST_BODY_STR_ATTR);
-    	if(bodyString != null)return bodyString;
-		DataBuffer dataBuffer = exchange.getAttribute(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
-		if(dataBuffer == null)return null;
-		CharBuffer charBuffer = StandardCharsets.UTF_8.decode(dataBuffer.asByteBuffer());
-        bodyString = charBuffer.toString();
-        //
-        exchange.getAttributes().put(CACHED_REQUEST_BODY_STR_ATTR, bodyString);
-		return bodyString;
-	}
     
-    public static String getRequestHitKey(ServerWebExchange exchange) {
-		String hitKey = exchange.getAttribute(GatewayConstants.CONTEXT_REQUEST_HIT_KEY);
-		if(hitKey != null)return hitKey;
-		
-		ServerHttpRequest request = exchange.getRequest();
-		
-		StringBuilder builder = new StringBuilder();
-		builder.append(request.getMethodValue()).append(request.getPath().value());
-		
-		Map<String, Object> paramMap = new HashMap<>();
-		request.getQueryParams().forEach( (k,v) -> {
-			if(!v.isEmpty())paramMap.put(k, v.get(0));
-		} );
-		if(request.getMethod() != HttpMethod.GET) {
-			String cachingBody = getCachingBodyString(exchange);
-			if(StringUtils.isNotBlank(cachingBody) && cachingBody.length() > 2) {
-				paramMap.putAll(JsonUtils.toHashMap(cachingBody,Object.class));
-			}
-		}
-		if(!paramMap.isEmpty()) {
-			builder.append(ParameterUtils.mapToQueryParams(paramMap));
-		}
-		
-		hitKey = builder.length() <= 64 ? builder.toString() : DigestUtils.md5(builder.toString());
-		exchange.getAttributes().put(GatewayConstants.CONTEXT_REQUEST_HIT_KEY, hitKey);
-		return hitKey;
-	}
 }

@@ -59,17 +59,12 @@ public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHan
 			CurrentRuntimeContext.setClientType(portal.getClientType());
 			CurrentRuntimeContext.setPlatformType(portal.getCode());
 		}
-		
-		String routeName = RuequestHelper.resolveRouteName(request.getPath().value());
-		BizSystemModule module = CurrentSystemHolder.getModule(routeName);
-		exchange.getAttributes().put(GatewayConstants.CONTEXT_ROUTE_SERVICE, module);
-
 	}
 
 	@Override
 	public boolean customAuthentication(ServerWebExchange exchange) {
 		
-		BizSystemModule module = exchange.getAttribute(GatewayConstants.CONTEXT_ROUTE_SERVICE);
+		BizSystemModule module = RuequestHelper.getCurrentModule(exchange);
 		ServerHttpRequest request = exchange.getRequest();
 		
 		if(module.getAnonUriMatcher() != null && module.getAnonUriMatcher().match(request.getPath().value())) {
