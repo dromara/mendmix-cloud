@@ -1,7 +1,9 @@
+<div align=center><img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/logo.png" width="400" height="100" /></div>
+
 ## 资源索引
  - [快速开始](http://docs.jeesuite.com/guide/getting-started.html)
  - [文档列表](http://docs.jeesuite.com/docments/)
- - [集成项目](https://gitee.com/vakinge/oneplatform)，[github](https://github.com/vakinge/oneplatform)
+ - [快速上手-mendmix-tutorial](https://gitee.com/vakinge/mendmix-tutorial),[集成项目-oneplatform](https://gitee.com/vakinge/oneplatform)
  
 ## 简介
 `Mendmix`定位是一站式分布式开发架构开源解决方案及云原生架构技术底座。`Mendmix`提供了数据库、缓存、消息中间件、分布式定时任务、安全框架、网关以及主流产商云服务快速集成能力。基于`Mendmix`可以不用关注技术细节快速搭建高并发高可用基于微服务的分布式架构。
@@ -27,9 +29,19 @@
 
 模块 | 核心功能说明 | 其他说明
 ---|---|---
-row 1 col 1 | row 1 col 21 | row 1 col 2
-
-
+mendmix-common | http、json、加解密、异步、GUID等工具类以及整体架构一些规范性定义|
+mendmix-common2 | 分布式锁、轻量级定时任务、全局workerId生成等依赖中间件的通用组件 | 
+mendmix-spring | Spring工厂以及一些相关工具类、配置二次处理、一些运行机制规范定义 | 
+mendmix-cache | 缓存中间件适配、多redis实例快速注册及管理 | 
+mendmix-scheduler | 分布式定时任务，基于quartz、redis、zookeeper实现，支持日志上报、重试、多租户、并行处理，提供管理API |支持redis或zookeeper分布式协调 
+mendmix-mybatis | CRUD增强、通用字段自动处理、自动缓存、读写分离、软删除、乐观锁、数据权限、安全审计 | 兼容Mapper3增强框架
+mendmix-security | 认证和鉴权（接口权限）、session管理器、支持oauth2.0等 | 不依赖任何第三方权限框架
+mendmix-logging | 多日志厂商适配、日志采集上报、应用日志动态刷新机制 |
+mendmix-springweb | 接口规范定义，通用拦截器、mock用户、请求响应增强插件机制 | 
+mendmix-springcloud-support | 组件自动注册、springcloud 组件增强 | 
+mendmix-gateway | 认证、接口权限、审计日志、openAPI、响应统一包装、限流、防重复提交、命中缓存降级访问 | 默认集成mendmix-security模块
+mendmix-amqp-adapter | 消息中间件适配，目前支持：内存队列、redis、kafka、rocketMQ、腾讯云及阿里云的云厂商MQ产品 | 
+mendmix-cos-adapter | 文件存储适配，目前支持：minIO、七牛、阿里云、腾讯云、华为云、AWS的文件存储服务 | 
 
 
 ---
