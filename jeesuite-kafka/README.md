@@ -1,1 +1,0 @@
-## 本模块停止更新，已独立成新的独立项目，请移步：[码云](https://gitee.com/vakinge/jeesuite-amqp-adapter)或[github](https://github.com/vakinge/jeesuite-amqp-adapter)

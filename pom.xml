@@ -2,13 +2,13 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.jeesuite</groupId>
-	<artifactId>jeesuite-libs</artifactId>
-	<version>13</version>
+	<groupId>com.mendmix</groupId>
+	<artifactId>mendmix-parent</artifactId>
+	<version>2022.05</version>
 	<packaging>pom</packaging>
 	<description>java 后台开发套件</description>
-	<name>jeesuite-libs</name>
-	<url>http://www.jeesuite.com</url>
+	<name>mendmix分布式云原生架构技术底座</name>
+	<url>http://www.mendmix.com</url>
 
 	<licenses>
 		<license>
@@ -37,19 +37,19 @@
 			<name>vakin jiang</name>
 			<email>vakinge@gmail.com</email>
 			<organization>github</organization>
-			<organizationUrl>https://github.com/vakinge</organizationUrl>
+			<organizationUrl>http://www.mendmix.com</organizationUrl>
 		</developer>
 	</developers>
 
 	<scm>
 		<connection>
-         scm:git:https://github.com/vakinge/jeesuite-libs.git
+         scm:git:https://github.com/dromara/mendmix.git
       </connection>
 		<developerConnection>
-         scm:git:https://github.com/vakinge/jeesuite-libs.git
+         scm:git:https://github.com/dromara/mendmix.git
       </developerConnection>
-		<url>https://github.com/vakinge/jeesuite-libs</url>
-		<tag>v1.0</tag>
+		<url>https://github.com/dromara/mendmix</url>
+		<tag>1.4.1</tag>
 	</scm>
 
 	<properties>
@@ -79,19 +79,19 @@
 	</properties>
 
 	<modules>
-		<module>jeesuite-common</module>
-		<module>jeesuite-spring</module>
-		<module>jeesuite-cache</module>
-		<module>jeesuite-scheduler</module>
-		<module>jeesuite-mybatis</module>
-		<module>jeesuite-springweb</module>
-		<module>jeesuite-security</module>
-		<module>jeesuite-common2</module>
-		<module>jeesuite-logging</module>
-		<module>jeesuite-springboot-starter</module>
-		<module>jeesuite-gateway-adapter</module>
-		<module>jeesuite-amqp-adapter</module>
-		<module>jeesuite-cos-adapter</module>
+		<module>mendmix-common</module>
+		<module>mendmix-spring</module>
+		<module>mendmix-cache</module>
+		<module>mendmix-scheduler</module>
+		<module>mendmix-mybatis</module>
+		<module>mendmix-springweb</module>
+		<module>mendmix-security</module>
+		<module>mendmix-common2</module>
+		<module>mendmix-logging</module>
+		<module>mendmix-springcloud-support</module>
+		<module>mendmix-gateway</module>
+		<module>mendmix-amqp-adapter</module>
+		<module>mendmix-cos-adapter</module>
 	</modules>
 
 	<dependencies>
@@ -335,7 +335,7 @@
 		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
 		<snapshotRepository>
 			<id>snapshots</id>
-			<url>http://nexus.z.com/nexus/content/repositories/snapshots</url>
+			<url>http://nexus.xxx.com/nexus/content/repositories/snapshots</url>
 		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>

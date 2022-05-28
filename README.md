@@ -1,33 +1,41 @@
-<img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/logo1.png" width="100" height="60" />
-
 ## 资源索引
  - [快速开始](http://docs.jeesuite.com/guide/getting-started.html)
  - [文档列表](http://docs.jeesuite.com/docments/)
  - [集成项目](https://gitee.com/vakinge/oneplatform)，[github](https://github.com/vakinge/oneplatform)
  
 ## 简介
-Jeesuite寓意为java企业级应用开发套件，定位是一站式分布式开发架构开源解决方案及云原生架构技术底座。Jeesuite-libs提供了数据库、缓存、消息中间件、分布式定时任务、安全框架、网关以及主流产商云服务快速集成能力。基于Jeesuite-libs可以不用关注技术细节快速搭建高并发高可用基于微服务的分布式架构。
+`Mendmix`定位是一站式分布式开发架构开源解决方案及云原生架构技术底座。`Mendmix`提供了数据库、缓存、消息中间件、分布式定时任务、安全框架、网关以及主流产商云服务快速集成能力。基于`Mendmix`可以不用关注技术细节快速搭建高并发高可用基于微服务的分布式架构。
 
-## 为什么有jeesuite-libs
- - 一些框架使用起来比较复杂(譬如各种配置，各种资源管理，容错等)，针对这种情况我们做了大量二次封装旨在简化使用难度。
- - 一些框架高度抽象貌似能满足所有应用场景，但是实际上大部分情况我们只用到了他10%的功能，结果她却只解决了我们90%的问题，针对这种情况我们就放弃使用而是参考他的设计自己实现一套简化版本
+## 发展历程`Jeesuite-libs`→`Mendmix`
+2015年发布第一版取名叫`Jeesuite-libs`一直沿用至今，定位是工具型软件，以各个模块能完全独立使用为前提。经过近8年的发展以及在多家大型公司技术中台、数字化转型、企业上云过程中锤炼，定制化越来越高，`Jeesuite-libs`从原来一个个离散的点变成了一个逻辑完备的面，也就是形成了一整套分布式架构及云原生架构的解决方案。基于这种转变`Jeesuite-libs`不再适合我们的发展方向，因此现在更名为`Mendmix`。
+
  
-## 重要的事情说三遍
-本项目底层框架库，直接跑不起来！所以不要问我怎么直接跑起来~所以不要问我怎么直接跑起来~所以不要问我怎么直接跑起来~。要运行可以关注集成演示项目：[https://gitee.com/vakinge/oneplatform](https://gitee.com/vakinge/oneplatform)
+## 关于Mendmix
+ - &#x2705;**寓意**：Mend+Mix，解决各种框架整合、各种场景的融合的问题、形成一整套完全自洽的解决方案
+ - &#x2705;**理念**：融合、增强、包容、自洽
+ - &#x2705;**愿景**：服务中小企业、减低架构成本、整体方案开箱即用
+ - &#x2705;**原则**：最小依赖可运行；只做增强不修改依赖框架本；贴近业务场景只做有用的功能
 
-## 愿景
-服务中小企业、减低架构成本、整体方案开箱即用。
+## 最小运行依赖
+>以下是包含了消息队列、定时任务、存储、全局锁、缓存、Mybatis增强等各种场景最小化运行依赖。如果需要支持分布式仅仅只需要增加必要的配置和第三方依赖包即可。
+ - Spring + Springcloud必要组件
+ - Mybatis，mybatis-spring
+ - quatrz
+ - 以及一些诸如guava的工具类库
+ 
+## 功能图谱
 
-## 原则
- - 只做增强不修改依赖框架本身，可自由升级版本。
- - 持续更新、所有release版本经过严格测试和线上验证。
- - 贴近业务场景、只做有用的功能。
- - 高度灵活、每个模块可以独立使用。
+模块 | 核心功能说明 | 其他说明
+---|---|---
+row 1 col 1 | row 1 col 21 | row 1 col 2
+
+
+
 
 ---
 ## 版本
-* [sonatype](https://oss.sonatype.org/content/repositories/releases/com/jeesuite/) 
-* [http://mvnrepository.com/search?q=jeesuite](http://mvnrepository.com/search?q=jeesuite)
+* [sonatype](https://oss.sonatype.org/content/repositories/releases/com/mendmix/) 
+* [http://mvnrepository.com/search?q=mendmix](http://mvnrepository.com/search?q=mendmix)
 
 ## 关于作者
  - 15年IT互联网老兵，熟悉微服务、k8s、云原生架构及各种分布式架构；
@@ -37,6 +45,5 @@ Jeesuite寓意为java企业级应用开发套件，定位是一站式分布式�
 <img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/2021-hainajiang.jpeg" width="350" height="360" />
  
  
-## 微信交流群(如果群二维码过期，请先加作者微信[图2])
-<img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_group_qrcode.jpg" width="180" height="180" />
+## 微信交流群(请先加作者微信)
 <img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_qrcode.jpeg" width="180" height="180" />
