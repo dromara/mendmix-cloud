@@ -23,14 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
-import com.mendmix.amqp.memoryqueue.MemoryQueueProducerAdapter;
+import com.mendmix.amqp.memoryqueue.EventbusProducerAdapter;
 import com.mendmix.amqp.qcloud.cmq.CMQConsumerAdapter;
 import com.mendmix.amqp.qcloud.cmq.CMQProducerAdapter;
 import com.mendmix.amqp.redis.RedisConsumerAdapter;
@@ -49,8 +47,6 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 	private MQConsumer consumer;
 	private MQProducer producer;
 	
-	@Autowired(required = false)
-	private StringRedisTemplate redisTemplate;
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
@@ -73,10 +69,10 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 			producer = new RocketProducerAdapter();
 		}else if("cmq".equals(providerName)){
 			producer = new CMQProducerAdapter();
-		}else if("memoryqueue".equals(providerName)){
-			producer = new MemoryQueueProducerAdapter();
+		}else if("eventbus".equals(providerName)){
+			producer = new EventbusProducerAdapter();
 		}else if("redis".equals(providerName)){
-			producer = new RedisProducerAdapter(redisTemplate);
+			producer = new RedisProducerAdapter();
 		}else{
 			throw new MendmixBaseException("NOT_SUPPORT[providerName]:" + providerName);
 		}
@@ -101,15 +97,17 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 				consumer = new RocketmqConsumerAdapter(messageHandlerMaps);
 			}else if("cmq".equals(providerName)){
 				consumer = new CMQConsumerAdapter(messageHandlerMaps);
-			}else if("memoryqueue".equals(providerName)){
-				MemoryQueueProducerAdapter.setMessageHandlers(messageHandlerMaps);
+			}else if("eventbus".equals(providerName)){
+				EventbusProducerAdapter.setMessageHandlers(messageHandlerMaps);
 			}else if("redis".equals(providerName)){
-				consumer = new RedisConsumerAdapter(redisTemplate, messageHandlerMaps);
+				consumer = new RedisConsumerAdapter(messageHandlerMaps);
 			}else{
 				throw new MendmixBaseException("NOT_SUPPORT[providerName]:" + providerName);
 			}
 			
-			consumer.start();
+			if(consumer != null) {
+				consumer.start();
+			}
 			logger.info("MQ_COMSUMER started -> groupName:{},providerName:{}",MQContext.getGroupName(),providerName);
 		}
 	}

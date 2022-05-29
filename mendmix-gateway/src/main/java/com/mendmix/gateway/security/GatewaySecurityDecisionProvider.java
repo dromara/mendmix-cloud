@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.springframework.context.ApplicationListener;
+
 import com.mendmix.common.async.AsyncInitializer;
 import com.mendmix.common.model.ApiInfo;
 import com.mendmix.gateway.CurrentSystemHolder;
@@ -27,8 +29,10 @@ import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.security.SecurityDecisionProvider;
 import com.mendmix.security.SecurityDelegating;
 import com.mendmix.security.model.ApiPermission;
+import com.mendmix.security.util.ApiPermssionHelper;
+import com.mendmix.spring.DataChangeEvent;
 
-public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionProvider implements AsyncInitializer {
+public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionProvider implements AsyncInitializer ,ApplicationListener<DataChangeEvent>{
 	
 	
 	@Override
@@ -67,6 +71,15 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 	public void doInitialize() {
 		SecurityDelegating.init();
 	}
+
+	@Override
+	public void onApplicationEvent(DataChangeEvent event) {
+		if(event.getDataType().equals("moduleApis")) {
+			ApiPermssionHelper.reload();
+		}
+	}
+	
+	
 
 	
 }

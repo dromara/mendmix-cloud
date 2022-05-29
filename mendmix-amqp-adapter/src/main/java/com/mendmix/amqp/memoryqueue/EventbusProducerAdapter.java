@@ -36,13 +36,13 @@ import com.mendmix.amqp.MessageHandler;
 /**
  * 
  * <br>
- * Class Name : MemoryQueueProducer
+ * Class Name : EventbusProducerAdapter
  *
  * @author jiangwei
  * @version 1.0.0
  * @date 2020年3月24日
  */
-public class MemoryQueueProducerAdapter implements MQProducer {
+public class EventbusProducerAdapter implements MQProducer {
 
 	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.amqp");
 
@@ -83,7 +83,7 @@ public class MemoryQueueProducerAdapter implements MQProducer {
 	}
 	
 	public static void setMessageHandlers(Map<String, MessageHandler> messageHandlers) {
-		MemoryQueueProducerAdapter.messageHandlers = messageHandlers;
+		EventbusProducerAdapter.messageHandlers = messageHandlers;
 	}
 
 	static class MQMessageEvent {

@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.spring.InstanceFactory;
@@ -131,7 +132,7 @@ public class MQContext {
 			if(StringUtils.isNotBlank(namespace) && !"none".equals(namespace)){
 				context.namespacePrefix = namespace + "_";
 			}
-			context.groupName = rebuildWithNamespace(ResourceUtils.getAndValidateProperty("mendmix.amqp.groupName"));
+			context.groupName = rebuildWithNamespace(ResourceUtils.getProperty("mendmix.amqp.groupName",GlobalRuntimeContext.APPID));
 			context.loghandlerEnabled = Boolean.parseBoolean(ResourceUtils.getProperty("mendmix.amqp.loghandler.enabled", "true"));
 		}
 		return context.groupName;

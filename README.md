@@ -21,9 +21,9 @@
 ## 最小运行依赖
 >以下是包含了消息队列、定时任务、存储、全局锁、缓存、Mybatis增强等各种场景最小化运行依赖。如果需要支持分布式仅仅只需要增加必要的配置和第三方依赖包即可。
  - Spring + Springcloud必要组件
- - Mybatis，mybatis-spring
+ - Mybatis，mybatis-spring,Druid
  - Quartz
- - 以及一些诸如guava的工具类库
+ - 以及一些诸如guava,jackson的工具类库
  
 ## 功能图谱
 

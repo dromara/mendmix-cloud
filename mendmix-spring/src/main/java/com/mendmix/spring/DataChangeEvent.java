@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mendmix.common.model;
+package com.mendmix.spring;
 
-public class ValueParam {
+import org.springframework.context.ApplicationEvent;
 
-	private String value;
+public class DataChangeEvent extends ApplicationEvent {
 
-	public ValueParam() {}
+	private static final long serialVersionUID = 1L;
 	
-
-	public ValueParam(String value) {
-		this.value = value;
+	private String dataType;
+	
+	public DataChangeEvent(String dataType,Object source) {
+		super(source);
+		this.dataType = dataType;
 	}
 
-
-
-	public String getValue() {
-		return value;
+	public String getDataType() {
+		return dataType;
 	}
 
-	public void setValue(String value) {
-		this.value = value;
+	public void setDataType(String dataType) {
+		this.dataType = dataType;
 	}
 	
 	
+
 }

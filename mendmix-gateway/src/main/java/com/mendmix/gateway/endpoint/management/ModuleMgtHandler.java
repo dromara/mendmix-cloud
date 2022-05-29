@@ -52,7 +52,7 @@ public class ModuleMgtHandler implements MgtHandler {
 		if("list".equals(actName)) {
     		if(StringUtils.isBlank(serviceId)) {
     			List<BizSystemModule> filterList = modules.stream().filter(
-    					o -> !o.isGlobal()
+    					o -> !o.isGlobal() && !o.isGateway()
     			).collect(Collectors.toList());
     			//
     			if(!Boolean.parseBoolean(handleParam.getParameter("details"))) {

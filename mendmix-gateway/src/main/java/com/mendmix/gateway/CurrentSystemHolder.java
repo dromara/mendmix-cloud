@@ -44,6 +44,7 @@ import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.api.SystemMgtApi;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.gateway.model.BizSystemPortal;
+import com.mendmix.spring.DataChangeEvent;
 import com.mendmix.spring.InstanceFactory;
 import com.mendmix.springweb.exporter.AppMetadataHolder;
 import com.mendmix.springweb.model.AppMetadata;
@@ -227,6 +228,7 @@ public class CurrentSystemHolder {
 				module.addApiInfo(api);
 			}
 			moduleApiInfos.put(module.getServiceId(), module.getApiInfos());
+			InstanceFactory.getContext().publishEvent(new DataChangeEvent("moduleApis", new Object()));
 			log.info(">>initModuleApiInfos success -> serviceId:{},nums:{}",module.getServiceId(),module.getApiInfos().size());
 		} catch (Exception e) {
 			boolean ignore = e instanceof ClassCastException;

@@ -15,13 +15,13 @@
  */
 package com.mendmix.amqp.redis;
 
-import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import com.mendmix.amqp.AbstractProducer;
 import com.mendmix.amqp.MQMessage;
+import com.mendmix.cache.RedisTemplateGroups;
 
 /**
  * 
@@ -38,9 +38,8 @@ public class RedisProducerAdapter extends AbstractProducer {
 
 	private StringRedisTemplate redisTemplate;
 	
-	public RedisProducerAdapter(StringRedisTemplate redisTemplate) {
-		Validate.notNull(redisTemplate, "can't load bean [redisTemplate]");
-		this.redisTemplate = redisTemplate;
+	public RedisProducerAdapter() {
+		
 	}
 
 	@Override
@@ -51,6 +50,9 @@ public class RedisProducerAdapter extends AbstractProducer {
 	@Override
 	public String sendMessage(MQMessage message,boolean async) {
 		try {
+			if(redisTemplate == null) {
+				redisTemplate = RedisTemplateGroups.getDefaultStringRedisTemplate();
+			}
 			redisTemplate.convertAndSend(message.getTopic(), message.toMessageValue(false));
 			handleSuccess(message);
 		} catch (Exception e) {

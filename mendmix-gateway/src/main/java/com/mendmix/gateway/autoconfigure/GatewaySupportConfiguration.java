@@ -29,6 +29,7 @@ import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.result.view.ViewResolver;
 
 import com.mendmix.gateway.endpoint.ActuatorController;
+import com.mendmix.gateway.endpoint.ServiceExporterController;
 import com.mendmix.gateway.exception.ReactiveGlobalExceptionHandler;
 import com.mendmix.gateway.exception.RouteErrorWebExceptionHandler;
 import com.mendmix.gateway.router.CustomRouteDefinitionRepository;
@@ -49,6 +50,11 @@ public class GatewaySupportConfiguration {
 	@Bean
 	public ActuatorController actuatorController() {
 		return new ActuatorController();
+	}
+	
+	@Bean
+	public ServiceExporterController serviceExporterController() {
+		return new ServiceExporterController();
 	}
 	
 	@Bean

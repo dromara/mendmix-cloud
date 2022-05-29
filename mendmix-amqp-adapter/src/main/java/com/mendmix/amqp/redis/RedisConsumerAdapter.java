@@ -32,6 +32,7 @@ import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import com.mendmix.amqp.MQConsumer;
 import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MessageHandler;
+import com.mendmix.cache.RedisTemplateGroups;
 import com.mendmix.common.async.StandardThreadExecutor;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 
@@ -52,14 +53,15 @@ public class RedisConsumerAdapter implements MQConsumer {
 	/**
 	 * @param messageHandlers
 	 */
-	public RedisConsumerAdapter(StringRedisTemplate redisTemplate,Map<String, MessageHandler> messageHandlers) {
-		Validate.notNull(redisTemplate, "can't load bean [redisTemplate]");
-		this.connectionFactory = redisTemplate.getConnectionFactory();
+	public RedisConsumerAdapter(Map<String, MessageHandler> messageHandlers) {
 		this.messageHandlers = messageHandlers;
 	}
 
 	@Override
 	public void start() throws Exception {
+		StringRedisTemplate redisTemplate = RedisTemplateGroups.getDefaultStringRedisTemplate();
+		Validate.notNull(redisTemplate, "can't load bean [redisTemplate]");
+		this.connectionFactory = redisTemplate.getConnectionFactory();
 		int maxThread = MQContext.getMaxProcessThreads();
 		this.fetchExecutor = new ThreadPoolExecutor(1, 1,0, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new StandardThreadFactory("messageFetcher"));
 		this.asyncProcessExecutor = new StandardThreadExecutor(1, maxThread,60, TimeUnit.SECONDS,1000,new StandardThreadFactory("messageAsyncProcessor"));

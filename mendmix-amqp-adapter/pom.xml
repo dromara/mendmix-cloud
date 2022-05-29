@@ -24,6 +24,13 @@
 			<version>${project.version}</version>
 			<optional>true</optional>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.mendmix</groupId>
+			<artifactId>mendmix-cache</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
 
 		<dependency>
 			<groupId>org.apache.rocketmq</groupId>

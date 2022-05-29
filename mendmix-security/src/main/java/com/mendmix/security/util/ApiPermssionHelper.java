@@ -54,7 +54,8 @@ public class ApiPermssionHelper {
 	private static final String LEAST_ONE_REGEX = ".+";
 	
 	
-	public static void init(SecurityDecisionProvider decisionProvider) {
+	private static void init() {
+		SecurityDecisionProvider decisionProvider = SecurityDelegating.decisionProvider();
     	List<ApiPermission> permissions = decisionProvider.getAllApiPermissions();
     	String permissionKey;
     	for (ApiPermission apiPermission : permissions) {
@@ -80,18 +81,21 @@ public class ApiPermssionHelper {
 			}
 		}
     	
-    	if(apiPermissions.isEmpty()) {
-    		apiPermissions.put("default", defaultApiOnNotMatch);
-    	}
     	
-    	logger.info(">>load apiPermissions:{}",apiPermissions.keySet());
     }
+	
+	public static void reload() {
+		if(apiPermissions.isEmpty())return;
+		init();
+		logger.info(">>reload apiPermissions:{}",apiPermissions.size());
+	}
 	
 	public static ApiPermission matchPermissionObject(String method, String uri) {
 		if(apiPermissions.isEmpty()) {
 			synchronized (apiPermissions) {
 				if(apiPermissions.isEmpty()) {
-					init(SecurityDelegating.decisionProvider());
+					init();
+					logger.info(">>reload apiPermissions:{}",apiPermissions.size());
 				}
 			}
 		}

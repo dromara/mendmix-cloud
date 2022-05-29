@@ -140,7 +140,7 @@ public class BizSystemModule {
 	}
 
 	public String getProxyUri() {
-		if(proxyUri == null && serviceId != null && !GlobalRuntimeContext.APPID.equals(serviceId)) {
+		if(proxyUri == null && serviceId != null && !isGateway()) {
 			if(serviceId.contains(":")) {
 				proxyUri = serviceId;
 			}else {
@@ -163,6 +163,7 @@ public class BizSystemModule {
 		return apiInfos == null ? (apiInfos = new HashMap<>()) : apiInfos;
 	}
 	
+	@JsonIgnore
 	public boolean isGateway() {
 		return GlobalRuntimeContext.APPID.equalsIgnoreCase(getServiceId());
 	}

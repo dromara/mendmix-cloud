@@ -55,9 +55,6 @@ public class SecurityDelegating {
 		decisionProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
 		storageManager = new SecurityStorageManager(decisionProvider.cacheType());
 		sessionManager = new SecuritySessionManager(decisionProvider,storageManager);
-		//
-		ApiPermssionHelper.init(decisionProvider);
-		
 		logger.info(">> SecurityDelegating inited !!,sessisonStorageType:{}",decisionProvider.cacheType());
 	}
 
