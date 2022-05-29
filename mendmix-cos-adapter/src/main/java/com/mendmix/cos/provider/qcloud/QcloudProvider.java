@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.time.DateUtils;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.async.StandardThreadExecutor;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.qcloud.cos.COSClient;
@@ -121,7 +121,7 @@ public class QcloudProvider extends AbstractProvider {
 	public void createBucket(String bucketName,boolean isPrivate) {
 		bucketName = buildBucketName(bucketName);
 		if(cosclient.doesBucketExist(bucketName)){
-			throw new JeesuiteBaseException(406, "bucketName["+bucketName+"]已存在");
+			throw new MendmixBaseException(406, "bucketName["+bucketName+"]已存在");
 		}
 		CreateBucketRequest request = new CreateBucketRequest(bucketName);
 		if(isPrivate) {
@@ -176,7 +176,7 @@ public class QcloudProvider extends AbstractProvider {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new JeesuiteBaseException(500, buildMessage(bucketName,e));
+			throw new MendmixBaseException(500, buildMessage(bucketName,e));
 		}
 	}
 
@@ -187,7 +187,7 @@ public class QcloudProvider extends AbstractProvider {
 			URL url = cosclient.generatePresignedUrl(bucketName, fileKey, DateUtils.addSeconds(new Date(), expireInSeconds));
 			return url.toString();
 		} catch (Exception e) {
-			throw new JeesuiteBaseException(500, buildMessage(bucketName,e));
+			throw new MendmixBaseException(500, buildMessage(bucketName,e));
 		}
 	}
 
@@ -197,7 +197,7 @@ public class QcloudProvider extends AbstractProvider {
 			bucketName = buildBucketName(bucketName);
 			cosclient.deleteObject(bucketName, fileKey);
 		} catch (Exception e) {
-			throw new JeesuiteBaseException(500, buildMessage(bucketName,e));
+			throw new MendmixBaseException(500, buildMessage(bucketName,e));
 		} 
 		return true;
 	}
@@ -208,7 +208,7 @@ public class QcloudProvider extends AbstractProvider {
 			InputStream inputStream = getObjectInputStream(bucketName, fileKey);
 			return IOUtils.toByteArray(inputStream);
 		} catch (IOException e) {
-			throw new JeesuiteBaseException(e.getMessage());
+			throw new MendmixBaseException(e.getMessage());
 		}
 	}
 
@@ -220,7 +220,7 @@ public class QcloudProvider extends AbstractProvider {
 			COSObject cosObject = cosclient.getObject(_bucketName, _fileKey);
 			return cosObject.getObjectContent();
 		} catch (Exception e) {
-			throw new JeesuiteBaseException(500, buildMessage(bucketName,e));
+			throw new MendmixBaseException(500, buildMessage(bucketName,e));
 		}
 	}
 
@@ -239,7 +239,7 @@ public class QcloudProvider extends AbstractProvider {
 			objectMetadata.setCustomMetadatas(metadata.getUserMetadata());
 			return objectMetadata;
 		} catch (Exception e) {
-			throw new JeesuiteBaseException(500, buildMessage(bucketName,e));
+			throw new MendmixBaseException(500, buildMessage(bucketName,e));
 		}
 	}
 
@@ -270,7 +270,7 @@ public class QcloudProvider extends AbstractProvider {
 			org.json.JSONObject json = CosStsClient.getCredential(config);
 			return json.toMap();
 		} catch (IOException e) {
-			throw new JeesuiteBaseException("生成临时凭证错误:"+e.getMessage());
+			throw new MendmixBaseException("生成临时凭证错误:"+e.getMessage());
 		}
 	}
 
@@ -307,11 +307,11 @@ public class QcloudProvider extends AbstractProvider {
 	private static String buildMessage(String bucketName,Exception e){
 		if(e instanceof CosServiceException){
 			if("NoSuchBucket".equals(((CosServiceException)e).getErrorCode())){
-				throw new JeesuiteBaseException(404, "bucketName["+bucketName+"]不存在"); 
+				throw new MendmixBaseException(404, "bucketName["+bucketName+"]不存在"); 
 			}else if("AccessDenied".equals(((CosServiceException)e).getErrorCode())){
-				throw new JeesuiteBaseException(403, "appId与bucketName["+bucketName+"]不匹配"); 
+				throw new MendmixBaseException(403, "appId与bucketName["+bucketName+"]不匹配"); 
 			}else if("InvalidAccessKeyId".equals(((CosServiceException)e).getErrorCode())){
-				throw new JeesuiteBaseException(40, "AccessKey配置错误"); 
+				throw new MendmixBaseException(40, "AccessKey配置错误"); 
 			}
 			return ((CosServiceException)e).getErrorMessage();
 		}else{

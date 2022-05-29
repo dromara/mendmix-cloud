@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.cos.BucketConfig;
 import com.mendmix.cos.CObjectMetadata;
@@ -148,10 +148,10 @@ public class QiniuProvider extends AbstractProvider {
         try {
             re = httpClient.newCall(request).execute();
             if (!re.isSuccessful()) {
-            	throw new JeesuiteBaseException(re.code(), re.message());
+            	throw new MendmixBaseException(re.code(), re.message());
             }
         } catch (IOException e) {
-        	throw new JeesuiteBaseException(e.getMessage());
+        	throw new MendmixBaseException(e.getMessage());
         }
 	}
 	
@@ -164,7 +164,7 @@ public class QiniuProvider extends AbstractProvider {
 			return true;
 		} catch (QiniuException e) {
 			if(e.code() == 612)return false;
-			throw new JeesuiteBaseException(e.code(), e.getMessage());
+			throw new MendmixBaseException(e.code(), e.getMessage());
 		}
 	}
 
@@ -227,9 +227,9 @@ public class QiniuProvider extends AbstractProvider {
 			if(re.isSuccessful()){
 				return re.body().bytes();
 			}
-			throw new JeesuiteBaseException(re.code(),re.message());
+			throw new MendmixBaseException(re.code(),re.message());
 		} catch (IOException e) {
-			throw new JeesuiteBaseException(e.getMessage());
+			throw new MendmixBaseException(e.getMessage());
 		}
 	}
 
@@ -244,9 +244,9 @@ public class QiniuProvider extends AbstractProvider {
 			if(re.isSuccessful()){
 				return re.body().byteStream();
 			}
-			throw new JeesuiteBaseException(re.code(),re.message());
+			throw new MendmixBaseException(re.code(),re.message());
 		} catch (IOException e) {
-			throw new JeesuiteBaseException(e.getMessage());
+			throw new MendmixBaseException(e.getMessage());
 		}
 	}
 
@@ -310,13 +310,13 @@ public class QiniuProvider extends AbstractProvider {
 	private void processQiniuException(String bucketName, QiniuException e) {
 		Response r = e.response;
 		if(e.code() == 631){
-			throw new JeesuiteBaseException(404, "bucketName["+bucketName+"]不存在");
+			throw new MendmixBaseException(404, "bucketName["+bucketName+"]不存在");
 		}
 		if(e.code() == 614){
-			throw new JeesuiteBaseException(406, "bucketName["+bucketName+"]已存在");
+			throw new MendmixBaseException(406, "bucketName["+bucketName+"]已存在");
 		}
 		if(e.code() == 612){
-			throw new JeesuiteBaseException(404, "资源不存在");
+			throw new MendmixBaseException(404, "资源不存在");
 		}
 		String message;
 		try {
@@ -324,7 +324,7 @@ public class QiniuProvider extends AbstractProvider {
 		} catch (Exception e2) {
 			message = r.toString();
 		}
-		throw new JeesuiteBaseException(message);
+		throw new MendmixBaseException(message);
 	}
 
 
@@ -373,10 +373,10 @@ public class QiniuProvider extends AbstractProvider {
             		}
             	}
             } else {
-                throw new JeesuiteBaseException(re.message());
+                throw new MendmixBaseException(re.message());
             }
         } catch (IOException e) {
-        	throw new JeesuiteBaseException(e.getMessage());
+        	throw new MendmixBaseException(e.getMessage());
         }
         return rs;
 	}

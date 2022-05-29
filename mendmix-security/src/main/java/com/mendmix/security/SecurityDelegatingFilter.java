@@ -90,11 +90,11 @@ public class SecurityDelegatingFilter implements Filter {
 			if(WebUtils.isAjax(request)){				
 				WebUtils.responseOutJson(response, MSG_401_UNAUTHORIZED);
 			}else{
-				if(SecurityDelegating.getConfigurerProvider().error401Page() == null){
+				if(SecurityDelegating.decisionProvider().error401Page() == null){
 					response.setStatus(401);
 					WebUtils.responseOutHtml(response, "401 Unauthorized");
 				}else{					
-					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.getConfigurerProvider().error401Page();
+					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.decisionProvider().error401Page();
 					response.sendRedirect(loginPage);
 				}
 			}
@@ -103,11 +103,11 @@ public class SecurityDelegatingFilter implements Filter {
 			if(WebUtils.isAjax(request)){				
 				WebUtils.responseOutJson(response, MSG_403_FORBIDDEN);
 			}else{
-				if(SecurityDelegating.getConfigurerProvider().error403Page() == null){
+				if(SecurityDelegating.decisionProvider().error403Page() == null){
 					response.setStatus(403);
 					WebUtils.responseOutHtml(response, "403 Forbidden");
 				}else{					
-					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.getConfigurerProvider().error403Page();
+					String loginPage = WebUtils.getBaseUrl(request) + SecurityDelegating.decisionProvider().error403Page();
 					response.sendRedirect(loginPage);
 				}
 			}

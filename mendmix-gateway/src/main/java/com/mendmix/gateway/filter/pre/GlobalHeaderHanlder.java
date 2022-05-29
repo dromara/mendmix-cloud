@@ -15,6 +15,8 @@
  */
 package com.mendmix.gateway.filter.pre;
 
+import java.util.Map;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.web.server.ServerWebExchange;
@@ -29,12 +31,11 @@ import com.mendmix.gateway.filter.PreFilterHandler;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.springweb.client.RequestHeaderBuilder;
 
-
 /**
  * 
  * 
  * <br>
- * Class Name   : GlobalHeaderHanlder
+ * Class Name : GlobalHeaderHanlder
  *
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @version 1.0.0
@@ -43,34 +44,40 @@ import com.mendmix.springweb.client.RequestHeaderBuilder;
 public class GlobalHeaderHanlder implements PreFilterHandler {
 
 	@Override
-	public Builder process(ServerWebExchange exchange,BizSystemModule module,Builder requestBuilder) {
+	public Builder process(ServerWebExchange exchange, BizSystemModule module, Builder requestBuilder) {
 		HttpHeaders headers = exchange.getRequest().getHeaders();
 		Builder reqBuilder = requestBuilder == null ? exchange.getRequest().mutate() : requestBuilder;
-		if(!headers.containsKey(CustomRequestHeaders.HEADER_REQUEST_ID)){
+		if (!headers.containsKey(CustomRequestHeaders.HEADER_REQUEST_ID)) {
 			reqBuilder.header(CustomRequestHeaders.HEADER_REQUEST_ID, TokenGenerator.generate());
 		}
-		reqBuilder.header(CustomRequestHeaders.HEADER_INVOKER_IS_GATEWAY,Boolean.TRUE.toString());
+		reqBuilder.header(CustomRequestHeaders.HEADER_INVOKER_IS_GATEWAY, Boolean.TRUE.toString());
+
 		//
-		RequestHeaderBuilder.getHeaders().forEach( (k,v) -> {
-			reqBuilder.header(k,v);
-		} );
-		
-		//
-		Boolean trustedRequest = ThreadLocalContext.get(GatewayConstants.CONTEXT_TRUSTED_REQUEST);
-		if(trustedRequest == null || !trustedRequest) {
-			//一些token禁止前端传入
-			if(headers.containsKey(CustomRequestHeaders.HEADER_IGNORE_TENANT)) {
-				reqBuilder.headers(httpHeaders -> httpHeaders.remove(CustomRequestHeaders.HEADER_IGNORE_TENANT));
-			}
-			if(headers.containsKey(CustomRequestHeaders.HEADER_AUTH_USER)) {
-				reqBuilder.headers(httpHeaders -> httpHeaders.remove(CustomRequestHeaders.HEADER_AUTH_USER));
-				AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
-				if(currentUser != null) {
-					reqBuilder.header(CustomRequestHeaders.HEADER_AUTH_USER, currentUser.toEncodeString());
+		Boolean trustedRequest = ThreadLocalContext.get(GatewayConstants.CONTEXT_TRUSTED_REQUEST, false);
+		// 上下文header
+		Map<String, String> contextHeaders = RequestHeaderBuilder.getHeaders();
+		// 移除敏感header
+		if (!trustedRequest) {
+			for (final String headerName : RequestHeaderBuilder.sensitiveHeaders) {
+				if (headers.containsKey(headerName)) {
+					reqBuilder.headers(httpHeaders -> httpHeaders.remove(headerName));
+					contextHeaders.remove(headerName);
 				}
 			}
 		}
-		
+		//
+		contextHeaders.forEach((k, v) -> {
+			reqBuilder.header(k, v);
+		});
+
+		// 当前登录用户
+		if (!contextHeaders.containsKey(CustomRequestHeaders.HEADER_AUTH_USER)) {
+			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+			if (currentUser != null) {
+				reqBuilder.header(CustomRequestHeaders.HEADER_AUTH_USER, currentUser.toEncodeString());
+			}
+		}
+
 		return reqBuilder;
 	}
 

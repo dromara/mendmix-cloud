@@ -15,6 +15,7 @@
  */
 package com.mendmix.gateway.autoconfigure;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,8 +25,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
+import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.security.GatewayReactiveCustomAuthnHandler;
+import com.mendmix.security.ReactiveCustomAuthnHandler;
 import com.mendmix.security.ReactiveSecurityDelegatingFilter;  
   
 @Configuration  
@@ -33,7 +36,7 @@ public class FilterRegConfig {
 	
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
-	@ConditionalOnProperty(name = "application.cors.enabled",havingValue = "true")
+	@ConditionalOnProperty(name = GatewayConfigs.CORS_ENABLED_CONFIG_KEY,havingValue = "true")
 	public CorsWebFilter corsWebFilter() {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
@@ -50,7 +53,8 @@ public class FilterRegConfig {
 	
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE + 1)
-	public ReactiveSecurityDelegatingFilter securityDelegatingFilter() {
-		return new ReactiveSecurityDelegatingFilter(new GatewayReactiveCustomAuthnHandler(), GatewayConstants.PATH_PREFIX);
+	public ReactiveSecurityDelegatingFilter securityDelegatingFilter(@Autowired(required = false) ReactiveCustomAuthnHandler customAuthnHandler) {
+		if(customAuthnHandler == null)customAuthnHandler = new GatewayReactiveCustomAuthnHandler();
+		return new ReactiveSecurityDelegatingFilter(customAuthnHandler, GatewayConstants.PATH_PREFIX);
 	}
 }  

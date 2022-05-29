@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.GlobalConstants;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.cos.BucketConfig;
 import com.mendmix.cos.CObjectMetadata;
 import com.mendmix.cos.CUploadObject;
@@ -201,7 +201,7 @@ public class AwsProvider extends AbstractProvider {
         try {
             String bucketName = object.getBucketName();
             if (StringUtils.isEmpty(bucketName)) {
-                throw new JeesuiteBaseException("BucketName 不能为空");
+                throw new MendmixBaseException("BucketName 不能为空");
             }
             String fileKey = object.getFileKey();
             PutObjectResponse putObjectResponse = null;
@@ -238,11 +238,11 @@ public class AwsProvider extends AbstractProvider {
                 uploadResult.setFileSize(size);
                 return uploadResult;
             }
-        } catch (JeesuiteBaseException e){
+        } catch (MendmixBaseException e){
             throw e;
         } catch (Exception e) {
             LOGGER.warn("上传失败, e={}", ExceptionUtils.getMessage(e), e);
-            throw new JeesuiteBaseException(e.getMessage());
+            throw new MendmixBaseException(e.getMessage());
         }
         return null;
     }

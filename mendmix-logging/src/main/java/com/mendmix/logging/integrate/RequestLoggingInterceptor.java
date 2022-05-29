@@ -41,7 +41,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.annotation.ApiMetadata;
 import com.mendmix.common.util.BeanUtils;
 import com.mendmix.common.util.ParameterUtils;
@@ -125,7 +125,7 @@ public class RequestLoggingInterceptor {
 			}
 			return result;
 		} catch (Exception e) {
-			if (e instanceof JeesuiteBaseException) {
+			if (e instanceof MendmixBaseException) {
 				actionLog.setExceptions(e.getMessage());
 			} else {
 				actionLog.setExceptions(ExceptionUtils.getMessage(e));

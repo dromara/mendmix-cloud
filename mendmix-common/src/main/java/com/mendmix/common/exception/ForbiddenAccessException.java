@@ -15,9 +15,9 @@
  */
 package com.mendmix.common.exception;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 
-public class ForbiddenAccessException extends JeesuiteBaseException {
+public class ForbiddenAccessException extends MendmixBaseException {
 
 	private static final long serialVersionUID = 1L;
 	

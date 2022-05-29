@@ -24,9 +24,8 @@ public class SimpleCryptUtils {
 
 	public static final String GLOBAL_CRYPT_KEY;
 	static{
-		String env = ResourceUtils.getProperty("env");
-		String base = ResourceUtils.getProperty("jeesuie.global.crypto.cryptKey",SimpleCryptUtils.class.getName());
-		GLOBAL_CRYPT_KEY = DigestUtils.md5Short(env + base) + DigestUtils.md5(base).substring(0, 2);
+		String base = ResourceUtils.getProperty("global.crypto.cryptKey","ILOVEMENDMIX");
+		GLOBAL_CRYPT_KEY = DigestUtils.md5Short(base) + DigestUtils.md5(base).substring(0, 2);
 	}
 	public static String encrypt(String data) {
 		 String encode = DES.encrypt(GLOBAL_CRYPT_KEY, data);

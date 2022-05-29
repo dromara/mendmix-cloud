@@ -39,7 +39,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.crypt.Base64;
 
 /**
@@ -127,16 +127,16 @@ public class RsaSignUtils {
 			}
 			return out.toByteArray();
 		} catch (NoSuchAlgorithmException e) {
-			throw new JeesuiteBaseException(4003,"无此解密算法");
+			throw new MendmixBaseException(4003,"无此解密算法");
 		} catch (NoSuchPaddingException e) {
 			e.printStackTrace();
 			return null;
 		} catch (InvalidKeyException e) {
-			throw new JeesuiteBaseException(4003,"解密私钥非法,请检查");
+			throw new MendmixBaseException(4003,"解密私钥非法,请检查");
 		} catch (IllegalBlockSizeException e) {
-			throw new JeesuiteBaseException(4003,"密文长度非法");
+			throw new MendmixBaseException(4003,"密文长度非法");
 		} catch (BadPaddingException e) {
-			throw new JeesuiteBaseException(4003,"密文数据已损坏");
+			throw new MendmixBaseException(4003,"密文数据已损坏");
 		} finally {
 			try {
 				if (out != null)
@@ -181,16 +181,16 @@ public class RsaSignUtils {
 	            }  
 	            return new String(out.toByteArray(),StandardCharsets.UTF_8);
 	        } catch (NoSuchAlgorithmException e) {  
-	            throw new JeesuiteBaseException(4003,"无此解密算法");  
+	            throw new MendmixBaseException(4003,"无此解密算法");  
 	        } catch (NoSuchPaddingException e) {  
 	            e.printStackTrace();  
 	            return null;  
 	        } catch (InvalidKeyException e) {  
-	            throw new JeesuiteBaseException(4003,"解密私钥非法,请检查");  
+	            throw new MendmixBaseException(4003,"解密私钥非法,请检查");  
 	        } catch (IllegalBlockSizeException e) {  
-	            throw new JeesuiteBaseException(4003,"密文长度非法");  
+	            throw new MendmixBaseException(4003,"密文长度非法");  
 	        } catch (BadPaddingException e) {  
-	            throw new JeesuiteBaseException(4003,"密文数据已损坏");  
+	            throw new MendmixBaseException(4003,"密文数据已损坏");  
 	        }finally{
 	        	try {if(out != null)out.close(); } catch (Exception e2) {}
 	        }
@@ -208,7 +208,7 @@ public class RsaSignUtils {
 		} catch (NoSuchAlgorithmException e) {
 			// TODO: handle exception
 		} catch (InvalidKeyException e) {
-			throw new JeesuiteBaseException(4003,"私钥格式错误");
+			throw new MendmixBaseException(4003,"私钥格式错误");
 		} catch (SignatureException e) {
 			// TODO: handle exception
 		} catch (UnsupportedEncodingException e) {

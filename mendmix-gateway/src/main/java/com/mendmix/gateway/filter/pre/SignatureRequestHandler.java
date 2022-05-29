@@ -24,7 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.util.DigestUtils;
 import com.mendmix.common.util.JsonUtils;
@@ -64,7 +64,7 @@ public class SignatureRequestHandler implements PreFilterHandler {
 
 		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),exchange.getRequest().getPath().value());
 		if (apiInfo == null || !apiInfo.isOpenApi()) {
-			throw new JeesuiteBaseException("该接口未开放访问权限");
+			throw new MendmixBaseException("该接口未开放访问权限");
 		}
 
 		HttpHeaders headers = exchange.getRequest().getHeaders();
@@ -77,13 +77,13 @@ public class SignatureRequestHandler implements PreFilterHandler {
 		String appId = headers.getFirst(GatewayConstants.APP_ID_HEADER);
 
 		if (StringUtils.isAnyBlank(timestamp, appId)) {
-			throw new JeesuiteBaseException("认证头信息不完整");
+			throw new MendmixBaseException("认证头信息不完整");
 		}
 
 		String secret = appIdSecretMappings.get(appId);
 
 		if (StringUtils.isBlank(secret)) {
-			throw new JeesuiteBaseException("appId不存在");
+			throw new MendmixBaseException("appId不存在");
 		}
 
 		Object body = RuequestHelper.getCachingBodyString(exchange);
@@ -93,7 +93,7 @@ public class SignatureRequestHandler implements PreFilterHandler {
 		String expectSign = DigestUtils.md5(signBaseString);
 
 		if (!expectSign.equals(sign)) {
-			throw new JeesuiteBaseException("签名错误");
+			throw new MendmixBaseException("签名错误");
 		}
 
 		return requestBuilder;

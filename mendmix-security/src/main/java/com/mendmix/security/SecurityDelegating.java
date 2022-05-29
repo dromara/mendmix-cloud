@@ -16,9 +16,12 @@
 package com.mendmix.security;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.constants.PermissionLevel;
@@ -27,7 +30,9 @@ import com.mendmix.common.exception.UnauthorizedException;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.TokenGenerator;
 import com.mendmix.security.model.AccessToken;
+import com.mendmix.security.model.ApiPermission;
 import com.mendmix.security.model.UserSession;
+import com.mendmix.security.util.ApiPermssionHelper;
 import com.mendmix.spring.InstanceFactory;
 
 /**
@@ -37,10 +42,11 @@ import com.mendmix.spring.InstanceFactory;
  */
 public class SecurityDelegating {
 	
+	private static Logger logger = LoggerFactory.getLogger("com.mendmix.security");
+	
 	private static final int SESSION_INTERVAL_MILLS =  60 * 1000;
 	private SecurityDecisionProvider decisionProvider;
 	private SecuritySessionManager sessionManager;
-	private SecurityResourceManager resourceManager;
 	private SecurityStorageManager storageManager;
 	
 	private static volatile SecurityDelegating instance;
@@ -49,7 +55,10 @@ public class SecurityDelegating {
 		decisionProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
 		storageManager = new SecurityStorageManager(decisionProvider.cacheType());
 		sessionManager = new SecuritySessionManager(decisionProvider,storageManager);
-		resourceManager = new SecurityResourceManager(decisionProvider,storageManager);
+		//
+		ApiPermssionHelper.init(decisionProvider);
+		
+		logger.info(">> SecurityDelegating inited !!,sessisonStorageType:{}",decisionProvider.cacheType());
 	}
 
 	private static SecurityDelegating getInstance() {
@@ -65,7 +74,7 @@ public class SecurityDelegating {
 		getInstance();
 	}
 
-	protected static SecurityDecisionProvider getConfigurerProvider() {
+	public static SecurityDecisionProvider decisionProvider() {
 		return getInstance().decisionProvider;
 	}
 
@@ -77,7 +86,11 @@ public class SecurityDelegating {
 	 */
 	public static UserSession doAuthentication(String type,String name,String password){
 		AuthUser userInfo = getInstance().decisionProvider.validateUser(type,name, password);
-		return updateSession(userInfo);
+		UserSession session = updateSession(userInfo);
+		if(getInstance().decisionProvider.apiAuthzEnabled()) {
+			getInstance().fetchUserPermissions(session);
+		}
+		return session;
 	}
 	
 	public static String doAuthenticationForOauth2(String type,String name,String password){
@@ -136,24 +149,20 @@ public class SecurityDelegating {
 			}
 		}
 
-		boolean isAdmin = session != null && session.getUser() != null 
-				&& session.getUser().isAdmin();
+		boolean isAdmin = session != null && session.getUser() != null && session.getUser().isAdmin();
 		
-		if(!isAdmin && !getInstance().resourceManager.isAnonymous(uri)){
-			if(session == null || session.isAnonymous()){
-				throw new UnauthorizedException();
-			}
-			
-			if(getInstance().decisionProvider.apiAuthzEnabled()) {
-				String permissionKey = ApiPermssionCheckHelper.buildPermissionKey(method,uri);
-				PermissionLevel permissionLevel = ApiPermssionCheckHelper.matchPermissionLevel(getInstance().resourceManager, permissionKey);
-				
-				//如果需鉴权
-				if(permissionLevel == PermissionLevel.PermissionRequired){
-					List<String> permissions = getInstance().resourceManager.getUserPermissions(session);
-					if(!ApiPermssionCheckHelper.checkPermissions(getInstance().resourceManager,permissionKey, permissions)){
-						throw new ForbiddenAccessException();
-					}
+		
+		ApiPermission permissionObject = ApiPermssionHelper.matchPermissionObject(method, uri);
+		if((session == null || session.isAnonymous()) && PermissionLevel.Anonymous != permissionObject.getPermissionLevel()) {
+			throw new UnauthorizedException();
+		}
+		
+		if(!isAdmin && getInstance().decisionProvider.apiAuthzEnabled()) {
+			//如果需鉴权
+			if(permissionObject.getPermissionLevel() == PermissionLevel.PermissionRequired){
+				List<String> permissions = getInstance().getUserPermissions(session);
+				if(!permissions.contains(permissionObject.getPermissionKey())){
+					throw new ForbiddenAccessException();
 				}
 			}
 		}
@@ -198,11 +207,9 @@ public class SecurityDelegating {
 	
 	public static void refreshUserPermssion(Serializable...userIds){
 		if(userIds != null && userIds.length > 0 && userIds[1] != null){
-			for (Serializable userId : userIds) {
-				getInstance().resourceManager.refreshUserPermssions(userId);
-			}
+			
 		}else{
-			getInstance().resourceManager.refreshUserPermssions();
+			
 		}
 	}
 
@@ -225,5 +232,29 @@ public class SecurityDelegating {
     public static <T> T getTemporaryCacheValue(String key) {
     	return getInstance().storageManager.getTemporaryCacheValue(key);
     }
+    
+    private List<String> getUserPermissions(UserSession session){
+    	List<String> permissions = sessionManager.getUserPermissions(session);
+    	if(permissions != null)return permissions;
+    	synchronized (getInstance()) {
+    		permissions = fetchUserPermissions(session);
+    		return permissions;
+		}
+    }
+
+	private List<String> fetchUserPermissions(UserSession session) {
+		List<String> permissions;
+		List<ApiPermission> apiPermissions = decisionProvider.getUserApiPermissions(session.getUser().getId());
+		if(apiPermissions == null || apiPermissions.isEmpty()) {
+			permissions = new ArrayList<>(0);
+		}else {
+			permissions = new ArrayList<>(apiPermissions.size());
+			for (ApiPermission api : apiPermissions) {
+				permissions.add(ApiPermssionHelper.buildPermissionKey(api.getMethod(), decisionProvider.resolveUri(api.getUri())));
+			}
+		}
+		sessionManager.updateUserPermissions(session, permissions);
+		return permissions;
+	}
 
 }

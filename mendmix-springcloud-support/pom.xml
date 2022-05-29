@@ -27,14 +27,18 @@
 			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-common</artifactId>
 			<version>${project.version}</version>
-			<optional>true</optional>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-common2</artifactId>
 			<version>${project.version}</version>
-			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.mendmix</groupId>
+			<artifactId>mendmix-springweb</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 
 		<dependency>
@@ -58,12 +62,6 @@
 		<dependency>
 			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-logging</artifactId>
-			<version>${project.version}</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>com.mendmix</groupId>
-			<artifactId>mendmix-springweb</artifactId>
 			<version>${project.version}</version>
 			<optional>true</optional>
 		</dependency>

@@ -28,7 +28,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.mendmix.cache.adapter.RedisCacheAdapter;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.spring.InstanceFactory;
 
@@ -69,7 +69,7 @@ public class RedisTemplateGroups {
 		}
 		
 		if(groupTemplateMapping.containsKey(groupName)) {
-			throw new JeesuiteBaseException("redisedisTemplate For["+groupName+"] not found");
+			throw new MendmixBaseException("redisedisTemplate For["+groupName+"] not found");
 		}else {
 			initRedisTemplateGroup(groupName);
 		}
@@ -85,7 +85,7 @@ public class RedisTemplateGroups {
 		}
 		
 		if(groupTemplateMapping.containsKey(groupName)) {
-			throw new JeesuiteBaseException("redisedisTemplate For["+groupName+"] not found");
+			throw new MendmixBaseException("redisedisTemplate For["+groupName+"] not found");
 		}else {
 			initRedisTemplateGroup(groupName);
 		}

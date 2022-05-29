@@ -24,8 +24,7 @@ import org.springframework.cloud.client.loadbalancer.Request;
 import org.springframework.cloud.client.loadbalancer.reactive.ReactiveLoadBalancer.Factory;
 import org.springframework.cloud.loadbalancer.blocking.client.BlockingLoadBalancerClient;
 
-
-import com.mendmix.common.http.CustomRequestHostHolder;
+import com.mendmix.common.http.HostMappingHolder;
 
 /**
  * 
@@ -45,11 +44,11 @@ public class CustomBlockingLoadBalancerClient  extends BlockingLoadBalancerClien
 	public <T> ServiceInstance choose(String serviceId, Request<T> request) {
         
 		ServiceInstance instance = super.choose(serviceId, request);
-		if(instance == null && CustomRequestHostHolder.containsProxyUrlMapping(serviceId)) {
+		if(instance == null && HostMappingHolder.containsProxyUrlMapping(serviceId)) {
 			instance = fixedServiceInstances.get(serviceId);
 			if(instance == null) {
 				synchronized (fixedServiceInstances) {
-					URI uri = URI.create(CustomRequestHostHolder.getProxyUrlMapping(serviceId));
+					URI uri = URI.create(HostMappingHolder.getProxyUrlMapping(serviceId));
 					instance = new FixedServiceInstance(serviceId, uri);
 					fixedServiceInstances.put(serviceId, instance);
 				}

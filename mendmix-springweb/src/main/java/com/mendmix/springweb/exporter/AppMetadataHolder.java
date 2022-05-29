@@ -143,12 +143,12 @@ public class AppMetadataHolder {
 					} else {
 						apiUri = baseUri + addFirstPathSeparator(apiUri);
 					}
-					apiInfo.setUrl(pathPrefix + apiUri);
+					apiInfo.setUri(pathPrefix + apiUri);
 					apiInfo.setMethod(apiHttpMethod);
 					if(methodMetadata == null){
-						apiInfo.setPermissionType(PermissionLevel.LoginRequired);
+						apiInfo.setPermissionLevel(PermissionLevel.LoginRequired);
 					}else{								
-						apiInfo.setPermissionType(methodMetadata.permissionLevel());
+						apiInfo.setPermissionLevel(methodMetadata.permissionLevel());
 						apiInfo.setName(methodMetadata.actionName());
 						apiInfo.setActionLog(methodMetadata.actionLog());
 						apiInfo.setRequestLog(methodMetadata.requestLog());
@@ -157,7 +157,7 @@ public class AppMetadataHolder {
 					}
 					
 					if(StringUtils.isBlank(apiInfo.getName())) {
-						String name = apiInfo.getUrl().replace("/", "_");
+						String name = apiInfo.getUri().replace("/", "_");
 						if(name.startsWith("_"))name = name.substring(1);
 						apiInfo.setName(name);
 					}

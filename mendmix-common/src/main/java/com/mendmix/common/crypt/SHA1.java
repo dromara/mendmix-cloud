@@ -18,7 +18,7 @@ package com.mendmix.common.crypt;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 
 
 public class SHA1 {
@@ -68,7 +68,7 @@ public class SHA1 {
 
             return hexstr.toString();
         } catch (Exception e) {
-            throw new JeesuiteBaseException(500, "error", e);
+            throw new MendmixBaseException(500, "error", e);
         }
     }
 }

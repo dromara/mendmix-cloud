@@ -17,7 +17,7 @@ package com.mendmix.logging;
 
 import java.lang.reflect.Constructor;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 
 /**
  * @author Clinton Begin
@@ -51,7 +51,7 @@ public final class LogFactory {
     try {
       return logConstructor.newInstance(logger);
     } catch (Throwable t) {
-      throw new JeesuiteBaseException("Error creating logger for logger " + logger + ".  Cause: " + t);
+      throw new MendmixBaseException("Error creating logger for logger " + logger + ".  Cause: " + t);
     }
   }
 
@@ -98,7 +98,7 @@ public final class LogFactory {
       }
       logConstructor = candidate;
     } catch (Throwable t) {
-      throw new JeesuiteBaseException("Error setting Log implementation.  Cause: " + t);
+      throw new MendmixBaseException("Error setting Log implementation.  Cause: " + t);
     }
   }
 

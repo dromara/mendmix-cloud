@@ -20,7 +20,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.crypt.Base58;
 import com.mendmix.common.crypt.DES;
 
@@ -84,10 +84,10 @@ public class TokenGenerator {
 				timestamp = Long.parseLong(DES.decrypt(cryptKey,token).substring(6));
 			}
 		} catch (Exception e) {
-			throw new JeesuiteBaseException(4005, "token格式错误");
+			throw new MendmixBaseException(403, "token格式错误");
 		}
 		if(validateExpire && date.getTime() - timestamp > EXPIRE){
-			throw new JeesuiteBaseException(4005, "token已过期");
+			throw new MendmixBaseException(403, "token已过期");
 		}
 	}
 	

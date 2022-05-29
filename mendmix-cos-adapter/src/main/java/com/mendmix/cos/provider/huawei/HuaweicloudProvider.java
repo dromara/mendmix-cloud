@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 import com.mendmix.common.GlobalConstants;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.cos.BucketConfig;
 import com.mendmix.cos.CObjectMetadata;
 import com.mendmix.cos.CUploadObject;
@@ -134,7 +134,7 @@ public class HuaweicloudProvider extends AbstractProvider {
     public CUploadResult upload(CUploadObject object) {
         String bucketName = object.getBucketName();
         if (StringUtils.isBlank(bucketName)) {
-            throw new JeesuiteBaseException("BucketName 不能为空");
+            throw new MendmixBaseException("BucketName 不能为空");
         }
         InputStream inputStream = object.getInputStream();
         File file = object.getFile();
@@ -158,7 +158,7 @@ public class HuaweicloudProvider extends AbstractProvider {
                 putObjectResult=obsClient.putObject(bucketName, fileKey, inputStream);
                 size=inputStream.available();
             }else{
-                throw new JeesuiteBaseException("upload object is NULL");
+                throw new MendmixBaseException("upload object is NULL");
             }
             if (putObjectResult != null) {
                 AccessControlList acl = new AccessControlList();
@@ -173,7 +173,7 @@ public class HuaweicloudProvider extends AbstractProvider {
             }
         } catch (Exception e) {
             logger.error("上传文件出错, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
-            throw new JeesuiteBaseException(e.getMessage());
+            throw new MendmixBaseException(e.getMessage());
         }
         return null;
     }
@@ -234,7 +234,7 @@ public class HuaweicloudProvider extends AbstractProvider {
             return inputStream;
         }catch (Exception e){
             logger.error("获取流失败, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
-            throw new JeesuiteBaseException(e.getMessage());
+            throw new MendmixBaseException(e.getMessage());
         }
     }
 
@@ -289,7 +289,7 @@ public class HuaweicloudProvider extends AbstractProvider {
     protected String generatePresignedUrl(String bucketName, String fileKey, int expireInSeconds) {
         //默认5分钟， 最长7天
         if (!exists(bucketName, fileKey)) {
-            throw new JeesuiteBaseException("对象[bucketName=" + bucketName + ",fileKey=" + fileKey + "]不存在");
+            throw new MendmixBaseException("对象[bucketName=" + bucketName + ",fileKey=" + fileKey + "]不存在");
         }
         TemporarySignatureRequest req = new TemporarySignatureRequest(HttpMethodEnum.GET, expireInSeconds);
         req.setBucketName(bucketName);

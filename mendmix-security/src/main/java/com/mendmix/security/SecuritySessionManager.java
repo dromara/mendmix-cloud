@@ -15,6 +15,8 @@
  */
 package com.mendmix.security;
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.mendmix.common.CurrentRuntimeContext;
@@ -125,6 +127,17 @@ public class SecuritySessionManager {
 			key = buildUserSessionUniqueKey(session.getUser());
 			storageManager.getCache(cacheName).remove(key);
 		}
+	}
+	
+	public void updateUserPermissions(UserSession session, List<String> permissions) {
+		if(permissions == null)return;
+		String key = "permission:" + session.getSessionId();
+		storageManager.getCache(cacheName).setObject(key, permissions);
+	}
+	
+	public List<String> getUserPermissions(UserSession session){
+		String key = "permission:" + session.getSessionId();
+		return storageManager.getCache(cacheName).getObject(key);
 	}
 	
 	public long getUpdateTime(UserSession session) {

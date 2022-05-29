@@ -15,6 +15,8 @@
  */
 package com.mendmix.springweb.client;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import com.mendmix.common.CurrentRuntimeContext;
@@ -25,6 +27,14 @@ import com.mendmix.common.util.TokenGenerator;
 import com.mendmix.spring.InstanceFactory;
 
 public class RequestHeaderBuilder {
+	
+	public static List<String> sensitiveHeaders = Arrays.asList(
+			CustomRequestHeaders.HEADER_TENANT_ID,
+			CustomRequestHeaders.HEADER_AUTH_USER,
+			CustomRequestHeaders.HEADER_IGNORE_TENANT,
+			CustomRequestHeaders.HEADER_IGNORE_AUTH,
+			CustomRequestHeaders.HEADER_CLUSTER_ID
+		 );
 
 	private static RequestHeaderProvider headerProvider;
 	

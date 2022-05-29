@@ -18,7 +18,6 @@ package com.mendmix.gateway.security;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.mendmix.common.async.AsyncInitializer;
 import com.mendmix.common.model.ApiInfo;
@@ -37,14 +36,11 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 		return false;
 	}
 	
-	
-
 	@Override
-	public List<String> anonymousUrlPatterns() {
-		List<String> urlPatterns = super.anonymousUrlPatterns();
-		return urlPatterns.stream().map(url -> GatewayConstants.PATH_PREFIX.concat(url)).collect(Collectors.toList());
+	public String resolveUri(String uri) {
+		return GatewayConstants.PATH_PREFIX + uri;
 	}
-
+	
 
 	@Override
 	public List<ApiPermission> getAllApiPermissions() {
@@ -58,20 +54,19 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 			apis = module.getApiInfos().values();
 			for (ApiInfo apiInfo : apis) {
 				apiPermission = new ApiPermission();
-				apiPermission.setGrantType(apiInfo.getPermissionType().name());
-				apiPermission.setHttpMethod(apiInfo.getMethod());
-				apiPermission.setUri(apiInfo.getUrl());
+				apiPermission.setPermissionLevel(apiInfo.getPermissionLevel());
+				apiPermission.setMethod(apiInfo.getMethod());
+				apiPermission.setUri(apiInfo.getUri());
 				result.add(apiPermission);
 			}
 		}
 		return result;
 	}
 
-	
 	@Override
 	public void doInitialize() {
 		SecurityDelegating.init();
 	}
-	
+
 	
 }

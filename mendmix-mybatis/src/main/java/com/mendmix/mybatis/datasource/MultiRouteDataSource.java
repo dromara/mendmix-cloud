@@ -34,7 +34,7 @@ import org.springframework.jdbc.datasource.AbstractDataSource;
 
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.GlobalRuntimeContext;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.RoundRobinSelecter;
 import com.mendmix.common.util.BeanUtils;
 import com.mendmix.common.util.ResourceUtils;
@@ -100,7 +100,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 		int index = 0;
 		String tenantId = dsKeyWithTenant ? context.tenantId : null;
 		if(dsKeyWithTenant && StringUtils.isBlank(tenantId)) {
-			throw new JeesuiteBaseException("Can't get [tentantId] from currentContext");
+			throw new MendmixBaseException("Can't get [tentantId] from currentContext");
 		}
 		if(!useMaster) {
 			if(slaveNumSelecters.isEmpty()) {
@@ -145,7 +145,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 		String lookupKey = currentDataSourceKey();
 		DataSource dataSource = targetDataSources.get(lookupKey);
 	    if (dataSource == null) {
-			throw new JeesuiteBaseException("Cannot determine target DataSource for lookup key [" + lookupKey + "]");
+			throw new MendmixBaseException("Cannot determine target DataSource for lookup key [" + lookupKey + "]");
 		}
 		return dataSource;
 	}

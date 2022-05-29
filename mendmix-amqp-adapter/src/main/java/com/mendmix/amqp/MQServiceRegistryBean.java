@@ -37,7 +37,7 @@ import com.mendmix.amqp.redis.RedisConsumerAdapter;
 import com.mendmix.amqp.redis.RedisProducerAdapter;
 import com.mendmix.amqp.rocketmq.RocketProducerAdapter;
 import com.mendmix.amqp.rocketmq.RocketmqConsumerAdapter;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.spring.InstanceFactory;
 import com.mendmix.spring.helper.SpringAopHelper;
 
@@ -78,7 +78,7 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 		}else if("redis".equals(providerName)){
 			producer = new RedisProducerAdapter(redisTemplate);
 		}else{
-			throw new JeesuiteBaseException("NOT_SUPPORT[providerName]:" + providerName);
+			throw new MendmixBaseException("NOT_SUPPORT[providerName]:" + providerName);
 		}
 		producer.start();
 		logger.info("MQ_PRODUCER started -> groupName:{},providerName:{}",MQContext.getGroupName(),providerName);
@@ -106,7 +106,7 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 			}else if("redis".equals(providerName)){
 				consumer = new RedisConsumerAdapter(redisTemplate, messageHandlerMaps);
 			}else{
-				throw new JeesuiteBaseException("NOT_SUPPORT[providerName]:" + providerName);
+				throw new MendmixBaseException("NOT_SUPPORT[providerName]:" + providerName);
 			}
 			
 			consumer.start();

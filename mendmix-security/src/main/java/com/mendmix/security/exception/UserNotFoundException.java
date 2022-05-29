@@ -15,9 +15,9 @@
  */
 package com.mendmix.security.exception;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 
-public class UserNotFoundException extends JeesuiteBaseException {
+public class UserNotFoundException extends MendmixBaseException {
 
 	private static final long serialVersionUID = 1L;
 	

@@ -34,9 +34,9 @@ import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月22日
  */
-public class JeesuiteMybatisEnhancer {
+public class MendmixMybatisEnhancer {
 
-	private static final Logger logger = LoggerFactory.getLogger(JeesuiteMybatisEnhancer.class);
+	private static final Logger logger = LoggerFactory.getLogger(MendmixMybatisEnhancer.class);
 
 	public static void handle(String group, Configuration configuration) throws Exception {
 		if ("tkMapper".equals(MybatisConfigs.getCrudDriver())) {

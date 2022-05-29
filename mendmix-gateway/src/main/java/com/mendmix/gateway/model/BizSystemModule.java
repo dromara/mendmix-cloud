@@ -25,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.model.ApiInfo;
-import com.mendmix.common.util.PathMatcher;
 import com.mendmix.gateway.GatewayConstants;
 
 public class BizSystemModule {
@@ -37,8 +36,6 @@ public class BizSystemModule {
 
     private String proxyUri;
     
-    private String anonymousUris;
-
     private String systemId;
 
     private String name;
@@ -53,9 +50,7 @@ public class BizSystemModule {
 
     @JsonIgnore
     private Map<Pattern, ApiInfo> wildcardUris = new HashMap<>();
-    
-    @JsonIgnore
-    private PathMatcher anonUriMatcher;
+
 
     private Map<String, ApiInfo> apiInfos;
 
@@ -85,39 +80,13 @@ public class BizSystemModule {
 	}
 	
 
-	public String getAnonymousUris() {
-		return anonymousUris;
-	}
-
-	public void setAnonymousUris(String anonymousUris) {
-		this.anonymousUris = anonymousUris;
-	}
-
-	public PathMatcher getAnonUriMatcher() {
-		return anonUriMatcher;
-	}
-
-	public void setAnonUriMatcher(PathMatcher anonUriMatcher) {
-		this.anonUriMatcher = anonUriMatcher;
-	}
-
-	public void finalCorrect() {
+	public void format() {
 		if(this.stripPrefix < 0) {
 			this.stripPrefix = StringUtils.countMatches(getRouteName(), "/") + 2;
 			if(getProxyUri().endsWith("/" + getRouteName())) {
 				proxyUri = proxyUri.substring(0,proxyUri.lastIndexOf(getRouteName()) - 1);
 				stripPrefix = 1;
 			}
-		}
-		
-		if(StringUtils.isNotBlank(this.anonymousUris)) {
-			String prefix;
-			if(GlobalRuntimeContext.APPID.equals(serviceId)) {
-				prefix = GatewayConstants.PATH_PREFIX;
-			}else {
-				prefix = GatewayConstants.PATH_PREFIX + "/" + routeName;
-			}
-			anonUriMatcher = new PathMatcher(prefix, this.anonymousUris);
 		}
 	}
 
@@ -194,13 +163,17 @@ public class BizSystemModule {
 		return apiInfos == null ? (apiInfos = new HashMap<>()) : apiInfos;
 	}
 	
+	public boolean isGateway() {
+		return GlobalRuntimeContext.APPID.equalsIgnoreCase(getServiceId());
+	}
+	
 	public void addApiInfo(ApiInfo apiInfo) {
-		String resolveUri = BizSystemModule.resolveRealUri(this, apiInfo.getUrl());
-		apiInfo.setUrl(resolveUri);
+		String resolveUri = BizSystemModule.resolveRealUri(this, apiInfo.getUri());
+		apiInfo.setUri(resolveUri.substring(GatewayConstants.PATH_PREFIX.length()));
 		String uniqueKey = buildUniqueKey(apiInfo.getMethod(), resolveUri);
 		getApiInfos().put(uniqueKey, apiInfo);
 		if(uniqueKey.contains("{")) {
-			Pattern pattern = Pattern.compile(uniqueKey.replace("\\{[^/]+?\\}", ".+"));
+			Pattern pattern = Pattern.compile(uniqueKey.replaceAll("\\{[^/]+?\\}", ".+"));
 			wildcardUris.put(pattern, apiInfo);
 		}
 	}
@@ -253,7 +226,7 @@ public class BizSystemModule {
 	}
 	
 	public static String resolveRealUri(BizSystemModule module,String uri) {
-		if(GlobalRuntimeContext.APPID.equals(module.getRouteName())) {
+		if(module.isGateway()) {
 			return uri;
 		}else {
 			if(module.getStripPrefix() == 1) {
@@ -297,7 +270,7 @@ public class BizSystemModule {
 	@Override
 	public String toString() {
 		return "[routeName=" + routeName + ", serviceId=" + serviceId + ", proxyUri=" + proxyUri
-				+ ", stripPrefix=" + stripPrefix + ", anonymousUris=" + anonymousUris + "]";
+				+ ", stripPrefix=" + stripPrefix + "]";
 	}
 
 	

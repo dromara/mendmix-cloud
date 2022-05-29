@@ -23,12 +23,14 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 
+import com.mendmix.common.util.ResourceUtils;
+
 /**
  * 加密解密工具包
  */
 public class DES {
 
-	private static final byte[] IV_PARAMS_BYTES = "mendmix".getBytes();
+	private static final byte[] IV_PARAMS_BYTES = ResourceUtils.getProperty("global.crypto.ivParameter","MEND+MIX").getBytes();
 	public static final String ALGORITHM_DES = "DES/CBC/PKCS5Padding";
 	
     /**

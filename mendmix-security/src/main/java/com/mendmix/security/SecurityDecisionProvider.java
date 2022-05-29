@@ -15,9 +15,11 @@
  */
 package com.mendmix.security;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
+import com.mendmix.common.model.ApiModel;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.security.SecurityConstants.CacheType;
@@ -73,11 +75,15 @@ public abstract class SecurityDecisionProvider {
 		return CacheType.local;
 	}
 
-	public List<String> anonymousUrlPatterns() {
-		return ResourceUtils.getList("mendmix.security.anonymous-uris");
+	public List<ApiModel> anonymousUris() {
+		return new ArrayList<>(0);
 	}
 	
-	public abstract AuthUser validateUser(String type,String name,String password) throws JeesuiteBaseException;
+	public String resolveUri(String uri) {
+		return uri;
+	}
+	
+	public abstract AuthUser validateUser(String type,String name,String password) throws MendmixBaseException;
 	public abstract List<ApiPermission> getAllApiPermissions();
 	public abstract List<ApiPermission> getUserApiPermissions(String userId);
 	public abstract String error401Page();

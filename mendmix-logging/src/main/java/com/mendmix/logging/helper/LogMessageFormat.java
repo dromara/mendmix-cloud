@@ -20,7 +20,7 @@ import java.io.Serializable;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.mendmix.common.CurrentRuntimeContext;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.ResourceUtils;
 
@@ -72,7 +72,7 @@ public class LogMessageFormat {
 	
 	public static String buildExceptionMessages(Throwable throwable,int showLines) {
 		if(showLines <= 0)return ExceptionUtils.getStackTrace(throwable);
-		if (throwable instanceof JeesuiteBaseException == false) {
+		if (throwable instanceof MendmixBaseException == false) {
 			return ExceptionUtils.getStackTrace(throwable);
 		}
     	String[] traces = ExceptionUtils.getRootCauseStackTrace(throwable);

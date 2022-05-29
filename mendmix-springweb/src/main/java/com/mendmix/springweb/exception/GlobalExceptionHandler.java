@@ -28,12 +28,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.GlobalConstants;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.logging.integrate.ActionLogCollector;
 
@@ -52,7 +50,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(Exception.class)
 	@ResponseBody
-	public WrapperResponse<?> exceptionHandler(Exception e, HttpServletResponse response) {
+	public WrapperResponse<?> exceptionHandler(HttpServletRequest request, HttpServletResponse response,Exception e) {
 
 		// 缓存回滚
 		if (rollbackCacheMethod != null) {
@@ -65,8 +63,8 @@ public class GlobalExceptionHandler {
 		WrapperResponse<?> resp = new WrapperResponse<>();
 		
 		e = (Exception) getActualThrowable(e);
-		if (e instanceof JeesuiteBaseException) {
-			JeesuiteBaseException e1 = (JeesuiteBaseException) e;
+		if (e instanceof MendmixBaseException) {
+			MendmixBaseException e1 = (MendmixBaseException) e;
 			resp.setCode(e1.getCode());
 			resp.setMsg(e1.getMessage());
 		} else if (e instanceof org.springframework.web.HttpRequestMethodNotSupportedException) {
@@ -103,8 +101,7 @@ public class GlobalExceptionHandler {
 		}
 
 		//默认情况http code都转换为200，异常信息由异常体传递
-		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-		if(request != null && Boolean.parseBoolean(request.getHeader(CustomRequestHeaders.HEADER_HTTP_STATUS_KEEP))){
+		if(Boolean.parseBoolean(request.getHeader(CustomRequestHeaders.HEADER_HTTP_STATUS_KEEP))){
 			int errorCode = resp.getCode();
 			if(errorCode >= 400 && errorCode<=500){
 				response.setStatus(errorCode);

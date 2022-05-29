@@ -189,7 +189,7 @@ public class CurrentRuntimeContext {
 	private static String getContextVal(String headerName, boolean validate) {
 		String value = ThreadLocalContext.getStringValue(headerName);
 		if (validate && StringUtils.isBlank(value)) {
-			throw new JeesuiteBaseException(500, "无法获取上下文[" + headerName + "]信息");
+			throw new MendmixBaseException(500, "无法获取上下文[" + headerName + "]信息");
 		}
 		return value;
 	}

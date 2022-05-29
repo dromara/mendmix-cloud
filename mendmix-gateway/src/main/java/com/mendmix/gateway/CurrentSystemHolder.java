@@ -36,7 +36,8 @@ import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 
 import com.mendmix.common.GlobalRuntimeContext;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
+import com.mendmix.common.http.HostMappingHolder;
 import com.mendmix.common.http.HttpRequestEntity;
 import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.util.ResourceUtils;
@@ -132,17 +133,18 @@ public class CurrentSystemHolder {
 
 		Map<String, BizSystemModule> _modules = new HashMap<>(modules.size());
 		for (BizSystemModule module : modules) {
-			boolean isGateway = GlobalRuntimeContext.APPID.equalsIgnoreCase(module.getServiceId());
-			if (!isGateway && StringUtils.isBlank(module.getRouteName())) {
-				continue;
+			//
+			if(!module.isGateway()) {
+				module.format();
+				if(module.getProxyUri().startsWith("http")) {
+					HostMappingHolder.addProxyUrlMapping(module.getServiceId(), module.getProxyUri());
+				}
 			}
-			module.finalCorrect();
 			//
 			if(moduleApiInfos.containsKey(module.getServiceId())) {
 				module.setApiInfos(moduleApiInfos.get(module.getServiceId()));
 			}
 			_modules.put(module.getRouteName(), module);
-			
 		}
 		routeModuleMappings.set(_modules);
 		//
@@ -179,7 +181,6 @@ public class CurrentSystemHolder {
 				module.setDefaultRoute(true);
 				module.setServiceId(entry.getValue().toString());
 				module.setProxyUri(properties.getProperty(prefix + ".uri"));
-				module.setAnonymousUris(properties.getProperty(prefix + ".anonymousUris"));
 				//
 				updateModuleRouteInfos(module, defaultRouteDefs);
 				localModules.add(module);
@@ -205,7 +206,7 @@ public class CurrentSystemHolder {
 		if(pathDef != null) {
 			String pathPattern = pathDef.getArgs().get("_genkey_0");
 			if(!pathPattern.startsWith(GatewayConstants.PATH_PREFIX)) {
-				throw new JeesuiteBaseException("route path must startWith:" + GatewayConstants.PATH_PREFIX);
+				throw new MendmixBaseException("route path must startWith:" + GatewayConstants.PATH_PREFIX);
 			}
 			String[] parts = StringUtils.split(pathPattern, "/");
 			module.setRouteName(parts[1]);
@@ -229,8 +230,8 @@ public class CurrentSystemHolder {
 			log.info(">>initModuleApiInfos success -> serviceId:{},nums:{}",module.getServiceId(),module.getApiInfos().size());
 		} catch (Exception e) {
 			boolean ignore = e instanceof ClassCastException;
-			if(!ignore && e instanceof JeesuiteBaseException) {
-				JeesuiteBaseException ex = (JeesuiteBaseException) e;
+			if(!ignore && e instanceof MendmixBaseException) {
+				MendmixBaseException ex = (MendmixBaseException) e;
 				ignore = ex.getCode() == 404 || ex.getCode() == 401 || ex.getCode() == 403;
 			}
 			if(ignore) {

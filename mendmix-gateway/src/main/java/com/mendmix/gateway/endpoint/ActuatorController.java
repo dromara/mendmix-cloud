@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mendmix.common.GlobalRuntimeContext;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.http.HttpRequestEntity;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.GatewayConstants;
@@ -57,7 +57,7 @@ public class ActuatorController {
 				try {
 					String status = HttpRequestEntity.get(module.getHealthUri()).execute().toValue("status");
 					moduleStatus.put(module.getServiceId(), status);
-				}catch (JeesuiteBaseException e) {
+				}catch (MendmixBaseException e) {
 					if(e.getCode() == 404 || e.getCode() == 401 || e.getCode() == 403) {
 						result.put(module.getServiceId(), "UP");
 					}else {

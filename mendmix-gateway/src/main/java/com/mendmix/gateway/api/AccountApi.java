@@ -17,13 +17,12 @@ package com.mendmix.gateway.api;
 
 import java.util.List;
 
-import com.mendmix.common.JeesuiteBaseException;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.gateway.model.AccountScope;
 
 public interface AccountApi {
 
-	AuthUser validateAccount(String type,String account,String password) throws JeesuiteBaseException;
+	AuthUser validateAccount(String type,String account,String password);
 	
 	List<AccountScope> findAccountScopes(String accountId);
 }

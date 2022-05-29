@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mendmix.common2.lock;
+package com.mendmix.gateway.endpoint.management;
 
-import com.mendmix.common.MendmixBaseException;
+/**
+ * 
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">jiangwei</a>
+ * @date 2022年3月19日
+ */
+public interface MgtHandler {
 
-public class LockException extends MendmixBaseException {
-	private static final long serialVersionUID = 1L;
-
-	public LockException(String e) {
-		super(9999,e);
-	}
-
-	public LockException(Throwable cause) {
-		super(9999, cause.getMessage(), cause);
-	}
+	String category();
 	
-	
+	Object handleRequest(String actName,HandleParam handleParam); 
 }

@@ -15,9 +15,9 @@
  */
 package com.mendmix.security.exception;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 
-public class UserPasswordWrongException extends JeesuiteBaseException {
+public class UserPasswordWrongException extends MendmixBaseException {
 
 	private static final long serialVersionUID = 1L;
 	

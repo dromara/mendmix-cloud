@@ -15,34 +15,34 @@
  */
 package com.mendmix.common;
 
-public class JeesuiteBaseException extends RuntimeException {
+public class MendmixBaseException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
 	private int code;
 	private String bizCode;
 	
-	public JeesuiteBaseException() {
+	public MendmixBaseException() {
 		super();
 	}
 	
-	public JeesuiteBaseException(String message) {
+	public MendmixBaseException(String message) {
 		this(500, message);
 	}
 
-	public JeesuiteBaseException(int code,String message) {
+	public MendmixBaseException(int code,String message) {
 		super(message);
 		this.code = code;
 	}
 	
 	
-	public JeesuiteBaseException(int code, String bizCode,String message) {
+	public MendmixBaseException(int code, String bizCode,String message) {
 		super(message);
 		this.code = code;
 		this.bizCode = bizCode;
 	}
 
-	public JeesuiteBaseException(int code,String message, Throwable cause) {
+	public MendmixBaseException(int code,String message, Throwable cause) {
 		super(message, cause);
 		this.code = code;
 	}

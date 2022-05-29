@@ -23,29 +23,15 @@ import com.mendmix.common.constants.PermissionLevel;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年4月15日
  */
-public class ApiInfo {
+public class ApiInfo extends ApiModel{
 
-	private String url;
-	private String method;
 	private String name;
-	private PermissionLevel permissionType;
+	private PermissionLevel permissionLevel;
 	private boolean actionLog;
 	private boolean requestLog;
 	private boolean responseLog;
 	private boolean openApi;
 	
-	public String getUrl() {
-		return url;
-	}
-	public void setUrl(String url) {
-		this.url = url;
-	}
-	public String getMethod() {
-		return method;
-	}
-	public void setMethod(String method) {
-		this.method = method;
-	}
 	public String getName() {
 		return name;
 	}
@@ -53,12 +39,11 @@ public class ApiInfo {
 		this.name = name;
 	}
 
-	public PermissionLevel getPermissionType() {
-		return permissionType;
+	public PermissionLevel getPermissionLevel() {
+		return permissionLevel;
 	}
-
-	public void setPermissionType(PermissionLevel permissionType) {
-		this.permissionType = permissionType;
+	public void setPermissionLevel(PermissionLevel permissionLevel) {
+		this.permissionLevel = permissionLevel;
 	}
 	public boolean isActionLog() {
 		return actionLog;
@@ -84,6 +69,5 @@ public class ApiInfo {
 	public void setOpenApi(boolean openApi) {
 		this.openApi = openApi;
 	}
-	
 
 }

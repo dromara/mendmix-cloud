@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.http.HttpResponseEntity;
 import com.mendmix.common.util.HttpUtils;
@@ -104,7 +104,7 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 		}else if(QiniuProvider.NAME.equals(type)) {
 			provider = new QiniuProvider(config);
 		}else {
-			throw new JeesuiteBaseException("cos["+type+"] not support");
+			throw new MendmixBaseException("cos["+type+"] not support");
 		}
 		
 		if(defaultBucket != null) {

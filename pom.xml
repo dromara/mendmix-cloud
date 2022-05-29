@@ -6,8 +6,8 @@
 	<artifactId>mendmix-parent</artifactId>
 	<version>2022.05</version>
 	<packaging>pom</packaging>
-	<description>java 后台开发套件</description>
-	<name>mendmix分布式云原生架构技术底座</name>
+	<name>mendmix</name>
+	<description>mendmix分布式云原生架构技术底座</description>
 	<url>http://www.mendmix.com</url>
 
 	<licenses>

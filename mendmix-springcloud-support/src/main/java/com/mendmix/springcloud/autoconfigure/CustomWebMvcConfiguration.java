@@ -61,7 +61,7 @@ public class CustomWebMvcConfiguration implements WebMvcConfigurer {
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new GlobalDefaultInterceptor())
 		       .addPathPatterns("/**")
-		       .excludePathPatterns("/error","/swagger-ui.html", "/v2/api-docs", "/swagger-resources/**", "/webjars/**", "/info", "/health");
+		       .excludePathPatterns("/error","/swagger-ui.html", "/v2/api-docs", "/swagger-resources/**", "/webjars/**", "actuator/**");
 
 		if (UserMockUtils.isEnabled()) {
 			registry.addInterceptor(new MockLoginUserInterceptor()).addPathPatterns("/**");

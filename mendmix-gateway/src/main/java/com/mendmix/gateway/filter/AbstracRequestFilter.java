@@ -30,7 +30,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.gateway.GatewayConfigs;
@@ -100,7 +100,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
     		exchange = exchange.mutate().request(requestBuilder.build()).build();
 		} catch (Exception e) {
 			exchange.getAttributes().clear();
-			if(e instanceof JeesuiteBaseException == false) {
+			if(e instanceof MendmixBaseException == false) {
 				logger.error("requestFilter_error",e);
 			}
 			ServerHttpResponse response = exchange.getResponse();

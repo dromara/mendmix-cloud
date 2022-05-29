@@ -24,7 +24,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.Maps;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.cos.BucketConfig;
 import com.mendmix.cos.CObjectMetadata;
 import com.mendmix.cos.CUploadObject;
@@ -133,7 +133,7 @@ public class MinioProvider extends AbstractProvider{
         try {
             boolean found = existsBucket(bucketName);
             if (found) {
-                throw new JeesuiteBaseException(406, "bucketName[" + bucketName + "]已存在");
+                throw new MendmixBaseException(406, "bucketName[" + bucketName + "]已存在");
             }
             minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
           //默认是none， 即私有
@@ -144,7 +144,7 @@ public class MinioProvider extends AbstractProvider{
                         .build());
             }
 
-        } catch (JeesuiteBaseException jbex) {
+        } catch (MendmixBaseException jbex) {
             throw jbex;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -169,7 +169,7 @@ public class MinioProvider extends AbstractProvider{
         try {
             String bucketName = object.getBucketName();
             if (StringUtils.isEmpty(bucketName)) {
-                throw new JeesuiteBaseException("BucketName 不能为空");
+                throw new MendmixBaseException("BucketName 不能为空");
             }
             String fileKey = object.getFileKey();
             InputStream inputStream = object.getInputStream();
@@ -204,7 +204,7 @@ public class MinioProvider extends AbstractProvider{
                          .build());
                  size=inputStream.available();
              } else {
-                 throw new JeesuiteBaseException("upload object is NULL");
+                 throw new MendmixBaseException("upload object is NULL");
              }
              if (objectWriteResponse != null) {
                  CUploadResult uploadResult = new CUploadResult(fileKey, getDownloadUrl(object.getBucketName(),fileKey, 300), null);
@@ -212,7 +212,7 @@ public class MinioProvider extends AbstractProvider{
                  uploadResult.setFileSize(size);
                  return uploadResult;
              }
-        } catch (JeesuiteBaseException jbex) {
+        } catch (MendmixBaseException jbex) {
             throw jbex;
         } catch (Exception e) {
         	throw new RuntimeException(e);
@@ -267,7 +267,7 @@ public class MinioProvider extends AbstractProvider{
     @Override
     protected String generatePresignedUrl(String bucketName, String fileKey, int expireInSeconds) {
         if (!exists(bucketName, fileKey)) {
-            throw new JeesuiteBaseException("bucket["+bucketName+"] fileKey["+fileKey+"] not exists");
+            throw new MendmixBaseException("bucket["+bucketName+"] fileKey["+fileKey+"] not exists");
         }
         try {
             String url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()

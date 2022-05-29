@@ -26,7 +26,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.mendmix.common.GlobalConstants;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.Page;
 import com.mendmix.common.util.JsonUtils;
 
@@ -101,11 +101,11 @@ public class HttpResponseEntity {
 				msg = jsonNode.get(msgAlias).textValue();
 			}
 			int statusCode = StringUtils.isNumeric(code) ? Integer.parseInt(code) : 500;
- 			throw new JeesuiteBaseException(statusCode, bizCode, msg);
+ 			throw new MendmixBaseException(statusCode, bizCode, msg);
 		}
 		
 		if(!isSuccessed()) {
-			throw new JeesuiteBaseException(statusCode, StringUtils.defaultIfBlank(message, "http请求异常"));
+			throw new MendmixBaseException(statusCode, StringUtils.defaultIfBlank(message, "http请求异常"));
 		}
 		
 		return body;

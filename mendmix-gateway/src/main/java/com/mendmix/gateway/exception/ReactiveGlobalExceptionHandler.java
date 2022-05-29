@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.mendmix.common.GlobalConstants;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.logging.integrate.ActionLogCollector;
 
@@ -42,8 +42,8 @@ public class ReactiveGlobalExceptionHandler {
 		WrapperResponse<?> resp = new WrapperResponse<>();
 		
 		e = (Exception) getActualThrowable(e);
-		if (e instanceof JeesuiteBaseException) {
-			JeesuiteBaseException e1 = (JeesuiteBaseException) e;
+		if (e instanceof MendmixBaseException) {
+			MendmixBaseException e1 = (MendmixBaseException) e;
 			resp.setCode(e1.getCode());
 			resp.setMsg(e1.getMessage());
 		} else if(e instanceof MethodArgumentNotValidException){

@@ -15,20 +15,20 @@
  */
 package com.mendmix.common.util;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 
 public class AssertUtil {
 
 	public static void isTrue(boolean expression, int code,String message) {
 		if (!expression) {
-			throw new JeesuiteBaseException(code, message);
+			throw new MendmixBaseException(code, message);
 		}
 	}
 	
 
 	public static void isNull(Object object, String message) {
 		if (object != null) {
-			throw new JeesuiteBaseException(ResourceUtils.getInt("errorcode:record.existed", 500), message);
+			throw new MendmixBaseException(ResourceUtils.getInt("errorcode:record.existed", 500), message);
 		}
 	}
 
@@ -38,7 +38,7 @@ public class AssertUtil {
 
 	public static void notNull(Object object, String message) {
 		if (object == null) {
-			throw new JeesuiteBaseException(ResourceUtils.getInt("errorcode:record.not-exist", 500), message);
+			throw new MendmixBaseException(ResourceUtils.getInt("errorcode:record.not-exist", 500), message);
 		}
 	}
 
@@ -49,7 +49,7 @@ public class AssertUtil {
 
 	public static void notBlank(String expression, String message) {
 		if (expression == null ||"".equals(expression.trim())) {
-			throw new JeesuiteBaseException(ResourceUtils.getInt("errorcode:param.required", 400), message);
+			throw new MendmixBaseException(ResourceUtils.getInt("errorcode:param.required", 400), message);
 		}
 	}
 

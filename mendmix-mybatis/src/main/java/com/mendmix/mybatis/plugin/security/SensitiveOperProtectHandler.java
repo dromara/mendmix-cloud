@@ -18,7 +18,7 @@ package com.mendmix.mybatis.plugin.security;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.plugin.InvocationVals;
 import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
@@ -41,7 +41,7 @@ public class SensitiveOperProtectHandler implements InterceptorHandler{
 		Object[] objects = invocation.getArgs();
 		MappedStatement ms = (MappedStatement) objects[0];
 		if(ms.getSqlCommandType().equals(SqlCommandType.DELETE)){
-			throw new JeesuiteBaseException(4003, "当前已开启敏感操作保护");
+			throw new MendmixBaseException(4003, "当前已开启敏感操作保护");
 		}
 		return null;
 	}

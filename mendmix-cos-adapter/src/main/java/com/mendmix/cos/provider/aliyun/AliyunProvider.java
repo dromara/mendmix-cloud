@@ -40,7 +40,7 @@ import com.aliyun.oss.model.ObjectMetadata;
 import com.aliyun.oss.model.PolicyConditions;
 import com.aliyun.oss.model.PutObjectRequest;
 import com.aliyun.oss.model.PutObjectResult;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.cos.BucketConfig;
 import com.mendmix.cos.CObjectMetadata;
 import com.mendmix.cos.CUploadObject;
@@ -89,7 +89,7 @@ public class AliyunProvider extends AbstractProvider{
 	@Override
 	public void createBucket(String bucketName,boolean isPrivate) {
 		if(ossClient.doesBucketExist(bucketName)) {
-			throw new JeesuiteBaseException(406, "bucketName["+bucketName+"]已存在");
+			throw new MendmixBaseException(406, "bucketName["+bucketName+"]已存在");
 		}
 		CreateBucketRequest request = new CreateBucketRequest(bucketName);
 		if(isPrivate) {
@@ -170,7 +170,7 @@ public class AliyunProvider extends AbstractProvider{
 			InputStream inputStream = getObjectInputStream(bucketName, fileKey);
 			return IOUtils.toByteArray(inputStream);
 		} catch (IOException e) {
-			throw new JeesuiteBaseException(e.getMessage());
+			throw new MendmixBaseException(e.getMessage());
 		}
 	}
 
@@ -251,7 +251,7 @@ public class AliyunProvider extends AbstractProvider{
 			objectMetadata.setCustomMetadatas(metadata.getUserMetadata());
 			return objectMetadata;
 		} catch (Exception e) {
-			throw new JeesuiteBaseException(500, e.getMessage());
+			throw new MendmixBaseException(500, e.getMessage());
 		}
 	}
 

@@ -18,9 +18,6 @@ package com.mendmix.security;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.mendmix.cache.command.RedisObject;
 import com.mendmix.cache.redis.JedisProviderFactory;
 import com.mendmix.security.SecurityConstants.CacheType;
@@ -30,7 +27,6 @@ import com.mendmix.security.model.ExpireableObject;
 
 public class SecurityStorageManager {
 	
-	private static Logger log = LoggerFactory.getLogger("com.mendmix.security");
 	
 	protected static final String CACHE_GROUP_NAME = "security";
 	

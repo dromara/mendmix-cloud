@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.GlobalRuntimeContext;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.model.AuthUser;
@@ -109,7 +109,7 @@ public class ActionLogCollector {
     public static void onResponseEnd(ActionLog actionLog,int httpStatus,Throwable throwable){
     	if(actionLog == null) {
     		if(throwable != null) {
-    			if (throwable instanceof JeesuiteBaseException) {
+    			if (throwable instanceof MendmixBaseException) {
     				log.warn("bizError"+LogMessageFormat.buildLogTail(null)+":{}",LogMessageFormat.buildExceptionMessages(throwable));
     			}else {
     				log.error("systemError" + LogMessageFormat.buildLogTail(null),throwable);
@@ -123,7 +123,7 @@ public class ActionLogCollector {
     		actionLog.setResponseCode(httpStatus);
     	}
     	if(throwable != null) {
-    		if (throwable instanceof JeesuiteBaseException) {
+    		if (throwable instanceof MendmixBaseException) {
 				log.warn("bizError"+LogMessageFormat.buildLogTail(actionLog.getActionKey())+":{}",LogMessageFormat.buildExceptionMessages(throwable));
 			}else {
 				log.error("systemError" + LogMessageFormat.buildLogTail(actionLog.getActionKey()),throwable);

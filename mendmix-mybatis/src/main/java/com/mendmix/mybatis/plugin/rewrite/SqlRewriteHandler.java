@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.CurrentRuntimeContext;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.constants.MatchPolicy;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.model.OrderBy;
@@ -290,7 +290,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 					|| deptMappedStatements.contains(invocation.getMappedStatement().getId())) {
 				String departmentId = CurrentRuntimeContext.getAndValidateCurrentUser().getDeptId();
 				if(StringUtils.isBlank(departmentId)) {
-					throw new JeesuiteBaseException("当前登录用户部门ID为空");
+					throw new MendmixBaseException("当前登录用户部门ID为空");
 				}
 				String[] values = dataMapping.get(orgBasePermKey);
 				if(values != null && values.length > 0) {
@@ -386,7 +386,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			if(sharddingTenant && fieldName.equals(tenantPropName)) {
 				column = tenantColumnName;
 				String currentTenantId = CurrentRuntimeContext.getTenantId();
-				if(currentTenantId == null)throw new JeesuiteBaseException("无法获取当前租户ID");
+				if(currentTenantId == null)throw new MendmixBaseException("无法获取当前租户ID");
 				values = new String[] {currentTenantId};
 			}else {
 				if(dataMapping == null || !dataMapping.containsKey(fieldName))continue;

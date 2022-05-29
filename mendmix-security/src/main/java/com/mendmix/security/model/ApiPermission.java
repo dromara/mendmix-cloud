@@ -15,6 +15,11 @@
  */
 package com.mendmix.security.model;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.mendmix.common.constants.PermissionLevel;
+
 /**
  * 
  * <br>
@@ -27,28 +32,65 @@ package com.mendmix.security.model;
 public class ApiPermission {
 
 	private String uri;
-	private String httpMethod;
-	private String grantType;
+	private String method;
+	private PermissionLevel permissionLevel;
+	private String permissionKey;
+
+	public ApiPermission() {}
 	
+	
+	
+	public ApiPermission(String httpMethod,String uri, PermissionLevel permissionLevel) {
+		this.method = httpMethod;
+		this.uri = uri;
+		this.permissionLevel = permissionLevel;
+	}
+
 	public String getUri() {
 		return uri;
 	}
+	
 	public void setUri(String uri) {
 		this.uri = uri;
 	}
-	public String getHttpMethod() {
-		return httpMethod;
-	}
-	public void setHttpMethod(String httpMethod) {
-		this.httpMethod = httpMethod;
-	}
-	public String getGrantType() {
-		return grantType;
-	}
-	public void setGrantType(String grantType) {
-		this.grantType = grantType;
+	
+	public String getMethod() {
+		return method;
 	}
 	
-	
+	public void setMethod(String method) {
+		this.method = method;
+	}
 
+
+	public PermissionLevel getPermissionLevel() {
+		return permissionLevel;
+	}
+
+
+	public void setPermissionLevel(PermissionLevel permissionLevel) {
+		this.permissionLevel = permissionLevel;
+	}
+	
+	public void setPermissionLevel(String permissionLevel) {
+		this.permissionLevel = PermissionLevel.valueOf(permissionLevel);
+	}
+
+	public String getPermissionKey() {
+		return permissionKey;
+	}
+
+	public void setPermissionKey(String permissionKey) {
+		this.permissionKey = permissionKey;
+	}
+
+
+
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+	}
+	
+	
+	
 }

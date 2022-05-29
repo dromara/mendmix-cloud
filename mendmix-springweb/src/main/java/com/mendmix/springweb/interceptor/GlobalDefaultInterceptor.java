@@ -29,6 +29,7 @@ import org.springframework.web.servlet.ModelAndView;
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.GlobalRuntimeContext;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.annotation.ApiMetadata;
 import com.mendmix.common.exception.ForbiddenAccessException;
@@ -79,12 +80,17 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			headerName = headerNames.nextElement();
 			CurrentRuntimeContext.addContextHeader(headerName,request.getHeader(headerName));
 		}
-		//
+		
+	   //
 		if(AppConfigs.invokeTokenCheckEnabled){	
 			String uri = request.getRequestURI();
 			if(!invoketokenCheckIgnoreUriMather.match(uri)){				
 				String authCode = request.getHeader(CustomRequestHeaders.HEADER_INVOKE_TOKEN);
-				TokenGenerator.validate(authCode, true);
+				try {					
+					TokenGenerator.validate(authCode, true);
+				} catch (MendmixBaseException e) {
+					throw new MendmixBaseException(403, "invoke-" + e.getMessage());
+				}
 			}
 		}
 	

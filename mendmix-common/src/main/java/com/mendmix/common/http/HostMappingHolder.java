@@ -26,13 +26,13 @@ import com.mendmix.common.util.ResourceUtils;
 /**
  * 
  * <br>
- * Class Name   : CustomRequestHostResolver
+ * Class Name   : HostMappingHolder
  *
  * @author jiangwei
  * @version 1.0.0
  * @date 2018年12月06日
  */
-public class CustomRequestHostHolder {
+public class HostMappingHolder {
 
 	private static final String PATH_SEPARATOR = "/";
 	private static final String LOCALHOST = "localname";
@@ -43,7 +43,7 @@ public class CustomRequestHostHolder {
 	private static ProxyResolver proxyResolver;
 	
 	public static void setProxyResolver(ProxyResolver proxyResolver) {
-		CustomRequestHostHolder.proxyResolver = proxyResolver;
+		HostMappingHolder.proxyResolver = proxyResolver;
 	}
 
 	private static Map<String, String> getProxyUrlMappings() {

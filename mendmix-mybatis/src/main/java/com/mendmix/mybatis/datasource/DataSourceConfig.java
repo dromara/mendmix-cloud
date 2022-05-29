@@ -17,7 +17,7 @@ package com.mendmix.mybatis.datasource;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.mybatis.MybatisConfigs;
 
@@ -211,11 +211,11 @@ public class DataSourceConfig {
 	
 	public void validate() {
 		if(StringUtils.isAnyBlank(url,username,password)) {
-			throw new JeesuiteBaseException("DataSourceConfig[url,username,password] is required");
+			throw new MendmixBaseException("DataSourceConfig[url,username,password] is required");
 		}
 		//租户分库
 		if(StringUtils.isBlank(tenantId) && MybatisConfigs.isSchameSharddingTenant(group)) {
-			throw new JeesuiteBaseException("DataSourceConfig[tenantId] is required For SchameSharddingTenant");
+			throw new MendmixBaseException("DataSourceConfig[tenantId] is required For SchameSharddingTenant");
 		}
 	}
 	

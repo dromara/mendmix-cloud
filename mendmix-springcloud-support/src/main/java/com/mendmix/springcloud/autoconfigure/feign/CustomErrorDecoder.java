@@ -26,7 +26,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 
 import com.google.common.io.CharStreams;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.util.JsonUtils;
 
 import feign.Response;
@@ -46,18 +46,18 @@ public class CustomErrorDecoder implements ErrorDecoder {
     			Map responseBody = JsonUtils.toObject(content, Map.class);
     			if(responseBody.containsKey("code")){
     				int code = Integer.parseInt(responseBody.get("code").toString());
-    				return new JeesuiteBaseException(code,Objects.toString(responseBody.get("msg")));
+    				return new MendmixBaseException(code,Objects.toString(responseBody.get("msg")));
     			}
 			} catch (Exception e) {}
     	}else {
     		logger.error("feign_client_error ->method:{},status:{},message:{}", methodKey,response.status(),response.reason());
 			 String message = response.reason();
 			 if(message == null)message = "服务调用错误";
-			 return new JeesuiteBaseException(response.status(),message + "("+methodKey+")");
+			 return new MendmixBaseException(response.status(),message + "("+methodKey+")");
 		}
         
 		String error = String.format("feign_client_error ->method:%s,status:%s,message:%s", methodKey,response.status(),response.reason());
-        return new JeesuiteBaseException(500,error);
+        return new MendmixBaseException(500,error);
 	}
 
 }

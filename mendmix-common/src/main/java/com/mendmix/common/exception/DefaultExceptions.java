@@ -15,7 +15,7 @@
  */
 package com.mendmix.common.exception;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 
 /**
  * 
@@ -28,5 +28,5 @@ import com.mendmix.common.JeesuiteBaseException;
  */
 public class DefaultExceptions {
 
-	public static final JeesuiteBaseException SYSTEM_EXCEPTION = new JeesuiteBaseException(500, "exception.system.error", "系统繁忙");
+	public static final MendmixBaseException SYSTEM_EXCEPTION = new MendmixBaseException(500, "exception.system.error", "系统繁忙");
 }

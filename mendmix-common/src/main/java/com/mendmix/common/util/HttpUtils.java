@@ -24,9 +24,9 @@ import java.net.URL;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.http.ApacheHttpClient;
-import com.mendmix.common.http.CustomRequestHostHolder;
+import com.mendmix.common.http.HostMappingHolder;
 import com.mendmix.common.http.HttpClientProvider;
 import com.mendmix.common.http.HttpRequestEntity;
 import com.mendmix.common.http.HttpResponseEntity;
@@ -90,10 +90,9 @@ public class HttpUtils {
 			if(StringUtils.isBlank(requestEntity.getUri())) {
 				throw new IllegalArgumentException("request uri is missing");
 			}
-			requestEntity.uri(CustomRequestHostHolder.resolveUrl(requestEntity.getUri()));
+			requestEntity.uri(HostMappingHolder.resolveUrl(requestEntity.getUri()));
 			return provider.execute(requestEntity);
 		} catch (IOException e) {
-			e.printStackTrace();
 			return new HttpResponseEntity(400, e.getMessage());
 		}
 	}
@@ -143,10 +142,10 @@ public class HttpUtils {
 	            
 	            return saveFilePath;
 	        } else {
-	        	throw new JeesuiteBaseException(responseCode, "下载失败");
+	        	throw new MendmixBaseException(responseCode, "下载失败");
 	        }
 		} catch (IOException e) {
-			throw new JeesuiteBaseException(500, "下载失败", e);
+			throw new MendmixBaseException(500, "下载失败", e);
 		}finally {
 			try {if( outputStream!= null) outputStream.close();} catch (Exception e2) {}
 			try {if( httpConn!= null) httpConn.disconnect();} catch (Exception e2) {}

@@ -97,7 +97,7 @@ public class AppMetadata {
 	}
 	
 	public void addApi(ApiInfo api) {
-		this.apis.put(api.getUrl(), api);
+		this.apis.put(api.getUri(), api);
 	}
 
 }

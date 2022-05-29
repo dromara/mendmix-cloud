@@ -28,7 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpMethod;
 
 import com.mendmix.common.GlobalConstants;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.util.DigestUtils;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.ParameterUtils;
@@ -123,7 +123,7 @@ public class HttpServletRequestReader {
 			value = Objects.toString(requestDatas.get(name), null);
 			if(value != null)return value;
 		}
-		throw new JeesuiteBaseException();
+		throw new MendmixBaseException();
 	}
 	
 	private Map<String, Object> queryParamsToMap(HttpServletRequest request) {

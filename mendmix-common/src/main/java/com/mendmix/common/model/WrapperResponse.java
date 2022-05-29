@@ -17,7 +17,7 @@ package com.mendmix.common.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.exception.DefaultExceptions;
 import com.mendmix.common.util.JsonUtils;
 
@@ -129,9 +129,9 @@ public class WrapperResponse<T> {
 	}
 
 	public static <T> WrapperResponse<T> fail(Exception e) {
-		JeesuiteBaseException be;
-		if(e instanceof JeesuiteBaseException) {
-			be  = (JeesuiteBaseException) e;
+		MendmixBaseException be;
+		if(e instanceof MendmixBaseException) {
+			be  = (MendmixBaseException) e;
 		}else {
 			be = DefaultExceptions.SYSTEM_EXCEPTION;
 		}

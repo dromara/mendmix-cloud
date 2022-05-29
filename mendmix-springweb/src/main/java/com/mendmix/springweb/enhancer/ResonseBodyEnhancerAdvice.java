@@ -107,6 +107,7 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
     private class ResponseRewrite implements ResponseBodyEnhancer {
 
     	private PathMatcher ignorePathMatcher = new PathMatcher(GlobalRuntimeContext.getContextPath(), "/actuator/*");
+		@SuppressWarnings("unchecked")
 		@Override
 		public Object process(Object body,
 	    		MethodParameter methodParameter,
@@ -123,6 +124,14 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
 	    	if(body instanceof WrapperResponse) {
 	    		response.getHeaders().add(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
 	        	return body;
+	        }
+	    	
+	    	if(body instanceof Map) {
+	    		Map<String, Object> bodyToMap = (Map<String, Object>) body;
+	    		//{timestamp=Sun May 29 15:37:57 CST 2022, status=500, error=Internal Server Error, path=/api/svc/user/basic/1}
+	    		if(bodyToMap.containsKey("status") && bodyToMap.containsKey("error")) {
+	    			return WrapperResponse.fail((int)bodyToMap.get("status"), bodyToMap.get("error").toString());
+	    		}
 	        }
 	    	
 	    	if(ignorePathMatcher.match(request.getURI().getPath())) {

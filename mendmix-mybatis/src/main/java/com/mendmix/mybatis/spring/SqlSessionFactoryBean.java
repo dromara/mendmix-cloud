@@ -54,7 +54,7 @@ public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryB
 		MybatisMapperParser.addMapperLocations(groupName, mapperLocations);
 		Configuration configuration = getObject().getConfiguration();
 		//
-		JeesuiteMybatisEnhancer.handle(groupName,configuration);
+		MendmixMybatisEnhancer.handle(groupName,configuration);
 	}
 	
 	@Override

@@ -25,7 +25,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 
 import com.google.common.io.CharStreams;
-import com.mendmix.common.JeesuiteBaseException;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.util.JsonUtils;
 
 /**
@@ -52,7 +52,7 @@ public class CustomResponseErrorHandler extends DefaultResponseErrorHandler {
 		Map<?, ?> responseItmes = null;
 		if(code == 404 && StringUtils.isNotBlank(content)){
 			responseItmes = JsonUtils.toObject(content, Map.class);
-			throw new JeesuiteBaseException(404, "Page Not Found["+responseItmes.get("path")+"]");
+			throw new MendmixBaseException(404, "Page Not Found["+responseItmes.get("path")+"]");
 		}
 
 		int errorCode = 500;
@@ -73,7 +73,7 @@ public class CustomResponseErrorHandler extends DefaultResponseErrorHandler {
 			errorMsg = DEFAULT_ERROR_MSG;
 		}
 		
-		throw new JeesuiteBaseException(errorCode, errorMsg + "(Remote)");
+		throw new MendmixBaseException(errorCode, errorMsg + "(Remote)");
 	}
 
 	@Override

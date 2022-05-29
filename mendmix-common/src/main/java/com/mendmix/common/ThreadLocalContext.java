@@ -54,6 +54,11 @@ public class ThreadLocalContext {
 		return (T) context.get().get(key);
 	}
 	
+	public static <T> T get(String key,T defaultVal){
+		T value = get(key);
+		return value == null ? defaultVal : value;
+	}
+	
 	public static void remove(String...keys){
 		if(context.get() == null)return;
 		for (String key : keys) {

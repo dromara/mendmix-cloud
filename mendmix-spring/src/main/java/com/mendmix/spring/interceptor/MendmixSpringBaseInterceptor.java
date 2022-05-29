@@ -34,7 +34,7 @@ import com.mendmix.spring.InterceptorHanlder;
  * @version 1.0.0
  * @date 2018年10月31日
  */
-public abstract class JeesuiteSpringBaseInterceptor {
+public abstract class MendmixSpringBaseInterceptor {
 	
 	private static List<InterceptorHanlder> handlers  =  new ArrayList<>();
 	static {

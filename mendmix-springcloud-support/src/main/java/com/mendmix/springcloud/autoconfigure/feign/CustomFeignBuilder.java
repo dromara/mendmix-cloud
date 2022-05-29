@@ -18,7 +18,7 @@ package com.mendmix.springcloud.autoconfigure.feign;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 
-import com.mendmix.common.http.CustomRequestHostHolder;
+import com.mendmix.common.http.HostMappingHolder;
 
 import feign.Feign.Builder;
 import feign.Target;
@@ -40,8 +40,8 @@ public class CustomFeignBuilder extends Builder {
 			@Override
 			public String url() {
 				String svcName = this.name();
-				if(CustomRequestHostHolder.containsContextPathMapping(svcName)) {
-					StringBuilder withContextPath = new StringBuilder(svcName).append(CustomRequestHostHolder.getContextPathMapping(svcName));
+				if(HostMappingHolder.containsContextPathMapping(svcName)) {
+					StringBuilder withContextPath = new StringBuilder(svcName).append(HostMappingHolder.getContextPathMapping(svcName));
 					String url = super.url().replace(svcName, withContextPath);
 					return url;
 				}

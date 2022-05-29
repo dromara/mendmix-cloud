@@ -23,7 +23,7 @@ import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
-import com.mendmix.common.http.CustomRequestHostHolder;
+import com.mendmix.common.http.HostMappingHolder;
 import com.mendmix.common.http.ProxyResolver;
 import com.mendmix.spring.InstanceFactory;
 
@@ -51,7 +51,7 @@ public class LoadBalancerWrapper implements ProxyResolver,CommandLineRunner {
 		}
 		this.discoveryClient = discoveryClient;
 		LoadBalancerWrapper.me = this;
-		CustomRequestHostHolder.setProxyResolver(this);
+		HostMappingHolder.setProxyResolver(this);
 	}
 
     //LoadBalancerClient,在未启动完成执行回出现循环依赖异常
