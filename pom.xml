@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.mendmix</groupId>
 	<artifactId>mendmix-parent</artifactId>
-	<version>2022.05</version>
+	<version>14.0</version>
 	<packaging>pom</packaging>
 	<name>mendmix</name>
 	<description>mendmix分布式云原生架构技术底座</description>
@@ -49,7 +49,7 @@
          scm:git:https://github.com/dromara/mendmix.git
       </developerConnection>
 		<url>https://github.com/dromara/mendmix</url>
-		<tag>1.4.1</tag>
+		<tag>1.4.1-SNAPSHOT</tag>
 	</scm>
 
 	<properties>
@@ -334,12 +334,12 @@
 	<distributionManagement>
 		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
 		<snapshotRepository>
-			<id>snapshots</id>
-			<url>http://nexus.xxx.com/nexus/content/repositories/snapshots</url>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
 
