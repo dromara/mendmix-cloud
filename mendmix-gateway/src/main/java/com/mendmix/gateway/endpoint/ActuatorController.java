@@ -16,6 +16,7 @@
 package com.mendmix.gateway.endpoint;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.http.HttpRequestEntity;
+import com.mendmix.common.util.DateUtils;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.model.BizSystemModule;
@@ -48,12 +50,13 @@ public class ActuatorController {
 	public Map<String, Object> health(@RequestParam(value = "details",required = false) boolean details){
 		Map<String, Object> result = new HashMap<>(1);
 		result.put("status", "UP");
-		result.put("startTime", GlobalRuntimeContext.STARTUP_TIME);
+		result.put("startTime", DateUtils.format(new Date(GlobalRuntimeContext.STARTUP_TIME)));
 		
 		if(details) {
 			Collection<BizSystemModule> modules = CurrentSystemHolder.getModules();
 			Map<String, Object> moduleStatus = new HashMap<>(modules.size());
 			for (BizSystemModule module : modules) {
+				if(module.isGateway())continue;
 				try {
 					String status = HttpRequestEntity.get(module.getHealthUri()).execute().toValue("status");
 					moduleStatus.put(module.getServiceId(), status);

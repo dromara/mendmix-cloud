@@ -57,4 +57,14 @@ public class CustomBlockingLoadBalancerClient  extends BlockingLoadBalancerClien
 		return instance;
 	}
 
+	@Override
+	public URI reconstructURI(ServiceInstance serviceInstance, URI original) {
+		if(serviceInstance instanceof FixedServiceInstance) {
+			return URI.create(HostMappingHolder.resolveUrl(original.toString()));
+		}
+		return super.reconstructURI(serviceInstance, original);
+	}
+	
+	
+
 }

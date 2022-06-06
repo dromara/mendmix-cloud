@@ -122,7 +122,7 @@ public class RedisDistributeLock implements Lock {
 				
 				if (res){
 					return res;
-				}else if(sleep > 10){
+				}else if(sleep > 15){
 					sleep = sleep - 10;
 				}
 				

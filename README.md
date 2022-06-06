@@ -47,7 +47,7 @@ mendmix-cos-adapter | 文件存储适配，目前支持：minIO、七牛、阿�
 ---
 ## 版本
 * [sonatype](https://oss.sonatype.org/content/repositories/releases/com/mendmix/) 
-* [http://mvnrepository.com/search?q=mendmix](http://mvnrepository.com/search?q=mendmix)
+* [https://search.maven.org/search?q=mendmix](https://search.maven.org/search?q=mendmix)
 
 ## 关于作者
  - 15年IT互联网老兵，熟悉微服务、k8s、云原生架构及各种分布式架构；
