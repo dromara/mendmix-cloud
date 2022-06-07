@@ -1,8 +1,8 @@
 <div align=center><img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/logo.png" width="400" height="100" /></div>
 
 ## 资源索引
- - [快速开始](http://docs.mendmix.com/guide/getting-started.html)
- - [文档列表](http://docs.mendmix.com/docments/)
+ - [快速开始](https://docs.jeesuite.com/guide/getting-started.html)
+ - [文档列表](https://docs.jeesuite.com/docments/)
  - [快速上手-mendmix-tutorial](https://gitee.com/vakinge/mendmix-tutorial)
  - [集成项目-oneplatform](https://gitee.com/vakinge/oneplatform)
  

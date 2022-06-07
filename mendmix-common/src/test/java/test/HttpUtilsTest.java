@@ -23,11 +23,9 @@ import com.mendmix.common.util.ResourceUtils;
 public class HttpUtilsTest {
 
 	public static void main(String[] args) {
-		
-		ResourceUtils.add("mendmix.httputil.provider","httpClient");
-		
+
 		HttpResponseEntity entity;
-		entity = HttpUtils.get("http://www.kuaidi100.com/query?type=yuantong&postid=11111111111");
+		entity = HttpUtils.get("https://www.oschina.net/news/198787/http3-rfc-9114");
 		System.out.println(entity);
 		
 		String json = "{\"example\":{\"env\":\"dev\"},\"pageNo\":1,\"pageSize\":10}";

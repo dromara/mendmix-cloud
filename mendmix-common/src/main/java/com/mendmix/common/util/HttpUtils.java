@@ -65,7 +65,7 @@ public class HttpUtils {
 		if(provider == null) {
 			provider = new JdkHttpClient();
 		}
-		System.out.println("==========init HttpClientProvider:"+provider.getClass().getName()+"===========");
+		System.out.println("init HttpClientProvider:"+provider.getClass().getSimpleName());
 	}
 
 	private HttpUtils() {}
