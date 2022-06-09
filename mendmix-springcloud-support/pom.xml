@@ -61,6 +61,18 @@
 		</dependency>
 		<dependency>
 			<groupId>com.mendmix</groupId>
+			<artifactId>mendmix-cos-adapter</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.mendmix</groupId>
+			<artifactId>mendmix-amqp-adapter</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-logging</artifactId>
 			<version>${project.version}</version>
 			<optional>true</optional>

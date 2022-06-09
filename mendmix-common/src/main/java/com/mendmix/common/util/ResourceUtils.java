@@ -71,7 +71,6 @@ public final class ResourceUtils {
 			URL url = Thread.currentThread().getContextClassLoader().getResource("");
 			if(url == null)url = ResourceUtils.class.getResource("");
 			
-			Map<String, List<String>> allFileMap = new HashMap<>();
 			if(url != null){
 				if (url.getProtocol().equals("file")) {	
 					File parent = new File(url.getPath());
@@ -81,7 +80,7 @@ public final class ResourceUtils {
 						loadPropertiesFromFile(parent);
 					}
 				}else if (url.getProtocol().equals("jar")) {					
-					loadPropertiesFromJarFile(url,allFileMap);
+					loadPropertiesFromJarFile(url);
 				}
 			}
 			//
@@ -103,7 +102,9 @@ public final class ResourceUtils {
 		}
 	}
 
-	private static void loadPropertiesFromJarFile(URL url,Map<String, List<String>> allFileMap) throws UnsupportedEncodingException, IOException {
+	private static void loadPropertiesFromJarFile(URL url) throws UnsupportedEncodingException, IOException {
+		
+		Map<String, List<String>> allFileMap = new HashMap<>();
 		
 		String jarFilePath = url.getFile();	
 		if(jarFilePath.contains("war!")){
@@ -132,7 +133,7 @@ public final class ResourceUtils {
 		
 		Set<String> fileExts = allFileMap.keySet();
 		for (String key : fileExts) {
-			parseConfigSortFiles(allFileMap.get(key), key, jarFile);
+			parseSameExtensionFiles(allFileMap.get(key), key, jarFile);
 		}
 		
 		jarFile.close();
@@ -161,17 +162,19 @@ public final class ResourceUtils {
 		
 		Set<String> fileExts = allFileMap.keySet();
 		for (String key : fileExts) {
-			parseConfigSortFiles(allFileMap.get(key), key, null);
+			parseSameExtensionFiles(allFileMap.get(key), key, null);
 		}
 	}
 
 	/**
+	 * 
 	 * @param fileList
 	 * @param fileExt
+	 * @param jarFile
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
-	private static void parseConfigSortFiles(List<String> fileList, String fileExt,JarFile jarFile)
+	private static void parseSameExtensionFiles(List<String> fileList, String fileExt,JarFile jarFile)
 			throws IOException, FileNotFoundException {
 		if(fileList.size() == 1){
 			Properties p = parseToProperties(fileList.get(0), jarFile);
@@ -459,7 +462,8 @@ public final class ResourceUtils {
 	
 	/**
 	 * 如果替换包含占位符则替换占位符
-	 * @param key
+	 * @param properties
+	 * @param value
 	 * @return
 	 */
     public static String replaceRefValue(Properties properties,String value ) {
@@ -542,7 +546,8 @@ public final class ResourceUtils {
     	return replaceRefValue(allProperties, value);
     }
     
-    private static void parseYamlInnerMap(String keyPrefix,Properties result,Map<String, Object> yamlData){
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private static void parseYamlInnerMap(String keyPrefix,Properties result,Map<String, Object> yamlData){
     	if(yamlData == null)return ;
 		Object value;
 		String currentKey;

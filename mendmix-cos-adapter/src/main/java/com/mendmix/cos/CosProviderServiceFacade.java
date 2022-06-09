@@ -82,19 +82,19 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 	public void afterPropertiesSet() throws Exception {
 		//
 		if(defaultBucket == null) {
-			defaultBucket = ResourceUtils.getProperty("cos.defaultBucket");
+			defaultBucket = ResourceUtils.getProperty("mendmix.cos.defaultBucket");
 		}
 		
 		if(type == null) {
-			type = ResourceUtils.getAndValidateProperty("cos.provider");	
+			type = ResourceUtils.getAndValidateProperty("mendmix.cos.provider");	
 		}
 		if(config == null) {
 			config = new CosProviderConfig();
-			config.setAccessKey(ResourceUtils.getProperty("cos.accessKey"));
-			config.setSecretKey(ResourceUtils.getProperty("cos.secretKey"));
-			config.setAppId(ResourceUtils.getProperty("cos.appId"));
-			config.setRegionName(ResourceUtils.getProperty("cos.regionName"));
-			config.setMaxConnectionsCount(ResourceUtils.getInt("cos.maxConnections", 200));
+			config.setAccessKey(ResourceUtils.getProperty("mendmix.cos.accessKey"));
+			config.setSecretKey(ResourceUtils.getProperty("mendmix.cos.secretKey"));
+			config.setAppId(ResourceUtils.getProperty("mendmix.cos.appId"));
+			config.setRegionName(ResourceUtils.getProperty("mendmix.cos.regionName"));
+			config.setMaxConnectionsCount(ResourceUtils.getInt("mendmix.cos.maxConnections", 200));
 		}
 		
 		if(AliyunProvider.NAME.equals(type)) {
@@ -109,23 +109,23 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 		
 		if(defaultBucket != null) {
 			BucketConfig bucketConfig = provider.getBucketConfig(defaultBucket);
-			bucketConfig.setUrlPrefix(ResourceUtils.getProperty("cos.defaultUrlPrefix"));
+			bucketConfig.setUrlPrefix(ResourceUtils.getProperty("mendmix.cos.defaultUrlPrefix"));
 			((AbstractProvider)provider).addBucketConfig(bucketConfig);
 		}else {
-			Map<String, String> urlPrefixMappings = ResourceUtils.getMappingValues("cos.bucket.urlPrefix.mapping");
+			Map<String, String> urlPrefixMappings = ResourceUtils.getMappingValues("mendmix.cos.bucket.urlPrefix.mapping");
 			if(urlPrefixMappings != null) {
 				urlPrefixMappings.forEach( (bucket,urlPrefix) -> {
 					BucketConfig bucketConfig = provider.getBucketConfig(defaultBucket);
-					bucketConfig.setUrlPrefix(ResourceUtils.getProperty("cos.defaultUrlPrefix"));
+					bucketConfig.setUrlPrefix(ResourceUtils.getProperty("mendmix.cos.defaultUrlPrefix"));
 					((AbstractProvider)provider).addBucketConfig(bucketConfig);
 				});				
 			}
 		}
 		
-		logUrl = ResourceUtils.getProperty("cos.loghandler.url");
-		if(logUrl != null && Boolean.parseBoolean(ResourceUtils.getProperty("cos.loghandler.enabled", "true"))) {
-			int nThread = ResourceUtils.getInt("cos.loghandler.threads", 1);
-			int capacity = ResourceUtils.getInt("cos.loghandler.queueSize", 1000);
+		logUrl = ResourceUtils.getProperty("mendmix.cos.loghandler.url");
+		if(logUrl != null && Boolean.parseBoolean(ResourceUtils.getProperty("mendmix.cos.loghandler.enabled", "true"))) {
+			int nThread = ResourceUtils.getInt("mendmix.cos.loghandler.threads", 1);
+			int capacity = ResourceUtils.getInt("mendmix.cos.loghandler.queueSize", 1000);
 			logHandleExecutor = new ThreadPoolExecutor(nThread, nThread,
 	                0L, TimeUnit.MILLISECONDS,
 	                new LinkedBlockingQueue<Runnable>(capacity),
