@@ -39,7 +39,7 @@ public class MendmixMybatisEnhancer {
 	private static final Logger logger = LoggerFactory.getLogger(MendmixMybatisEnhancer.class);
 
 	public static void handle(String group, Configuration configuration) throws Exception {
-		if ("tkMapper".equals(MybatisConfigs.getCrudDriver())) {
+		try {
 			Class<?> helperClazz = Class.forName("tk.mybatis.mapper.mapperhelper.MapperHelper");
 			Object helper = helperClazz.newInstance();
 			Class<?> configClazz = Class.forName("tk.mybatis.mapper.entity.Config");
@@ -57,8 +57,10 @@ public class MendmixMybatisEnhancer {
 
 			method = helperClazz.getDeclaredMethod("processConfiguration", Configuration.class);
 			method.invoke(helper, configuration);
-		} else {
+		} catch (ClassNotFoundException e) {
 			new GeneralSqlGenerator(group, configuration).generate();
+		}catch (Exception e) {
+			throw e;
 		}
 
 		// pageHelper

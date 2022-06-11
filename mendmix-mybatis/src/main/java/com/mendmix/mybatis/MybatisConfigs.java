@@ -39,7 +39,6 @@ import com.mendmix.mybatis.plugin.rwseparate.RwRouteHandler;
  */
 public class MybatisConfigs {
 	
-	public static final String CRUD_DRIVER = "mendmix.mybatis.crudDriver";
 	public static final String DB_TYPE = "mendmix.mybatis.dbType";
 	public static final String CACHE_ENABLED = "mendmix.mybatis.cache.enabled";
 	public static final String CACHE_EXPIRE_SECONDS = "mendmix.mybatis.cache.expireSeconds";
@@ -80,10 +79,6 @@ public class MybatisConfigs {
 	
 	public static boolean getBoolean(String group,String key,boolean defaultValue){
 		return Boolean.parseBoolean(getProperty(group, key, String.valueOf(defaultValue)));
-	}
-	
-	public static String getCrudDriver(){
-		return ResourceUtils.getProperty(CRUD_DRIVER);
 	}
 	
 	public static String getDbType(String group){
