@@ -16,25 +16,15 @@
 package com.mendmix.gateway.security;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.ThreadLocalContext;
-import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.util.TokenGenerator;
-import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.helper.RuequestHelper;
-import com.mendmix.gateway.model.BizSystemModule;
-import com.mendmix.gateway.model.BizSystemPortal;
-import com.mendmix.logging.integrate.ActionLog;
-import com.mendmix.logging.integrate.ActionLogCollector;
-import com.mendmix.security.ReactiveCustomAuthnHandler;
-import com.mendmix.security.model.UserSession;
 
 /**
  * 
@@ -45,23 +35,9 @@ import com.mendmix.security.model.UserSession;
  * @version 1.0.0
  * @date May 14, 2022
  */
-public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHandler {
+public class SpecUnauthorizedHandler {
 
-	
-	
-	@Override
-	public void beforeAuthentication(ServerWebExchange exchange) {
-		ServerHttpRequest request = exchange.getRequest();
-		String domain = RuequestHelper.getOriginDomain(request);
-		BizSystemPortal portal = CurrentSystemHolder.getSystemPortal(domain);
-		if(portal != null) {
-			CurrentRuntimeContext.setTenantId(portal.getTenantId());
-			CurrentRuntimeContext.setClientType(portal.getClientType());
-			CurrentRuntimeContext.setPlatformType(portal.getCode());
-		}
-	}
 
-	@Override
 	public boolean customAuthentication(ServerWebExchange exchange) {
 		
 		ServerHttpRequest request = exchange.getRequest();
@@ -79,24 +55,6 @@ public class GatewayReactiveCustomAuthnHandler implements ReactiveCustomAuthnHan
 		return pass;
 	}
 
-	@Override
-	public void afterAuthentication(ServerWebExchange exchange,UserSession userSession) {
-		if(!GatewayConfigs.actionLogEnabled)return;
-		ServerHttpRequest request = exchange.getRequest();
-		BizSystemModule module = CurrentSystemHolder.getModule(RuequestHelper.resolveRouteName(request.getPath().value()));
-		
-		ApiInfo apiInfo = module.getApiInfo(request.getMethodValue(), request.getPath().value());
-		boolean logging = apiInfo != null ? apiInfo.isActionLog() : true;
-		if(logging) {
-			logging = !GatewayConfigs.actionLogGetMethodIngore || !request.getMethod().equals(HttpMethod.GET);
-		}
-		if(logging){
-			String clientIp = RuequestHelper.getIpAddr(request);
-			ActionLog actionLog = ActionLogCollector.onRequestStart(request.getMethodValue(),request.getPath().value(),clientIp).apiMeta(apiInfo);
-		    exchange.getAttributes().put(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME, actionLog);
-		}
-	}
-	
 	/**
 	 * 匿名访问白名单
 	 * @param request

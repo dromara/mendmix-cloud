@@ -43,6 +43,7 @@
 		<dependency>
 			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-security</artifactId>
+			<optional>true</optional>
 			<version>${project.version}</version>
 		</dependency>
 

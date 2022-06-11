@@ -36,8 +36,6 @@ import reactor.core.publisher.Mono;
  */
 public class ReactiveRequestContextAdapter implements RequestContextAdapter {
 
-	private static final String _CTX_REQUEST_KEY = "_ctx_request_key";
-	
 	public static void init(ServerHttpRequest request) {
 		ThreadLocalContext.unset();
 		ThreadLocalContext.set(_CTX_REQUEST_KEY, request);

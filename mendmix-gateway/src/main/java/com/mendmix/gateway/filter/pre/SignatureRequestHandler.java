@@ -16,12 +16,15 @@
 package com.mendmix.gateway.filter.pre;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.mendmix.common.MendmixBaseException;
@@ -87,8 +90,18 @@ public class SignatureRequestHandler implements PreFilterHandler {
 		}
 
 		Object body = RuequestHelper.getCachingBodyString(exchange);
-
 		Map<String, Object> map = JsonUtils.toHashMap(body.toString(), Object.class);
+		if(map == null)map = new HashMap<>();
+		MultiValueMap<String, String> queryParams = exchange.getRequest().getQueryParams();
+		for (Entry<String, List<String>> entry : queryParams.entrySet()) {
+			if(entry.getValue() == null)continue;
+			if(entry.getValue().size() == 1) {
+				map.put(entry.getKey(), entry.getValue().get(0));
+			}else if(entry.getValue().size() > 1) {
+				map.put(entry.getKey(), entry.getValue());
+			}
+		}
+		
 		String signBaseString = StringUtils.trimToEmpty(ParameterUtils.mapToQueryParams(map)) + timestamp + secret;
 		String expectSign = DigestUtils.md5(signBaseString);
 

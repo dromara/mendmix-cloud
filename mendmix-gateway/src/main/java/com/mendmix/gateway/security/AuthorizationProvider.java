@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mendmix.security;
+package com.mendmix.gateway.security;
+
+import org.springframework.http.server.reactive.ServerHttpRequest;
+
+import com.mendmix.common.exception.ForbiddenAccessException;
+import com.mendmix.common.exception.UnauthorizedException;
+import com.mendmix.common.model.AuthUser;
 
 /**
- * 
- * <br>
- * Class Name   : RequestContextAdapter
- *
- * @author <a href="mailto:vakinge@gmail.com">vakin</a>
- * @version 1.0.0
- * @date May 14, 2022
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">vakinge</a>
+ * @date Jun 11, 2022
  */
-public interface RequestContextAdapter {
+public interface AuthorizationProvider {
 
-	static final String _CTX_RESPONSE_KEY = "_ctx_response_key";
-	static final String _CTX_REQUEST_KEY = "_ctx_request_key";
+	void initContext(ServerHttpRequest request);
 	
-	String getHeader(String headerName);
-	
-	String getCookie(String cookieName);
-	
-	void addCookie(String domain,String cookieName,String cookieValue,int expire);
+	AuthUser doAuthorization(String method,String uri) throws UnauthorizedException,ForbiddenAccessException;
 }
