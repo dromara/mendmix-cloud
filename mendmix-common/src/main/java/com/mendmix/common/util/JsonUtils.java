@@ -160,6 +160,10 @@ public class JsonUtils {
 		return toHashMap(jsonString, String.class, valueType);
 	}
 	
+	public static Map<String, Object> toHashMap(String jsonString) {
+		return toHashMap(jsonString, String.class, Object.class);
+	}
+	
 	@SuppressWarnings("unchecked")
 	public static <T> T toObject(String jsonString, JavaType javaType) {
 		if (StringUtils.isEmpty(jsonString)) {

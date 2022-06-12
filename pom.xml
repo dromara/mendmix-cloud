@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.mendmix</groupId>
 	<artifactId>mendmix-parent</artifactId>
-	<version>14.0</version>
+	<version>14.1</version>
 	<packaging>pom</packaging>
 	<name>mendmix</name>
 	<description>mendmix分布式云原生架构技术底座</description>
@@ -49,7 +49,7 @@
          scm:git:https://github.com/dromara/mendmix.git
       </developerConnection>
 		<url>https://github.com/dromara/mendmix</url>
-		<tag>1.4.1-SNAPSHOT</tag>
+		<tag>1.4.1</tag>
 	</scm>
 
 	<properties>
@@ -60,7 +60,7 @@
 		<spring-cloud-component.version>3.1.1</spring-cloud-component.version>
 		<spring-boot.version>2.6.6</spring-boot.version>
 		<spring-cloud-netflix.version>2.2.10.RELEASE</spring-cloud-netflix.version>
-		<kafka.version>2.3.1</kafka.version>
+		<kafka.version>2.7.0</kafka.version>
 		<zkclient.version>0.10</zkclient.version>
 		<zookeeper.version>3.4.14</zookeeper.version>
 		<jedis.version>3.3.0</jedis.version>
@@ -68,12 +68,13 @@
 		<mybatis-spring.version>2.0.5</mybatis-spring.version>
 		<mybatis-boot-starter>2.1.3</mybatis-boot-starter>
 		<slf4j.version>1.7.32</slf4j.version>
-		<log4j2.version>2.17.1</log4j2.version>
+		<log4j2.version>2.17.2</log4j2.version>
 		<druid.version>1.2.10</druid.version>
 		<guava.version>30.1.1-jre</guava.version>
 		<mysql.version>8.0.16</mysql.version>
 		<junit.version>[4.13.1,)</junit.version>
-		<fastjson.version>1.2.76</fastjson.version>
+		<fastjson.version>2.0.7</fastjson.version>
+		<jackson.version>2.13.3</jackson.version>
 		<okhttp3.version>3.14.9</okhttp3.version>
 		<swagger.version>2.9.2</swagger.version>
 	</properties>

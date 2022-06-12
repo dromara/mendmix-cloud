@@ -5,10 +5,10 @@
 	<parent>
 		<groupId>com.mendmix</groupId>
 		<artifactId>mendmix-parent</artifactId>
-		<version>14.0</version>
+		<version>14.1</version>
 	</parent>
 	<artifactId>mendmix-springweb</artifactId>
-	<version>1.4.1-SNAPSHOT</version>
+	<version>1.4.1</version>
 
 	<dependencies>
 		<dependency>
@@ -63,11 +63,6 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>${guava.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.alibaba</groupId>
-			<artifactId>fastjson</artifactId>
 		</dependency>
 
 		<dependency>

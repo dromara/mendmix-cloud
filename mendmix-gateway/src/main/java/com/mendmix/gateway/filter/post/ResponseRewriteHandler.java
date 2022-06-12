@@ -15,15 +15,19 @@
  */
 package com.mendmix.gateway.filter.post;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.mendmix.common.CustomRequestHeaders;
+import com.mendmix.common.model.WrapperResponse;
+import com.mendmix.common.util.JsonUtils;
 import com.mendmix.gateway.filter.PostFilterHandler;
 import com.mendmix.gateway.model.BizSystemModule;
 
@@ -60,9 +64,7 @@ public class ResponseRewriteHandler implements PostFilterHandler {
 		}
 		//
 		if(StringUtils.isBlank(respBodyAsString)) {
-			JSONObject respJSONObject = new JSONObject(2);
-			respJSONObject.put(_CODE_NAME, 200);
-			return respJSONObject.toJSONString();
+			return JsonUtils.toJson(WrapperResponse.success());
 		}
 		
 		int statusCode = exchange.getResponse().getStatusCode().value();
@@ -70,7 +72,7 @@ public class ResponseRewriteHandler implements PostFilterHandler {
 		
 		String responseData = respBodyAsString;
 		String responseMsg = null;
-		JSONObject originRespJSON = null;
+		Map<String, Object> originObject = null;
         boolean rebuild = false;
 		try {
 			if (logger.isTraceEnabled()) {
@@ -78,18 +80,18 @@ public class ResponseRewriteHandler implements PostFilterHandler {
 			}
 
 			try {
-				originRespJSON = JSON.parseObject(responseData);
+				originObject = JsonUtils.toHashMap(responseData);
 			} catch (Exception e) {
 			}
 			// 已经包含code结构不处理
-			boolean isCodeResp = originRespJSON != null
-								&& originRespJSON.containsKey(_CODE_NAME)
-							    && (originRespJSON.size() == 1 || originRespJSON.containsKey(_DATA_NAME) || originRespJSON.containsKey(_MSG_NAME));
+			boolean isCodeResp = originObject != null
+								&& originObject.containsKey(_CODE_NAME)
+							    && (originObject.size() == 1 || originObject.containsKey(_DATA_NAME) || originObject.containsKey(_MSG_NAME));
 			if (!isCodeResp) {
 				rebuild = true;
 				if (statusCode != 200) {
 					try {
-						responseMsg = originRespJSON.getString(_MESSAGE_NAME);
+						responseMsg = Objects.toString(originObject.get(_MESSAGE_NAME), null);
 					} catch (Exception e) {
 					}
 					if (responseMsg == null) {
@@ -115,20 +117,16 @@ public class ResponseRewriteHandler implements PostFilterHandler {
 			}
 			//
 			if (rebuild) {
-				JSONObject respJSONObject = new JSONObject();
-				respJSONObject.put(_CODE_NAME, statusCode == 200 ? 200 : 500);
+				Map<String, Object> rebuildObject = new LinkedHashMap<>(3);
+				rebuildObject.put(_CODE_NAME, statusCode == 200 ? 200 : 500);
 				if (StringUtils.isNotBlank(responseMsg))
-					respJSONObject.put(_MSG_NAME, responseMsg);
-				if (originRespJSON != null) {
-					respJSONObject.put(_DATA_NAME, originRespJSON);
+					rebuildObject.put(_MSG_NAME, responseMsg);
+				if (originObject != null) {
+					rebuildObject.put(_DATA_NAME, originObject);
 				} else if (StringUtils.isNotBlank(responseData)) {
-					try {
-						respJSONObject.put(_DATA_NAME, JSON.parse(responseData));
-					} catch (Exception e2) {
-						respJSONObject.put(_DATA_NAME, responseData);
-					}
+					rebuildObject.put(_DATA_NAME, originObject);
 				}
-				responseData = respJSONObject.toJSONString();
+				responseData = JsonUtils.toJson(rebuildObject);
 			}
 		}
 		
