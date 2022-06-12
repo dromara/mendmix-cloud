@@ -105,7 +105,7 @@ public class RocketmqConsumerAdapter implements MQConsumer {
 			if(msgs.isEmpty())return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			MessageExt msg = msgs.get(0); //每次只拉取一条
 			if(!messageHandlers.containsKey(msg.getTopic())) {
-				logger.warn("not messageHandler found for:{}",msg.getTopic());
+				logger.warn("MENDMIX-TRACE-LOGGGING-->> not messageHandler found for:{}",msg.getTopic());
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			}
 			if(MQContext.getConsumeMaxRetryTimes() > 0 && msg.getReconsumeTimes() > MQContext.getConsumeMaxRetryTimes()) {
@@ -131,7 +131,7 @@ public class RocketmqConsumerAdapter implements MQConsumer {
 	            	String transactionStatus = message.checkTransactionStatus();
 	            	if(transactionStatus != null) {
 	            		if(transactionStatus.equals(MessageStatus.processed.name())) {
-							logger.info("MQ_MESSAGE_TRANSACTION_STATUS_PROCESSED ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
+							logger.info("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_TRANSACTION_STATUS_PROCESSED ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
 							return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 						}else if(transactionStatus.equals(MessageStatus.notExists.name())) {
 							//考虑发起方事务提交可能延时等情况，这里开启一次重试
@@ -140,21 +140,21 @@ public class RocketmqConsumerAdapter implements MQConsumer {
 								MQContext.processMessageLog(message,ActionType.sub,new IllegalArgumentException("transactionId["+message.getTransactionId()+"] not found"));
 								return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 							}else  {
-								logger.info("MQ_MESSAGE_TRANSACTION_STATUS_INVALID ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
+								logger.info("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_TRANSACTION_STATUS_INVALID ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
 								return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 							}
 						}
 	            	}
-					if(logger.isDebugEnabled())logger.debug("MQ_MESSAGE_TRANSACTION_STATUS_VALID -> topic:{},transactionId:{}",message.getTopic(),message.getTransactionId());
+					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_TRANSACTION_STATUS_VALID -> topic:{},transactionId:{}",message.getTopic(),message.getTransactionId());
 				}
 				
 				messageHandlers.get(message.getTopic()).process(message);
-				if(logger.isDebugEnabled())logger.debug("MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message);
+				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message);
 				//
 				MQContext.processMessageLog(message, ActionType.sub,null);
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			} catch (Exception e) {
-				logger.error(String.format("MQ_MESSAGE_CONSUME_ERROR ->message:%s",message.toString()),e);
+				logger.error(String.format("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_ERROR ->message:%s",message.toString()),e);
 				//
 				MQContext.processMessageLog(message,ActionType.sub, e);
 				return ConsumeConcurrentlyStatus.RECONSUME_LATER;

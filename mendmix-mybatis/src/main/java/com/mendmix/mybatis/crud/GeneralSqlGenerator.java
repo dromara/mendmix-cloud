@@ -66,7 +66,7 @@ public class GeneralSqlGenerator {
 			new SelectByPrimaryKeyBuilder().build(configuration, languageDriver, entity);
 			new SelectByPrimaryKeysBuilder().build(configuration, languageDriver, entity);
 			new CountAllBuilder().build(configuration, languageDriver, entity);
-			log.info(" >> generate autoCrud for:[{}] finish",entity.getEntityClass().getName());
+			log.info("MENDMIX-TRACE-LOGGGING-->> generate autoCrud for:[{}] finish",entity.getEntityClass().getName());
 		}
 	}
 }

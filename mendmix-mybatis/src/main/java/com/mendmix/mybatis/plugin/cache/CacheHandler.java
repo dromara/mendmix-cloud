@@ -148,7 +148,7 @@ public class CacheHandler implements InterceptorHandler {
 		for (MapperMetadata mm : mappers) {
 			if(mm.getMapperClass().isAnnotationPresent(CacheIgnore.class))continue;
 			if(!baseEntityClass.isAssignableFrom(mm.getEntityClass())){
-				logger.warn("[{}] not extends from [{}],ignore register auto cache!!!!",mm.getEntityClass().getName(),baseEntityClass.getName());
+				logger.warn("MENDMIX-TRACE-LOGGGING-->> [{}] not extends from [{}],ignore register auto cache!!!!",mm.getEntityClass().getName(),baseEntityClass.getName());
 				continue;
 			}
 			Class<?> mapperClass = mm.getMapperClass();
@@ -167,12 +167,12 @@ public class CacheHandler implements InterceptorHandler {
 					if(tmpMap.containsKey(method.getFullName()))continue;
 					methodCache = generateQueryMethodCacheByMethod(mm, method);
 					tmpMap.put(method.getFullName(), methodCache);
-					logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",methodCache.methodName,methodCache.keyPattern);
+					logger.info("MENDMIX-TRACE-LOGGGING-->> 解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",methodCache.methodName,methodCache.keyPattern);
 				}
 			}
 			//缓存需要自动缓存的mapper
 			cacheEnableMappers.add(mm.getMapperClass().getName());
-			logger.info("解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",queryByPKMethod.methodName,queryByPKMethod.keyPattern);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> 解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",queryByPKMethod.methodName,queryByPKMethod.keyPattern);
 			
 			queryCacheMethods.put(mapperClass.getName(), tmpMap);
 			
@@ -180,7 +180,7 @@ public class CacheHandler implements InterceptorHandler {
 			generateUpdateByPkCacheMethod(mapperClass, mm.getEntityClass(), keyPatternForPK);
 		}
 		//
-		logger.info(">>>customUpdateCacheMapppings:{}",customUpdateCacheMapppings);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> customUpdateCacheMapppings:{}",customUpdateCacheMapppings);
 	}
 
 	@Override
@@ -193,7 +193,7 @@ public class CacheHandler implements InterceptorHandler {
 		if(mt.getSqlCommandType().equals(SqlCommandType.SELECT)){	
 			//事务方法内部的查询不走缓存
 			if(MybatisRuntimeContext.isTransactionalOn()){
-				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process skipCache[isTransactionalOn] -> mapperId:{}",mt.getId());
+				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process skipCache[isTransactionalOn] -> mapperId:{}",mt.getId());
 				return null;
 			}
 			//按主键查询
@@ -211,10 +211,10 @@ public class CacheHandler implements InterceptorHandler {
 				invocationVal.setConcurrentLockKey(concurrentLockKey);
 				getLock = CacheUtils.setIfAbsent(concurrentLockKey, "1", 30);
 				if(!getLock){
-					if(logger.isDebugEnabled())logger.debug(">>auto_cache_process notGetConcurrentLock -> mapperId:{}",mt.getId());
+					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process notGetConcurrentLock -> mapperId:{}",mt.getId());
 					return BLOCK_ON_CONCURRENT_LOCK_RETURN;
 				}
-				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process getConcurrentLock -> mapperId:{}",mt.getId());
+				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process getConcurrentLock -> mapperId:{}",mt.getId());
 			}
 			
 			Object cacheObject = null;
@@ -229,9 +229,9 @@ public class CacheHandler implements InterceptorHandler {
 					nullPlaceholder = nullValueCache && NULL_PLACEHOLDER.equals(cacheObject);
 				}
 				if(nullPlaceholder){
-					if(logger.isDebugEnabled())logger.debug(">>auto_cache_process hitCache -> mapperId:{},cacheKey:{}",mt.getId(),cacheKey);
+					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process hitCache -> mapperId:{},cacheKey:{}",mt.getId(),cacheKey);
 				}else if(cacheObject != null){
-					if(logger.isDebugEnabled())logger.debug(">>auto_cache_process hitCache -> mapperId:{},cacheKey:{}",mt.getId(),cacheKey);
+					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process hitCache -> mapperId:{},cacheKey:{}",mt.getId(),cacheKey);
 				}
 			}else{
 				//新根据缓存KEY找到与按ID缓存的KEY
@@ -241,7 +241,7 @@ public class CacheHandler implements InterceptorHandler {
 						cacheObject = NULL_PLACEHOLDER;
 					}else{						
 						cacheObject = CacheUtils.get(refCacheKey);
-						if(cacheObject != null && logger.isDebugEnabled())logger.debug(">>auto_cache_process  hitRefCache -> mapperId:{},cacheKey:{},refCacheKey:{}",mt.getId(),cacheKey,refCacheKey);
+						if(cacheObject != null && logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process  hitRefCache -> mapperId:{},cacheKey:{},refCacheKey:{}",mt.getId(),cacheKey,refCacheKey);
 					}
 				}
 			}
@@ -286,7 +286,7 @@ public class CacheHandler implements InterceptorHandler {
 				//
 				if(!metadata.isSecondQueryById()){
 					CacheUtils.set(cacheKey,result, metadata.getExpire());
-					if(logger.isDebugEnabled())logger.debug(">>auto_cache_process addCache -> mapperId:{},cacheKey:{}",mt.getId(),cacheKey);
+					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process addCache -> mapperId:{},cacheKey:{}",mt.getId(),cacheKey);
                     
 					if(metadata.isPk){
 						//唯一索引（业务上）
@@ -305,7 +305,7 @@ public class CacheHandler implements InterceptorHandler {
 						}
 						//缓存fieldkey->idkey
 						cacheFieldRefKey(cacheKey,idCacheKey, metadata.getExpire());
-						if(logger.isDebugEnabled())logger.debug(">>auto_cache_process addCache -> mapperId:{},idCacheKey:{},cacheKey:{}",mt.getId(),idCacheKey,cacheKey);
+						if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process addCache -> mapperId:{},idCacheKey:{},cacheKey:{}",mt.getId(),idCacheKey,cacheKey);
 					}
 				}
 			}else{
@@ -377,9 +377,9 @@ public class CacheHandler implements InterceptorHandler {
 				String fieldCacheKey = genarateQueryCacheKey(invocationVal,methodCache.keyPattern , cacheFieldValues);
 				
 				cacheFieldRefKey(fieldCacheKey,cacheKey, methodCache.getExpire());
-				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process addRefCache -> mapperId:{},cacheKey:{},refkey:{}",mt.getId(),fieldCacheKey,cacheKey);
+				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process addRefCache -> mapperId:{},cacheKey:{},refkey:{}",mt.getId(),fieldCacheKey,cacheKey);
 			} catch (Exception e) {
-				logger.warn("cacheUniqueSelectRef:"+cacheKey,e);
+				logger.warn("MENDMIX-TRACE-LOGGGING-->> cacheUniqueSelectRef:"+cacheKey,e);
 			}
 		}
 	}
@@ -495,7 +495,7 @@ public class CacheHandler implements InterceptorHandler {
 			@Override
 			public void run() {
 				clearCacheGroup(groupName);
-				if(logger.isDebugEnabled())logger.debug(">>auto_cache_process removeGroupCache -> mapperId:{},groupName:{}",msId,groupName);
+				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process removeGroupCache -> mapperId:{},groupName:{}",msId,groupName);
 			}
 		});
 	}

@@ -91,7 +91,7 @@ public class RocketProducerAdapter extends AbstractProducer {
 				producer.send(_message, new SendCallback() {
 					@Override
 					public void onSuccess(SendResult sendResult) {
-						if(logger.isDebugEnabled())logger.debug("MQ_SEND_SUCCESS:{} -> msgId:{},status:{},offset:{}",message.getTopic(),sendResult.getMsgId(),sendResult.getSendStatus().name(),sendResult.getQueueOffset());
+						if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_SEND_SUCCESS:{} -> msgId:{},status:{},offset:{}",message.getTopic(),sendResult.getMsgId(),sendResult.getSendStatus().name(),sendResult.getQueueOffset());
 						message.setMsgId(sendResult.getMsgId());
 						handleSuccess(message);
 					}
@@ -99,7 +99,7 @@ public class RocketProducerAdapter extends AbstractProducer {
 					@Override
 					public void onException(Throwable e) {
 						handleError(message, e);
-						logger.warn("MQ_SEND_FAIL:"+message.getTopic(),e);
+						logger.warn("MENDMIX-TRACE-LOGGGING-->> MQ_SEND_FAIL:"+message.getTopic(),e);
 					}
 				});
 			}else{
@@ -113,7 +113,7 @@ public class RocketProducerAdapter extends AbstractProducer {
 			}
 		} catch (Exception e) {
 			handleError(message, e);
-			logger.warn("MQ_SEND_FAIL:"+message.getTopic(),e);
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> MQ_SEND_FAIL:"+message.getTopic(),e);
 		}
 		
 		return null;

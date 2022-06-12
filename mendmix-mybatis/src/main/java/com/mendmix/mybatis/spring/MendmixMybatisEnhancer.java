@@ -77,7 +77,7 @@ public class MendmixMybatisEnhancer {
 		configuration.addInterceptor(interceptor);
 		interceptor.afterRegister();
 
-		logger.info(">> JeesuiteMybatisEnhancer finshed -> group:{},hanlderNames:{}", group, hanlderNames);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> JeesuiteMybatisEnhancer finshed -> group:{},hanlderNames:{}", group, hanlderNames);
 
 	}
 }

@@ -74,7 +74,7 @@ public class MNSConsumer implements InitializingBean,DisposableBean,PriorityOrde
 		semaphore = new Semaphore(maxThread);
 		defaultProcessExecutor = new StandardThreadExecutor(1, maxThread,60, TimeUnit.SECONDS, 1,new StandardThreadFactory("mns-defaultProcess-Executor"));
 		fetchExecutor.submit(new Worker(queue));
-		logger.info("start work for queue Ok -> queue:{}",queue.getQueueURL());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> start work for queue Ok -> queue:{}",queue.getQueueURL());
 	}
 	
 	private void initTopicHanlders(){
@@ -89,7 +89,7 @@ public class MNSConsumer implements InitializingBean,DisposableBean,PriorityOrde
 				MNSClientInstance.createTopicIfAbsent(topicName, queueName);
 				
 				queueHanlders.put(topicName, hanlder);
-				logger.info("registered MNSHanlder Ok -> queue:{},topic:{},hander:{}",queueName,topicName,hanlder.getClass().getName());
+				logger.info("MENDMIX-TRACE-LOGGGING-->> registered MNSHanlder Ok -> queue:{},topic:{},hander:{}",queueName,topicName,hanlder.getClass().getName());
 			}
 		}
 		if(queueHanlders.isEmpty())throw new RuntimeException("not any MNS TopicHanlder found");
@@ -134,10 +134,10 @@ public class MNSConsumer implements InitializingBean,DisposableBean,PriorityOrde
 							@Override
 							public void run() {
 								try {									
-									logger.debug("processs_topic begin -> topicName:{},messageId:{}",topicName,message.getMessageId());
+									logger.debug("MENDMIX-TRACE-LOGGGING-->> processs_topic begin -> topicName:{},messageId:{}",topicName,message.getMessageId());
 									hanlder.process(topicName,bodyString);
 									queue.deleteMessage(message.getReceiptHandle());
-									logger.debug("processs_topic end -> topicName:{},messageId:{},DequeueCount:{}",topicName,message.getMessageId(),message.getDequeueCount());
+									logger.debug("MENDMIX-TRACE-LOGGGING-->> processs_topic end -> topicName:{},messageId:{},DequeueCount:{}",topicName,message.getMessageId(),message.getDequeueCount());
 								} finally {
 									//释放信号量
 									semaphore.release();
@@ -146,7 +146,7 @@ public class MNSConsumer implements InitializingBean,DisposableBean,PriorityOrde
 						});
 					}
 				} catch (Exception e) {
-					logger.error("mns_unknow_error",e);
+					logger.error("MENDMIX-TRACE-LOGGGING-->> mns_unknow_error",e);
 				}
 				
 			}

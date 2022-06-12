@@ -72,13 +72,13 @@ public abstract class AbstractConsumer implements MQConsumer {
 			this.asyncProcessExecutor = new StandardThreadExecutor(1, maxThread,60, TimeUnit.SECONDS,maxThread,new StandardThreadFactory("messageAsyncProcessor"));
 		    //
 			fetchMaxThreads = maxThread;
-			logger.info("init asyncProcessExecutor finish -> maxThread:{}",maxThread);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> init asyncProcessExecutor finish -> maxThread:{}",maxThread);
 		}
 		//
 		this.fetchExecutor = new StandardThreadExecutor(fetchCoreThreads, fetchMaxThreads,0, TimeUnit.SECONDS, fetchMaxThreads * 10,new StandardThreadFactory("messageFetcher"));
 		fetchExecutor.execute(new Worker());
 		
-		logger.info("init fetchExecutor finish -> fetchMaxThreads:{}",fetchMaxThreads);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> init fetchExecutor finish -> fetchMaxThreads:{}",fetchMaxThreads);
 		
 	}
 
@@ -133,30 +133,30 @@ public abstract class AbstractConsumer implements MQConsumer {
             	String transactionStatus = message.checkTransactionStatus();
             	if(transactionStatus != null) {
             		if(transactionStatus.equals(MessageStatus.processed.name())) {
-						logger.info("MQmessage_TRANSACTION_STATUS_PROCESSED ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
+						logger.info("MENDMIX-TRACE-LOGGGING-->> MQmessage_TRANSACTION_STATUS_PROCESSED ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
 						//
 						processMessageConsumeLog(message,null);
 						return;
 					}else if(transactionStatus.equals(MessageStatus.notExists.name())) {
 						//考虑发起方事务提交可能延时等情况，这里开启一次重试
 						if(message.getConsumeTimes() > 1) {
-							logger.info("MQmessage_TRANSACTION_STATUS_INVALID ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
+							logger.info("MENDMIX-TRACE-LOGGGING-->> MQmessage_TRANSACTION_STATUS_INVALID ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
 							//
 							processMessageConsumeLog(message,new IllegalArgumentException("transactionId["+message.getTransactionId()+"] not found"));
 						}
 						return;
 					}
             	}
-				if(logger.isDebugEnabled())logger.debug("MQmessage_TRANSACTION_STATUS_VALID -> topic:{},transactionId:{}",message.getTopic(),message.getTransactionId());
+				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQmessage_TRANSACTION_STATUS_VALID -> topic:{},transactionId:{}",message.getTopic(),message.getTransactionId());
 			}
 			messageHandler.process(message);
 			//处理成功，删除
 			processMessageConsumeLog(message,null);
 			if(logger.isDebugEnabled()) {
-				logger.debug("MQmessage_CONSUME_SUCCESS -> message:{}",message.logString());
+				logger.debug("MENDMIX-TRACE-LOGGGING-->> MQmessage_CONSUME_SUCCESS -> message:{}",message.logString());
 			}
 		}catch (Exception e) {
-			logger.error(String.format("MQmessage_CONSUME_ERROR -> [%s]",message.logString()),e);
+			logger.error(String.format("MENDMIX-TRACE-LOGGGING-->> MQmessage_CONSUME_ERROR -> [%s]",message.logString()),e);
 			processMessageConsumeLog(message,e);
 		} finally {
 			ThreadLocalContext.unset();

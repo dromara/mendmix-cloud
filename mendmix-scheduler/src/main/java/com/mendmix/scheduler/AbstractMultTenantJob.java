@@ -48,7 +48,7 @@ public abstract class AbstractMultTenantJob extends AbstractJob{
 			doStandaloneDadaSourceJob(context);
 		}else{
 			for (String tenantId : tenantIds) {
-				logger.debug("doStandaloneDadaSourceJob route to TenantId:{}",tenantId);
+				logger.debug("MENDMIX-TRACE-LOGGGING-->> doStandaloneDadaSourceJob route to TenantId:{}",tenantId);
 				CurrentRuntimeContext.setTenantId(tenantId);
 				try {
 					doStandaloneDadaSourceJob(context);

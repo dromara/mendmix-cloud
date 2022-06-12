@@ -74,7 +74,7 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 	
 	@Override
 	public void start() throws Exception {
-		logger.info(">>KafkaConsumer start Begin..");
+		logger.info("MENDMIX-TRACE-LOGGGING-->> KafkaConsumer start Begin..");
 		Properties configs = buildConfigs();
 		offsetAutoCommit = Boolean.parseBoolean(configs.getProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG));
 		kafkaConsumer = new KafkaConsumer<>(configs);
@@ -107,7 +107,7 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 
 		super.startWorker();
 		
-		logger.info(">>KafkaConsumer start End -> subscribeTopics:{}",configs,topicNames);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> KafkaConsumer start End -> subscribeTopics:{}",configs,topicNames);
 	}
 	
 	@Override
@@ -174,7 +174,7 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 				if(exception != null) {
 					kafkaConsumer.commitSync(uncommitOffsets);
 				}else {
-					if(logger.isDebugEnabled())logger.debug("MQmessage_COMMIT_SUCCESS -> offsets:{}",offsets);
+					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQmessage_COMMIT_SUCCESS -> offsets:{}",offsets);
 				}
 				//
 				offsets.forEach( (k,v) -> {

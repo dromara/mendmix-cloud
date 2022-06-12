@@ -103,12 +103,12 @@ public class HuaweicloudProvider extends AbstractProvider {
     @Override
     public void deleteBucket(String bucketName) {
         if (!existsBucket(bucketName)) {
-            logger.info("桶[{}]不存在", bucketName);
+            logger.info("MENDMIX-TRACE-LOGGGING-->> Bucket[{}]不存在", bucketName);
             return ;
         }
         ObjectListing objectListing = obsClient.listObjects(bucketName);
         if (objectListing != null && !objectListing.getObjects().isEmpty()) {
-            logger.error("桶[{}]不为空， 不能删除", bucketName);
+            logger.error("MENDMIX-TRACE-LOGGGING-->> 桶[{}]不为空， 不能删除", bucketName);
             throw new RuntimeException("桶["+bucketName+"]不为空， 不能删除");
         }
         obsClient.deleteBucket(bucketName);
@@ -117,7 +117,7 @@ public class HuaweicloudProvider extends AbstractProvider {
     @Override
     public BucketConfig getBucketConfig(String bucketName) {
         if (!existsBucket(bucketName)) {
-            logger.info("Bucket[{}]不存在", bucketName);
+            logger.info("MENDMIX-TRACE-LOGGGING-->> Bucket[{}]不存在", bucketName);
             return null;
         }
         boolean isPrivate=false;
@@ -141,7 +141,7 @@ public class HuaweicloudProvider extends AbstractProvider {
         String fileKey = object.getFileKey();
         byte[] bytes = object.getBytes();
         long size=0;
-        logger.info("bucknetName={}, fileKey={}", bucketName, fileKey);
+        logger.info("MENDMIX-TRACE-LOGGGING-->> bucknetName={}, fileKey={}", bucketName, fileKey);
         PutObjectResult putObjectResult=null;
         try {
             if (file != null) {
@@ -172,7 +172,7 @@ public class HuaweicloudProvider extends AbstractProvider {
                 return uploadResult;
             }
         } catch (Exception e) {
-            logger.error("上传文件出错, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
+            logger.error("MENDMIX-TRACE-LOGGGING-->> 上传文件出错, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
             throw new MendmixBaseException(e.getMessage());
         }
         return null;
@@ -207,7 +207,7 @@ public class HuaweicloudProvider extends AbstractProvider {
     @Override
     public byte[] getObjectBytes(String bucketName, String fileKey) {
         if (!existsBucket(bucketName)) {
-            logger.info("Bucket[{}]不存在", bucketName);
+            logger.info("MENDMIX-TRACE-LOGGGING-->> Bucket[{}]不存在", bucketName);
             return null;
         }
         try {
@@ -217,7 +217,7 @@ public class HuaweicloudProvider extends AbstractProvider {
             inputStream.close();
             return bytes;
         } catch (Exception e) {
-            logger.error("获取字节, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
+            logger.error("MENDMIX-TRACE-LOGGGING-->> 获取字节, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
         }
         return null;
     }
@@ -225,7 +225,7 @@ public class HuaweicloudProvider extends AbstractProvider {
     @Override
     public InputStream getObjectInputStream(String bucketName, String fileKey) {
         if (!existsBucket(bucketName)) {
-            logger.info("Bucket[{}]不存在", bucketName);
+            logger.info("MENDMIX-TRACE-LOGGGING-->> Bucket[{}]不存在", bucketName);
             return null;
         }
         try {
@@ -271,7 +271,7 @@ public class HuaweicloudProvider extends AbstractProvider {
                 obsClient.close();
             }
         } catch (Exception e) {
-            logger.error("obsClient关闭失败, e={}", ExceptionUtils.getMessage(e));
+            logger.error("MENDMIX-TRACE-LOGGGING-->> obsClient关闭失败, e={}", ExceptionUtils.getMessage(e));
         }
     }
 

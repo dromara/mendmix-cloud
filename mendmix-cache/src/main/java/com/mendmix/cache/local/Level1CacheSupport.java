@@ -84,11 +84,11 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		if(!cacheNames.contains(cacheName))return true;
 		//删除本地
 		cacheProvider.remove(cacheName, key);
-		logger.debug("remove local LEVEL1 cache: cacheName:[{}], key:[{}]",cacheName,key);
+		logger.debug("MENDMIX-TRACE-LOGGGING-->> remove local LEVEL1 cache: cacheName:[{}], key:[{}]",cacheName,key);
 		if(!distributedMode)return true;
 		boolean publish = publish(channelName, new ClearCommand(cacheName, key).serialize());
 		if(publish){
-			logger.debug("broadcast <clear-cache> command for key:[{}] by channelName:[{}]",key,channelName);			
+			logger.debug("MENDMIX-TRACE-LOGGGING-->> broadcast <clear-cache> command for key:[{}] by channelName:[{}]",key,channelName);			
 		}
 		return publish;
 	}
@@ -109,7 +109,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		String cacheName = key.split("\\.")[0];
 		if(!cacheNames.contains(cacheName))return true;
 		boolean result = cacheProvider.set(cacheName, key, value);
-		if(logger.isDebugEnabled())logger.debug("set LEVEL1 cache:{}",key);
+		if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> set LEVEL1 cache:{}",key);
 		return result;
 	}
 
@@ -118,7 +118,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		String cacheName = key.split("\\.")[0];
 		if(!cacheNames.contains(cacheName))return null;
 		T object = cacheProvider.get(cacheName, key);
-		if(object != null)logger.debug("get cache:{} from LEVEL1",key);
+		if(object != null)logger.debug("MENDMIX-TRACE-LOGGGING-->> get cache:{} from LEVEL1",key);
 		return object;
 	}
 
@@ -127,7 +127,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 		String cacheName = key.split("\\.")[0];
 		if(!cacheNames.contains(cacheName))return;
 		cacheProvider.remove(cacheName, key);
-		logger.debug("remove LEVEL1 cache,cacheName:{},key:{}",cacheName,key);
+		logger.debug("MENDMIX-TRACE-LOGGGING-->> remove LEVEL1 cache,cacheName:{},key:{}",cacheName,key);
 	}
 
 	@Override
@@ -159,7 +159,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 						subJedisClient = new Jedis(host, port);
 						if(password != null)subJedisClient.auth(password);
 						if("PONG".equals(subJedisClient.ping())){							
-							logger.info("subscribe localCache sync channel.....");
+							logger.info("MENDMIX-TRACE-LOGGGING-->> subscribe localCache sync channel.....");
 							subJedisClient.subscribe(listener, new String[]{channelName});
 						}
 					} catch (Exception e) {
@@ -239,7 +239,7 @@ public class Level1CacheSupport implements InitializingBean, DisposableBean{
 			if(channel.equals(channelName)){
 				if(CLEAR_ALL.equals(message)){
 					cacheProvider.clearAll();
-					logger.info("receive command {} and clear local cache finish!",CLEAR_ALL);
+					logger.info("MENDMIX-TRACE-LOGGGING-->> receive command {} and clear local cache finish!",CLEAR_ALL);
 				}else{	
 					try {						
 						ClearCommand command = ClearCommand.deserialize(message);

@@ -192,6 +192,6 @@ public class JedisProviderFactoryBean implements ApplicationContextAware,Initial
 		
 		acf.registerBeanDefinition(beanName, beanDefinitionBuilder.getRawBeanDefinition());
 		//
-		logger.info("register JedisProvider OK,Class:{},beanName:{}",beanClass.getSimpleName(),beanName);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> register JedisProvider OK,Class:{},beanName:{}",beanClass.getSimpleName(),beanName);
 	}
 }

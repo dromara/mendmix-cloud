@@ -71,7 +71,7 @@ public class SchedulerMonitor implements Closeable{
 	public JobGroupInfo getJobGroupInfo(String groupName){
 
 		if(StringUtils.isBlank(groupName)){
-			logger.warn("getJobGroupInfo groupName is required");
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> getJobGroupInfo groupName is required");
 			return null;
 		}
 		JobGroupInfo groupInfo = new JobGroupInfo();
@@ -143,7 +143,7 @@ public class SchedulerMonitor implements Closeable{
 		for (String node : nodeIds) {
 			String nodePath = path + "/" + node;
 			zkClient.writeData(nodePath, cmd);
-			logger.info("publishEvent finish，path:{},content:{}",nodePath,cmd);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> publishEvent finish，path:{},content:{}",nodePath,cmd);
 			break;
 		}
 		
@@ -152,7 +152,6 @@ public class SchedulerMonitor implements Closeable{
 	public void clearInvalidGroup(){
         if(asyncEventBus != null)return;
     	List<String> groups = zkClient.getChildren(ZkJobRegistry.ROOT.substring(0, ZkJobRegistry.ROOT.length() - 1));
-    	logger.info("==============clear Invalid jobs=================");
     	for (String group : groups) {
     		String groupPath = ZkJobRegistry.ROOT + group;
     		String nodeStateParentPath = groupPath + "/nodes";
@@ -161,14 +160,13 @@ public class SchedulerMonitor implements Closeable{
     				List<String> jobs = zkClient.getChildren(groupPath);
     				for (String job : jobs) {
     					zkClient.delete(groupPath + "/" + job);
-    					logger.info("delete path:{}/{}",groupPath,job);
+    					logger.info("MENDMIX-TRACE-LOGGGING-->> delete path:{}/{}",groupPath,job);
     				}
     				zkClient.delete(groupPath);
-    				logger.info("delete path:{}",groupPath);
+    				logger.info("MENDMIX-TRACE-LOGGGING-->> delete path:{}",groupPath);
     			}
 			} catch (Exception e) {}
 		}
-    	logger.info("==============clear Invalid jobs end=================");
     	
     
 	}

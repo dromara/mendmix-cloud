@@ -74,7 +74,7 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		List<String> groups = DataSoureConfigHolder.getGroups();
 		for (String group : groups) {
 			registerGroupMybatisBean(registry,group);
-			logger.info(">> registerGroupMybatisBean Finished -> group:{}",group);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> registerGroupMybatisBean Finished -> group:{}",group);
 		}
 	}
 

@@ -92,7 +92,7 @@ public class DataChangeLogHandler implements InterceptorHandler {
 				//BehaviorLogContextHoler.onUpdateEntityAfter((BaseEntity)args[1]);
 			}
 		} catch (Exception e) {
-			logger.warn("datachange_interceptor_error for["+mt.getId()+"]",e);
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> datachange_interceptor_error for["+mt.getId()+"]",e);
 		}
 	}
 

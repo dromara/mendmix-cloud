@@ -111,7 +111,7 @@ public class GlobalFilter implements WebFilter {
 					   exchange.getAttributes().clear();
 				    });
 		} catch (Exception e) {
-			logger.error("_global_filter_error",e);
+			logger.error("MENDMIX-TRACE-LOGGGING-->> _global_filter_error",e);
 			ThreadLocalContext.unset();
 			exchange.getAttributes().clear();
 			byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.fail(e));
@@ -153,7 +153,7 @@ public class GlobalFilter implements WebFilter {
 				}
 			}
 			if(!matched) {
-				logger.warn("header[x-system-id]={} can't matched",systemId);
+				logger.warn("MENDMIX-TRACE-LOGGGING-->> header[x-system-id]={} can't matched",systemId);
 				systemId = null;
 			}
 		

@@ -69,7 +69,7 @@ public class CMQManager {
 		config.setAlwaysPrintResultLog(false);
 		config.setPrintSlow(false);
 		this.account = new Account(config);		
-		logger.info("init CMQ Account OK -> endpoint:{}",config.getEndpoint());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> init CMQ Account OK -> endpoint:{}",config.getEndpoint());
 	}
 	
 
@@ -138,7 +138,7 @@ public class CMQManager {
 			if(!existList.contains(subscriptionName)) {
 				createSubscription(topicName, instance.queueName, subscriptionName);
 			}
-			logger.info(">>subscriptionName:{} for queue:{},topic:{}",subscriptionName,instance.queueName,topicName);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> subscriptionName:{} for queue:{},topic:{}",subscriptionName,instance.queueName,topicName);
 		}catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -161,39 +161,39 @@ public class CMQManager {
 			QueueMeta meta = ResourceUtils.getBean("mendmix.amqp.cmq.", QueueMeta.class);
 			account.createQueue(queueName, meta);
 			//
-			logger.info("createQueue finished -> queueName:{}",queueName);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> createQueue finished -> queueName:{}",queueName);
 		} catch (Exception e) {
 			if(!e.getMessage().contains("is already existed")){				
 				throw new RuntimeException(e);
 			}
-			logger.info("queueName:{} is already existed",queueName);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> queueName:{} is already existed",queueName);
 		}
 		return account.getQueue(queueName);
 	}
 	
 	private static void createTopic(String topicName) {
 		try {
-			logger.info("createTopic begin -> topicName:",topicName);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> createTopic begin -> topicName:",topicName);
 			int maxMsgSize = 1024*1024;
 			getAccount().createTopic(topicName, maxMsgSize);
-			logger.info("createTopic finished -> topicName:{}",topicName);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> createTopic finished -> topicName:{}",topicName);
 		}catch (Exception e) {
 			if(!e.getMessage().contains("is already existed")){				
 				throw new RuntimeException(e);
 			}
-			logger.info("topicName:{} is already existed",topicName);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> topicName:{} is already existed",topicName);
 		}
 	}
 	
 	private static void createSubscription(String topicName,String queueName,String subscriptionName){
 		try {
 			getAccount().createSubscribe(topicName, subscriptionName, queueName, "queue");
-			logger.info("createSubscription finished -> subscriptionName:{}",subscriptionName);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> createSubscription finished -> subscriptionName:{}",subscriptionName);
 		}catch (Exception e) {
 			if(!e.getMessage().contains("is already existed")){				
 				throw new RuntimeException(e);
 			}
-			logger.info("subscriptionName:{} is already existed",subscriptionName);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> subscriptionName:{} is already existed",subscriptionName);
 		}
 	}
 	

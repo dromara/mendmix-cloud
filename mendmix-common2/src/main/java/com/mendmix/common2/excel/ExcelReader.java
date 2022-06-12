@@ -199,7 +199,7 @@ public final class ExcelReader implements Closeable {
 
 
     private void getCellValue(Cell cell, Object o, Field field) throws IllegalAccessException, ParseException {
-        LOG.debug("cell:{}, field:{}, type:{}", cell.getCellTypeEnum(), field.getName(), field.getType().getName());
+        LOG.debug("MENDMIX-TRACE-LOGGGING-->> cell:{}, field:{}, type:{}", cell.getCellTypeEnum(), field.getName(), field.getType().getName());
         switch (cell.getCellTypeEnum()) {
             case BLANK:
                 break;
@@ -263,7 +263,7 @@ public final class ExcelReader implements Closeable {
         Workbook workbook;
         File file = new File(this.excelFilePath);
         if (!file.exists()) {
-            LOG.warn("文件:{} 不存在！创建此文件！", this.excelFilePath);
+            LOG.warn("MENDMIX-TRACE-LOGGGING-->> 文件:{} 不存在！创建此文件！", this.excelFilePath);
             if (!file.createNewFile()) {
                 throw new IOException("文件创建失败");
             }

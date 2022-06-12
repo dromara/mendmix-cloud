@@ -87,7 +87,7 @@ public class ApiPermssionHelper {
 	public static void reload() {
 		if(apiPermissions.isEmpty())return;
 		init();
-		logger.info(">>reload apiPermissions:{}",apiPermissions.size());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> reload apiPermissions:{}",apiPermissions.size());
 	}
 	
 	public static ApiPermission matchPermissionObject(String method, String uri) {
@@ -95,7 +95,7 @@ public class ApiPermssionHelper {
 			synchronized (apiPermissions) {
 				if(apiPermissions.isEmpty()) {
 					init();
-					logger.info(">>reload apiPermissions:{}",apiPermissions.size());
+					logger.info("MENDMIX-TRACE-LOGGGING-->> reload apiPermissions:{}",apiPermissions.size());
 				}
 			}
 		}

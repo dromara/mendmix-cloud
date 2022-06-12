@@ -55,7 +55,7 @@ public class RouteErrorWebExceptionHandler  extends DefaultErrorWebExceptionHand
 		
 		Throwable error = super.getError(request);
 		
-		logger.warn("routeError{},errorType:{},errorMsg:{}",LogMessageFormat.buildLogTail(request.path()),error.getClass().getName(),error.getMessage());
+		logger.warn("MENDMIX-TRACE-LOGGGING-->> routeError{},errorType:{},errorMsg:{}",LogMessageFormat.buildLogTail(request.path()),error.getClass().getName(),error.getMessage());
 		String msg = error.getMessage();
 		Integer code = HttpStatus.INTERNAL_SERVER_ERROR.value();
 		if(msg.contains("Connection refused") || msg.contains("connection timed out")) {

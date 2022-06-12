@@ -46,7 +46,7 @@ public class RwRouteHandler implements InterceptorHandler {
 		MappedStatement ms = invocation.getMappedStatement();
 		//已指定强制使用
 		if(MybatisRuntimeContext.isRwRouteAssigned()){
-			logger.debug("RwRouteAssigned for:{},useMaster:{}",ms.getId(),MybatisRuntimeContext.isUseMaster());
+			logger.debug("MENDMIX-TRACE-LOGGGING-->> RwRouteAssigned for:{},useMaster:{}",ms.getId(),MybatisRuntimeContext.isUseMaster());
 			return null;
 		}
 		
@@ -55,10 +55,10 @@ public class RwRouteHandler implements InterceptorHandler {
 			//!selectKey 为自增id查询主键(SELECT LAST_INSERT_ID() )方法，使用主库
 			if(!ms.getId().contains(SelectKeyGenerator.SELECT_KEY_SUFFIX)){				
 				MybatisRuntimeContext.useSlave();
-				logger.debug("Method[{} use Slave Strategy..",ms.getId());
+				logger.debug("MENDMIX-TRACE-LOGGGING-->> Method[{} use Slave Strategy..",ms.getId());
 			}
 		}else{
-			logger.debug("Method[{}] use Master Strategy..",ms.getId());
+			logger.debug("MENDMIX-TRACE-LOGGGING-->> Method[{}] use Master Strategy..",ms.getId());
 			MybatisRuntimeContext.userMaster();
 		}
 		

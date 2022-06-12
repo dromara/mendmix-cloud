@@ -91,7 +91,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 			throw new IllegalArgumentException("Property 'targetDataSources' is required");
 		}
 		
-		logger.info("init multiRouteDataSource[{}] finished -> dsKeyWithTenant:{}",group,dsKeyWithTenant);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> init multiRouteDataSource[{}] finished -> dsKeyWithTenant:{}",group,dsKeyWithTenant);
 	}
 
 	private String currentDataSourceKey() {
@@ -187,7 +187,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 				slaveNumSelecters.put(subGroup, new RoundRobinSelecter(1));
 			}
 		}
-		logger.info(">>register realDataSource[{}] finished! -> config:{}",config.dataSourceKey(),config.toString());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> register realDataSource[{}] finished! -> config:{}",config.dataSourceKey(),config.toString());
 	}
 
 	private void mergeGlobalDataSourceConfig(DataSourceConfig config) {

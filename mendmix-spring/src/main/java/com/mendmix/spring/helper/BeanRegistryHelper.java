@@ -66,7 +66,7 @@ public class BeanRegistryHelper {
         //使用bean注册工具类进行注册.
         //BeanDefinitionReaderUtils.registerBeanDefinition(beanDefinitionHolder, registry);
 		
-		logger.info(">> register Bean[{}] Finished -> className:{}",beanName,beanClass.getName());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> register Bean[{}] Finished -> className:{}",beanName,beanClass.getName());
 		
 		return beanName;
 		

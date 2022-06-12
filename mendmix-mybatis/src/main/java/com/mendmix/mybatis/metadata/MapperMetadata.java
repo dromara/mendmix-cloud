@@ -122,7 +122,7 @@ public class MapperMetadata {
 				mapperMethods.put(method.getName(),new MapperMethod(method, fullName, sqlType));
 			}
 		} catch (Exception e) {
-			log.info("parse mapper error -> mapperClassName:{}",mapperClassName,e);
+			log.info("MENDMIX-TRACE-LOGGGING-->> parse mapper error -> mapperClassName:{}",mapperClassName,e);
 		}
 	}
 	

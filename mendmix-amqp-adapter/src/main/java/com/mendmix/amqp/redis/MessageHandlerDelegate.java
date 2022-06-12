@@ -49,11 +49,11 @@ public class MessageHandlerDelegate {
 				CurrentRuntimeContext.setTenantId(message.getTenantId());
 			}
 			messageHandler.process(message);
-			if(logger.isDebugEnabled())logger.debug("MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message.toString());
+			if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message.toString());
 			MQContext.processMessageLog(message, ActionType.sub,null);
 		} catch (Exception e) {
 			MQContext.processMessageLog(message, ActionType.sub,e);
-			logger.error(String.format("MQ_MESSAGE_CONSUME_ERROR ->message:%s",body),e);
+			logger.error(String.format("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_ERROR ->message:%s",body),e);
 		}
 		
 	}

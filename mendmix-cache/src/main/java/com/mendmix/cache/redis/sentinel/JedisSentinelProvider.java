@@ -78,12 +78,12 @@ public class JedisSentinelProvider implements JedisProvider<Jedis,BinaryJedis>{
 					jedis.set(SLAVE_CHEKER_KEY,SLAVE_CHEKER_VAL);
 				} catch (Exception e) {
 					if(e instanceof JedisDataException && e.getMessage().contains("READONLY")){
-						logger.warn("JedisDataException happend error:{} and will re-init jedisPool" ,e.getMessage());
+						logger.warn("MENDMIX-TRACE-LOGGGING-->> JedisDataException happend error:{} and will re-init jedisPool" ,e.getMessage());
 						//重新初始化jedisPool
 						synchronized (jedisPool) {							
 							jedisPool.destroy();
 							jedisPool = new JedisSentinelPool(masterName, sentinels, jedisPoolConfig, timeout, password, database,clientName);
-							logger.info("jedisPool re-init ok,currentHostMaster is:{}:{}" ,jedisPool.getCurrentHostMaster().getHost(),jedisPool.getCurrentHostMaster().getPort());
+							logger.info("MENDMIX-TRACE-LOGGGING-->> jedisPool re-init ok,currentHostMaster is:{}:{}" ,jedisPool.getCurrentHostMaster().getHost(),jedisPool.getCurrentHostMaster().getPort());
 						}
 					}
 				}finally {

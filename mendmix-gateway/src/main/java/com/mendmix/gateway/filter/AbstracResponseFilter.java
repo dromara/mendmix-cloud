@@ -90,7 +90,7 @@ public abstract class AbstracResponseFilter implements GlobalFilter, Ordered, In
     	return chain.filter(exchange.mutate().response(newResponse).build()).then(Mono.fromRunnable(() -> {
 			Long start = exchange.getAttribute(GatewayConstants.CONTEXT_REQUEST_START_TIME);
 			if (logger.isDebugEnabled() && start != null) {
-				logger.debug(">request_time_trace -> uri:{},useTime:{} ms" ,exchange.getRequest().getPath().value(),(System.currentTimeMillis() - start));
+				logger.debug("MENDMIX-TRACE-LOGGGING-->> request_time_trace -> uri:{},useTime:{} ms" ,exchange.getRequest().getPath().value(),(System.currentTimeMillis() - start));
 			}
 		}));
     }

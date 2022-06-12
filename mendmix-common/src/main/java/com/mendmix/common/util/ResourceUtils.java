@@ -75,7 +75,7 @@ public final class ResourceUtils {
 				if (url.getProtocol().equals("file")) {	
 					File parent = new File(url.getPath());
 					if(!parent.exists()){
-						System.err.println(">>loadPropertiesFromFile_error,dir not found");
+						System.err.println("MENDMIX-TRACE-LOGGGING-->> loadPropertiesFromFile_error,dir not found");
 					}else{					
 						loadPropertiesFromFile(parent);
 					}
@@ -95,7 +95,7 @@ public final class ResourceUtils {
 			
 			if(profileFile != null) {
 				allProperties.putAll(profileProperties);
-				System.out.println(">>load properties from file:" + profileFile);
+				System.out.println("MENDMIX-TRACE-LOGGGING-->> load properties from file:" + profileFile);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -179,7 +179,7 @@ public final class ResourceUtils {
 		if(fileList.size() == 1){
 			Properties p = parseToProperties(fileList.get(0), jarFile);
 			allProperties.putAll(p);
-			System.out.println(">>load properties from file:" + fileList.get(0));
+			System.out.println("MENDMIX-TRACE-LOGGGING-->> load properties from file:" + fileList.get(0));
 		}else if(fileList.size() > 1){
 			Map<String, Properties> filePropMap = new LinkedHashMap<>(fileList.size());
 			Properties p;
@@ -210,7 +210,7 @@ public final class ResourceUtils {
 				if(fileName.startsWith("application-"))continue;
 				if(fileName.startsWith("bootstrap-"))continue;
 				allProperties.putAll(filePropMap.get(file));
-				System.out.println(">>load properties from file:" + file);
+				System.out.println("MENDMIX-TRACE-LOGGGING-->> load properties from file:" + file);
 			}
 		}
 	}

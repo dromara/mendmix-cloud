@@ -94,7 +94,7 @@ public final class LogFactory {
       Constructor<? extends Logger> candidate = implClass.getConstructor(String.class);
       Logger log = candidate.newInstance(LogFactory.class.getName());
       if (log.isDebugEnabled()) {
-        log.debug("Logging initialized using '" + implClass + "' adapter.");
+        log.debug("MENDMIX-TRACE-LOGGGING-->> Logging initialized using '" + implClass + "' adapter.");
       }
       logConstructor = candidate;
     } catch (Throwable t) {

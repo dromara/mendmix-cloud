@@ -74,11 +74,11 @@ public class KafkaProducerAdapter extends AbstractProducer {
 					message.onProducerFinished(null,recordMetadata.partition(), recordMetadata.offset());
                     if (e == null) {//成功发送
                         handleSuccess(message);
-                        logger.debug("发送成功, topic:{}, partition:{}, offset:{}", topic, recordMetadata.partition(), recordMetadata.offset());
+                        logger.debug("MENDMIX-TRACE-LOGGGING-->> 发送成功, topic:{}, partition:{}, offset:{}", topic, recordMetadata.partition(), recordMetadata.offset());
                     }else{
                         //发送失败
                         handleError(message, e);
-                        logger.warn("发送失败, topic:{}, partition:{}, offset:{}, exception:{}", topic, recordMetadata.partition(), recordMetadata.offset(), e);
+                        logger.warn("MENDMIX-TRACE-LOGGGING-->> 发送失败, topic:{}, partition:{}, offset:{}, exception:{}", topic, recordMetadata.partition(), recordMetadata.offset(), e);
                     }
 				}
 			});

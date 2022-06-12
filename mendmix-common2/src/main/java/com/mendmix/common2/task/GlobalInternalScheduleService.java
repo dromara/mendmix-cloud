@@ -96,7 +96,7 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 			}
 		}, 1000, 5000, TimeUnit.MILLISECONDS);
 
-		log.info("init GlobalInternalScheduleService finish -> subtaskNums:{}", taskStats.size());
+		log.info("MENDMIX-TRACE-LOGGGING-->> init GlobalInternalScheduleService finish -> subtaskNums:{}", taskStats.size());
 	}
 
 	protected void execSubTimerTask(SubTimerTaskStat taskStat) {
@@ -109,11 +109,11 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 		taskStat.running = true;
 		try {
 			if (log.isDebugEnabled())
-				log.debug("InternalSchedule[{}] execute Begin..", taskStat.taskName);
+				log.debug("MENDMIX-TRACE-LOGGGING-->> InternalSchedule[{}] execute Begin..", taskStat.taskName);
 			taskStat.task.doSchedule();
 			taskStat.lastFireTime = currentTime;
 		} catch (Exception e) {
-			log.error("InternalSchedule[{}] execute Error:{}", taskStat.taskName,ExceptionUtils.getMessage(e));
+			log.error("MENDMIX-TRACE-LOGGGING-->> InternalSchedule[{}] execute Error:{}", taskStat.taskName,ExceptionUtils.getMessage(e));
 		} finally {
 			taskStat.running = false;
 		}

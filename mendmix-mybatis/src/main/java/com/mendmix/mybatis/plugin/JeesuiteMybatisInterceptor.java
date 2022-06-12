@@ -87,9 +87,9 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 					Class<?> clazz = Class.forName(name);
 					InterceptorHandler handler = (InterceptorHandler) clazz.newInstance();
 					this.interceptorHandlers.add(handler);
-					logger.info("registered cumstom InterceptorHandler:{}",name);
+					logger.info("MENDMIX-TRACE-LOGGGING-->> registered cumstom InterceptorHandler:{}",name);
 				} catch (Exception e) {
-					logger.error("registered cumstom InterceptorHandler error",e);
+					logger.error("MENDMIX-TRACE-LOGGGING-->> registered cumstom InterceptorHandler error",e);
 				}
 			}
 		}

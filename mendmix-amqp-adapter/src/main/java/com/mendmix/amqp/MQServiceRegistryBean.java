@@ -77,7 +77,7 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 			throw new MendmixBaseException("NOT_SUPPORT[providerName]:" + providerName);
 		}
 		producer.start();
-		logger.info("MQ_PRODUCER started -> groupName:{},providerName:{}",MQContext.getGroupName(),providerName);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> MQ_PRODUCER started -> groupName:{},providerName:{}",MQContext.getGroupName(),providerName);
 	}
     
     private void startConsumer(String providerName) throws Exception{
@@ -90,7 +90,7 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 				MQTopicRef topicRef = origin.getClass().getAnnotation(MQTopicRef.class);
 				String topicName = MQContext.rebuildWithNamespace(topicRef.value());
 				messageHandlerMaps.put(topicName, e);
-				logger.info("ADD MQ_COMSUMER_HANDLER ->topic:{},handlerClass:{} ",topicName,e.getClass().getName());
+				logger.info("MENDMIX-TRACE-LOGGGING-->> ADD MQ_COMSUMER_HANDLER ->topic:{},handlerClass:{} ",topicName,e.getClass().getName());
 			});
 			
 			if("rocketmq".equals(providerName)){
@@ -108,7 +108,7 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 			if(consumer != null) {
 				consumer.start();
 			}
-			logger.info("MQ_COMSUMER started -> groupName:{},providerName:{}",MQContext.getGroupName(),providerName);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> MQ_COMSUMER started -> groupName:{},providerName:{}",MQContext.getGroupName(),providerName);
 		}
 	}
 

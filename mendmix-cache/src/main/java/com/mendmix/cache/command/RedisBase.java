@@ -309,7 +309,7 @@ public abstract class RedisBase {
 			return (T)SerializeUtils.deserialize(bytes);
 		} catch (Exception e) {
 			remove();
-			logger.warn("get key[{}] from redis is not null,but Deserialize error,message:{}",key,e);
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> get key[{}] from redis is not null,but Deserialize error,message:{}",key,e);
 			return null;
 		}
 	}

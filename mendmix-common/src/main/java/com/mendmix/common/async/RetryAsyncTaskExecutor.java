@@ -68,7 +68,7 @@ public class RetryAsyncTaskExecutor {
 	public RetryAsyncTaskExecutor(String taskName, int threads, int queueSize,int maxRetry) {
 		this.maxRetry = maxRetry;
 		executor = new StandardThreadExecutor(1, threads, 300, TimeUnit.SECONDS, queueSize, new StandardThreadFactory(taskName + "-asyncTask"));
-		logger.info("AsyncTaskExecutor[{}] 初始化完成 -> threads:{},queueSize:{},maxRetry:{}",taskName,threads,queueSize,maxRetry);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> AsyncTaskExecutor[{}] 初始化完成 -> threads:{},queueSize:{},maxRetry:{}",taskName,threads,queueSize,maxRetry);
 	}
 
 	public void submitTask(RetryTask task){
@@ -82,7 +82,7 @@ public class RetryAsyncTaskExecutor {
 	private void executeWithRetry(RetryTask task,int execNums) {
 		final String tenantId = CurrentRuntimeContext.getTenantId();
 		if(execNums >= maxRetry){	
-			logger.warn("{} executeWithRetry over maxRetry[{}]",task.traceId(),maxRetry);
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> {} executeWithRetry over maxRetry[{}]",task.traceId(),maxRetry);
 			onFinalErrorProcess(task);
 			return;
 		}
@@ -90,7 +90,7 @@ public class RetryAsyncTaskExecutor {
 		final int currentExecNums =  (++execNums);
 		if(currentExecNums > 1){
 			try {Thread.sleep(RandomUtils.nextLong(500, 1000));} catch (Exception e) {}
-			logger.info("{} {}/{} Begin",task.traceId(),currentExecNums,maxRetry);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> {} {}/{} Begin",task.traceId(),currentExecNums,maxRetry);
 		}
 		executor.execute(new Runnable() {
 			@Override
@@ -106,19 +106,19 @@ public class RetryAsyncTaskExecutor {
 							try {
 								task.callback.onSuccess();
 							} catch (Exception e) {
-								logger.error("{} onSuccessCallback Error:{}",task.traceId(),e.getMessage());
+								logger.error("MENDMIX-TRACE-LOGGGING-->> {} onSuccessCallback Error:{}",task.traceId(),e.getMessage());
 							}
 						}
 					}
 					
 					if(currentExecNums > 1){
-						logger.info("{} {}/{} End -> {}",task.traceId(),currentExecNums,maxRetry,result);
+						logger.info("MENDMIX-TRACE-LOGGGING-->> {} {}/{} End -> {}",task.traceId(),currentExecNums,maxRetry,result);
 					}
 				} catch (Exception e) {
 					if(currentExecNums == maxRetry){
 						logger.error(String.format("%s %s/%s Error",task.traceId(),currentExecNums,maxRetry),e);
 					}else{
-						logger.info("{} {}/{} Error:{}",task.traceId(),currentExecNums,maxRetry,e.getMessage());
+						logger.info("MENDMIX-TRACE-LOGGGING-->> {} {}/{} Error:{}",task.traceId(),currentExecNums,maxRetry,e.getMessage());
 					}
 					executeWithRetry(task,currentExecNums);
 				} finally {

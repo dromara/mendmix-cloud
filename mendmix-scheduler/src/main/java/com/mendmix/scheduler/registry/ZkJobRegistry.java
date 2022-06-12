@@ -99,7 +99,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 
 				if (!activeNodes.contains(JobContext.getContext().getNodeId())) {
 					zkClient.createEphemeral(nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
-					logger.info("node[{}] re-join task clusters", JobContext.getContext().getNodeId());
+					logger.info("MENDMIX-TRACE-LOGGGING-->> node[{}] re-join task clusters", JobContext.getContext().getNodeId());
 				}
 				// 对节点列表排序
 				Collections.sort(activeNodes);
@@ -112,7 +112,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 						// 指定当前节点为排序后的第一个节点
 						String newExecuteNodeId = activeNodes.get(0);
 						jobConfig.setCurrentNodeId(newExecuteNodeId);
-						logger.warn("Job[{}-{}] currentNodeId[{}] not in activeNodeList, assign new ExecuteNodeId:{}",
+						logger.warn("MENDMIX-TRACE-LOGGGING-->> Job[{}-{}] currentNodeId[{}] not in activeNodeList, assign new ExecuteNodeId:{}",
 								jobConfig.getGroupName(), jobConfig.getJobName(), jobConfig.getCurrentNodeId(),
 								newExecuteNodeId);
 					}
@@ -204,7 +204,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 			}
 		});
 		//
-		logger.info("finish register schConfig:{}",
+		logger.info("MENDMIX-TRACE-LOGGGING-->> finish register schConfig:{}",
 				ToStringBuilder.reflectionToString(conf, ToStringStyle.MULTI_LINE_STYLE));
 	}
 
@@ -224,11 +224,11 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 				//
 				if (currentChilds == null || !currentChilds.contains(JobContext.getContext().getNodeId())) {
 					zkClient.createEphemeral(nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
-					logger.info("Nodelist is empty~ node[{}] re-join task clusters",
+					logger.info("MENDMIX-TRACE-LOGGGING-->> Nodelist is empty~ node[{}] re-join task clusters",
 							JobContext.getContext().getNodeId());
 					return;
 				}
-				logger.info(">>nodes changed ,nodes:{}", currentChilds);
+				logger.info("MENDMIX-TRACE-LOGGGING-->> nodes changed ,nodes:{}", currentChilds);
 				// 分配节点
 				rebalanceJobNode(currentChilds);
 				// 刷新当前可用节点
@@ -236,16 +236,16 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 			}
 		});
 
-		logger.info("subscribe nodes change event at path:{}", nodeStateParentPath);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> ", nodeStateParentPath);
 		// 注册命令事件
 		registerCommondEvent();
-		logger.info("subscribe command event at path:{}",
+		logger.info("MENDMIX-TRACE-LOGGGING-->> subscribe command event at path:{}",
 				nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
 		// 刷新节点列表
 		List<String> activeNodes = zkClient.getChildren(nodeStateParentPath);
 		JobContext.getContext().refreshNodes(activeNodes);
 
-		logger.info("current activeNodes:{}", activeNodes);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> current activeNodes:{}", activeNodes);
 	}
 
 
@@ -269,7 +269,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 				config = getConfigFromZK(path, null);
 			} catch (Exception e) {
 				checkZkAvailabled();
-				logger.warn("fecth JobConfig from Registry error", e);
+				logger.warn("MENDMIX-TRACE-LOGGGING-->> fecth JobConfig from Registry error", e);
 			}
 		}
 		return config;
@@ -283,7 +283,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 
 		if (zkClient.getChildren(nodeStateParentPath).size() == 1) {
 			zkClient.delete(path);
-			logger.info("all node is closed ,delete path:" + path);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> all node is closed ,delete path:" + path);
 		}
 	}
 
@@ -314,7 +314,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 					zkClient.writeData(getPath(config), JsonUtils.toJson(config));
 			} catch (Exception e) {
 				checkZkAvailabled();
-				logger.warn(String.format("Job[{}] setRuning error...", jobName), e);
+				logger.warn(String.format("MENDMIX-TRACE-LOGGGING-->> Job[{}] setRuning error...", jobName), e);
 			}
 		} finally {
 			updatingStatus = false;
@@ -337,7 +337,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 					zkClient.writeData(getPath(config), JsonUtils.toJson(config));
 			} catch (Exception ex) {
 				checkZkAvailabled();
-				logger.warn(String.format("Job[{}] setStoping error...", jobName), ex);
+				logger.warn(String.format("MENDMIX-TRACE-LOGGGING-->> Job[{}] setStoping error...", jobName), ex);
 			}
 		} finally {
 			updatingStatus = false;
@@ -356,7 +356,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 			zkAvailabled = true;
 		} catch (Exception e) {
 			zkAvailabled = false;
-			logger.warn("ZK server is not available....");
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> ZK server is not available....");
 		}
 		return zkAvailabled;
 	}
@@ -372,7 +372,6 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 	public void onRegistered() {
 		// 注册订阅事件
 		regAndSubscribeNodeEvent();
-		logger.info("==============clear Invalid jobs=================");
 		List<String> jobs = zkClient.getChildren(groupPath);
 
 		List<String> registerJobs = new ArrayList<>(JobContext.getContext().getAllJobs().keySet());
@@ -386,7 +385,6 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 			jobPath = groupPath + "/" + job;
 			zkClient.delete(jobPath);
 		}
-		logger.info("==============clear Invalid jobs end=================");
 
 	}
 
@@ -401,7 +399,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 			public void handleDataChange(String dataPath, Object data) throws Exception {
 				MonitorCommond cmd = (MonitorCommond) data;
 				if (cmd != null) {
-					logger.info("收到commond:" + cmd.toString());
+					logger.info("MENDMIX-TRACE-LOGGGING-->> 收到commond:" + cmd.toString());
 					execCommond(cmd);
 				}
 			}

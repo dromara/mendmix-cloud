@@ -72,7 +72,7 @@ public class PaginationHandler implements InterceptorHandler {
 
 		this.dbType = DatabaseType.valueOf(MybatisConfigs.getDbType(context.getGroupName()));
 		
-		logger.info("dbType:{}",dbType.name());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> dbType:{}",dbType.name());
 		
 		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		for (MapperMetadata e : mappers) {

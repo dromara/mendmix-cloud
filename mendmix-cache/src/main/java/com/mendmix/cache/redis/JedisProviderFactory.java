@@ -91,7 +91,7 @@ public class JedisProviderFactory {
 			if(jedisProviders.containsKey(groupName)){
 				return jedisProviders.get(groupName);
 			}
-			logger.warn("未找到group[{}]对应的redis配置，使用默认缓存配置",groupName);
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> 未找到group[{}]对应的redis配置，使用默认缓存配置",groupName);
 		}
 		return defaultJedisProvider;
 	}

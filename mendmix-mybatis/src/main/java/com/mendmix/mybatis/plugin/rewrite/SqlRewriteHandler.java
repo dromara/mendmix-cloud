@@ -161,7 +161,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 		}
 		
-		logger.info("dataProfileMappings >> {}",dataPermMappings);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> dataProfileMappings >> {}",dataPermMappings);
 	}
 	
 	private void initColumnConfig(List<MapperMetadata> mappers,String column,List<String> mapperNames) {

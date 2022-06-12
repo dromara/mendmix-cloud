@@ -109,9 +109,9 @@ public class EventbusProducerAdapter implements MQProducer {
 			if(handler != null){
 				try {
 					messageHandlers.get(message.getTopic()).process(message);
-					if(logger.isDebugEnabled())logger.debug("MQ_MESSAGE_CONSUME_SUCCESS ->topic:{},message:{}",message.getTopic(),sequence);
+					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_SUCCESS ->topic:{},message:{}",message.getTopic(),sequence);
 				} catch (Exception e) {
-					logger.error(String.format("MQ_MESSAGE_CONSUME_ERROR ->topic:%s,msgId:%s", message.getTopic(),sequence),e);
+					logger.error(String.format("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_ERROR ->topic:%s,msgId:%s", message.getTopic(),sequence),e);
 				}				
 			}
 		}

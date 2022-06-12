@@ -112,7 +112,7 @@ public class MybatisMapperParser {
 			mapperMetadata.setGroup(group);
 		}
 		entitiesGroupMap.put(group, list);
-		log.info(">parse group[{}] finish,size:{}", group, entityInfos.size());
+		log.info("MENDMIX-TRACE-LOGGGING-->> parse group[{}] finish,size:{}", group, entityInfos.size());
 
 	}
 
@@ -129,7 +129,7 @@ public class MybatisMapperParser {
 			entityInfos.put(mapperClass, entityInfo);
 		}
 		if(entityInfo.getEntityClass() == null){				
-			log.warn("can't parse entityClass for:{}",mapperClass);
+			log.warn("MENDMIX-TRACE-LOGGGING-->> can't parse entityClass for:{}",mapperClass);
 			return;
 		}
 		mapperKeyMappings.put(mapperClass, entityInfo);
@@ -167,7 +167,7 @@ public class MybatisMapperParser {
 				if (includeContents.containsKey(refId)) {
 					data = data.replaceAll("<\\s?include.*(" + refId + ").*>", includeContents.get(refId));
 				} else {
-					log.error(String.format(">>>>>Parse SQL from mapper[%s-%s] error,not found include key:%s",
+					log.error(String.format("MENDMIX-TRACE-LOGGGING-->> Parse SQL from mapper[%s-%s] error,not found include key:%s",
 							fileName, node.getStringAttribute("id"), refId));
 				}
 			} else {

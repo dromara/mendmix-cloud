@@ -54,7 +54,7 @@ public class SecurityDelegating {
 		decisionProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
 		storageManager = new SecurityStorageManager(decisionProvider.cacheType());
 		sessionManager = new SecuritySessionManager(decisionProvider,storageManager);
-		logger.info(">> SecurityDelegating inited !!,sessisonStorageType:{}",decisionProvider.cacheType());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> SecurityDelegating inited !!,sessisonStorageType:{}",decisionProvider.cacheType());
 	}
 
 	private static SecurityDelegating getInstance() {

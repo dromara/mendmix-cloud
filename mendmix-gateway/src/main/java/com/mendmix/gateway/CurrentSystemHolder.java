@@ -225,7 +225,7 @@ public class CurrentSystemHolder {
 		} else {
 			mainSystem = new BizSystem();
 			mainSystem.setId(ResourceUtils.getProperty("default.allocation.system.id", "0"));
-			log.warn("system [{}] not found!!!!!!", GlobalRuntimeContext.SYSTEM_ID);
+			log.warn("MENDMIX-TRACE-LOGGGING-->> system [{}] not found!!!!!!", GlobalRuntimeContext.SYSTEM_ID);
 		}
 
 		// 全局模块

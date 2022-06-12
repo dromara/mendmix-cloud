@@ -104,7 +104,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered,Asyn
 			ThreadLocalContext.unset();
 			exchange.getAttributes().clear();
 			if(e instanceof MendmixBaseException == false) {
-				logger.error("requestFilter_error",e);
+				logger.error("MENDMIX-TRACE-LOGGGING-->> requestFilter_error",e);
 			}
 			ServerHttpResponse response = exchange.getResponse();
 			byte[] bytes = JsonUtils.toJson(WrapperResponse.fail(e)).getBytes(StandardCharsets.UTF_8);

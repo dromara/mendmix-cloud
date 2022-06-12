@@ -81,7 +81,7 @@ public class GuavaLevel1CacheProvider implements Level1CacheProvider{
 				}
 			}
 		} catch (Exception e) {
-			logger.warn("get LEVEL1 cache error",e);
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> get LEVEL1 cache error",e);
 		}
 		return null;
 	}

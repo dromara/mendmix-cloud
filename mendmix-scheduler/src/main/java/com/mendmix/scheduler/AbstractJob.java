@@ -128,12 +128,12 @@ public abstract class AbstractJob implements DisposableBean{
 			// 更新状态
 			beginTime = getPreviousFireTime();
 			JobContext.getContext().getRegistry().setRuning(jobName, beginTime);
-			logger.debug("Job_{} at node[{}] execute begin...", jobName, JobContext.getContext().getNodeId());
+			logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} at node[{}] execute begin...", jobName, JobContext.getContext().getNodeId());
 			
 			if(logging())ActionLogCollector.onSystemBackendTaskStart(jobName, jobName);
 			// 执行
 			doJob(JobContext.getContext());
-			logger.debug("Job_{} at node[{}] execute finish", jobName, JobContext.getContext().getNodeId());
+			logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} at node[{}] execute finish", jobName, JobContext.getContext().getNodeId());
 		} catch (Exception e) {
 			//重试
 			if(retries > 0)JobContext.getContext().getRetryProcessor().submit(this, retries);
@@ -150,7 +150,7 @@ public abstract class AbstractJob implements DisposableBean{
 				try {
 					JobContext.getContext().getPersistHandler().saveLog(schConf, exception);
 				} catch (Exception e2) {
-					logger.warn("JobLogPersistHandler run error",e2);
+					logger.warn("MENDMIX-TRACE-LOGGGING-->> JobLogPersistHandler run error",e2);
 				}
 			}
 			// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
@@ -170,7 +170,7 @@ public abstract class AbstractJob implements DisposableBean{
     	if(parallelEnabled())return false;
         try {
             if (!schConf.isActive()) {
-            	logger.debug("Job_{} 已禁用,终止执行", jobName);
+            	logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} 已禁用,终止执行", jobName);
                 return true;
             }
             
@@ -181,7 +181,7 @@ public abstract class AbstractJob implements DisposableBean{
             if(schConf.getNextFireTime() != null){
             	//下次执行时间 < 当前时间强制执行
             	if(currentTimes - schConf.getNextFireTime().getTime() > DEFAULT_ALLOW_DEVIATION){
-                	logger.debug("Job_{} NextFireTime[{}] before currentTime[{}],re-join-execute task ",jobName,currentTimes,schConf.getNextFireTime().getTime());
+                	logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} NextFireTime[{}] before currentTime[{}],re-join-execute task ",jobName,currentTimes,schConf.getNextFireTime().getTime());
                 	return false;
                 }
             	//如果多个节点做了时间同步，那么误差应该为0才触发任务执行，但是考虑一些误差因素，可以做一个误差容错
@@ -198,14 +198,14 @@ public abstract class AbstractJob implements DisposableBean{
           //如果执行节点不为空,且不等于当前节点
             if(StringUtils.isNotBlank(schConf.getCurrentNodeId()) ){            	
             	if(!JobContext.getContext().getNodeId().equals(schConf.getCurrentNodeId())){
-            		logger.debug("Job_{} 指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
+            		logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} 指定执行节点:{}，不匹配当前节点:{}", jobName,schConf.getCurrentNodeId(),JobContext.getContext().getNodeId());
             		return true;
             	}
             	//如果分配了节点，则可以保证本节点不会重复执行则不需要判断runing状态
             }else{  
             	if (schConf.isRunning()) {
             		//如果某个节点开始了任务但是没有正常结束导致没有更新任务执行状态
-            		logger.info("Job_{} 其他节点[{}]正在执行,终止当前执行", schConf.getCurrentNodeId(),jobName);
+            		logger.info("MENDMIX-TRACE-LOGGGING-->> Job_{} 其他节点[{}]正在执行,终止当前执行", schConf.getCurrentNodeId(),jobName);
             		return true;
             	}
             }
@@ -227,7 +227,7 @@ public abstract class AbstractJob implements DisposableBean{
             	getTrigger().setCronExpression(newCronExpr);  
                 getScheduler().rescheduleJob(triggerKey, getTrigger()); 
                 getScheduler().resumeTrigger(triggerKey);
-                logger.info("Job_{} CronExpression changed, origin:{},current:{}",jobName,originConExpression,newCronExpr);
+                logger.info("MENDMIX-TRACE-LOGGGING-->> Job_{} CronExpression changed, origin:{},current:{}",jobName,originConExpression,newCronExpr);
             }  
         } catch (Exception e) {
         	logger.error("checkConExprChange error",e);
@@ -294,7 +294,7 @@ public abstract class AbstractJob implements DisposableBean{
     	
         JobContext.getContext().getRegistry().register(jobConfg);
         
-        logger.info("Initialized Job_{} OK!!", jobName);
+        logger.info("MENDMIX-TRACE-LOGGGING-->> Initialized Job_{} OK!!", jobName);
     }
 	
 	public void afterInitialized()  {

@@ -106,11 +106,11 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if(ResourceUtils.getBoolean("mendmix.task.disabled", false)) {
-			logger.info("mendmix.task.disabled = {},Skip!!!",ResourceUtils.getBoolean("mendmix.task.disabled", false));
+			logger.info("MENDMIX-TRACE-LOGGGING-->> mendmix.task.disabled = {},Skip!!!",ResourceUtils.getBoolean("mendmix.task.disabled", false));
 			return;
 		}
 		
-		logger.info(">>JobContextNodeId:{}",JobContext.getContext().getNodeId());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> JobContextNodeId:{}",JobContext.getContext().getNodeId());
 		if(groupName == null) {
 			setGroupName(GlobalRuntimeContext.APPID);
 		}
@@ -124,7 +124,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 		}
 		
 		if(schedulers.isEmpty()){
-			logger.warn("Scheduler init failed,Any job not found");
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> Scheduler init failed,Any job not found");
 			return;
 		}
 		
@@ -146,7 +146,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 			threadPoolSize = threadPoolSize > 0 ? threadPoolSize : (schedulers.size() > 10 ? (schedulers.size()/2)  : schedulers.size());
 			quartzProperties.setProperty(SchedulerFactoryBean.PROP_THREAD_COUNT, String.valueOf(threadPoolSize));
 			beanDefBuilder.addPropertyValue("quartzProperties", quartzProperties);
-			logger.info("init Scheduler threadPoolSize:"+threadPoolSize);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> init Scheduler threadPoolSize:"+threadPoolSize);
 			
 			acf.registerBeanDefinition(beanName, beanDefBuilder.getRawBeanDefinition());
 		}else{
@@ -164,14 +164,14 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 				public void run() {	
 					job.afterInitialized();
 					if(job.isExecuteOnStarted()){						
-						logger.info("<<Job[{}] execute on startup....",job.jobName);
+						logger.info("MENDMIX-TRACE-LOGGGING-->> Job[{}] execute on startup....",job.jobName);
 						job.execute();
-						logger.info(">>Job[{}] execute on startup ok!",job.jobName);
+						logger.info("MENDMIX-TRACE-LOGGGING-->> Job[{}] execute on startup ok!",job.jobName);
 					}
 				}
 			});
 			
-			logger.info(">>>>>>> Job[{}][{}]-Class[{}]  initialized finish ",job.group,job.jobName,job.getClass().getName());
+			logger.info("MENDMIX-TRACE-LOGGGING-->> Job[{}][{}]-Class[{}]  initialized finish ",job.group,job.jobName,job.getClass().getName());
 		}
 		
 		//
@@ -219,7 +219,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
     	
     	ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
     	for (String scanBasePackage : scanBasePackages) {
-    		logger.info(">>begin scan package [{}] with Annotation[ScheduleConf] jobs ",scanBasePackage);
+    		logger.info("MENDMIX-TRACE-LOGGGING-->> begin scan package [{}] with Annotation[ScheduleConf] jobs ",scanBasePackage);
     		try {
                 String pattern = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + ClassUtils.convertClassNameToResourcePath(scanBasePackage)
                         + RESOURCE_PATTERN;
@@ -243,14 +243,14 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
                         	job.setRetries(annotation.retries());
                         	if(!schedulers.contains(job)){                        		
                         		schedulers.add(job);
-                        		logger.info("register new job:{}",ToStringBuilder.reflectionToString(job, ToStringStyle.JSON_STYLE));
+                        		logger.info("MENDMIX-TRACE-LOGGGING-->> register new job:{}",ToStringBuilder.reflectionToString(job, ToStringStyle.JSON_STYLE));
                         	}else{
-                        		logger.info("Job[{}] is registered",job.getJobName());
+                        		logger.info("MENDMIX-TRACE-LOGGGING-->> Job[{}] is registered",job.getJobName());
                         	}
                         }
                     }
                 }
-                logger.info("<<scan package["+scanBasePackage+"] finished!");
+                logger.info("MENDMIX-TRACE-LOGGGING-->> scan package["+scanBasePackage+"] finished!");
             } catch (Exception e) {
             	if(e instanceof org.springframework.beans.factory.NoSuchBeanDefinitionException){
             		throw (org.springframework.beans.factory.NoSuchBeanDefinitionException)e;

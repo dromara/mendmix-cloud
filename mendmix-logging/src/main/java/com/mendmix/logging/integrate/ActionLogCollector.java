@@ -110,9 +110,9 @@ public class ActionLogCollector {
     	if(actionLog == null) {
     		if(throwable != null) {
     			if (throwable instanceof MendmixBaseException) {
-    				log.warn("bizError"+LogMessageFormat.buildLogTail(null)+":{}",LogMessageFormat.buildExceptionMessages(throwable));
+    				log.warn("MENDMIX-TRACE-LOGGGING-->> bizError"+LogMessageFormat.buildLogTail(null)+":{}",LogMessageFormat.buildExceptionMessages(throwable));
     			}else {
-    				log.error("systemError" + LogMessageFormat.buildLogTail(null),throwable);
+    				log.error("MENDMIX-TRACE-LOGGGING-->> systemError" + LogMessageFormat.buildLogTail(null),throwable);
     			}
     		}
     		return;
@@ -124,9 +124,9 @@ public class ActionLogCollector {
     	}
     	if(throwable != null) {
     		if (throwable instanceof MendmixBaseException) {
-				log.warn("bizError"+LogMessageFormat.buildLogTail(actionLog.getActionKey())+":{}",LogMessageFormat.buildExceptionMessages(throwable));
+				log.warn("MENDMIX-TRACE-LOGGGING-->> bizError"+LogMessageFormat.buildLogTail(actionLog.getActionKey())+":{}",LogMessageFormat.buildExceptionMessages(throwable));
 			}else {
-				log.error("systemError" + LogMessageFormat.buildLogTail(actionLog.getActionKey()),throwable);
+				log.error("MENDMIX-TRACE-LOGGGING-->> systemError" + LogMessageFormat.buildLogTail(actionLog.getActionKey()),throwable);
 			}
 		}else  if(log.isDebugEnabled()) {
 			String requestLogMessage = RequestLogBuilder.responseLogMessage(actionLog.getResponseCode(), null, actionLog.getResponseData());

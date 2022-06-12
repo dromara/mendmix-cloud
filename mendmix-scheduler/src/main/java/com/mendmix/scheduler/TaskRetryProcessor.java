@@ -78,13 +78,13 @@ public class TaskRetryProcessor {
 	public void submit(final AbstractJob job,final int retries){
 		int taskCount;
 		if((taskCount = taskQueue.size()) > 100){
-			logger.warn("ErrorMessageProcessor queue task count over:{}",taskCount);
+			logger.warn("MENDMIX-TRACE-LOGGGING-->> ErrorMessageProcessor queue task count over:{}",taskCount);
 		}
 		if(queueJobNames.contains(job.jobName)){
-			logger.debug("Job[{}-{}] is existing in retry Queue",job.group,job.jobName);
+			logger.debug("MENDMIX-TRACE-LOGGGING-->> Job[{}-{}] is existing in retry Queue",job.group,job.jobName);
 			return;
 		}
-		logger.info("Add Job[{}-{}] to retry Queue,will be retry {} time",job.group,job.jobName,retries);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> Add Job[{}-{}] to retry Queue,will be retry {} time",job.group,job.jobName,retries);
 		taskQueue.add(new PriorityTask(job, retries));
 		queueJobNames.add(job.jobName);
 	}
@@ -95,7 +95,7 @@ public class TaskRetryProcessor {
 		taskQueue.add(new PriorityTask(null, 0));
 		try {Thread.sleep(1000);} catch (Exception e) {}
 		executor.shutdown();
-		logger.info("TaskRetryProcessor closed");
+		logger.info("MENDMIX-TRACE-LOGGGING-->> TaskRetryProcessor closed");
 	}
 	
 	class PriorityTask implements Runnable,Comparable<PriorityTask>{
@@ -124,20 +124,20 @@ public class TaskRetryProcessor {
 		@Override
 		public void run() {
 			try {	
-				logger.debug("begin re-process Job[{}-{}]:",job.group,job.jobName);
+				logger.debug("MENDMIX-TRACE-LOGGGING-->> begin re-process Job[{}-{}]:",job.group,job.jobName);
 				job.doJob(JobContext.getContext());
 				//remove
 				queueJobNames.remove(job.jobName);
 			} catch (Exception e) {
 				retryCount++;
-				logger.warn("retry Job[{}-{}] error",job.group,job.jobName);
+				logger.warn("MENDMIX-TRACE-LOGGGING-->> retry Job[{}-{}] error",job.group,job.jobName);
 				retry();
 			}
 		}
 		
 		private void retry(){
 			if(retryCount == retries){
-				logger.warn("retry_skip mssageId[{}] retry over {} time error ,skip!!!");
+				logger.warn("MENDMIX-TRACE-LOGGGING-->> retry_skip mssageId[{}] retry over {} time error ,skip!!!");
 				//remove
 				queueJobNames.remove(job.jobName);
 				return;
@@ -145,7 +145,7 @@ public class TaskRetryProcessor {
 			nextFireTime = nextFireTime + retryCount * RETRY_PERIOD_UNIT;
 			//重新放入任务队列
 			taskQueue.add(this);
-			logger.debug("re-submit Job[{}-{}] task to queue,next fireTime:{}",job.group,job.jobName,nextFireTime);
+			logger.debug("MENDMIX-TRACE-LOGGGING-->> re-submit Job[{}-{}] task to queue,next fireTime:{}",job.group,job.jobName,nextFireTime);
 		}
 
 		@Override

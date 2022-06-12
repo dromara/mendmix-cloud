@@ -154,7 +154,7 @@ public class SignatureRequestHandler implements PreFilterHandler {
 		
 		if(GatewayConfigs.openApiScopeEnabled) {
 			if(openApiConfig.getGrantedApis() == null || !openApiConfig.getGrantedApis().contains(apiInfo.getUri())) {
-				logger.info("openapi_error_apiUnauthorized -> clientId:{},uri:{}",openApiConfig.getClientId(),apiInfo.getUri());
+				logger.info("MENDMIX-TRACE-LOGGGING-->> openapi_error_apiUnauthorized -> clientId:{},uri:{}",openApiConfig.getClientId(),apiInfo.getUri());
 				throw new MendmixBaseException(403,"未开通该接口访问权限");
 			}
 		}
@@ -176,12 +176,12 @@ public class SignatureRequestHandler implements PreFilterHandler {
 
 	@Override
 	public void onStarted() {
-		logger.info("init OpenApiConfigs begin...");
+		logger.info("MENDMIX-TRACE-LOGGGING-->> init OpenApiConfigs begin...");
 		List<OpenApiConfig> configs = getConfigProvider().allOpenApiConfigs();
 		for (OpenApiConfig config : configs) {
 			openApiConfigs.put(config.getClientId(), config);
 		}
-		logger.info("init OpenApiConfigs finish -> clientIds:{}",openApiConfigs.keySet());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> init OpenApiConfigs finish -> clientIds:{}",openApiConfigs.keySet());
 	}
 	
 	

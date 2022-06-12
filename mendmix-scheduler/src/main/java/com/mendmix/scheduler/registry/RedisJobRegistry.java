@@ -183,7 +183,7 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 					redisTemplate.opsForZSet().remove(NODE_REGISTER_KEY, nodeId);
 					iterator.remove();
 					rebalanceRequired = true;
-					logger.info("scheduler node[{}] lastHeartbeatTime:{},removing...",nodeId,lastHeartbeatTime);
+					logger.info("MENDMIX-TRACE-LOGGGING-->> scheduler node[{}] lastHeartbeatTime:{},removing...",nodeId,lastHeartbeatTime);
 				}
 			}
 		}
@@ -191,7 +191,7 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 		if(rebalanceRequired) {
 			List<String> activeNodeIds = new ArrayList<>(nodeIds);
 			JobContext.getContext().refreshNodes(activeNodeIds);
-			logger.info("current activeNodeIds:{}",activeNodeIds);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> current activeNodeIds:{}",activeNodeIds);
 			//
 			rebalanceJobNode(activeNodeIds);
 		}

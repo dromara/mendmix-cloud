@@ -174,7 +174,7 @@ public class AwsProvider extends AbstractProvider {
                     .acl(acl).build());
             s3Client.putBucketPolicy(PutBucketPolicyRequest.builder().bucket(bucketName).policy(String.format(publicPolicyTemplate, bucketName,bucketName)).build());
         } catch (Exception e) {
-            LOGGER.error("创建Bucket[{}]出错, e={}", bucketName, ExceptionUtils.getMessage(e), e);
+            LOGGER.error("MENDMIX-TRACE-LOGGGING-->> 创建Bucket[{}]出错, e={}", bucketName, ExceptionUtils.getMessage(e), e);
         }
     }
 
@@ -183,7 +183,7 @@ public class AwsProvider extends AbstractProvider {
         try {
             s3Client.deleteBucket(DeleteBucketRequest.builder().bucket(bucketName).build());
         } catch (Exception e) {
-            LOGGER.error("删除Bucket[{}]出错, e={}", bucketName, ExceptionUtils.getMessage(e), e);
+            LOGGER.error("MENDMIX-TRACE-LOGGGING-->> 删除Bucket[{}]出错, e={}", bucketName, ExceptionUtils.getMessage(e), e);
         }
     }
 
@@ -241,7 +241,7 @@ public class AwsProvider extends AbstractProvider {
         } catch (MendmixBaseException e){
             throw e;
         } catch (Exception e) {
-            LOGGER.warn("上传失败, e={}", ExceptionUtils.getMessage(e), e);
+            LOGGER.warn("MENDMIX-TRACE-LOGGGING-->> 上传失败, e={}", ExceptionUtils.getMessage(e), e);
             throw new MendmixBaseException(e.getMessage());
         }
         return null;
@@ -269,7 +269,7 @@ public class AwsProvider extends AbstractProvider {
             DeleteBucketResponse deleteBucketResponse = s3Client.deleteBucket(deleteBucketRequest);
             return deleteBucketResponse.sdkHttpResponse().isSuccessful();
         } catch (Exception e) {
-            LOGGER.error("删除Bucket[{}]出错, e={}", bucketName, ExceptionUtils.getMessage(e), e);
+            LOGGER.error("MENDMIX-TRACE-LOGGGING-->> 删除Bucket[{}]出错, e={}", bucketName, ExceptionUtils.getMessage(e), e);
         }
         return false;
     }
@@ -285,7 +285,7 @@ public class AwsProvider extends AbstractProvider {
             ResponseBytes<GetObjectResponse> objectAsBytes = s3Client.getObjectAsBytes(getObjectRequest);
             bytes = objectAsBytes.asByteArray();
         } catch (Exception e) {
-            LOGGER.error("getObjectBytes出错, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e), e);
+            LOGGER.error("MENDMIX-TRACE-LOGGGING-->> getObjectBytes出错, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e), e);
         }
         return bytes;
     }

@@ -73,7 +73,7 @@ public class CMQConsumerAdapter extends AbstractConsumer {
 				return message;
 			}).collect(Collectors.toList());
 		} catch (Exception e) {
-			logger.error("",e);
+			logger.error("MENDMIX-TRACE-LOGGGING-->> ",e);
 			return new ArrayList<>(0);
 		}
 	}
@@ -85,7 +85,7 @@ public class CMQConsumerAdapter extends AbstractConsumer {
 			String receiptHandle = originMessage.receiptHandle;
 			CMQManager.getQueue().deleteMessage(receiptHandle);
 		} catch (Exception e) {
-			logger.error("",e);
+			logger.error("MENDMIX-TRACE-LOGGGING-->> ",e);
 		}
 		return null;
 	}

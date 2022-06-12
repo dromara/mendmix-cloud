@@ -58,7 +58,7 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 			String nodeId = nodes.get(nodeIndex++);
 			if (!StringUtils.equals(job.getCurrentNodeId(), nodeId)) {
 				job.setCurrentNodeId(nodeId);
-				logger.info("rebalance Job[{}-{}] To Node[{}] ", job.getGroupName(), job.getJobName(), nodeId);
+				logger.info("MENDMIX-TRACE-LOGGGING-->> rebalance Job[{}-{}] To Node[{}] ", job.getGroupName(), job.getJobName(), nodeId);
 			}
 			if (nodeIndex >= nodes.size()) {
 				nodeIndex = 0;
@@ -76,7 +76,7 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 		final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(key);
 		if(MonitorCommond.TYPE_EXEC == cmd.getCmdType()){
 			if(config.isRunning()){
-				logger.info("任务正在执行中，请稍后再执行");
+				logger.info("MENDMIX-TRACE-LOGGGING-->> tasl[{}] is running,return",abstractJob.getJobName());
 				return;
 			}
 			if(abstractJob != null){
@@ -84,7 +84,7 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 					@Override
 					public void run() {
 						try {
-							logger.info("begin execute job[{}] by MonitorCommond",abstractJob.getJobName());
+							logger.info("MENDMIX-TRACE-LOGGGING-->> begin execute job[{}] by MonitorCommond",abstractJob.getJobName());
 							abstractJob.doJob(JobContext.getContext());
 						} catch (Exception e) {
 							logger.error(abstractJob.getJobName(),e);
@@ -92,7 +92,7 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 					}
 				});
 			}else{
-				logger.warn("Not found job by key:{} !!!!",key);
+				logger.warn("MENDMIX-TRACE-LOGGGING-->> Not found job by key:{} !!!!",key);
 			}
 		}else if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType() 
 				|| MonitorCommond.TYPE_CRON_MOD == cmd.getCmdType()){

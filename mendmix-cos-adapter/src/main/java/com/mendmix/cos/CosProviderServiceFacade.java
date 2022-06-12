@@ -130,7 +130,7 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 	                0L, TimeUnit.MILLISECONDS,
 	                new LinkedBlockingQueue<Runnable>(capacity),
 	                new StandardThreadFactory("cosLogHandleExecutor"));
-			logger.info("init logHandleExecutor OK ,nThread:{},queue:{}",nThread,capacity);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> init logHandleExecutor OK ,nThread:{},queue:{}",nThread,capacity);
 		}
 	}
 	
@@ -226,7 +226,7 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 				public void run() {
 					HttpResponseEntity entity = HttpUtils.postJson(logUrl, JsonUtils.toJson(param));
 					if(!entity.isSuccessed()) {
-						logger.warn("syncUploadLogError==>{}",entity.getBody());
+						logger.warn("MENDMIX-TRACE-LOGGGING-->> syncUploadLogError==>{}",entity.getBody());
 					}
 				}
 			});
