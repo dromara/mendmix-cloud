@@ -37,7 +37,6 @@ import reactor.core.publisher.Mono;
 public class ReactiveRequestContextAdapter implements RequestContextAdapter {
 
 	public static void init(ServerHttpRequest request) {
-		ThreadLocalContext.unset();
 		ThreadLocalContext.set(_CTX_REQUEST_KEY, request);
 		CurrentRuntimeContext.addContextHeaders(request.getHeaders().toSingleValueMap());		
 	}

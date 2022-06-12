@@ -17,11 +17,13 @@ package com.mendmix.gateway.security;
 
 import org.springframework.http.server.reactive.ServerHttpRequest;
 
+import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.exception.ForbiddenAccessException;
 import com.mendmix.common.exception.UnauthorizedException;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.security.SecurityDelegating;
 import com.mendmix.security.context.ReactiveRequestContextAdapter;
+import com.mendmix.security.model.UserSession;
 
 /**
  * @description <br>
@@ -38,7 +40,15 @@ public class DefaultAuthorizationProvider implements AuthorizationProvider {
 	@Override
 	public AuthUser doAuthorization(String method, String uri)
 			throws UnauthorizedException, ForbiddenAccessException {
-		return SecurityDelegating.doAuthorization(method, uri).getUser();
+		final UserSession session = SecurityDelegating.doAuthorization(method, uri);
+		if(session != null && !session.isAnonymous()) {
+			CurrentRuntimeContext.setAuthUser(session.getUser());
+			if(session.getTenanId() != null) {
+				CurrentRuntimeContext.setTenantId(session.getTenanId());
+			}
+			return session.getUser();
+		}
+		return null;
 	}
 
 }

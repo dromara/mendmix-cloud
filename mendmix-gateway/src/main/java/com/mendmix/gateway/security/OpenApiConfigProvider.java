@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mendmix.gateway.api;
+package com.mendmix.gateway.security;
 
 import java.util.List;
 
-import com.mendmix.gateway.model.Tenant;
+import com.mendmix.gateway.model.OpenApiConfig;
 
-public interface TenantApi {
+/**
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">vakinge</a>
+ * @date Jun 12, 2022
+ */
+public interface OpenApiConfigProvider {
 
-	Tenant userDefaultTenant(String userId);
-	List<Tenant> userTenantList(String userId);
+	List<OpenApiConfig> allOpenApiConfigs();
+	
+	OpenApiConfig openApiConfig(String clientId);
 }

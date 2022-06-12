@@ -48,11 +48,15 @@ public class GlobalRuntimeContext {
 		ENV = StringUtils.isBlank(env) ? "local" : env;
 		APPID = ResourceUtils.getProperty("spring.application.name","unknow-service");
 		String[] strings = StringUtils.split(APPID, "-");
-		MODULE_NAME = strings.length > 1 ? strings[1] : strings[0];
-		if(ResourceUtils.containsProperty("system.id")) {
-			SYSTEM_ID = ResourceUtils.getProperty("system.id");
+		if(ResourceUtils.containsProperty("mendmix.system.identifier")) {
+			SYSTEM_ID = ResourceUtils.getProperty("mendmix.system.identifier");
 		}else {
 			SYSTEM_ID = strings[0];
+		}
+		if(ResourceUtils.containsProperty("mendmix.system.module.identifier")) {
+			MODULE_NAME = ResourceUtils.getProperty("mendmix.system.module.identifier");
+		}else {
+			MODULE_NAME = strings.length > 1 ? strings[1] : strings[0];
 		}
 		//
 		contextPath = ResourceUtils.getProperty("server.servlet.context-path","");
@@ -60,7 +64,10 @@ public class GlobalRuntimeContext {
 			contextPath = contextPath.substring(0, contextPath.length() - 1);
 		}
 		//
-		System.getProperty("env", ENV);
+		System.setProperty("systemId", GlobalRuntimeContext.SYSTEM_ID);
+		System.setProperty("moduleId", GlobalRuntimeContext.MODULE_NAME);
+		System.setProperty("appId", GlobalRuntimeContext.APPID);
+		System.setProperty("env", GlobalRuntimeContext.ENV);
 	}
 	
 	public static void setWorkIdGenerator(WorkIdGenerator workIdGenerator) {

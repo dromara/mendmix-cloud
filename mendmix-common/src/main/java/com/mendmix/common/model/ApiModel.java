@@ -1,5 +1,7 @@
 package com.mendmix.common.model;
 
+import com.mendmix.common.http.HttpMethod;
+
 public class ApiModel {
 
 	private String uri;
@@ -8,10 +10,10 @@ public class ApiModel {
 	public ApiModel() {}
 	
 	
-	public ApiModel(String uri, String method) {
+	public ApiModel(HttpMethod method,String uri) {
 		super();
 		this.uri = uri;
-		this.method = method;
+		this.method = method.name();
 	}
 
 

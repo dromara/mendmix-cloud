@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.cache.CacheBuilder;
 import com.mendmix.security.Cache;
 
+@SuppressWarnings("unchecked")
 public class LocalCache implements Cache{
 	
 	private com.google.common.cache.Cache<String,Object> cache;
@@ -50,6 +51,7 @@ public class LocalCache implements Cache{
 		cache.put(key, value);
 	}
 
+	
 	@Override
 	public <T> T getObject(String key) {
 		return (T) cache.getIfPresent(key);

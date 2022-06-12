@@ -21,8 +21,12 @@ import java.util.List;
 
 import org.springframework.context.ApplicationListener;
 
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.async.AsyncInitializer;
+import com.mendmix.common.http.HttpMethod;
 import com.mendmix.common.model.ApiInfo;
+import com.mendmix.common.model.ApiModel;
+import com.mendmix.common.model.AuthUser;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.model.BizSystemModule;
@@ -40,6 +44,24 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 		return false;
 	}
 	
+	
+	@Override
+	public List<ApiModel> anonymousUris() {
+		List<ApiModel> apis = new ArrayList<>();
+		apis.add(new ApiModel(HttpMethod.GET,"/actuator/health"));
+		return apis;
+	}
+
+
+
+	@Override
+	public AuthUser validateUser(String type, String name, String password) throws MendmixBaseException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
 	@Override
 	public String resolveUri(String uri) {
 		return GatewayConstants.PATH_PREFIX + uri;

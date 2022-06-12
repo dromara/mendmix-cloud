@@ -15,6 +15,7 @@
  */
 package com.mendmix.gateway.filter.pre;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,8 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.util.MultiValueMap;
@@ -38,6 +41,11 @@ import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.filter.PreFilterHandler;
 import com.mendmix.gateway.helper.RuequestHelper;
 import com.mendmix.gateway.model.BizSystemModule;
+import com.mendmix.gateway.model.OpenApiConfig;
+import com.mendmix.gateway.security.OpenApiConfigProvider;
+import com.mendmix.logging.integrate.ActionLog;
+import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.spring.InstanceFactory;
 
 /**
  * 
@@ -51,43 +59,78 @@ import com.mendmix.gateway.model.BizSystemModule;
  */
 public class SignatureRequestHandler implements PreFilterHandler {
 
-	private Map<String, String> appIdSecretMappings = new HashMap<String, String>();
-
-	public SignatureRequestHandler() {
-		// 本地配置
-		Properties properties = ResourceUtils.getAllProperties(GatewayConfigs.OPENAPI_CLIENT_MAPPING_CONFIG_KEY);
-		properties.forEach((k, v) -> {
-			String appId = k.toString().split("\\[|\\]")[1];
-			appIdSecretMappings.put(appId, v.toString());
-		});
+	static Logger logger = LoggerFactory.getLogger("com.mendmix.gateway");
+	
+	private static Map<String, OpenApiConfig> openApiConfigs = new HashMap<>();
+	
+	private static OpenApiConfigProvider configProvider;
+	
+	private static OpenApiConfigProvider getConfigProvider() {
+		if(configProvider != null)return configProvider;
+		synchronized (openApiConfigs) {
+			if(configProvider != null)return configProvider;
+			configProvider = InstanceFactory.getInstance(OpenApiConfigProvider.class);
+            if(configProvider == null) {
+            	configProvider = new OpenApiConfigProvider() {
+					@Override
+					public OpenApiConfig openApiConfig(String clientId) {
+						return null;
+					}
+					@Override
+					public List<OpenApiConfig> allOpenApiConfigs() {
+						
+						List<OpenApiConfig> configs = new ArrayList<OpenApiConfig>();
+						// 本地配置
+						Properties properties = ResourceUtils.getAllProperties(GatewayConfigs.OPENAPI_CLIENT_MAPPING_CONFIG_KEY);
+						properties.forEach((k, v) -> {
+							String clientId = k.toString().split("\\[|\\]")[1];
+							OpenApiConfig config = new OpenApiConfig(clientId, v.toString());
+							if(GatewayConfigs.openApiScopeEnabled) {
+								List<String> apis = ResourceUtils.getList("mendmix.openapi.apiscope.mapping["+clientId+"]");
+								config.setGrantedApis(apis);
+							}
+							configs.add(config);
+						});
+						return configs;
+					}
+				};
+            }
+		}
+		return configProvider;
+	}
+	
+	public static OpenApiConfig getOpenApiConfig(String clientId) {
+		OpenApiConfig openApiConfig = openApiConfigs.get(clientId);
+		if(openApiConfig == null) {
+			openApiConfig = getConfigProvider().openApiConfig(clientId);
+		}
+		if(openApiConfig == null) {
+			throw new MendmixBaseException("clientId["+clientId+"]配置不存在");
+		}
+		return openApiConfig;
 	}
 
 	@Override
 	public Builder process(ServerWebExchange exchange, BizSystemModule module, Builder requestBuilder) {
 
-		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),exchange.getRequest().getPath().value());
-		if (apiInfo == null || !apiInfo.isOpenApi()) {
-			throw new MendmixBaseException("该接口未开放访问权限");
-		}
-
 		HttpHeaders headers = exchange.getRequest().getHeaders();
 		String sign = headers.getFirst(GatewayConstants.X_SIGN_HEADER);
-		if (StringUtils.isBlank(sign))
+		if (StringUtils.isBlank(sign)) {
 			return requestBuilder;
-		if (StringUtils.isBlank(sign))
-			return requestBuilder;
+		}
+		
+		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),exchange.getRequest().getPath().value());
+		if (apiInfo == null || !apiInfo.isOpenApi()) {
+			throw new MendmixBaseException(500,"该接口未开放访问权限");
+		}
 		String timestamp = headers.getFirst(GatewayConstants.TIMESTAMP_HEADER);
-		String appId = headers.getFirst(GatewayConstants.APP_ID_HEADER);
+		String clientId = headers.getFirst(GatewayConstants.APP_ID_HEADER);
 
-		if (StringUtils.isAnyBlank(timestamp, appId)) {
-			throw new MendmixBaseException("认证头信息不完整");
+		if (StringUtils.isAnyBlank(timestamp, clientId)) {
+			throw new MendmixBaseException(400,"认证头信息不完整");
 		}
 
-		String secret = appIdSecretMappings.get(appId);
-
-		if (StringUtils.isBlank(secret)) {
-			throw new MendmixBaseException("appId不存在");
-		}
+		OpenApiConfig openApiConfig = getOpenApiConfig(clientId);
 
 		Object body = RuequestHelper.getCachingBodyString(exchange);
 		Map<String, Object> map = JsonUtils.toHashMap(body.toString(), Object.class);
@@ -102,11 +145,25 @@ public class SignatureRequestHandler implements PreFilterHandler {
 			}
 		}
 		
-		String signBaseString = StringUtils.trimToEmpty(ParameterUtils.mapToQueryParams(map)) + timestamp + secret;
+		String signBaseString = StringUtils.trimToEmpty(ParameterUtils.mapToQueryParams(map)) + timestamp + openApiConfig.getClientSecret();
 		String expectSign = DigestUtils.md5(signBaseString);
 
 		if (!expectSign.equals(sign)) {
-			throw new MendmixBaseException("签名错误");
+			throw new MendmixBaseException(400,"签名错误");
+		}
+		
+		if(GatewayConfigs.openApiScopeEnabled) {
+			if(openApiConfig.getGrantedApis() == null || !openApiConfig.getGrantedApis().contains(apiInfo.getUri())) {
+				logger.info("openapi_error_apiUnauthorized -> clientId:{},uri:{}",openApiConfig.getClientId(),apiInfo.getUri());
+				throw new MendmixBaseException(403,"未开通该接口访问权限");
+			}
+		}
+		
+		ActionLog actionLog = exchange.getAttribute(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME);
+		if(actionLog != null) {
+			actionLog.setUserId(clientId);
+			actionLog.setUserName(clientId);
+			actionLog.setClientType("openApi");
 		}
 
 		return requestBuilder;
@@ -116,5 +173,17 @@ public class SignatureRequestHandler implements PreFilterHandler {
 	public int order() {
 		return 0;
 	}
+
+	@Override
+	public void onStarted() {
+		logger.info("init OpenApiConfigs begin...");
+		List<OpenApiConfig> configs = getConfigProvider().allOpenApiConfigs();
+		for (OpenApiConfig config : configs) {
+			openApiConfigs.put(config.getClientId(), config);
+		}
+		logger.info("init OpenApiConfigs finish -> clientIds:{}",openApiConfigs.keySet());
+	}
+	
+	
 
 }

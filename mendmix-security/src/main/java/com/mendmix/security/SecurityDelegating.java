@@ -19,7 +19,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,6 +116,12 @@ public class SecurityDelegating {
 	public static UserSession updateSession(AuthUser userInfo){
 		UserSession session = getCurrentSession();
 		if(session == null)session = UserSession.create();
+		//多系统情况，已第一次登录的系统id为准
+		if(session.getSystemId() == null) {
+			session.setSystemId(CurrentRuntimeContext.getSystemId());
+		}
+		session.setTenanId(CurrentRuntimeContext.getTenantId());
+		session.setClientType(CurrentRuntimeContext.getClientType());
 		session.setUser(userInfo);
 		
 		if(getInstance().decisionProvider.kickOff()){
@@ -153,6 +158,10 @@ public class SecurityDelegating {
 		if((session == null || session.isAnonymous()) && PermissionLevel.Anonymous != permissionObject.getPermissionLevel()) {
 			throw new UnauthorizedException();
 		}
+		//兼容多系统切换
+		if(session != null) {
+			session.setSystemId(CurrentRuntimeContext.getSystemId());
+		}
 		
 		if(!isAdmin && getInstance().decisionProvider.apiAuthzEnabled()) {
 			//如果需鉴权
@@ -163,15 +172,7 @@ public class SecurityDelegating {
 				}
 			}
 		}
-		//
-		if(session != null) {
-			CurrentRuntimeContext.setAuthUser(session.getUser());
-			
-			if(StringUtils.isNotBlank(session.getTenantId())) {
-				CurrentRuntimeContext.setTenantId(session.getTenantId());
-			}
-		}
-		
+
 		return session;
 	}
 	

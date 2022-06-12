@@ -42,7 +42,6 @@ import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.apache.logging.log4j.core.config.xml.XmlConfigurationFactory;
 import org.apache.logging.log4j.status.StatusLogger;
 
-import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.util.IpUtils;
 import com.mendmix.common.util.ResourceUtils;
 
@@ -106,10 +105,6 @@ public class LogProfileManager {
 	}
 
 	public static void reload() {
-
-		System.setProperty("systemId", GlobalRuntimeContext.SYSTEM_ID);
-		System.setProperty("appId", GlobalRuntimeContext.APPID);
-		System.setProperty("env", GlobalRuntimeContext.ENV);
 
 		Properties logProperties = ResourceUtils.getAllProperties("log.");
 		logProperties.forEach((k, v) -> {

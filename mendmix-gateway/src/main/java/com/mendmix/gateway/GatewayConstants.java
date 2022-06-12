@@ -26,7 +26,7 @@ public class GatewayConstants {
 	public static final String CACHED_REQUEST_BODY_STR_ATTR = "cachedRequestBodyStr";
 	
 	public static final String X_SIGN_HEADER = "x-open-sign";
-	public static final String APP_ID_HEADER = "x-open-appId";
+	public static final String APP_ID_HEADER = "x-open-clientId";
 	public static final String TIMESTAMP_HEADER = "timestamp";
 	
 	public static final String PATH_PREFIX = "/api";

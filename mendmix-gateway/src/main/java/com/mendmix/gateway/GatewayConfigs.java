@@ -39,7 +39,8 @@ public class GatewayConfigs extends AppConfigs {
 	public static final boolean actionLogGetMethodIngore = ResourceUtils.getBoolean("mendmix.actionlog.getMethod.ignore", true);
 	public static final List<String> anonymousIpWhilelist = ResourceUtils.getList("mendmix.acl.anonymous-ip-whilelist");
 	
-	public static final boolean openEnabled = ResourceUtils.getBoolean("mendmix.openapi.enabled", false);
+	public static final boolean openApiEnabled = ResourceUtils.getBoolean("mendmix.openapi.enabled", false);
+	public static final boolean openApiScopeEnabled = ResourceUtils.getBoolean("mendmix.openapi.apiscope.enabled", false);
 	
 	public static final List<String> ignoreRewriteRoutes = ResourceUtils.getList("mendmix.response.rewrite.ignore-routes");
 	

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,8 +82,8 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 				if (GlobalRuntimeContext.APPID.equals(module.getServiceId())) {
 					continue;
 				}
-				// 本地已加载
-				if (routeHub.get().containsKey(module.getServiceId())) {
+				
+				if(routeHub.get().containsKey(module.getServiceId())) {
 					continue;
 				}
 				//
@@ -94,13 +95,15 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 				adaptCachedBodyGlobalFilter.onApplicationEvent(enableBodyCachingEvent);
 			}
 			
-			StringBuilder logBuilder = new StringBuilder("\n=============routes map Begin==============\n");
-			for (BizSystemModule module : modules.values()) {
-				if(GlobalRuntimeContext.APPID.equals(module.getServiceId()))continue;
-				logBuilder.append(module.toString()).append("\n");
+			StringBuilder message = new StringBuilder("\n================final RouteMapping begin===============\n");
+			for (RouteDefinition route : routeHub.get().values()) {
+				EnableBodyCachingEvent enableBodyCachingEvent = new EnableBodyCachingEvent(new Object(), route.getId());
+				adaptCachedBodyGlobalFilter.onApplicationEvent(enableBodyCachingEvent);
+				buildRouteLogMessage(message, route);
 			}
-			logBuilder.append("=============routes map End==============\n");
-			logger.info(logBuilder.toString());
+			message.append("================final RouteMapping end===============\n");
+			logger.info(message.toString());
+
 		}
 
 		return Flux.fromIterable(routeHub.get().values());
@@ -124,7 +127,7 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 		String proxyUri = module.getProxyUri();
 		int stripPrefix = module.getStripPrefix();
 		RouteDefinition routeDef = new RouteDefinition();
-		routeDef.setId(module.getServiceId());
+		routeDef.setId(module.getRouteName());
 		routeDef.setUri(URI.create(proxyUri));
 		routeDef.setPredicates(new ArrayList<>(1));
 		String pathExpr = String.format("Path=%s/%s/**", GatewayConstants.PATH_PREFIX, module.getRouteName());
@@ -145,5 +148,26 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 		});
 	}
 
+	private void buildRouteLogMessage(StringBuilder message, RouteDefinition route) {
+		message.append(route.getId()).append(":[");
+		message.append("url:").append(route.getUri()).append(",");
+		PredicateDefinition pathDef = route.getPredicates().stream().filter(p -> "Path".equals(p.getName())).findFirst().orElse(null);
+		String routeName = "";
+		if(pathDef != null) {
+			String argValue = pathDef.getArgs().get("_genkey_0");
+			String[] parts = StringUtils.split(argValue, "/");
+			if(parts.length > 1) {
+				routeName = parts[1];
+				message.append("routeName:").append(routeName);
+			}
+			message.append(",path:").append(argValue);
+		}
+		FilterDefinition stripPrefixDef = route.getFilters().stream().filter(p -> "StripPrefix".equals(p.getName())).findFirst().orElse(null);
+		if(stripPrefixDef != null) {
+			message.append(",stripPrefix:").append(stripPrefixDef.getArgs().get("_genkey_0"));
+		}
+		
+		message.append("]\n");
+	}
 
 }

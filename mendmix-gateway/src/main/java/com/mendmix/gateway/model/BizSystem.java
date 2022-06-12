@@ -15,6 +15,7 @@
  */
 package com.mendmix.gateway.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -76,7 +77,7 @@ public class BizSystem {
 
 
 	public List<BizSystemPortal> getPortals() {
-		return portals;
+		return portals == null ? (portals = new ArrayList<>(0)) : portals;
 	}
 
 	public void setPortals(List<BizSystemPortal> portals) {
@@ -84,11 +85,17 @@ public class BizSystem {
 	}
 
 	public List<BizSystemModule> getModules() {
-		return modules;
+		return modules == null ? (modules = new ArrayList<>(0)) : modules;
 	}
 
 	public void setModules(List<BizSystemModule> modules) {
 		this.modules = modules;
+	}
+
+	@Override
+	public String toString() {
+		return "[id:" + id + ", code:" + code + ", name:" + name + ", modules:" + getModules().size() + ", portals:"
+				+ getPortals().size() + "]";
 	}
 
 	

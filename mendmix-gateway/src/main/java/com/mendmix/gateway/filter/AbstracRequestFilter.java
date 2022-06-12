@@ -31,6 +31,8 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.mendmix.common.MendmixBaseException;
+import com.mendmix.common.ThreadLocalContext;
+import com.mendmix.common.async.AsyncInitializer;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.gateway.GatewayConfigs;
@@ -49,7 +51,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:vakinge@gmail.com">jiangwei</a>
  * @date 2022年4月7日
  */
-public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
+public abstract class AbstracRequestFilter implements GlobalFilter, Ordered,AsyncInitializer {
 
 	private static Logger logger = LoggerFactory.getLogger("com.mendmix.gateway");
     
@@ -64,7 +66,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
 			handlers.add(new RequestLogHanlder());
 		}
 		
-		if(GatewayConfigs.openEnabled) {
+		if(GatewayConfigs.openApiEnabled) {
 			handlers.add(new SignatureRequestHandler());
 		}
 
@@ -99,6 +101,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
     		}
     		exchange = exchange.mutate().request(requestBuilder.build()).build();
 		} catch (Exception e) {
+			ThreadLocalContext.unset();
 			exchange.getAttributes().clear();
 			if(e instanceof MendmixBaseException == false) {
 				logger.error("requestFilter_error",e);
@@ -117,6 +120,13 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered {
     	//after AdaptCachedBodyGlobalFilter
         return Ordered.HIGHEST_PRECEDENCE + 1001;
     }
+
+	@Override
+	public void doInitialize() {
+		for (PreFilterHandler handler : handlers) {
+			handler.onStarted();
+		}
+	}
     
     
 }

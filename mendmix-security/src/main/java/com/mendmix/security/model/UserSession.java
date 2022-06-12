@@ -15,9 +15,6 @@
  */
 package com.mendmix.security.model;
 
-import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.TokenGenerator;
 
@@ -36,10 +33,10 @@ public class UserSession {
 	private String sessionId;
 	private AuthUser user;
 	private long expiredAt;
-
-	private String tenantId;
-	@JsonIgnore
-	private List<String> permissions;
+	
+	private String tenanId;
+	private String systemId;
+	private String clientType;
 
 	public UserSession() {}
 	
@@ -74,30 +71,8 @@ public class UserSession {
 		this.sessionId = sessionId;
 	}
 
-
-	public String getTenantId() {
-		return tenantId;
-	}
-
-	public void setTenantId(String tenantId) {
-		this.tenantId = tenantId;
-	}
-
 	public void setUser(AuthUser user) {
 		this.user = user;
-	}
-
-	/**
-	 * @return the permissions
-	 */
-	public List<String> getPermissions() {
-		return permissions;
-	}
-	/**
-	 * @param permissions the permissions to set
-	 */
-	public void setPermissions(List<String> permissions) {
-		this.permissions = permissions;
 	}
 	
 	public long getExpiredAt() {
@@ -114,5 +89,29 @@ public class UserSession {
 	public int getExpiresIn() {
 		return (int) (this.expiredAt - System.currentTimeMillis());
 	}
-	
+
+	public String getTenanId() {
+		return tenanId;
+	}
+
+	public void setTenanId(String tenanId) {
+		this.tenanId = tenanId;
+	}
+
+	public String getSystemId() {
+		return systemId;
+	}
+
+	public void setSystemId(String systemId) {
+		this.systemId = systemId;
+	}
+
+	public String getClientType() {
+		return clientType;
+	}
+
+	public void setClientType(String clientType) {
+		this.clientType = clientType;
+	}
+
 }

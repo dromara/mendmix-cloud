@@ -42,7 +42,10 @@ public class SpecUnauthorizedHandler {
 		
 		ServerHttpRequest request = exchange.getRequest();
 		
-		boolean pass = request.getHeaders().containsKey(GatewayConstants.X_SIGN_HEADER);
+		boolean pass = false;
+		if(!RuequestHelper.getCurrentModule(exchange).isGateway()) {
+			pass = GatewayConfigs.openApiEnabled && request.getHeaders().containsKey(GatewayConstants.X_SIGN_HEADER);
+		}
 		if(!pass) {
 			pass = isIpWhilelistAccess(request);
 		}

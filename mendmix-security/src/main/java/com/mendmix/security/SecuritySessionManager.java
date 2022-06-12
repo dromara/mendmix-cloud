@@ -36,6 +36,9 @@ import com.mendmix.security.model.UserSession;
  */
 public class SecuritySessionManager {
 
+	private static final String PERMISSION_KEY_PREFIX = "permission:";
+	private static final String API_ITEM_KEY = "api_%s_%s";
+
 	private static String cacheName = "session";
 
 	private volatile String cookieDomain;
@@ -131,13 +134,15 @@ public class SecuritySessionManager {
 	
 	public void updateUserPermissions(UserSession session, List<String> permissions) {
 		if(permissions == null)return;
-		String key = "permission:" + session.getSessionId();
-		storageManager.getCache(cacheName).setObject(key, permissions);
+		String key = PERMISSION_KEY_PREFIX + session.getSessionId();
+		String field = String.format(API_ITEM_KEY, StringUtils.trimToEmpty(session.getSystemId()),StringUtils.trimToEmpty(session.getTenanId()));
+		storageManager.getCache(cacheName).setMapValue(key, field, permissions);
 	}
 	
 	public List<String> getUserPermissions(UserSession session){
-		String key = "permission:" + session.getSessionId();
-		return storageManager.getCache(cacheName).getObject(key);
+		String key = PERMISSION_KEY_PREFIX + session.getSessionId();
+		String field = String.format(API_ITEM_KEY, StringUtils.trimToEmpty(session.getSystemId()),StringUtils.trimToEmpty(session.getTenanId()));
+		return storageManager.getCache(cacheName).getMapValue(key, field);
 	}
 	
 	public long getUpdateTime(UserSession session) {

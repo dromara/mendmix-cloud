@@ -17,6 +17,7 @@ package com.mendmix.gateway.api;
 
 import java.util.List;
 
+import com.mendmix.gateway.model.BizSystem;
 import com.mendmix.gateway.model.BizSystemModule;
 
 /**
@@ -31,6 +32,10 @@ import com.mendmix.gateway.model.BizSystemModule;
  */
 public interface SystemMgtApi {
 
-	List<BizSystemModule> getSystemModules();
+	BizSystem getSystemMetadata(String identifier);
+
+	List<BizSystemModule> getGlobalModules();
+
+	List<String> getSubSystemIdentifiers(String identifier);
 
 }

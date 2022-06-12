@@ -15,9 +15,13 @@
  */
 package com.mendmix.gateway.filter;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
@@ -25,6 +29,7 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 
 import com.mendmix.common.CurrentRuntimeContext;
+import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.exception.ForbiddenAccessException;
 import com.mendmix.common.exception.UnauthorizedException;
@@ -35,6 +40,7 @@ import com.mendmix.common.util.JsonUtils;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.helper.RuequestHelper;
+import com.mendmix.gateway.model.BizSystem;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.gateway.model.BizSystemPortal;
 import com.mendmix.gateway.security.AuthorizationProvider;
@@ -75,6 +81,7 @@ public class GlobalFilter implements WebFilter {
 				return chain.filter(exchange);
 			}
 			
+			ThreadLocalContext.unset();
 			exchange.getAttributes().clear();
 			
 			beforeAuthentication(exchange);
@@ -87,18 +94,20 @@ public class GlobalFilter implements WebFilter {
 				currentUser = authorizationProvider.doAuthorization(request.getMethodValue(),request.getPath().value());
 			} catch (UnauthorizedException e) {
 				if(!specUnauthorizedHandler.customAuthentication(exchange)) {
-					byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.fail(e));
-					return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
+					return writeErrorResponse(response, e);
 				}
 			}catch (ForbiddenAccessException e) {				
-				byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.fail(e));
-				return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
+				return writeErrorResponse(response, e);
 			}
 			//
 			afterAuthentication(exchange,currentUser);
 			
 			return chain.filter(exchange) //
 				    .doFinally(s -> {
+				    	ActionLog actionLog = exchange.getAttribute(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME);
+				    	if(actionLog != null) {
+				    		ActionLogCollector.onResponseEnd(actionLog, response.getRawStatusCode(), null);
+				    	}
 					   exchange.getAttributes().clear();
 				    });
 		} catch (Exception e) {
@@ -119,6 +128,37 @@ public class GlobalFilter implements WebFilter {
 			CurrentRuntimeContext.setClientType(portal.getClientType());
 			CurrentRuntimeContext.setPlatformType(portal.getCode());
 		}
+		//
+		String systemId = getHeaderSystemId(request);
+		if(systemId == null) {
+			BizSystem system = CurrentSystemHolder.getSystem();
+			if(system != null)systemId = system.getId();
+		}
+		if(systemId != null) {
+			CurrentRuntimeContext.setSystemId(systemId);
+		}
+	}
+	
+	private String getHeaderSystemId(ServerHttpRequest request) {
+		String systemId = request.getHeaders().getFirst(CustomRequestHeaders.HEADER_SYSTEM_ID);
+		if(systemId != null) {
+			if(logger.isTraceEnabled())logger.trace("header[x-system-id]={}",systemId);
+			boolean matched = false;
+			List<BizSystem> systems = CurrentSystemHolder.getSystems();
+			for (BizSystem system : systems) {
+				if(systemId.equals(system.getId()) || systemId.equals(system.getCode())) {
+					systemId = system.getId();
+					matched = true;
+					break;
+				}
+			}
+			if(!matched) {
+				logger.warn("header[x-system-id]={} can't matched",systemId);
+				systemId = null;
+			}
+		
+		}
+		return systemId;
 	}
 	
 	private void afterAuthentication(ServerWebExchange exchange,AuthUser currentUser) {
@@ -138,5 +178,10 @@ public class GlobalFilter implements WebFilter {
 		}
 	}
 	
+	private Mono<Void> writeErrorResponse(ServerHttpResponse response,Exception e){
+		response.getHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+		byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.fail(e));
+		return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
+	}
 
 }
