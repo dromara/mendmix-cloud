@@ -8,7 +8,7 @@
 		<version>14.1</version>
 	</parent>
 	<artifactId>mendmix-security</artifactId>
-	<version>1.4.1</version>
+	<version>1.4.2-SNAPSHOT</version>
 
 
 	<dependencies>

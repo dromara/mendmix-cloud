@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.model.ApiInfo;
-import com.mendmix.gateway.GatewayConstants;
+import com.mendmix.gateway.GatewayConfigs;
 
 public class BizSystemModule {
 
@@ -170,7 +170,7 @@ public class BizSystemModule {
 	
 	public void addApiInfo(ApiInfo apiInfo) {
 		String resolveUri = BizSystemModule.resolveRealUri(this, apiInfo.getUri());
-		apiInfo.setUri(resolveUri.substring(GatewayConstants.PATH_PREFIX.length()));
+		apiInfo.setUri(resolveUri.substring(GatewayConfigs.PATH_PREFIX.length()));
 		String uniqueKey = buildUniqueKey(apiInfo.getMethod(), resolveUri);
 		getApiInfos().put(uniqueKey, apiInfo);
 		if(uniqueKey.contains("{")) {
@@ -231,9 +231,9 @@ public class BizSystemModule {
 			return uri;
 		}else {
 			if(module.getStripPrefix() == 1) {
-				uri = GatewayConstants.PATH_PREFIX + uri;
+				uri = GatewayConfigs.PATH_PREFIX + uri;
 			}else {
-				uri = String.format("%s/%s/%s", GatewayConstants.PATH_PREFIX,module.getRouteName(),uri);
+				uri = String.format("%s/%s/%s", GatewayConfigs.PATH_PREFIX,module.getRouteName(),uri);
 			}
 		}
 		return uri.replace("//", "/");

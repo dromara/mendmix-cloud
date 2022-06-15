@@ -372,8 +372,8 @@ public class CurrentSystemHolder {
 				.findFirst().orElse(null);
 		if (pathDef != null) {
 			String pathPattern = pathDef.getArgs().get("_genkey_0");
-			if (!pathPattern.startsWith(GatewayConstants.PATH_PREFIX)) {
-				throw new MendmixBaseException("route path must startWith:" + GatewayConstants.PATH_PREFIX);
+			if (!pathPattern.startsWith(GatewayConfigs.PATH_PREFIX)) {
+				throw new MendmixBaseException("route path must startWith:" + GatewayConfigs.PATH_PREFIX);
 			}
 			String[] parts = StringUtils.split(pathPattern, "/");
 			module.setRouteName(parts[1]);

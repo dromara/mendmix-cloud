@@ -26,7 +26,6 @@ import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import com.mendmix.gateway.GatewayConfigs;
-import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.filter.GlobalFilter;
 import com.mendmix.gateway.security.AuthorizationProvider;
 import com.mendmix.gateway.security.DefaultAuthorizationProvider;  
@@ -55,6 +54,6 @@ public class FilterRegConfig {
 	@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 	public GlobalFilter securityDelegatingFilter(@Autowired(required = false) AuthorizationProvider authorizationProvider) {
 		if(authorizationProvider == null)authorizationProvider = new DefaultAuthorizationProvider();
-		return new GlobalFilter(GatewayConstants.PATH_PREFIX,authorizationProvider);
+		return new GlobalFilter(GatewayConfigs.PATH_PREFIX,authorizationProvider);
 	}
 }  

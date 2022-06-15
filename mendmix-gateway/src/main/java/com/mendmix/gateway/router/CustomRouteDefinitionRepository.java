@@ -37,7 +37,7 @@ import org.springframework.cloud.gateway.support.NotFoundException;
 
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.gateway.CurrentSystemHolder;
-import com.mendmix.gateway.GatewayConstants;
+import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.model.BizSystemModule;
 
 import reactor.core.publisher.Flux;
@@ -130,7 +130,7 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 		routeDef.setId(module.getRouteName());
 		routeDef.setUri(URI.create(proxyUri));
 		routeDef.setPredicates(new ArrayList<>(1));
-		String pathExpr = String.format("Path=%s/%s/**", GatewayConstants.PATH_PREFIX, module.getRouteName());
+		String pathExpr = String.format("Path=%s/%s/**", GatewayConfigs.PATH_PREFIX, module.getRouteName());
 		routeDef.getPredicates().add(new PredicateDefinition(pathExpr));
 		routeDef.setFilters(new ArrayList<>(1));
 		routeDef.getFilters().add(new FilterDefinition("StripPrefix=" + stripPrefix));

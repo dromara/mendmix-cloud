@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.WrapperResponse;
-import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.endpoint.management.HandleParam;
 import com.mendmix.gateway.endpoint.management.MgtHandler;
 import com.mendmix.gateway.endpoint.management.ModuleMgtHandler;
@@ -42,7 +41,7 @@ import com.mendmix.gateway.endpoint.management.ScheduleMgtHandler;
  * @date 2022年4月7日
  */
 @RestController
-@RequestMapping(GatewayConstants.PATH_PREFIX + "/serviceExporter")
+@RequestMapping("/serviceExporter")
 public class ServiceExporterController {
 	
 	private static Logger logger = LoggerFactory.getLogger("com.mendmix.gateway");

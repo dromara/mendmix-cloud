@@ -34,6 +34,8 @@ public class GatewayConfigs extends AppConfigs {
 	public static final String CORS_ENABLED_CONFIG_KEY = "mendmix.request.cors.enabled";
 	
 	public static final String OPENAPI_CLIENT_MAPPING_CONFIG_KEY = "mendmix.openapi.client-config.mapping";
+	
+	public static final String PATH_PREFIX = ResourceUtils.getProperty("mendmix.request.pathPrefix", "/api");
 
 	public static final boolean actionLogEnabled = ResourceUtils.getBoolean("mendmix.actionlog.enabled", false);
 	public static final boolean actionLogGetMethodIngore = ResourceUtils.getBoolean("mendmix.actionlog.getMethod.ignore", true);

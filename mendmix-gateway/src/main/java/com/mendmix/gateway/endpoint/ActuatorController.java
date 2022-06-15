@@ -30,7 +30,6 @@ import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.http.HttpRequestEntity;
 import com.mendmix.common.util.DateUtils;
 import com.mendmix.gateway.CurrentSystemHolder;
-import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.model.BizSystemModule;
 
 /**
@@ -43,7 +42,7 @@ import com.mendmix.gateway.model.BizSystemModule;
  * @date May 18, 2022
  */
 @RestController
-@RequestMapping(GatewayConstants.PATH_PREFIX + "/actuator")
+@RequestMapping("/actuator")
 public class ActuatorController {
 
 	@GetMapping("/health")

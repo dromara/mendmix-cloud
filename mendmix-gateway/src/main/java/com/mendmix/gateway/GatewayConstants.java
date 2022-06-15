@@ -29,5 +29,4 @@ public class GatewayConstants {
 	public static final String APP_ID_HEADER = "x-open-clientId";
 	public static final String TIMESTAMP_HEADER = "timestamp";
 	
-	public static final String PATH_PREFIX = "/api";
 }

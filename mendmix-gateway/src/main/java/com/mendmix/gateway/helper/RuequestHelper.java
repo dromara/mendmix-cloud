@@ -38,6 +38,7 @@ import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.ParameterUtils;
 import com.mendmix.common.util.WebUtils;
 import com.mendmix.gateway.CurrentSystemHolder;
+import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.model.BizSystemModule;
 
@@ -106,7 +107,7 @@ public class RuequestHelper {
 	}
 
 	public static String resolveRouteName(String uri) {
-		String contextPath = GatewayConstants.PATH_PREFIX;
+		String contextPath = GatewayConfigs.PATH_PREFIX;
 		int indexOf = StringUtils.indexOf(uri, GlobalConstants.PATH_SEPARATOR, contextPath.length());
 		uri = uri.substring(indexOf + 1);
 

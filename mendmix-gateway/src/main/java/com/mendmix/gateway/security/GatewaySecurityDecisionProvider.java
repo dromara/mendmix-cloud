@@ -28,7 +28,7 @@ import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.model.ApiModel;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.gateway.CurrentSystemHolder;
-import com.mendmix.gateway.GatewayConstants;
+import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.security.SecurityDecisionProvider;
 import com.mendmix.security.SecurityDelegating;
@@ -64,7 +64,7 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 
 	@Override
 	public String resolveUri(String uri) {
-		return GatewayConstants.PATH_PREFIX + uri;
+		return GatewayConfigs.PATH_PREFIX + uri;
 	}
 	
 
