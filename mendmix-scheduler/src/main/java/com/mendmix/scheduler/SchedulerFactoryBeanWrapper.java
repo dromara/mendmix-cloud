@@ -241,6 +241,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
                         	job.setGroup(groupName);                       	
 							job.setJobName(jobName);
                         	job.setRetries(annotation.retries());
+                        	job.setLogging(annotation.logging());
                         	if(!schedulers.contains(job)){                        		
                         		schedulers.add(job);
                         		logger.info("MENDMIX-TRACE-LOGGGING-->> register new job:{}",ToStringBuilder.reflectionToString(job, ToStringStyle.JSON_STYLE));

@@ -33,16 +33,14 @@ public class MonitorCommond implements Serializable {
 	
 	
 	private byte cmdType;
-	private String jobGroup; 
 	private String jobName; 
 	private Object body;
 	
 	public MonitorCommond() {}
 
-	public MonitorCommond(byte cmdType, String jobGroup, String jobName, Object body) {
+	public MonitorCommond(byte cmdType, String jobName, Object body) {
 		super();
 		this.cmdType = cmdType;
-		this.jobGroup = jobGroup;
 		this.jobName = jobName;
 		this.body = body;
 	}
@@ -51,12 +49,6 @@ public class MonitorCommond implements Serializable {
 	}
 	public void setCmdType(byte cmdType) {
 		this.cmdType = cmdType;
-	}
-	public String getJobGroup() {
-		return jobGroup;
-	}
-	public void setJobGroup(String jobGroup) {
-		this.jobGroup = jobGroup;
 	}
 	public String getJobName() {
 		return jobName;
@@ -75,7 +67,7 @@ public class MonitorCommond implements Serializable {
 
 	@Override
 	public String toString() {
-		return "MonitorCommond [cmdType=" + cmdType + ", jobGroup=" + jobGroup + ", jobName=" + jobName + "]";
+		return "MonitorCommond [cmdType=" + cmdType + ", jobName=" + jobName + "]";
 	}
 	
 	

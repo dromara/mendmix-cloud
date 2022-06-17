@@ -34,13 +34,15 @@ import java.lang.annotation.Target;
 @Documented
 public @interface ScheduleConf {
 
+	String cronExpr();
+	
 	/**
 	 * 重试次数
 	 * @return
 	 */
 	int retries() default 0;
 	
-	String cronExpr();
+	boolean logging() default false;
 	/**
 	 * 是否启动立即执行一次
 	 * @return

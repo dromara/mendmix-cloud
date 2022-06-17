@@ -70,6 +70,8 @@ public abstract class AbstractJob implements DisposableBean{
     
     private int retries = 0;//失败重试次数
     
+    private boolean logging;
+    
     private AtomicBoolean runing = new AtomicBoolean(false);
     private AtomicInteger runCount = new AtomicInteger(0);
 
@@ -108,6 +110,10 @@ public abstract class AbstractJob implements DisposableBean{
 	public void setRetries(int retries) {
 		this.retries = retries;
 	}
+	
+	public void setLogging(boolean logging) {
+		this.logging = logging;
+	}
 
 	protected Scheduler getScheduler() {
         if (scheduler == null)
@@ -130,7 +136,7 @@ public abstract class AbstractJob implements DisposableBean{
 			JobContext.getContext().getRegistry().setRuning(jobName, beginTime);
 			logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} at node[{}] execute begin...", jobName, JobContext.getContext().getNodeId());
 			
-			if(logging())ActionLogCollector.onSystemBackendTaskStart(jobName, jobName);
+			if(logging)ActionLogCollector.onSystemBackendTaskStart(jobName, jobName);
 			// 执行
 			doJob(JobContext.getContext());
 			logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} at node[{}] execute finish", jobName, JobContext.getContext().getNodeId());
@@ -156,7 +162,7 @@ public abstract class AbstractJob implements DisposableBean{
 			// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
 			cronTrigger = null;
 			//
-			if(logging())ActionLogCollector.onSystemBackendTaskEnd(exception);
+			if(logging)ActionLogCollector.onSystemBackendTaskEnd(exception);
 		}
 	}
 
@@ -339,9 +345,6 @@ public abstract class AbstractJob implements DisposableBean{
 		return true;
 	}
 
-	public boolean logging() {
-		return true;
-	}
 	/**
 	 * 是否开启并行处理
 	 * @return

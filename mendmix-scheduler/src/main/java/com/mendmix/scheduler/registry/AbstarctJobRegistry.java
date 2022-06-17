@@ -72,8 +72,7 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 	public void execCommond(MonitorCommond cmd){
 		if(cmd == null)return;
 		JobConfig config = schedulerConfgs.get(cmd.getJobName());
-		String key = cmd.getJobGroup() + ":" + cmd.getJobName();
-		final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(key);
+		final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(cmd.getJobName());
 		if(MonitorCommond.TYPE_EXEC == cmd.getCmdType()){
 			if(config.isRunning()){
 				logger.info("MENDMIX-TRACE-LOGGGING-->> tasl[{}] is running,return",abstractJob.getJobName());
@@ -92,7 +91,7 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 					}
 				});
 			}else{
-				logger.warn("MENDMIX-TRACE-LOGGGING-->> Not found job by key:{} !!!!",key);
+				logger.warn("MENDMIX-TRACE-LOGGGING-->> Not found job :{} !!!!",cmd.getJobName());
 			}
 		}else if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType() 
 				|| MonitorCommond.TYPE_CRON_MOD == cmd.getCmdType()){

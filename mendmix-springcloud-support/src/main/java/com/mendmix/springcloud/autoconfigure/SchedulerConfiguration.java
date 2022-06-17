@@ -28,6 +28,7 @@ import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.scheduler.JobRegistry;
 import com.mendmix.scheduler.SchedulerFactoryBeanWrapper;
 import com.mendmix.scheduler.registry.NullJobRegistry;
+import com.mendmix.scheduler.registry.RedisJobRegistry;
 import com.mendmix.scheduler.registry.ZkJobRegistry;
 
 /**
@@ -49,6 +50,13 @@ public class SchedulerConfiguration {
 			registry.setZkServers(zkServers);
 			return registry;
 		}else{
+			try {
+				Class.forName("org.springframework.data.redis.core.StringRedisTemplate");
+				if(ResourceUtils.containsAnyProperty("spring.redis.host","spring.redis.sentinel.nodes","spring.redis.cluster.nodes")) {
+					return new RedisJobRegistry();
+				}
+			} catch (ClassNotFoundException e) {
+			}
 			return new NullJobRegistry();
 		}
 	}

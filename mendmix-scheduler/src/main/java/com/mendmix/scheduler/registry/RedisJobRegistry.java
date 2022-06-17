@@ -37,6 +37,7 @@ import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.scheduler.JobContext;
 import com.mendmix.scheduler.model.JobConfig;
+import com.mendmix.spring.InstanceFactory;
 
 
 /**
@@ -58,8 +59,20 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 	
 	private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, new StandardThreadFactory("RedisJobRegistry"));
 	
-
+	public RedisJobRegistry() {}
+	
 	public RedisJobRegistry(StringRedisTemplate redisTemplate) {
+		this.redisTemplate = redisTemplate;
+	}
+
+	private StringRedisTemplate getRedisTemplate() {
+		if(redisTemplate == null) {
+			return InstanceFactory.getInstance(StringRedisTemplate.class);
+		}
+		return redisTemplate;
+	}
+
+	public void setRedisTemplate(StringRedisTemplate redisTemplate) {
 		this.redisTemplate = redisTemplate;
 	}
 	
@@ -70,7 +83,7 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 		if(onOherNodeJob != null && onOherNodeJob.getCurrentNodeId() != null) {
 			long currentTime = System.currentTimeMillis();
 			//当前注册的节点
-			Set<String> nodeIds = redisTemplate.opsForZSet().rangeByScore(NODE_REGISTER_KEY, currentTime - SYNC_STAT_PERIOD - 1, currentTime + 10000);
+			Set<String> nodeIds = getRedisTemplate().opsForZSet().rangeByScore(NODE_REGISTER_KEY, currentTime - SYNC_STAT_PERIOD - 1, currentTime + 10000);
 		    //注册运行节点已下线
 			if(nodeIds == null || !nodeIds.contains(onOherNodeJob.getCurrentNodeId())) {
 				conf.setCurrentNodeId(null);
@@ -81,7 +94,7 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 			conf.setCurrentNodeId(GlobalRuntimeContext.getNodeName());
 		}
 		
-		redisTemplate.opsForHash().put(JOB_REGISTER_KEY, conf.getJobName(), JsonUtils.toJson(conf));
+		getRedisTemplate().opsForHash().put(JOB_REGISTER_KEY, conf.getJobName(), JsonUtils.toJson(conf));
 		//
 		updateNodeSTat(GlobalRuntimeContext.getNodeName(), System.currentTimeMillis());
 	}

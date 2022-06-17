@@ -130,8 +130,7 @@ public class JobContext {
 	}
 	
 	public void addJob(AbstractJob job){
-		String key = job.group + ":" + job.jobName;
-		allJobs.put(key, job);
+		allJobs.put(job.jobName, job);
 	}
 
 	public Map<String, AbstractJob> getAllJobs() {

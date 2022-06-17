@@ -73,10 +73,9 @@ public class ScheduleApiServlet extends HttpServlet {
 			List<JobConfig> jobs = JobContext.getContext().getRegistry().getAllJobs();
 			info.setJobs(jobs);
 			respJson = JsonUtils.toJson(info);
-		} else if("POST".equals(req.getMethod())){
+		} else if("POST".equals(req.getMethod()) && "command".equals(act)){
 			String postJson = CharStreams.toString(new InputStreamReader(req.getInputStream(), "UTF-8"));
 			MonitorCommond cmd = JsonUtils.toObject(postJson, MonitorCommond.class);
-			cmd.setJobGroup(JobContext.getContext().getGroupName());
 			AbstarctJobRegistry registry = (AbstarctJobRegistry)JobContext.getContext().getRegistry();
 			registry.execCommond(cmd);
 			
