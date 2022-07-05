@@ -8,7 +8,7 @@
 		<version>14.1</version>
 	</parent>
 	<artifactId>mendmix-common</artifactId>
-	<version>1.4.2-SNAPSHOT</version>
+	<version>1.4.2</version>
 	<description>基础工具类支持</description>
 	
 	<properties>

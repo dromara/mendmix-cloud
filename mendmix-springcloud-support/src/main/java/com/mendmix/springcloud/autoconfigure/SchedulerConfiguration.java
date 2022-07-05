@@ -64,9 +64,8 @@ public class SchedulerConfiguration {
 	@Bean
 	@Order(Ordered.LOWEST_PRECEDENCE)
 	public SchedulerFactoryBeanWrapper schedulerFactoryBean(JobRegistry jobRegistry) {
-		String groupName = ResourceUtils.getProperty("mendmix.task.groupName",GlobalRuntimeContext.APPID);
 		SchedulerFactoryBeanWrapper bean = new SchedulerFactoryBeanWrapper();
-		bean.setGroupName(groupName);
+		bean.setGroupName(GlobalRuntimeContext.APPID);
 		bean.setThreadPoolSize(ResourceUtils.getInt("mendmix.task.threadPoolSize", 2));
 		bean.setRegistry(jobRegistry);
 		bean.setScanPackages(ResourceUtils.getProperty("mendmix.task.scanPackages"));

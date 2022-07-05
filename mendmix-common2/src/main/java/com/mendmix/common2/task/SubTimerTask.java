@@ -19,5 +19,7 @@ public interface SubTimerTask {
 
 	void doSchedule();
 
-	int periodMillis();
+	default long delay() {return 0;};
+	
+	long interval();
 }

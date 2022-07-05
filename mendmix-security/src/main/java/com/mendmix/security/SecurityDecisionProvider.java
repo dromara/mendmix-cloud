@@ -79,10 +79,6 @@ public abstract class SecurityDecisionProvider {
 		return new ArrayList<>(0);
 	}
 	
-	public String resolveUri(String uri) {
-		return uri;
-	}
-	
 	public abstract AuthUser validateUser(String type,String name,String password) throws MendmixBaseException;
 	public abstract List<ApiPermission> getAllApiPermissions();
 	public abstract List<ApiPermission> getUserApiPermissions(String userId);

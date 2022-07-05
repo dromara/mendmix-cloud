@@ -7,7 +7,7 @@
 		<version>14.1</version>
 	</parent>
 	<artifactId>mendmix-common2</artifactId>
-	<version>1.4.2-SNAPSHOT</version>
+	<version>1.4.2</version>
 	
 	<properties>
 	   <poi.version>3.17</poi.version>

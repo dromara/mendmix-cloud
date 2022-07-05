@@ -49,7 +49,7 @@
          scm:git:https://github.com/dromara/mendmix.git
       </developerConnection>
 		<url>https://github.com/dromara/mendmix</url>
-		<tag>1.4.2-SNAPSHOT</tag>
+		<tag>1.4.2</tag>
 	</scm>
 
 	<properties>

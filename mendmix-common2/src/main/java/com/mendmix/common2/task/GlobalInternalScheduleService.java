@@ -103,7 +103,7 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 		if (taskStat.running)
 			return;
 		long currentTime = System.currentTimeMillis();
-		if (currentTime - taskStat.lastFireTime < taskStat.task.periodMillis()) {
+		if (currentTime - taskStat.lastFireTime < taskStat.task.interval()) {
 			return;
 		}
 		taskStat.running = true;
@@ -132,8 +132,12 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 			} catch (Exception e) {
 				this.taskName = task.getClass().getSimpleName();
 			}
-			// 确保启动执行
-			this.lastFireTime = System.currentTimeMillis() - 3600 * 24 * 1000;
+			if(task.delay() > 0) {
+				this.lastFireTime = System.currentTimeMillis() + task.delay();
+			}else {
+				//确保启动执行
+				this.lastFireTime = System.currentTimeMillis() - 3600 * 24 * 1000;
+			}
 		}
 	}
 
@@ -141,6 +145,7 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 	@Override
 	public void doInitialize() {
 		for (SubTimerTaskStat taskStat : taskStats) {
+			if(taskStat.task.delay() > 0)continue;
 			execSubTimerTask(taskStat);
 		}
 	}

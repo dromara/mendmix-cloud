@@ -163,6 +163,7 @@ public class JsonUtils {
 	public static Map<String, Object> toHashMap(String jsonString) {
 		return toHashMap(jsonString, String.class, Object.class);
 	}
+
 	
 	@SuppressWarnings("unchecked")
 	public static <T> T toObject(String jsonString, JavaType javaType) {
@@ -176,10 +177,24 @@ public class JsonUtils {
 		}
 	}
 	
-	public static JsonNode getNode(String jsonString,String nodeName){
+	public static JsonNode selectJsonNode(String jsonString,String nodeName){
+		JsonNode jsonNode = toJsonNode(jsonString);
+		return nodeName == null ? jsonNode : jsonNode.get(nodeName);
+	}
+	
+	public static JsonNode toJsonNode(String jsonString){
 		try {
 			JsonNode node = getMapper().readTree(jsonString);	
-			return nodeName == null ? node : node.get(nodeName);
+			return node;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public static ArrayNode toJsonArrayNode(String jsonString){
+		try {
+			JsonNode node = getMapper().readTree(jsonString);	
+			return (ArrayNode)node;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -193,7 +208,19 @@ public class JsonUtils {
 	 */
 	public static String getJsonNodeValue(String jsonString, String attrs) {  
 		if(StringUtils.isBlank(jsonString))return null;
-		return getJsonNodeValue(getNode(jsonString, null), attrs);
+		return getJsonNodeValue(selectJsonNode(jsonString, null), attrs);
+	}
+	
+	public static <T> T toObject(JsonNode node,Class<T> clazz) {
+		return toObject(node.toString(), clazz);
+	}
+	
+	public static <T> List<T> toList(ArrayNode node,Class<T> clazz) {
+		List<T> result = new ArrayList<>(node.size());
+		for (int i = 0; i < node.size(); i++) {
+			result.add(toObject(node.get(i), clazz));
+		}
+		return result;
 	}
 	
 	/**

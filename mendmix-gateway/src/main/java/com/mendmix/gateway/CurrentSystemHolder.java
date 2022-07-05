@@ -35,17 +35,12 @@ import org.springframework.cloud.gateway.route.RouteDefinition;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.http.HostMappingHolder;
-import com.mendmix.common.http.HttpRequestEntity;
-import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.api.SystemMgtApi;
 import com.mendmix.gateway.model.BizSystem;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.gateway.model.BizSystemPortal;
-import com.mendmix.spring.DataChangeEvent;
 import com.mendmix.spring.InstanceFactory;
-import com.mendmix.springweb.exporter.AppMetadataHolder;
-import com.mendmix.springweb.model.AppMetadata;
 
 /**
  * <br>
@@ -70,10 +65,6 @@ public class CurrentSystemHolder {
 	private static List<BizSystemModule> localModules;
 
 	private static List<String> routeNames = new ArrayList<>();
-
-	private static Map<String, Map<String, ApiInfo>> moduleApiInfos = new HashMap<>();
-
-	private static int fetchApiMetaRetries = 0;
 
 	public static BizSystem getSystem() {
 		if (mainSystem == null) {
@@ -198,24 +189,6 @@ public class CurrentSystemHolder {
 		}
 		logBuilder.append("\n============load systems end================\n");
 		log.info(logBuilder.toString());
-
-		// 查询api信息
-		if (fetchApiMetaRetries == 0) {
-			new Thread(() -> {
-				while (routeModuleMappings.values().size() > moduleApiInfos.size() && fetchApiMetaRetries < 360) {
-					for (BizSystemModule module : routeModuleMappings.values()) {
-						if (moduleApiInfos.containsKey(module.getServiceId()))
-							continue;
-						initModuleApiInfos(module);
-					}
-					fetchApiMetaRetries++;
-					try {
-						Thread.sleep(10000);
-					} catch (Exception e) {
-					}
-				}
-			}).start();
-		}
 	}
 
 	private static void loadRemoteSystems() {
@@ -314,6 +287,7 @@ public class CurrentSystemHolder {
 			if (gatewayModule == null) {
 				gatewayModule = new BizSystemModule();
 				gatewayModule.setServiceId(GlobalRuntimeContext.APPID);
+				modules.add(gatewayModule);
 			}
 			gatewayModule.setRouteName(GlobalRuntimeContext.APPID);
 			gatewayModule.setStripPrefix(0);
@@ -377,38 +351,6 @@ public class CurrentSystemHolder {
 			}
 			String[] parts = StringUtils.split(pathPattern, "/");
 			module.setRouteName(parts[1]);
-		}
-	}
-
-	private static void initModuleApiInfos(BizSystemModule module) {
-		try {
-			String url;
-			AppMetadata appMetadata;
-			if (GlobalRuntimeContext.APPID.equals(module.getRouteName())) {
-				appMetadata = AppMetadataHolder.getMetadata();
-			} else {
-				url = module.getMetadataUri();
-				appMetadata = HttpRequestEntity.get(url).backendInternalCall().execute().toObject(AppMetadata.class);
-			}
-			for (ApiInfo api : appMetadata.getApis()) {
-				module.addApiInfo(api);
-			}
-			moduleApiInfos.put(module.getServiceId(), module.getApiInfos());
-			InstanceFactory.getContext().publishEvent(new DataChangeEvent("moduleApis", new Object()));
-			log.info("MENDMIX-TRACE-LOGGGING-->> initModuleApiInfos success -> serviceId:{},nums:{}", module.getServiceId(),
-					module.getApiInfos().size());
-		} catch (Exception e) {
-			boolean ignore = e instanceof ClassCastException;
-			if (!ignore && e instanceof MendmixBaseException) {
-				MendmixBaseException ex = (MendmixBaseException) e;
-				ignore = ex.getCode() == 404 || ex.getCode() == 401 || ex.getCode() == 403;
-			}
-			if (ignore) {
-				module.setApiInfos(new HashMap<>(0));
-				moduleApiInfos.put(module.getServiceId(), module.getApiInfos());
-			} else if (fetchApiMetaRetries <= 1) {
-				log.error("MENDMIX-TRACE-LOGGGING-->> initModuleApiInfos error -> serviceId:[" + module.getServiceId() + "]", e);
-			}
 		}
 	}
 

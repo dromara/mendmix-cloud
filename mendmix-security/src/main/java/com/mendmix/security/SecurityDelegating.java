@@ -248,7 +248,7 @@ public class SecurityDelegating {
 		}else {
 			permissions = new ArrayList<>(apiPermissions.size());
 			for (ApiPermission api : apiPermissions) {
-				permissions.add(ApiPermssionHelper.buildPermissionKey(api.getMethod(), decisionProvider.resolveUri(api.getUri())));
+				permissions.add(ApiPermssionHelper.buildPermissionKey(api.getMethod(), api.getUri()));
 			}
 		}
 		sessionManager.updateUserPermissions(session, permissions);

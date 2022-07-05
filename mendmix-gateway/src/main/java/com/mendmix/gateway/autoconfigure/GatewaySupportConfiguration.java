@@ -33,6 +33,7 @@ import com.mendmix.gateway.endpoint.ServiceExporterController;
 import com.mendmix.gateway.exception.ReactiveGlobalExceptionHandler;
 import com.mendmix.gateway.exception.RouteErrorWebExceptionHandler;
 import com.mendmix.gateway.router.CustomRouteDefinitionRepository;
+import com.mendmix.gateway.task.ModuleApiRefreshTask;
 
 @Configuration
 public class GatewaySupportConfiguration {
@@ -72,6 +73,11 @@ public class GatewaySupportConfiguration {
 		exceptionHandler.setMessageWriters(serverCodecConfigurer.getWriters());
 		exceptionHandler.setMessageReaders(serverCodecConfigurer.getReaders());
 		return exceptionHandler;
+	}
+	
+	@Bean
+	public ModuleApiRefreshTask moduleApiRefreshTask() {
+		return new ModuleApiRefreshTask();
 	}
 
 }

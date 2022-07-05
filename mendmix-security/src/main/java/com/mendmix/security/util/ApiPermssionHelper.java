@@ -60,7 +60,7 @@ public class ApiPermssionHelper {
     	String permissionKey;
     	for (ApiPermission apiPermission : permissions) {
     		if(apiPermission.getPermissionLevel() == PermissionLevel.LoginRequired)continue;
-    		permissionKey = buildPermissionKey(apiPermission.getMethod(), decisionProvider.resolveUri(apiPermission.getUri()));
+    		permissionKey = buildPermissionKey(apiPermission.getMethod(), apiPermission.getUri());
     		apiPermission.setPermissionKey(permissionKey);
     		apiPermissions.put(permissionKey, apiPermission);
     		if(permissionKey.contains("{")) {
@@ -71,7 +71,7 @@ public class ApiPermssionHelper {
     	//
     	List<ApiModel> anonymousUris = decisionProvider.anonymousUris();
     	for (ApiModel api : anonymousUris) {
-    		permissionKey = buildPermissionKey(api.getMethod(), decisionProvider.resolveUri(api.getUri()));
+    		permissionKey = buildPermissionKey(api.getMethod(), api.getUri());
     		ApiPermission apiPermission = new ApiPermission(api.getMethod(), api.getUri(), PermissionLevel.Anonymous);
 			if(api.getUri().contains("*")) {
 				Pattern pattern = Pattern.compile(pathVariableToPattern(permissionKey.replaceAll("\\*+", LEAST_ONE_REGEX)));
@@ -81,11 +81,13 @@ public class ApiPermssionHelper {
 			}
 		}
     	
-    	
+    	if(apiPermissions.isEmpty()) {
+    		apiPermissions.put("_", defaultApiOnNotMatch);
+    	}
     }
 	
 	public static void reload() {
-		if(apiPermissions.isEmpty())return;
+		apiPermissions.clear();
 		init();
 		logger.info("MENDMIX-TRACE-LOGGGING-->> reload apiPermissions:{}",apiPermissions.size());
 	}

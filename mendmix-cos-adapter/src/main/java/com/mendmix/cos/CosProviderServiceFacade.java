@@ -34,6 +34,9 @@ import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.cos.provider.AbstractProvider;
 import com.mendmix.cos.provider.aliyun.AliyunProvider;
+import com.mendmix.cos.provider.aws.AwsProvider;
+import com.mendmix.cos.provider.huawei.HuaweicloudProvider;
+import com.mendmix.cos.provider.minio.MinioProvider;
 import com.mendmix.cos.provider.qcloud.QcloudProvider;
 import com.mendmix.cos.provider.qiniu.QiniuProvider;
 
@@ -94,6 +97,7 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 			config.setSecretKey(ResourceUtils.getProperty("mendmix.cos.secretKey"));
 			config.setAppId(ResourceUtils.getProperty("mendmix.cos.appId"));
 			config.setRegionName(ResourceUtils.getProperty("mendmix.cos.regionName"));
+			config.setEndpoint(ResourceUtils.getProperty("mendmix.cos.endpoint"));
 			config.setMaxConnectionsCount(ResourceUtils.getInt("mendmix.cos.maxConnections", 200));
 		}
 		
@@ -103,6 +107,12 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 			provider = new QcloudProvider(config);
 		}else if(QiniuProvider.NAME.equals(type)) {
 			provider = new QiniuProvider(config);
+		}else if(AwsProvider.NAME.equals(type)) {
+			provider = new AwsProvider(config);
+		}else if(MinioProvider.NAME.equals(type)) {
+			provider = new MinioProvider(config);
+		}else if(HuaweicloudProvider.NAME.equals(type)) {
+			provider = new HuaweicloudProvider(config);
 		}else {
 			throw new MendmixBaseException("cos["+type+"] not support");
 		}

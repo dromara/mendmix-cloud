@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.time.DateUtils;
 
 import com.aliyun.oss.ClientBuilderConfiguration;
@@ -68,7 +69,11 @@ public class AliyunProvider extends AbstractProvider{
 	
 	public AliyunProvider(CosProviderConfig conf) {
 		super(conf);
-		String endpoint = String.format("https://oss-%s.aliyuncs.com", conf.getRegionName());
+		Validate.notBlank(conf.getRegionName(),"conf[regionName] is required");
+		String endpoint = conf.getEndpoint();
+		if(endpoint == null) {
+			endpoint = String.format("https://oss-%s.aliyuncs.com", conf.getRegionName());
+		}
 		ClientBuilderConfiguration buildConf = new ClientBuilderConfiguration();
 		// 设置是否支持CNAME。CNAME用于将自定义域名绑定到目标Bucket。
 		buildConf.setSupportCname(true);

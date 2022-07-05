@@ -160,7 +160,7 @@ public class BizSystemModule {
 	}
 	
 	public Map<String, ApiInfo> getApiInfos() {
-		return apiInfos == null ? (apiInfos = new HashMap<>()) : apiInfos;
+		return apiInfos;
 	}
 	
 	@JsonIgnore
@@ -169,24 +169,26 @@ public class BizSystemModule {
 	}
 	
 	public void addApiInfo(ApiInfo apiInfo) {
+		if(apiInfos == null)apiInfos = new HashMap<>();
 		String resolveUri = BizSystemModule.resolveRealUri(this, apiInfo.getUri());
-		apiInfo.setUri(resolveUri.substring(GatewayConfigs.PATH_PREFIX.length()));
-		String uniqueKey = buildUniqueKey(apiInfo.getMethod(), resolveUri);
-		getApiInfos().put(uniqueKey, apiInfo);
-		if(uniqueKey.contains("{")) {
-			Pattern pattern = Pattern.compile(uniqueKey.replaceAll("\\{[^/]+?\\}", ".+"));
+		apiInfo.setUri(resolveUri);
+		String identifier = buildIdentifier(apiInfo.getMethod(), resolveUri);
+		apiInfo.setIdentifier(identifier);
+		apiInfos.put(identifier, apiInfo);
+		if(identifier.contains("{")) {
+			Pattern pattern = Pattern.compile(identifier.replaceAll("\\{[^/]+?\\}", ".+"));
 			wildcardUris.put(pattern, apiInfo);
 		}
 	}
 
 	public ApiInfo getApiInfo(String method, String uri) {
-		String uniqueKey = buildUniqueKey(method, uri);
-		ApiInfo apiInfo = getApiInfos().get(uniqueKey);
+		String identifier = buildIdentifier(method, uri);
+		ApiInfo apiInfo = getApiInfos().get(identifier);
 		if(apiInfo != null) {
 			return apiInfo;
 		}
 		for (Pattern pattern : wildcardUris.keySet()) {
-			if(pattern.matcher(uniqueKey).matches()) {
+			if(pattern.matcher(identifier).matches()) {
 				return wildcardUris.get(pattern);
 			}
 		}
@@ -227,8 +229,9 @@ public class BizSystemModule {
 	}
 	
 	public static String resolveRealUri(BizSystemModule module,String uri) {
+		if(uri.startsWith(GatewayConfigs.PATH_PREFIX + "/"))return uri;
 		if(module.isGateway()) {
-			return uri;
+			return GatewayConfigs.PATH_PREFIX + uri;
 		}else {
 			if(module.getStripPrefix() == 1) {
 				uri = GatewayConfigs.PATH_PREFIX + uri;
@@ -239,7 +242,7 @@ public class BizSystemModule {
 		return uri.replace("//", "/");
 	}
 	
-	public static String buildUniqueKey(String method, String uri) {
+	public static String buildIdentifier(String method, String uri) {
 		return new StringBuilder(method.toUpperCase()).append(GlobalConstants.UNDER_LINE).append(uri).toString();
 	}
 

@@ -21,14 +21,11 @@ import java.util.List;
 
 import org.springframework.context.ApplicationListener;
 
-import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.async.AsyncInitializer;
 import com.mendmix.common.http.HttpMethod;
 import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.model.ApiModel;
-import com.mendmix.common.model.AuthUser;
 import com.mendmix.gateway.CurrentSystemHolder;
-import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.security.SecurityDecisionProvider;
 import com.mendmix.security.SecurityDelegating;
@@ -51,22 +48,6 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 		apis.add(new ApiModel(HttpMethod.GET,"/actuator/health"));
 		return apis;
 	}
-
-
-
-	@Override
-	public AuthUser validateUser(String type, String name, String password) throws MendmixBaseException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-
-	@Override
-	public String resolveUri(String uri) {
-		return GatewayConfigs.PATH_PREFIX + uri;
-	}
-	
 
 	@Override
 	public List<ApiPermission> getAllApiPermissions() {

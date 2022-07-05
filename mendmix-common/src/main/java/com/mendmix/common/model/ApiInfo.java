@@ -27,6 +27,7 @@ public class ApiInfo extends ApiModel{
 
 	private String name;
 	private PermissionLevel permissionLevel;
+	private String identifier;
 	private boolean actionLog;
 	private boolean requestLog;
 	private boolean responseLog;
@@ -38,7 +39,13 @@ public class ApiInfo extends ApiModel{
 	public void setName(String name) {
 		this.name = name;
 	}
-
+	
+	public String getIdentifier() {
+		return identifier;
+	}
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
+	}
 	public PermissionLevel getPermissionLevel() {
 		return permissionLevel;
 	}

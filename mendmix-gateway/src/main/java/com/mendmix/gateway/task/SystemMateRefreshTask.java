@@ -16,18 +16,25 @@
 package com.mendmix.gateway.task;
 
 import com.mendmix.common2.task.SubTimerTask;
-import com.mendmix.gateway.CurrentSystemHolder;
 
 public class SystemMateRefreshTask implements SubTimerTask{
 
+	/* (non-Javadoc)
+	 * @see com.mendmix.common2.task.SubTimerTask#doSchedule()
+	 */
 	@Override
 	public void doSchedule() {
-		CurrentSystemHolder.load();
+		// TODO Auto-generated method stub
+		
 	}
 
+	/* (non-Javadoc)
+	 * @see com.mendmix.common2.task.SubTimerTask#interval()
+	 */
 	@Override
-	public int periodMillis() {
-		return 60 * 1000;
+	public long interval() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
-
+	
 }

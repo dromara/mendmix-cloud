@@ -17,12 +17,12 @@ package com.mendmix.common.http;
 
 import java.net.HttpURLConnection;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.mendmix.common.GlobalConstants;
@@ -42,21 +42,27 @@ import com.mendmix.common.util.JsonUtils;
  */
 public class HttpResponseEntity {
 	
+	private static final long serialVersionUID = 1L;
+	
 	private static final String msgAlias = "message";
 	private static final List<String> successCodes = Arrays.asList("200","0000","0");
 
 	private int statusCode;
 	private String body;
+	private Map<String, String> headers;
+	private String bizCode;
 	private String message;
-	private boolean jsonBody;
+	private JsonNode bodyJsonObject;
 	
+	private Boolean successed;
+	private Boolean isJson;
 	
 	
 	public HttpResponseEntity() {}
 	
-	public HttpResponseEntity(int statusCode, String body) {
+	public HttpResponseEntity(int statusCode, String message) {
 		this.statusCode = statusCode;
-		setBody(body);
+		this.message = message;
 	}
 
 
@@ -70,85 +76,84 @@ public class HttpResponseEntity {
 		return body;
 	}
 	
+	public String getBizCode() {
+		return bizCode;
+	}
+
+	public boolean isJson() {
+		if(isJson == null) {
+			isJson = body != null && JsonUtils.isJsonString(body);
+		}
+		return isJson;
+	}
+
+	public Map<String, String> getHeaders() {
+		return headers;
+	}
+	
+	public void addHeader(String name,String value) {
+		if(headers == null)headers = new HashMap<>();
+		headers.put(name, value);
+	}
+	
+
+	public JsonNode getBodyJsonObject() {
+		if(bodyJsonObject == null) {
+			handleBizException();
+		}
+		return bodyJsonObject;
+	}
+
 	public String getUnwrapBody() {
-		jsonBody = body != null && JsonUtils.isJsonString(body);
-		if(jsonBody) {
-			JsonNode jsonNode = JsonUtils.getNode(body, null);
-			//
-			if(!jsonNode.has(GlobalConstants.PARAM_CODE)) {
-				return body;
-			}
-			//
-			if(jsonNode.size() > 1 && !jsonNode.has(GlobalConstants.PARAM_DATA) 
-					&& !jsonNode.has(GlobalConstants.PARAM_MSG) 
-					&& !jsonNode.has(msgAlias)) {
-				return body;
-			}
-			
-			String code = jsonNode.get(GlobalConstants.PARAM_CODE).asText();
-			if(successCodes.contains(code)) {
-				JsonNode dataNode = jsonNode.get(GlobalConstants.PARAM_DATA);
-				if(dataNode instanceof NullNode) {
-					return null;
-				}
-				return Objects.toString(dataNode, null);
-			}
-			String bizCode = jsonNode.has("bizCode") ?  jsonNode.get("bizCode").textValue() : null;
-			String msg = null;
-			if(jsonNode.has(GlobalConstants.PARAM_MSG)) {
-				msg = jsonNode.get(GlobalConstants.PARAM_MSG).textValue();
-			}else {
-				msg = jsonNode.get(msgAlias).textValue();
-			}
-			int statusCode = StringUtils.isNumeric(code) ? Integer.parseInt(code) : 500;
- 			throw new MendmixBaseException(statusCode, bizCode, msg);
-		}
-		
 		if(!isSuccessed()) {
-			throw new MendmixBaseException(statusCode, StringUtils.defaultIfBlank(message, "http请求异常"));
+			throw new MendmixBaseException(getStatusCode(),getBizCode(), getMessage());
 		}
-		
 		return body;
 		
 	}
 	
-	public <T> T toObject(Class<T> clazz) {
+	public <T> T toBean(Class<T> clazz) {
 		String json = getUnwrapBody();
-		if(!jsonBody)return null;
+		if(!isJson)return null;
 		return JsonUtils.toObject(json, clazz);
 	}
 	
 	public <T> List<T> toList(Class<T> clazz) {
 		String json = getUnwrapBody();
-		if(!jsonBody)return null;
+		if(!isJson)return null;
 		return JsonUtils.toList(json, clazz);
 	}
 	
 	public String toValue(String selectNode) {
-		String json = getUnwrapBody();
-		if(!jsonBody)return null;
-		String value = JsonUtils.getJsonNodeValue(json, selectNode);
+		String value = JsonUtils.getJsonNodeValue(getUnwrapBody(), selectNode);
 		return value;
 	}
 	
-	public <T> T toObject(Class<T> clazz,String selectNode) {
-		String json = getUnwrapBody();
-		if(!jsonBody)return null;
-		json = JsonUtils.getJsonNodeValue(json, selectNode);
+	public <T> T toObject(Class<T> clazz) {
+		String unwrapBody = getUnwrapBody();
+		if(!isJson)return null;
+		String json = JsonUtils.getJsonNodeValue(unwrapBody, null);
 		return JsonUtils.toObject(json, clazz);
 	}
 	
 	public <T> List<T> toList(Class<T> clazz,String selectNode) {
-		String json = getUnwrapBody();
-		if(!jsonBody)return null;
-		json = JsonUtils.getJsonNodeValue(json, selectNode);
+		String unwrapBody = getUnwrapBody();
+		if(!isJson)return null;
+		String json = JsonUtils.getJsonNodeValue(unwrapBody, selectNode);
 		return JsonUtils.toList(json, clazz);
 	}
 	
 	public <T> Page<T> toPage(Class<T> clazz) {
 		String json = getUnwrapBody();
-		if(!jsonBody)return null;
-		return JsonUtils.toObject(json, new TypeReference<Page<T>>() {});
+		//return JsonUtils.toObject(json, new TypeReference<Page<T>>() {});
+		JsonNode jsonNode = JsonUtils.selectJsonNode(json, null);
+		Page<T> page = new Page<>();
+		page.setPageNo(jsonNode.get("pageNo").asInt());
+		page.setPageSize(jsonNode.get("pageSize").asInt());
+		page.setTotal(jsonNode.get("total").asLong());
+		page.setData(JsonUtils.toList(jsonNode.get("data").toString(), clazz));
+		
+		return page;
 	}
 	
 	public void setBody(String body) {
@@ -156,18 +161,73 @@ public class HttpResponseEntity {
 	}
 	
 	public boolean isSuccessed(){
-		boolean success = statusCode == HttpURLConnection.HTTP_OK 
-				|| (statusCode >= 200 && statusCode <= 210);
-		return success;
+		handleBizException();
+		return successed;
 	}
 	
 
 	public String getMessage() {
-		return StringUtils.trimToEmpty(message);
+		handleBizException();
+		return message;
 	}
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+	
+	
+	public MendmixBaseException buildException() {
+		return new MendmixBaseException(getStatusCode(),getBizCode(), getMessage());
+	}
+	
+	public void appendResponseLog(StringBuilder builder) {
+		builder.append("\nresponse");
+		builder.append("\n - statusCode:").append(statusCode);
+		if(body != null)builder.append("\n - body:").append(body);
+		builder.append("\n---------------backend request trace end--------------------");
+	}
+	
+	
+	private void handleBizException() {
+		if(successed != null)return;
+		successed = statusCode == HttpURLConnection.HTTP_OK 
+				|| (statusCode >= 200 && statusCode <= 210);
+		if(successed && isJson()) {   
+			bodyJsonObject = JsonUtils.toJsonNode(body);
+			//
+			if(!bodyJsonObject.has(GlobalConstants.PARAM_CODE)) {
+				return;
+			}
+			//
+			if(bodyJsonObject.size() > 1 && !bodyJsonObject.has(GlobalConstants.PARAM_DATA) 
+					&& !bodyJsonObject.has(GlobalConstants.PARAM_MSG) 
+					&& !bodyJsonObject.has(msgAlias)) {
+				return;
+			}
+			
+			String code = bodyJsonObject.get(GlobalConstants.PARAM_CODE).asText();
+			if(successCodes.contains(code)) {
+				bodyJsonObject = bodyJsonObject.get(GlobalConstants.PARAM_DATA);
+				if(bodyJsonObject instanceof NullNode) {
+					body = null;
+				}else {
+					body = bodyJsonObject.toString();
+				}
+			}else {
+				successed = false;
+				bizCode = bodyJsonObject.has("bizCode") ?  bodyJsonObject.get("bizCode").textValue() : null;
+				if(bodyJsonObject.has(GlobalConstants.PARAM_MSG)) {
+					message = bodyJsonObject.get(GlobalConstants.PARAM_MSG).textValue();
+				}else {
+					message = bodyJsonObject.get(msgAlias).textValue();
+				}
+				statusCode = StringUtils.isNumeric(code) ? Integer.parseInt(code) : 500;
+			}
+			
+			if(!successed && message == null) {
+				message = "http请求错误";
+			}
+		}
 	}
 
 	@Override

@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
-import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.cos.BucketConfig;
 import com.mendmix.cos.CObjectMetadata;
@@ -58,14 +57,20 @@ import com.qcloud.cos.utils.IOUtils;
 
 public class HuaweicloudProvider extends AbstractProvider {
 
-    public static final String NAME = "huawei";
+    public static final String NAME = "huaweicloud";
 
     private static Logger logger = LoggerFactory.getLogger(HuaweicloudProvider.class);
     private ObsClient obsClient;
 
     public HuaweicloudProvider(CosProviderConfig conf){
         super(conf);
-        String endpoint=conf.getEndpoint();
+        if(StringUtils.isBlank(conf.getRegionName())) {
+        	conf.setRegionName("cn-south-1");
+        }
+        String endpoint = conf.getEndpoint();
+		if(endpoint == null) {
+			endpoint = String.format("https://obs.%s.myhuaweicloud.com", conf.getRegionName());
+		}
         ObsConfiguration obsConfiguration = new ObsConfiguration();
         obsConfiguration.setEndPoint(endpoint);
         obsClient = new ObsClient(conf.getAccessKey(), conf.getSecretKey(), obsConfiguration);
@@ -140,22 +145,23 @@ public class HuaweicloudProvider extends AbstractProvider {
         File file = object.getFile();
         String fileKey = object.getFileKey();
         byte[] bytes = object.getBytes();
-        long size=0;
-        logger.info("MENDMIX-TRACE-LOGGGING-->> bucknetName={}, fileKey={}", bucketName, fileKey);
+        long size = 0;
         PutObjectResult putObjectResult=null;
         try {
+        	ObjectMetadata metadata = new ObjectMetadata();
+            if(object.getMimeType() != null) {
+            	metadata.setContentType(object.getMimeType());
+            }
             if (file != null) {
-                ObjectMetadata metadata = new ObjectMetadata();
-                metadata.setContentType(object.getMimeType());
                 putObjectResult = obsClient.putObject(bucketName, fileKey, file, metadata);
                 size = file.length();
             } else if (bytes != null) {
-                ByteArrayInputStream input = new ByteArrayInputStream(bytes);
-                putObjectResult = obsClient.putObject(bucketName, fileKey, input);
-                size=bytes.length;
-                input.close();
+                inputStream = new ByteArrayInputStream(bytes);
+                putObjectResult = obsClient.putObject(bucketName, fileKey, inputStream,metadata);
+                size = bytes.length;
+                inputStream.close();
             } else if (inputStream != null) {
-                putObjectResult=obsClient.putObject(bucketName, fileKey, inputStream);
+                putObjectResult=obsClient.putObject(bucketName, fileKey, inputStream,metadata);
                 size=inputStream.available();
             }else{
                 throw new MendmixBaseException("upload object is NULL");
@@ -172,8 +178,8 @@ public class HuaweicloudProvider extends AbstractProvider {
                 return uploadResult;
             }
         } catch (Exception e) {
-            logger.error("MENDMIX-TRACE-LOGGGING-->> 上传文件出错, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
-            throw new MendmixBaseException(e.getMessage());
+            logger.error(String.format("MENDMIX-TRACE-LOGGGING-->> 上传文件出错, bucketName:%s, fileKey:%s", bucketName, fileKey), e);
+            throw new MendmixBaseException("上传文件错误");
         }
         return null;
     }
@@ -186,9 +192,7 @@ public class HuaweicloudProvider extends AbstractProvider {
         ObsObject object = null;
         try {
             object = obsClient.getObject(bucketName, fileKey);
-        } catch (Exception e) {
-            logger.error("文件不存在, bucketName={}, fileKey={}, e={}", bucketName, fileKey, ExceptionUtils.getMessage(e));
-        }
+        } catch (Exception e) {}
         return object!=null;
     }
 
@@ -277,12 +281,8 @@ public class HuaweicloudProvider extends AbstractProvider {
 
     @Override
     protected String buildBucketUrlPrefix(String bucketName) {
-        String baseUrl=conf.getEndpoint();
-        if (!baseUrl.endsWith(GlobalConstants.PATH_SEPARATOR)) {
-            baseUrl = baseUrl + GlobalConstants.PATH_SEPARATOR;
-        }
-        String urlPrefix = baseUrl.replace("://", "://" + bucketName+".");
-        return urlPrefix;
+    	//mendmix.obs.cn-south-1.myhuaweicloud.com
+    	return String.format("https://%s.obs.%s.myhuaweicloud.com", bucketName,conf.getSecretKey());
     }
 
     @Override
