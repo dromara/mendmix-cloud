@@ -23,6 +23,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.http.ApacheHttpClient;
@@ -41,6 +43,8 @@ import com.mendmix.common.http.OkHttp3Client;
  * @date 2017年8月24日
  */
 public class HttpUtils {
+	
+	private static Logger logger = LoggerFactory.getLogger("com.mendmix.common.httpclient");
 	
 	private static HttpClientProvider provider;
 	
@@ -86,13 +90,30 @@ public class HttpUtils {
 	}
 	
 	public static HttpResponseEntity execute(HttpRequestEntity requestEntity) {
+		StringBuilder logBuilder = null;
 		try {
 			if(StringUtils.isBlank(requestEntity.getUri())) {
 				throw new IllegalArgumentException("request uri is missing");
 			}
 			requestEntity.uri(HostMappingHolder.resolveUrl(requestEntity.getUri()));
-			return provider.execute(requestEntity);
+			if(logger.isDebugEnabled()) {
+				logBuilder = requestEntity.buildRequestLog();
+			}
+			HttpResponseEntity resp = provider.execute(requestEntity);
+			if(logBuilder != null) {
+				resp.appendResponseLog(logBuilder);
+			}
+			return resp;
 		} catch (IOException e) {
+			if(logBuilder != null) {
+				logBuilder.append("\nexception:").append(e.getMessage());
+				logBuilder.append("\n---------------backend request trace end--------------------");
+			}
+			if(e instanceof java.net.ConnectException) {
+				return new HttpResponseEntity(503, "ConnectException:" + e.getMessage());
+			}else if(e instanceof java.net.UnknownHostException) {
+				return new HttpResponseEntity(400, "UnknownHostException:" + e.getMessage());
+			}
 			return new HttpResponseEntity(400, e.getMessage());
 		}
 	}

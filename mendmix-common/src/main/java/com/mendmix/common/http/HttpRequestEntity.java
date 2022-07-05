@@ -85,15 +85,19 @@ public class HttpRequestEntity {
 	public static HttpRequestEntity get(String uri) {
 		return new HttpRequestEntity().method(HttpMethod.GET).uri(uri);
 	}
+	
+	public HttpRequestEntity internalCall() {
+		if (!headers.containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)) {
+			header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generate());
+		}
+		return header(CustomRequestHeaders.HEADER_INTERNAL_REQUEST, Boolean.TRUE.toString());
+	}
 
 	public HttpRequestEntity backendInternalCall() {
-		if (!getHeaders().containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)) {
-			header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generateWithSign());
-		}
 		header(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
 		header(CustomRequestHeaders.HEADER_IGNORE_TENANT, Boolean.TRUE.toString());
 		header(CustomRequestHeaders.HEADER_IGNORE_AUTH, Boolean.TRUE.toString());
-		return header(CustomRequestHeaders.HEADER_INTERNAL_REQUEST, Boolean.TRUE.toString());
+		return internalCall();
 	}
 
 	public HttpRequestEntity useContext() {
@@ -314,6 +318,30 @@ public class HttpRequestEntity {
 		}
 
 		return charset;
+	}
+	
+	public StringBuilder buildRequestLog() {
+		//http-nio- ,reactor-http
+		//后台异步任务不打印
+		if(!Thread.currentThread().getName().contains("http-")) {
+			return null;
+		}
+		StringBuilder builder = new StringBuilder();
+		builder.append("\n---------------backend request trace start--------------------");
+		builder.append("\nurl:").append(uri);
+		if(getHeaders().containsKey(CustomRequestHeaders.HEADER_SYSTEM_ID) 
+				|| getHeaders().containsKey(CustomRequestHeaders.HEADER_TENANT_ID)) {
+			builder.append("\nheaders");
+			builder.append("\n - x-system-id:").append(getHeaders().get(CustomRequestHeaders.HEADER_SYSTEM_ID));
+			builder.append("\n - x-tenant-id:").append(getHeaders().get(CustomRequestHeaders.HEADER_TENANT_ID));
+		}
+		if(getQueryParams() != null && !getQueryParams().isEmpty()) {
+			builder.append("\nqueryParams:").append(getQueryParams());
+		}
+		if(getBody() != null) {
+			builder.append("\nbody:").append(getBody());
+		}
+		return builder;
 	}
 
 	public HttpResponseEntity execute() {
