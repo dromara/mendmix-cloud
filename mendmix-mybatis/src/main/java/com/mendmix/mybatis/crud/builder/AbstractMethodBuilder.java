@@ -47,7 +47,8 @@ public abstract class AbstractMethodBuilder extends AbstractExpressBuilder {
 			// 从参数对象里提取注解信息
 			EntityMetadata entityMapper = mapperMeta.getEntityMetadata();
 			// 生成sql
-			String sql = buildSQL(entityMapper,name.endsWith("Selective"));
+			boolean selective = selective() ? selective() : name.endsWith("Selective");
+			String sql = buildSQL(entityMapper,selective);
 			
 			if(scriptWrapper()) {
 				sql = String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
@@ -71,6 +72,10 @@ public abstract class AbstractMethodBuilder extends AbstractExpressBuilder {
 			configuration.addMappedStatement(statement);
 		}
 		
+	}
+	
+	protected boolean selective() {
+		return false;
 	}
 
 	abstract SqlCommandType sqlCommandType();

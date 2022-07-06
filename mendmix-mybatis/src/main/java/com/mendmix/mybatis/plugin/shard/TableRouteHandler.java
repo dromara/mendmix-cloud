@@ -27,7 +27,7 @@ import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
 import com.mendmix.mybatis.plugin.InvocationVals;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 
 /**
  * 分表自动路由
@@ -44,7 +44,7 @@ public class TableRouteHandler implements InterceptorHandler {
 	private List<String> tableRouteMappedStatements = new ArrayList<>();
 	
 	@Override
-	public void start(JeesuiteMybatisInterceptor context) {
+	public void start(MendmixMybatisInterceptor context) {
 		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		List<String> tmpTables = new ArrayList<>();
 		for (MapperMetadata mapper : mappers) {

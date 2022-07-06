@@ -27,7 +27,7 @@ import com.mendmix.mybatis.MybatisConfigs;
 import com.mendmix.mybatis.crud.GeneralSqlGenerator;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 
 /**
  * @description <br>
@@ -73,7 +73,7 @@ public class MendmixMybatisEnhancer {
 		
 		// 注册拦截器
 		String[] hanlderNames = MybatisConfigs.getHandlerNames(group);
-		JeesuiteMybatisInterceptor interceptor = new JeesuiteMybatisInterceptor(group, hanlderNames);
+		MendmixMybatisInterceptor interceptor = new MendmixMybatisInterceptor(group, hanlderNames);
 		configuration.addInterceptor(interceptor);
 		interceptor.afterRegister();
 

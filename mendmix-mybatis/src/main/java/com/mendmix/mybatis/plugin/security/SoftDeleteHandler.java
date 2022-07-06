@@ -21,7 +21,7 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.plugin.InvocationVals;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 
 /**
  * @description <br>
@@ -31,7 +31,7 @@ import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
 public class SoftDeleteHandler implements InterceptorHandler{
 
 	@Override
-	public void start(JeesuiteMybatisInterceptor context) {
+	public void start(MendmixMybatisInterceptor context) {
 		
 	}
 

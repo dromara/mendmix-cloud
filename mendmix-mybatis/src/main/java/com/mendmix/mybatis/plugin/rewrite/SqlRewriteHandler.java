@@ -16,10 +16,13 @@
 package com.mendmix.mybatis.plugin.rewrite;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -36,22 +39,21 @@ import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.MendmixBaseException;
-import com.mendmix.common.constants.MatchPolicy;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.model.OrderBy;
 import com.mendmix.common.model.OrderBy.OrderType;
 import com.mendmix.common.model.PageParams;
 import com.mendmix.common.util.ResourceUtils;
+import com.mendmix.common.util.StringConverter;
 import com.mendmix.mybatis.MybatisConfigs;
 import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.crud.CrudMethods;
-import com.mendmix.mybatis.kit.MybatisSqlUtils;
 import com.mendmix.mybatis.metadata.ColumnMetadata;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
 import com.mendmix.mybatis.plugin.InvocationVals;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.BinaryExpression;
@@ -98,14 +100,17 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	
 	private Map<String, LinkedHashMap<String,String>> dataPermMappings = new HashMap<>();
 	
-	private static boolean dynaDataPermEnabled = false;
+	private static boolean dynaDataPermEnaled = false;
+	//<alias,column>
+	private Map<String,String> globalDataPermColumnMappings = new HashMap<>();
+	private Map<String, LinkedHashMap<String,String>> tableDataPermColumnMappings = new HashMap<>();
 	
 	private List<String> softDeleteMappedStatements = new ArrayList<>();
 	private String softDeleteColumnName;
 	private String softDeletePropName;
 	private String softDeleteFalseValue;
 	
-	private boolean isFieldSharddingTenant;
+	private boolean columnSharddingTenant;
 	private String tenantColumnName;
 	private String tenantPropName;
 	
@@ -116,42 +121,55 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private List<String> deptMappedStatements = new ArrayList<>();
 
 	@Override
-	public void start(JeesuiteMybatisInterceptor context) {
+	public void start(MendmixMybatisInterceptor context) {
 	
-		isFieldSharddingTenant = MybatisConfigs.isFieldSharddingTenant(context.getGroupName());
+		dynaDataPermEnaled = MybatisConfigs.isDataPermissionEnabled(context.getGroupName());
+		columnSharddingTenant = MybatisConfigs.isColumnSharddingTenant(context.getGroupName());
 		softDeleteColumnName = MybatisConfigs.getSoftDeleteColumn(context.getGroupName());
 		softDeleteFalseValue = MybatisConfigs.getSoftDeletedFalseValue(context.getGroupName());
 		deptColumnName = MybatisConfigs.getDeptColumnName(context.getGroupName());
 		ownerColumnName = MybatisConfigs.getOwnerColumnName(context.getGroupName());
 		orgBasePermKey = MybatisConfigs.getCurrentOrgPermKey(context.getGroupName());
 		
-		Properties properties = ResourceUtils.getAllProperties("mendmix.mybatis.permission.table-column-mappings");
-		properties.forEach( (k,v) -> {
-			String tableName = k.toString().substring(k.toString().indexOf("[") + 1).replace("]", "").trim();
-			buildTableDataPermissionMapping(tableName, v.toString());
-		} );
-		
-		dynaDataPermEnabled = !dataPermMappings.isEmpty();
-		
 		final List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
+		if(dynaDataPermEnaled) {
+			Properties properties = ResourceUtils.getAllProperties("mendmix.mybatis.dataPermission.columns");
+			properties.forEach( (k,v) -> {
+				String tableName = null;
+				if(k.toString().contains("[")) {
+					tableName = k.toString().substring(k.toString().indexOf("[") + 1).replace("]", "").trim();
+				}
+				buildTableDataPermColumnMapping(tableName, v.toString());
+				
+			} );
+			//全局映射配置
+			for (MapperMetadata mapper : mappers) {
+				Collection<String> columns = mapper.getPropToColumnMappings().values();
+				Optional<Entry<String, String>> optional = globalDataPermColumnMappings.entrySet().stream().filter(e -> columns.contains(e.getValue())).findFirst();
+			    if(optional.isPresent()) {
+			    	if(!tableDataPermColumnMappings.containsKey(mapper.getTableName())) {
+			    		tableDataPermColumnMappings.put(mapper.getTableName(), new LinkedHashMap<>());
+			    	}
+			    	tableDataPermColumnMappings.get(mapper.getTableName()).put(optional.get().getKey(), optional.get().getValue());
+			    }
+			}
+		}
 		//
 		initColumnConfig(mappers, deptColumnName, deptMappedStatements);
 		//软删除
 		initColumnConfig(mappers, softDeleteColumnName, softDeleteMappedStatements);
 		//字段隔离租户模式
-		if (isFieldSharddingTenant) {
-			String tenantField = MybatisConfigs.getTenantSharddingField(context.getGroupName());
+		if (columnSharddingTenant) {
+			tenantColumnName = MybatisConfigs.getTenantColumnName(context.getGroupName());
 
 			ColumnMetadata tenantColumn;
 			for (MapperMetadata mapper : mappers) {
 				tenantColumn = mapper.getEntityMetadata().getColumns().stream().filter(o -> {
-					return o.getColumn().equals(tenantField) || o.getProperty().equals(tenantField);
+					return o.getColumn().equalsIgnoreCase(tenantColumnName);
 				}).findFirst().orElse(null);
 
 				if (tenantColumn == null)
 					continue;
-
-				if(tenantColumnName == null)tenantColumnName = tenantColumn.getColumn();
 				if(tenantPropName == null)tenantPropName = tenantColumn.getProperty();
 				
 				if (!dataPermMappings.containsKey(mapper.getTableName())) {
@@ -208,12 +226,13 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		if(invocation.getMappedStatement().getId().endsWith(CrudMethods.selectByPrimaryKey.name())) {
 			return null;
 		}
-		Map<String, String[]> dataMappings = null;
-		if(dynaDataPermEnabled) {
-			dataMappings = MybatisRuntimeContext.getDataProfileMappings();
+		//
+		if(dynaDataPermEnaled && !MybatisRuntimeContext.isIgnoreDataPermission() && MybatisRuntimeContext.getDataPermissionStrategy() != null) {
+			Map<String, String[]> dataPermValues = MybatisRuntimeContext.getDataPermissionValues();
+			invocation.setDataPermValues(dataPermValues);
 		}
 		//
-		rewriteSql(invocation, dataMappings);
+		rewriteSql(invocation);
 		
 		if(invocation.getPageParam() != null)return null;
         //不查数据库直接返回
@@ -264,50 +283,58 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 	}
 
-	/**
+   /**
 	 * @param invocation
-	 * @param dataMappings
+	 * @param dataPermValues
 	 * @return
 	 */
-	private void rewriteSql(InvocationVals invocation, Map<String, String[]> dataMapping) {
+	private void rewriteSql(InvocationVals invocation) {
 		String orignSql = invocation.getSql();
 		PageParams pageParam = invocation.getPageParam();
 		
 		boolean sharddingTenant = false;
-		if(isFieldSharddingTenant && !CurrentRuntimeContext.getIgnoreTenant()) {
+		if(columnSharddingTenant && !MybatisRuntimeContext.isIgnoreTenantMode()) {
 			sharddingTenant = true;
 		}
 		
-		boolean softDelete = softDeleteMappedStatements.contains(invocation.getMapperNameSpace()) 
-				|| softDeleteMappedStatements.contains(invocation.getMappedStatement().getId());
-		if(softDelete) {
-			if(dataMapping == null)dataMapping = new HashMap<>(1);
-			dataMapping.put(softDeletePropName, new String[] {softDeleteFalseValue});
-		}
+		boolean softDelete = !MybatisRuntimeContext.isIgnoreSoftDeleteConditon() && (
+				softDeleteMappedStatements.contains(invocation.getMapperNameSpace()) 
+				|| softDeleteMappedStatements.contains(invocation.getMappedStatement().getId())
+			);
 
-		if(deptPropName != null && dataMapping != null && dataMapping.containsKey(orgBasePermKey)) {
+		Map<String, String[]> dataPermValues = invocation.getDataPermValues();
+		if(dataPermValues != null && dataPermValues.containsKey(orgBasePermKey)) {
 			if(deptMappedStatements.contains(invocation.getMapperNameSpace()) 
 					|| deptMappedStatements.contains(invocation.getMappedStatement().getId())) {
 				String departmentId = CurrentRuntimeContext.getAndValidateCurrentUser().getDeptId();
 				if(StringUtils.isBlank(departmentId)) {
 					throw new MendmixBaseException("当前登录用户部门ID为空");
 				}
-				String[] values = dataMapping.get(orgBasePermKey);
+				//TODO 指定了其他部门？
+				String[] values = dataPermValues.get(orgBasePermKey);
 				if(values != null && values.length > 0) {
-					if(MatchPolicy.exact.name().equals(values[0])) {
-						dataMapping.put(deptPropName, new String[] {departmentId + QUERY_FUZZY_CHAR});
+					if("leaderView".equals(values[0])) {
+						dataPermValues.put(deptPropName, new String[] {departmentId + QUERY_FUZZY_CHAR});
 					}else {
-						dataMapping.put(deptPropName, new String[] {departmentId});
+						dataPermValues.put(deptPropName, new String[] {departmentId});
 					}
 				}else {
-					dataMapping.put(deptPropName, new String[] {departmentId});
+					dataPermValues.put(deptPropName, new String[] {departmentId});
 				}
 			}
 		}
-		if(!softDelete && dataMapping == null && !sharddingTenant) {
+		
+		boolean orderBy = false;
+		if(!softDelete && dataPermValues == null && !sharddingTenant) {
 			if(pageParam == null || (pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty())) {
 				return;
+			}else {
+				orderBy = true;
 			}
+		}
+		
+		if(logger.isDebugEnabled()) {
+			logger.debug("_mybatis_sqlRewrite_trace start -> statementId:{},sharddingTenant:{},softDelete:{},orderBy:{},dataPermMapping:{}",invocation.getMappedStatement().getId(),sharddingTenant,softDelete,orderBy,dataPermValues);
 		}
 			
 		SelectBody selectBody = null;
@@ -316,40 +343,63 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			selectBody = ((Select)stmt).getSelectBody();
 		} catch (JSQLParserException e) {
 			logger.error("PARSER_ERROR["+orignSql+"]",e);
-			throw new RuntimeException("sql解析错误");
+			return;
 		}
 		
-		handleSelectRewrite(selectBody, invocation, dataMapping, sharddingTenant);
+		handleSelectRewrite(selectBody, invocation, sharddingTenant);
 		//
 		invocation.setRewriteSql(selectBody.toString());
 	}
 
 	
 	
-	private boolean handleSelectRewrite(SelectBody selectBody,InvocationVals invocation,Map<String, String[]> dataMapping,boolean sharddingTenant) {
-		
+	private void handleSelectRewrite(SelectBody selectBody,InvocationVals invocation,boolean sharddingTenant) {
+		Map<String, String[]> dataPermValues = invocation.getDataPermValues();
+		//
+		DataPermissionStrategy strategy = MybatisRuntimeContext.getDataPermissionStrategy();
 		if(selectBody instanceof PlainSelect) {
 			PlainSelect select = (PlainSelect)selectBody;
 			FromItem fromItem = select.getFromItem();
 			if(fromItem instanceof Table) {
 				Table table = (Table) fromItem;
+				if(strategy != null && !strategy.isAllMatch() && !strategy.hasTableStrategy(table.getName())) {
+					return;
+				}
+				if(logger.isTraceEnabled()) {
+					logger.trace("_mybatis_sqlRewrite_trace processMainTable ->table:{}",table.getName());
+				}
 				//
-				Expression newWhere = handleTableDataPermission(select.getWhere(), table, dataMapping, sharddingTenant);
-				select.setWhere(newWhere);
+				Expression newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues, sharddingTenant);
+				select.setWhere(newWhereExpression);
 				//
 				handleTableOrderBy(select, table, invocation);
 				//
 				List<Join> joins = select.getJoins();
 				if(joins != null){
 					for (Join join : joins) {
-						table = (Table) join.getRightItem();
-						newWhere = handleTableDataPermission(join.getOnExpression(), table, dataMapping, sharddingTenant);
-						join.setOnExpression(newWhere);
+						if(join.getRightItem() instanceof Table) {
+							table = (Table) join.getRightItem();
+							if(strategy == null || !strategy.isHandleJoin(table.getName())) {
+								continue;
+							}
+							if(logger.isTraceEnabled()) {
+								logger.trace("_mybatis_sqlRewrite_trace processJoinTable ->table:{}",table.getName());
+							}
+							if(join.isInner()) {
+								newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues, sharddingTenant);
+								select.setWhere(newWhereExpression);
+							}else {
+								newWhereExpression = handleTableDataPermission(join.getOnExpression(), table, dataPermValues, sharddingTenant);
+								join.setOnExpression(newWhereExpression);
+							}
+						}else {
+							//TODO 
+						}
 					}
 				}
 			}else if(fromItem instanceof SubSelect) {
 				SubSelect subSelect = (SubSelect) fromItem;
-				handleSelectRewrite(subSelect.getSelectBody() ,invocation, dataMapping, sharddingTenant);
+				handleSelectRewrite(subSelect.getSelectBody() ,invocation, sharddingTenant);
 			}
 		}else if(selectBody instanceof SetOperationList) {
 			SetOperationList optList = (SetOperationList) selectBody;
@@ -359,25 +409,39 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 			List<SelectBody> selects = optList.getSelects();
 			for (SelectBody body : selects) {
-				handleSelectRewrite(body,invocation, dataMapping, sharddingTenant);
+				handleSelectRewrite(body,invocation, sharddingTenant);
 			}
 		}
-		
-		return true;
 	}
 	
-	private Expression handleTableDataPermission(Expression originWhere,Table table,Map<String, String[]> dataMapping,boolean sharddingTenant) {
-		if(!dataPermMappings.containsKey(table.getName())) {
-			return originWhere;
+	private Expression handleTableDataPermission(Expression whereExpression,Table table,Map<String, String[]> dataMapping,boolean sharddingTenant) {
+		
+		DataPermissionStrategy strategy = MybatisRuntimeContext.getDataPermissionStrategy();
+		Map<String, String> columnMapping = null;
+		if(strategy != null && !strategy.isAllMatch()) {
+			String[] columns = strategy.getTableStrategy(table.getName()).columns();
+			if(columns.length > 0) {
+				columnMapping = new HashMap<>(columns.length);
+				for (String column : columns) {
+					columnMapping.put(getDataPermColumnAlias(table.getName(), column),column);
+				}
+				mergeTableColumnMapping(columnMapping, table.getName(), tenantPropName,softDeletePropName,deptPropName);
+			}
 		}
-		Set<String> fieldNames;
-		Expression newExpression = originWhere;
+		if(columnMapping == null) {
+			columnMapping = tableDataPermColumnMappings.get(table.getName());
+		}
+		
+		if(columnMapping == null || columnMapping.isEmpty()) {
+			return whereExpression;
+		}
+		
+		Expression permExpression = null;
 		String column;
 		String[] values;
-		Map<String, String> columnMapping = dataPermMappings.get(table.getName());
-		fieldNames = columnMapping.keySet();
+		Set<String> fieldNames = columnMapping.keySet();
 		boolean withSoftDelete = false;
-		boolean withPermiCondition = false;
+		boolean withPermission = false;
 		for (String fieldName : fieldNames) {
 			if(fieldName.equals(softDeletePropName)) {
 				withSoftDelete = true;
@@ -393,43 +457,55 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				column = columnMapping.get(fieldName);
 				values = dataMapping.get(fieldName);
 				//
-				if(!withPermiCondition)withPermiCondition = true;
+				if(!withPermission)withPermission = true;
 			}
-			//如果某个匹配字段为空直接返回null，不在查询数据库
+			//如果某个匹配字段为空构造一个特殊的不等于条件
 			if(values == null || values.length == 0) {
 				EqualsTo equalsTo = new EqualsTo();
 				equalsTo.setLeftExpression(new Column(table, column));
-				equalsTo.setRightExpression(new StringValue("_PERMISSION_NOT_MATCH_"));
-				return equalsTo;
+				equalsTo.setRightExpression(new StringValue("__DATA_PERMISSION_NULL__"));
+				permExpression = equalsTo;
+				//break; 后面条件不处理 ，mybatis占位符可以出错
+			}else {
+				permExpression = handleColumnDataPermCondition(table, permExpression, column,values);
 			}
-			newExpression = handleColumnDataPermCondition(table, newExpression, column,values);
+			
+			if(logger.isTraceEnabled()) {
+				logger.trace("_mybatis_sqlRewrite_trace processColumn ->table:{},column:{},addtionalValues:{}",table.getName(),column,values);
+			}
 		}
 		
 		//当前创建人
-		if(withPermiCondition && ownerColumnName != null) {
+		if(withPermission && ownerColumnName != null && strategy.handleOwner(table.getName())) {
 			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
-			if (currentUser != null) {
+			if(currentUser != null) {
 				EqualsTo equalsTo = new EqualsTo();
 				equalsTo.setLeftExpression(new Column(table, ownerColumnName));
-				// TODO 需要按ID匹配否则出现同名
-				equalsTo.setRightExpression(new StringValue(currentUser.getName()));
+				equalsTo.setRightExpression(new StringValue(currentUser.getId()));
 				//
-				newExpression = newExpression == null ? equalsTo : new OrExpression(new Parenthesis(newExpression), equalsTo);
+				permExpression = permExpression == null ? equalsTo : new OrExpression(new Parenthesis(permExpression), equalsTo);
 			}
 		}
+		//原查询条件
+		if(whereExpression == null) {
+			whereExpression = permExpression;
+		}else if(permExpression != null) {
+			whereExpression = new AndExpression(new Parenthesis(permExpression), new Parenthesis(whereExpression));
+		}
 		//软删除
-		if (withSoftDelete) {
+		if(withSoftDelete) {
 			EqualsTo equalsTo = new EqualsTo();
 			equalsTo.setLeftExpression(new Column(table, softDeleteColumnName));
 			equalsTo.setRightExpression(new StringValue(softDeleteFalseValue));
-			newExpression = newExpression == null ? equalsTo : new AndExpression(new Parenthesis(newExpression), equalsTo);
+			whereExpression = whereExpression == null ? equalsTo : new AndExpression(new Parenthesis(whereExpression), equalsTo);
 		}
 		
-		return newExpression;
+		return whereExpression;
 	}
+
 	
 	private  Expression handleColumnDataPermCondition(Table table,Expression orginExpression,String columnName,String[] values){
-		Expression newExpression = null;
+		Expression newExpression = orginExpression;
 		Column column = new Column(table, columnName);
 		if (values.length == 1) {
 			BinaryExpression expression;
@@ -442,6 +518,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				expression.setLeftExpression(column);
 				expression.setRightExpression(new StringValue(values[0]));
 			}
+
 			if(orginExpression == null) {
 				newExpression = expression;
 			}else {
@@ -472,39 +549,69 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		
 		OrderByElement orderByElement;
 		for (OrderBy orderBy : pageParam.getOrderBys()) {
-			if(orderBy == null)continue;
+			if (orderBy == null)
+				continue;
 			MapperMetadata mapperMeta = MybatisMapperParser.getMapperMetadata(invocation.getMapperNameSpace());
-    		String columnName = mapperMeta.getEntityMetadata().getProp2ColumnMappings().get(orderBy.getField());
-    		if(columnName == null)columnName = orderBy.getField();
-    		orderByElement = new OrderByElement();
-    		orderByElement.setAsc(OrderType.ASC.name().equals(orderBy.getSortType()));
-    		orderByElement.setExpression(new Column(table, columnName));
-    		orderByElements.add(orderByElement);
+			String columnName = mapperMeta.getEntityMetadata().getProp2ColumnMappings().get(orderBy.getField());
+			if (columnName == null)
+				columnName = orderBy.getField();
+			orderByElement = new OrderByElement();
+			orderByElement.setAsc(OrderType.ASC.name().equals(orderBy.getSortType()));
+			orderByElement.setExpression(new Column(table, columnName));
+			orderByElements.add(orderByElement);
+			if (logger.isTraceEnabled()) {
+				logger.trace("_mybatis_sqlRewrite_trace processOrderBy ->table:{},columnName:{}", table.getName(),
+						columnName);
+			}
 		}
 		
 		selectBody.setOrderByElements(orderByElements);
 	}
 	
-	private void buildTableDataPermissionMapping(String tableName,String ruleString) {
-		dataPermMappings.put(tableName, new LinkedHashMap<>());
-		String[] rules = ruleString.split(",|;");
-		String[] tmpArr;
-		for (String rule : rules) {
-			tmpArr = rule.split(":");
-			String columnName = tmpArr[0];
-			String propName = tmpArr.length == 2 ? tmpArr[1] : MybatisSqlUtils.underscoreToCamelCase(columnName);
-			dataPermMappings.get(tableName).put(propName, columnName);
-			if(deptPropName == null && columnName.equals(deptColumnName)) {
-				deptPropName = propName;
+	
+	private void mergeTableColumnMapping(Map<String, String> columnMapping, String tableName, String...propNames) {
+		if(!tableDataPermColumnMappings.containsKey(tableName)) {
+			return;
+		}
+		LinkedHashMap<String, String> map = tableDataPermColumnMappings.get(tableName);
+		for (String propName : propNames) {
+			if(map.containsKey(propName)) {
+				columnMapping.put(propName, map.get(propName));
 			}
 		}
 	}
-	
-	
 
-	public static boolean isDynaDataPermEnabled() {
-		return dynaDataPermEnabled;
+	private void buildTableDataPermColumnMapping(String tableName,String columnValue) {
+		if(tableName != null) {
+			tableDataPermColumnMappings.put(tableName, new LinkedHashMap<>());
+		}
+		String[] columns = columnValue.split(",|;");
+		String[] tmpArr;
+		for (String column : columns) {
+			tmpArr = column.split(":");
+			String aliasName = tmpArr.length == 2 ? tmpArr[1] : StringConverter.toCamelCase(column);
+			if(tableName != null) {
+				tableDataPermColumnMappings.get(tableName).put(aliasName,tmpArr[0]);
+			}else {
+				globalDataPermColumnMappings.put(aliasName,tmpArr[0]);
+				if(deptPropName == null && tmpArr[0].equals(deptColumnName)) {
+					deptPropName = aliasName;
+				}
+			}
+		}
 	}
+
+	private String getDataPermColumnAlias(String table,String column) {
+		String alias = null;
+		if(tableDataPermColumnMappings.containsKey(table)) {
+			alias = tableDataPermColumnMappings.get(table).get(column);
+		}
+		if(alias == null) {
+			alias = globalDataPermColumnMappings.get(column);
+		}
+		return StringUtils.defaultString(alias, StringConverter.toCamelCase(column));
+	}
+
 
 	@Override
 	public void onFinished(InvocationVals invocation, Object result) {

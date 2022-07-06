@@ -42,13 +42,18 @@ public class MybatisConfigs {
 	public static final String DB_TYPE = "mendmix.mybatis.dbType";
 	public static final String CACHE_ENABLED = "mendmix.mybatis.cache.enabled";
 	public static final String CACHE_EXPIRE_SECONDS = "mendmix.mybatis.cache.expireSeconds";
-	public static final String TENANT_SHARDDING_FIELD = "mendmix.mybatis.tenant.sharddingField";
+	public static final String TENANT_ENABLED = "mendmix.mybatis.tenant.enabled";
+	public static final String TENANT_IGNORE_USER_TYPE = "mendmix.mybatis.tenant.ignoreUserType";
+	public static final String TENANT_COLUMN_NAME = "mendmix.mybatis.tenant.columnName";
 	public static final String INTERCEPTOR_HANDLERCLASS = "mendmix.mybatis.interceptorHandlerClass";
 	public static final String SOFT_DELETE_COLUMN_NAME = "mendmix.mybatis.softDelete.columnName";
 	public static final String SOFT_DELETE_FALSE_VALUE = "mendmix.mybatis.softDelete.falseValue";
 	public static final String OWNER_COLUMN_NAME = "mendmix.mybatis.createBy.columnName";
 	public static final String DEPT_COLUMN_NAME = "mendmix.mybatis.department.columnName";
 	public static final String ORG_BASE_PERM_KEY = "mendmix.mybatis.currentOrgPermKey";
+	
+	public static final boolean DATA_PERM_ALL_MATCH_MODE_ENABLED = ResourceUtils.getBoolean("application.mybatis.dataPermssion.allMatchMode.enabled",true);
+	
 	
 	private static Map<String, Properties> groupProperties = new HashMap<>();
 	
@@ -89,8 +94,8 @@ public class MybatisConfigs {
 		return getBoolean(group,CACHE_ENABLED, false);
 	}
 	
-	public static String getTenantSharddingField(String group) {
-		return getProperty(group,TENANT_SHARDDING_FIELD,null);
+	public static String getTenantColumnName(String group) {
+		return getProperty(group,TENANT_COLUMN_NAME,null);
 	}
 	
 	public static String getSoftDeleteColumn(String group) {
@@ -113,8 +118,12 @@ public class MybatisConfigs {
 		return getProperty(group,DEPT_COLUMN_NAME,null);
 	}
 	
-	public static boolean isFieldSharddingTenant(String group) {
-		return getTenantSharddingField(group) != null;
+	public static boolean isColumnSharddingTenant(String group) {
+		return getBoolean(group,TENANT_ENABLED, false);
+	}
+	
+	public static boolean isDataPermissionEnabled(String group) {
+		return getBoolean(group,"mendmix.mybatis.dataPermission.enabled", false);
 	}
 	
 	public static boolean isSchameSharddingTenant(String group) {

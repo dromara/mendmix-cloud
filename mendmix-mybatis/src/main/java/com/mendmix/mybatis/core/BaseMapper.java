@@ -18,6 +18,7 @@ package com.mendmix.mybatis.core;
 import java.io.Serializable;
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.ResultType;
 import org.apache.ibatis.annotations.SelectProvider;
@@ -91,6 +92,8 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
 	@SelectProvider(type = SelectByExampleProvider.class, method = "selectByExample")
 	@ResultMap("BaseResultMap")
 	List<T> selectByExample(T example);
+	
+	int batchUpdateByPrimaryKeys(@Param("ids")List<ID> ids,@Param("example") T example);
 	
 }
 

@@ -45,6 +45,8 @@ public class InvocationVals {
 	private String sql;
 	private boolean sqlRewrited;
 	
+	private Map<String, String[]> dataPermValues;
+	
 	
 	
 	private String mapperNameSpace;
@@ -160,9 +162,18 @@ public class InvocationVals {
 		return sqlRewrited;
 	}
 
-	public boolean isDynaDataPermEnabled() {
-		return SqlRewriteHandler.isDynaDataPermEnabled() 
-				&& MybatisRuntimeContext.getDataProfileMappings() != null;
+	public Map<String, String[]> getDataPermValues() {
+		return dataPermValues;
+	}
+
+
+	public void setDataPermValues(Map<String, String[]> dataPermValues) {
+		this.dataPermValues = dataPermValues;
+	}
+
+
+	public boolean isDynaDataPermEnaled() {
+		return dataPermValues != null;
 	}
 
 }

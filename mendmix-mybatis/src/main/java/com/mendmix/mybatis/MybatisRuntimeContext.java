@@ -25,6 +25,8 @@ import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.mybatis.datasource.DataSourceContextVals;
 import com.mendmix.mybatis.plugin.cache.CacheHandler;
+import com.mendmix.mybatis.plugin.rewrite.DataPermissionStrategy;
+import com.mendmix.mybatis.plugin.rewrite.annotation.DataPermission;
 
 /**
  * 
@@ -41,6 +43,11 @@ public class MybatisRuntimeContext {
 	private static final String CONTEXT_TRANS_ON_KEY = "_ctx_trans_on_";
 	private static final String CONTEXT_DATASOURCE_KEY = "_ctx_ds_";
 	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
+	private static final String CONTEXT_DATA_PERM_STRATEGY = "_ctx_dataperm_strategy_";
+	private static final String CONTEXT_IGNORE_TENANT = "_ctx_ignore_tenant_";
+	private static final String CONTEXT_IGNORE_REWRITE = "_ctx_ignore_rewrite_";
+	private static final String CONTEXT_IGNORE_DATA_PERM = "_ctx_ignore_dataperm_";
+	private static final String CONTEXT_IGNORE_SOFT_DELETE = "_ctx_ignore_softdel_";
 	
  	
 	public static String getContextParam(String paramName){
@@ -70,6 +77,51 @@ public class MybatisRuntimeContext {
 	
 	public static boolean isTransactionalOn(){
 		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_TRANS_ON_KEY));
+	}
+	
+	public static void setIgnoreTenant(boolean ignore){
+		ThreadLocalContext.set(CONTEXT_IGNORE_TENANT, String.valueOf(ignore));
+	}
+
+	public static boolean isIgnoreTenantMode(){
+		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_IGNORE_TENANT));
+	}
+	
+	public static void setIgnoreSqlRewrite(boolean ignore){
+		ThreadLocalContext.set(CONTEXT_IGNORE_REWRITE, String.valueOf(ignore));
+	}
+	
+	public static boolean isIgnoreSqlRewrite(){
+		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_IGNORE_REWRITE));
+	}
+	
+	public static void setIgnoreSoftDeleteConditon(boolean ignore){
+		ThreadLocalContext.set(CONTEXT_IGNORE_SOFT_DELETE, String.valueOf(ignore));
+	}
+	
+	public static boolean isIgnoreSoftDeleteConditon(){
+		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_IGNORE_SOFT_DELETE));
+	}
+	
+	public static void setIgnoreDataPermission(boolean ignore){
+		ThreadLocalContext.set(CONTEXT_IGNORE_DATA_PERM, String.valueOf(ignore));
+	}
+	
+	public static boolean isIgnoreDataPermission(){
+		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_IGNORE_DATA_PERM));
+	}
+	
+	public static void setDataPermissionStrategy(DataPermission annotation) {
+		ThreadLocalContext.set(CONTEXT_DATA_PERM_STRATEGY, new DataPermissionStrategy(annotation));
+	}
+	
+	public static DataPermissionStrategy getDataPermissionStrategy() {
+		DataPermissionStrategy strategy = ThreadLocalContext.get(CONTEXT_DATA_PERM_STRATEGY);
+		if(strategy == null && MybatisConfigs.DATA_PERM_ALL_MATCH_MODE_ENABLED) {
+			strategy = new DataPermissionStrategy(true, null);
+			ThreadLocalContext.set(CONTEXT_DATA_PERM_STRATEGY, strategy);
+		}
+		return strategy;
 	}
 	
 	public static boolean isEmpty(){
@@ -113,8 +165,8 @@ public class MybatisRuntimeContext {
 		return dataSourceContextVals;
 	}
 	
-	public static void addDataProfileMappings(String fieldName,String...fieldValues){
-		Map<String, String[]> map = getDataProfileMappings();
+	public static void addDataPermissionValues(String fieldName,String...fieldValues){
+		Map<String, String[]> map = getDataPermissionValues();
 		if(map == null){
 			map = new HashMap<>(5);
 			ThreadLocalContext.set(CONTEXT_DATA_PROFILE_KEY,map);
@@ -122,7 +174,7 @@ public class MybatisRuntimeContext {
 		map.put(fieldName, fieldValues);
 	}
 	
-	public static Map<String, String[]> getDataProfileMappings(){
+	public static Map<String, String[]> getDataPermissionValues(){
 		return ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
 	}
 	

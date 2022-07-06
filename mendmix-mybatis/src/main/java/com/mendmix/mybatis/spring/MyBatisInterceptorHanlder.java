@@ -16,10 +16,20 @@
 package com.mendmix.mybatis.spring;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mendmix.common.CurrentRuntimeContext;
+import com.mendmix.common.model.AuthUser;
+import com.mendmix.common.util.ResourceUtils;
+import com.mendmix.mybatis.MybatisConfigs;
 import com.mendmix.mybatis.MybatisRuntimeContext;
+import com.mendmix.mybatis.plugin.rewrite.annotation.DataPermission;
+import com.mendmix.mybatis.plugin.rewrite.annotation.DatapermissionIgnore;
+import com.mendmix.mybatis.plugin.rewrite.annotation.RewriteIgnore;
+import com.mendmix.mybatis.plugin.rewrite.annotation.SofeDeleteIgnore;
+import com.mendmix.mybatis.plugin.rewrite.annotation.TenantIgnore;
 import com.mendmix.mybatis.plugin.rwseparate.UseMaster;
 import com.mendmix.spring.InterceptorHanlder;
 
@@ -35,6 +45,8 @@ import com.mendmix.spring.InterceptorHanlder;
  */
 public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 
+	private List<String> ignoreTenantUserTypes = ResourceUtils.getList(MybatisConfigs.TENANT_IGNORE_USER_TYPE);
+
 	@Override
 	public void preHandler(Method method, Object[] args) {
 		//多个方法层级调用 ，以最外层方法定义为准
@@ -44,6 +56,34 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 		
 		if(!MybatisRuntimeContext.isRwRouteAssigned() && method.isAnnotationPresent(UseMaster.class)){				
 			MybatisRuntimeContext.userMaster();
+		}
+		
+		if(method.isAnnotationPresent(TenantIgnore.class)){	
+			MybatisRuntimeContext.setIgnoreTenant(true);
+		}else if(!MybatisRuntimeContext.isIgnoreTenantMode()){
+			//忽略多租户
+			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+			if(currentUser != null 
+					&& (ignoreTenantUserTypes.contains(currentUser.getType()))) {
+				MybatisRuntimeContext.setIgnoreTenant(true);
+			}
+			
+		}
+		//
+		if(method.isAnnotationPresent(DataPermission.class)){	
+			MybatisRuntimeContext.setDataPermissionStrategy(method.getAnnotation(DataPermission.class));
+		}
+		
+		if(method.isAnnotationPresent(RewriteIgnore.class)){	
+			MybatisRuntimeContext.setIgnoreSqlRewrite(true);
+		}
+		
+		if(method.isAnnotationPresent(DatapermissionIgnore.class)){	
+			MybatisRuntimeContext.setIgnoreDataPermission(true);
+		}
+		
+		if(method.isAnnotationPresent(SofeDeleteIgnore.class)){	
+			MybatisRuntimeContext.setIgnoreSoftDeleteConditon(true);
 		}
 	}
 

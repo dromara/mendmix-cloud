@@ -23,6 +23,8 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.Set;
+import java.util.Map.Entry;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -139,14 +141,36 @@ public class LogProfileManager {
 	 * @throws IOException
 	 */
 	private static void reloadLog4j2WithXmlConfigFile() {
-		// init context
-		LoggerContext logContext = (LoggerContext) LogManager.getContext(true);
+		LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
+
 		String profile = ResourceUtils.getProperty("log.profile", "default");
+		//
+		System.out.println("================log custom config====================");
+		System.out.println("log.profile          =    " + profile);
+		if ("file".equals(profile))
+			System.out.println("log.output.dir =    " + System.getProperty("log.output.dir"));
+		Properties properties = ResourceUtils.getAllProperties("log.");
+		Set<Entry<Object, Object>> entrySet = properties.entrySet();
+		boolean withLogLevelItem = false;
+		for (Entry<Object, Object> entry : entrySet) {
+			String key = entry.getKey().toString();
+			if (!key.endsWith(".level")) {
+				continue;
+			}
+			withLogLevelItem = true;
+			System.setProperty(key, entry.getValue().toString());
+			System.out.println(key + "   =   " + entry.getValue());
+		}
+		System.out.println("================log custom config====================");
+
 		if ("default".equals(profile)) {
-			logContext.reconfigure();
+			if (withLogLevelItem) {
+				logContext.reconfigure();
+				System.out.println("LoggerContext[" + logContext.getName() + "] reconfigured!");
+			}
 			return;
 		}
-		
+
 		try {
 			String log4jConfFileName = "log4j2-" + profile + ".xml";
 			InputStream in = loadFileInputStream(log4jConfFileName);
@@ -155,9 +179,10 @@ public class LogProfileManager {
 				return;
 			}
 			System.out.println("reload log4j from config:" + log4jConfFileName);
-			
+
 			LogManager.shutdown(true, true);
-			while (logContext.isStopping()) {}
+			while (logContext.isStopping()) {
+			}
 
 			XmlConfigurationFactory factory = new XmlConfigurationFactory();
 			Configuration configuration = null;
@@ -169,9 +194,11 @@ public class LogProfileManager {
 			StatusLogger.getLogger().reset();
 			logContext.start(configuration);
 			System.out.println("LoggerContext[" + logContext.getName() + "] reload...");
-			
-			while (logContext.isStarting()) {}
-			if (logContext.isStarted())System.out.println("LoggerContext[" + logContext.getName() + "] is started!");
+
+			while (logContext.isStarting()) {
+			}
+			if (logContext.isStarted())
+				System.out.println("LoggerContext[" + logContext.getName() + "] is started!");
 			in.close();
 		} catch (Exception e) {
 			e.printStackTrace();

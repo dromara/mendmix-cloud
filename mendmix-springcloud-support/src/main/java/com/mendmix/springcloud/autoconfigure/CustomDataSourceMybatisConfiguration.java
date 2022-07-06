@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -118,11 +120,11 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		propertyPairs.clear();
 		
 		propertyPairs.put("groupName", new BeanValue(group));
-		String value = ResourceUtils.getProperty(propKeyPrefix + "mybatis.mapper-locations");
+		String value = getGroupConfig(group,"mybatis.mapper-locations");
 		propertyPairs.put("mapperLocations", new BeanValue(value));
-		value = ResourceUtils.getProperty(propKeyPrefix + "mybatis.type-aliases-package");
+		value = getGroupConfig(group,"mybatis.type-aliases-package");
 		propertyPairs.put("typeAliasesPackage", new BeanValue(value));
-		value = ResourceUtils.getProperty(propKeyPrefix + "mybatis.type-handlers-package");
+		value = getGroupConfig(group,"mybatis.type-handlers-package");
 		if(value != null)propertyPairs.put("typeHandlersPackage", new BeanValue(value));
 		propertyPairs.put("dataSource", new BeanValue(dataSourceBeanName, true));
 		BeanRegistryHelper.register(registry, sessionFactoryBeanName, sessionFactoryClass, argValues, propertyPairs);
@@ -139,9 +141,31 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		argValues.clear();
 		propertyPairs.clear();
 		propertyPairs.put("sqlSessionFactoryBeanName", new BeanValue(sessionFactoryBeanName));
-		value = ResourceUtils.getProperty(propKeyPrefix + "mybatis.mapper-package");
+		value = getGroupConfig(group,"mybatis.mapper-package");
 		propertyPairs.put("basePackage", new BeanValue(value));
 		BeanRegistryHelper.register(registry, mapperConfigurerBeanName, mapperConfigurerClass, argValues, propertyPairs);
+		//SqlSessionTemplate
+		Class<?> sqlSessionTemplateClass = SqlSessionTemplate.class;
+        String sqlSessionTemplateBeanName = group +  "SqlSessionTemplate";
+		argValues.clear();
+		propertyPairs.clear();
+		argValues.add(new BeanValue(sessionFactoryBeanName, true));
+		BeanRegistryHelper.register(registry, sqlSessionTemplateBeanName, sqlSessionTemplateClass, argValues, propertyPairs);
+     
 	}
 
+	private String getGroupConfig(String group,String key) {
+		if(DataSourceConfig.DEFAULT_GROUP_NAME.equals(group)) {
+			return ResourceUtils.getProperty(key);
+		}
+		
+		String groupPrefix = "group["+group+"].";
+		String value = ResourceUtils.getProperty(groupPrefix + key);
+		if(StringUtils.isBlank(value)) {
+			groupPrefix = group + ".";
+			value = ResourceUtils.getProperty(groupPrefix + key);
+		}
+		
+		return value;
+	}
 }

@@ -53,7 +53,7 @@ import com.mendmix.mybatis.plugin.rwseparate.RwRouteHandler;
 	//@Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class}),
     @Signature(type = Executor.class, method = "update", args = { MappedStatement.class, Object.class }),  
     @Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class }) })  
-public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
+public class MendmixMybatisInterceptor implements Interceptor,DisposableBean{
 
 	protected static final Logger logger = LoggerFactory.getLogger("com.mendmix.mybatis");
 	
@@ -62,7 +62,7 @@ public class JeesuiteMybatisInterceptor implements Interceptor,DisposableBean{
 	
 	private static boolean cacheEnabled,rwRouteEnabled;
 	
-	public JeesuiteMybatisInterceptor(String groupName, String[] hanlderNames) {
+	public MendmixMybatisInterceptor(String groupName, String[] hanlderNames) {
 		this.groupName = groupName;
 		//
 		this.interceptorHandlers.add(new SqlRewriteHandler());

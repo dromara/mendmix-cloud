@@ -16,7 +16,7 @@
 package com.mendmix.mybatis.core;
 
 import com.mendmix.mybatis.plugin.InvocationVals;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 
 /**
  * mybatis插件拦截处理器接口
@@ -27,7 +27,7 @@ import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
  */
 public interface InterceptorHandler {
 	
-	void start(JeesuiteMybatisInterceptor context);
+	void start(MendmixMybatisInterceptor context);
 	
 	void close();
 

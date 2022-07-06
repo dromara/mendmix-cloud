@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.plugin.InvocationVals;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 
 
 /**
@@ -69,7 +69,7 @@ public class RwRouteHandler implements InterceptorHandler {
 	public void onFinished(InvocationVals invocation,Object result) {}
 
 	@Override
-	public void start(JeesuiteMybatisInterceptor context) {}
+	public void start(MendmixMybatisInterceptor context) {}
 
 
 	@Override

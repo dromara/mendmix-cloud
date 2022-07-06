@@ -66,7 +66,8 @@ public class MapperMetadata {
 	
 	private Map<String, List<String>> queryTableMappings = new HashMap<>();
 
-	
+	private Map<String, String> propToColumnMappings = new HashMap<>();
+
 	private Map<String,MapperMethod> mapperMethods = new HashMap<>();
 
 
@@ -216,6 +217,14 @@ public class MapperMetadata {
 	public List<String> getUseTableNames(String msId){
 		return queryTableMappings.get(msId);
 	}
+	
+	public Map<String, String> getPropToColumnMappings() {
+		return propToColumnMappings;
+	}
+	
+	public String property2ColumnName(String propName) {
+		return propToColumnMappings.get(propName);
+	}
 
 	private static void parseAllMethod(Class<?> clazz,List<Method> methods) {
 		if(clazz.getDeclaredMethods() != null) {
@@ -237,6 +246,11 @@ public class MapperMetadata {
 		entityClass = (Class<?>) genericTypes[0];
 		//
 		entityMetadata = MetadataHelper.getEntityMapper(entityClass);
+		
+		List<ColumnMetadata> columns = MetadataHelper.getTableColumnMappers(tableName);
+		for (ColumnMetadata column : columns) {
+			propToColumnMappings.put(column.getProperty(), column.getColumn());
+		}
 	}
 
 	public static class MapperMethod {

@@ -73,15 +73,15 @@ public class PageSqlUtils {
 				.replace(PAGE_SIZE_PLACEHOLDER, String.valueOf(pageParams.getPageSize()));
 	}
 
-	public static String getCountSql(String sql) {
-		final String formatSql = StringUtils.replaceEach(sql, SQL_LINE_CHARS, SQL_LINE_REPLACE_CHARS)
-				.split(SQL_ORDER_PATTERN)[0];
-		if (StringUtils.containsAny(formatSql, unionKeys)
+	public static String getCountSql(String sql){
+		final String formatSql = StringUtils.replaceEach(sql, SQL_LINE_CHARS, SQL_LINE_REPLACE_CHARS);
+		if(StringUtils.containsAny(formatSql, unionKeys) 
 				|| aggregationKeyPatterns.stream().anyMatch(p -> p.matcher(formatSql).find())
 				|| nestSelectPattern.matcher(formatSql).find()) {
 			return String.format(commonCountSqlTemplate, formatSql);
-		} else {
-			return formatSql.replaceFirst(SQL_SELECT_PATTERN, SQL_COUNT_PREFIX);
+		}else {
+			sql = formatSql.split(SQL_ORDER_PATTERN)[0];
+			return sql.replaceFirst(SQL_SELECT_PATTERN, SQL_COUNT_PREFIX);
 		}
 	}
 

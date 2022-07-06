@@ -27,7 +27,7 @@ import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
 import com.mendmix.mybatis.plugin.InvocationVals;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 
 /**
  * 数据变更日志mybatis层拦截处理器
@@ -61,7 +61,7 @@ public class DataChangeLogHandler implements InterceptorHandler {
 	}
 
 	@Override
-	public void start(JeesuiteMybatisInterceptor context) {}
+	public void start(MendmixMybatisInterceptor context) {}
 
 	@Override
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {

@@ -44,7 +44,7 @@ import com.mendmix.mybatis.exception.MybatisHanlerInitException;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
 import com.mendmix.mybatis.plugin.InvocationVals;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 import com.mendmix.mybatis.plugin.rewrite.SqlRewriteHandler;
 
 /**
@@ -68,7 +68,7 @@ public class PaginationHandler implements InterceptorHandler {
 	private DatabaseType dbType = DatabaseType.mysql;
 
 	@Override
-	public void start(JeesuiteMybatisInterceptor context) {
+	public void start(MendmixMybatisInterceptor context) {
 
 		this.dbType = DatabaseType.valueOf(MybatisConfigs.getDbType(context.getGroupName()));
 		

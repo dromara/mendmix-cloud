@@ -21,6 +21,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Map.Entry;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -38,7 +40,7 @@ import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
 import com.mendmix.mybatis.plugin.InvocationVals;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 import com.mendmix.mybatis.plugin.autofield.annotation.CreatedAt;
 import com.mendmix.mybatis.plugin.autofield.annotation.CreatedBy;
 import com.mendmix.mybatis.plugin.autofield.annotation.UpdatedAt;
@@ -83,10 +85,10 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 
 
 	@Override
-	public void start(JeesuiteMybatisInterceptor context) {
+	public void start(MendmixMybatisInterceptor context) {
 		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		
-		String tenantSharddingField = MybatisConfigs.getTenantSharddingField(context.getGroupName());
+		String tenantColumn = MybatisConfigs.getTenantColumnName(context.getGroupName());
 		for (MapperMetadata mm : mappers) {
 			Field[] createdFields = new Field[4];
 			Field[] updatedFields = new Field[3];
@@ -107,9 +109,19 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 				}else if(field.isAnnotationPresent(UpdatedAt.class)) {
 					field.setAccessible(true);
 					updatedFields[2] = field;
-				}else if(tenantSharddingField != null && field.getName().endsWith(tenantSharddingField)) {
-					field.setAccessible(true);
-					createdFields[3] = field;
+				}else if(tenantColumn != null) {
+					boolean isTenantField = field.getName().equals(tenantColumn);
+					if(!isTenantField) {
+						Optional<Entry<String, String>> optional = mm.getPropToColumnMappings().entrySet().stream().filter(e -> {
+							return e.getValue().equalsIgnoreCase(tenantColumn);
+						}).findFirst();
+						//
+						isTenantField = optional.isPresent() && field.getName().equals(optional.get().getKey());
+					}
+					if(isTenantField) {
+						field.setAccessible(true);
+						createdFields[3] = field;
+					}
 				}
 			}
 	

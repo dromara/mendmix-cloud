@@ -70,7 +70,7 @@ import com.mendmix.mybatis.metadata.MapperMetadata.MapperMethod;
 import com.mendmix.mybatis.metadata.SqlMetadata;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
 import com.mendmix.mybatis.plugin.InvocationVals;
-import com.mendmix.mybatis.plugin.JeesuiteMybatisInterceptor;
+import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 import com.mendmix.mybatis.plugin.cache.annotation.Cache;
 import com.mendmix.mybatis.plugin.cache.annotation.CacheIgnore;
 import com.mendmix.mybatis.plugin.rewrite.SqlRewriteHandler;
@@ -123,7 +123,7 @@ public class CacheHandler implements InterceptorHandler {
 	private ExecutorService cleanCacheExecutor = Executors.newFixedThreadPool(1, new StandardThreadFactory("cleanCacheExecutor"));
 	
 	@Override
-	public void start(JeesuiteMybatisInterceptor context) {
+	public void start(MendmixMybatisInterceptor context) {
 		
 		dataSourceGroupName = context.getGroupName();
 		
@@ -575,7 +575,7 @@ public class CacheHandler implements InterceptorHandler {
 		}
 		
 		AuthUser currentUser;
-		if(invocationVal.isDynaDataPermEnabled() && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
+		if(invocationVal.isDynaDataPermEnaled() && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
 			sb.append(GlobalConstants.AT).append(currentUser.getId());
 		}
 		
