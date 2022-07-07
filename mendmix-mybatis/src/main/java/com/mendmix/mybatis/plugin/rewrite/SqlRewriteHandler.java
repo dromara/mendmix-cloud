@@ -43,6 +43,7 @@ import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.model.OrderBy;
 import com.mendmix.common.model.OrderBy.OrderType;
 import com.mendmix.common.model.PageParams;
+import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.common.util.StringConverter;
 import com.mendmix.mybatis.MybatisConfigs;
@@ -226,13 +227,18 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		if(invocation.getMappedStatement().getId().endsWith(CrudMethods.selectByPrimaryKey.name())) {
 			return null;
 		}
+		
+		SqlRewriteStrategy rewriteStrategy = MybatisRuntimeContext.getSqlRewriteStrategy();
+		if(rewriteStrategy.isIgnoreAny()) {
+			return null;
+		}
 		//
-		if(dynaDataPermEnaled && !MybatisRuntimeContext.isIgnoreDataPermission() && MybatisRuntimeContext.getDataPermissionStrategy() != null) {
+		if(dynaDataPermEnaled && !rewriteStrategy.isIgnoreColumnPerm()) {
 			Map<String, String[]> dataPermValues = MybatisRuntimeContext.getDataPermissionValues();
 			invocation.setDataPermValues(dataPermValues);
 		}
 		//
-		rewriteSql(invocation);
+		rewriteSql(invocation,rewriteStrategy);
 		
 		if(invocation.getPageParam() != null)return null;
         //不查数据库直接返回
@@ -288,19 +294,18 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	 * @param dataPermValues
 	 * @return
 	 */
-	private void rewriteSql(InvocationVals invocation) {
+	private void rewriteSql(InvocationVals invocation,SqlRewriteStrategy rewriteStrategy) {
 		String orignSql = invocation.getSql();
 		PageParams pageParam = invocation.getPageParam();
-		
-		boolean sharddingTenant = false;
-		if(columnSharddingTenant && !MybatisRuntimeContext.isIgnoreTenantMode()) {
-			sharddingTenant = true;
-		}
-		
-		boolean softDelete = !MybatisRuntimeContext.isIgnoreSoftDeleteConditon() && (
+
+		rewriteStrategy.setIgnoreTenant(!columnSharddingTenant || rewriteStrategy.isIgnoreTenant());
+
+		boolean softDelete = !rewriteStrategy.isIgnoreSoftDelete() && (
 				softDeleteMappedStatements.contains(invocation.getMapperNameSpace()) 
 				|| softDeleteMappedStatements.contains(invocation.getMappedStatement().getId())
 			);
+		rewriteStrategy.setIgnoreSoftDelete(!softDelete);
+		
 
 		Map<String, String[]> dataPermValues = invocation.getDataPermValues();
 		if(dataPermValues != null && dataPermValues.containsKey(orgBasePermKey)) {
@@ -324,17 +329,16 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 		}
 		
-		boolean orderBy = false;
-		if(!softDelete && dataPermValues == null && !sharddingTenant) {
-			if(pageParam == null || (pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty())) {
-				return;
-			}else {
-				orderBy = true;
-			}
+		if(pageParam != null) {
+			rewriteStrategy.setHandleOrderBy(pageParam.getOrderBys() != null && !pageParam.getOrderBys().isEmpty());
 		}
 		
+		if(invocation.getDataPermValues() == null && rewriteStrategy.isIgnoreTenant() && rewriteStrategy.isIgnoreSoftDelete() && !rewriteStrategy.isHandleOrderBy()) {
+			return;
+		} 
+		
 		if(logger.isDebugEnabled()) {
-			logger.debug("_mybatis_sqlRewrite_trace start -> statementId:{},sharddingTenant:{},softDelete:{},orderBy:{},dataPermMapping:{}",invocation.getMappedStatement().getId(),sharddingTenant,softDelete,orderBy,dataPermValues);
+			logger.debug("_mybatis_sqlRewrite_trace start -> statementId:{},rewriteStrategy:{}",JsonUtils.toJson(rewriteStrategy));
 		}
 			
 		SelectBody selectBody = null;
@@ -346,17 +350,15 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			return;
 		}
 		
-		handleSelectRewrite(selectBody, invocation, sharddingTenant);
+		handleSelectRewrite(selectBody, invocation,rewriteStrategy);
 		//
 		invocation.setRewriteSql(selectBody.toString());
 	}
 
 	
 	
-	private void handleSelectRewrite(SelectBody selectBody,InvocationVals invocation,boolean sharddingTenant) {
+	private void handleSelectRewrite(SelectBody selectBody,InvocationVals invocation,SqlRewriteStrategy strategy) {
 		Map<String, String[]> dataPermValues = invocation.getDataPermValues();
-		//
-		DataPermissionStrategy strategy = MybatisRuntimeContext.getDataPermissionStrategy();
 		if(selectBody instanceof PlainSelect) {
 			PlainSelect select = (PlainSelect)selectBody;
 			FromItem fromItem = select.getFromItem();
@@ -369,7 +371,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 					logger.trace("_mybatis_sqlRewrite_trace processMainTable ->table:{}",table.getName());
 				}
 				//
-				Expression newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues, sharddingTenant);
+				Expression newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues,strategy);
 				select.setWhere(newWhereExpression);
 				//
 				handleTableOrderBy(select, table, invocation);
@@ -386,10 +388,10 @@ public class SqlRewriteHandler implements InterceptorHandler {
 								logger.trace("_mybatis_sqlRewrite_trace processJoinTable ->table:{}",table.getName());
 							}
 							if(join.isInner()) {
-								newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues, sharddingTenant);
+								newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues, strategy);
 								select.setWhere(newWhereExpression);
 							}else {
-								newWhereExpression = handleTableDataPermission(join.getOnExpression(), table, dataPermValues, sharddingTenant);
+								newWhereExpression = handleTableDataPermission(join.getOnExpression(), table, dataPermValues, strategy);
 								join.setOnExpression(newWhereExpression);
 							}
 						}else {
@@ -399,7 +401,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				}
 			}else if(fromItem instanceof SubSelect) {
 				SubSelect subSelect = (SubSelect) fromItem;
-				handleSelectRewrite(subSelect.getSelectBody() ,invocation, sharddingTenant);
+				handleSelectRewrite(subSelect.getSelectBody() ,invocation,strategy);
 			}
 		}else if(selectBody instanceof SetOperationList) {
 			SetOperationList optList = (SetOperationList) selectBody;
@@ -409,14 +411,13 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 			List<SelectBody> selects = optList.getSelects();
 			for (SelectBody body : selects) {
-				handleSelectRewrite(body,invocation, sharddingTenant);
+				handleSelectRewrite(body,invocation,strategy);
 			}
 		}
 	}
 	
-	private Expression handleTableDataPermission(Expression whereExpression,Table table,Map<String, String[]> dataMapping,boolean sharddingTenant) {
+	private Expression handleTableDataPermission(Expression whereExpression,Table table,Map<String, String[]> dataMapping,SqlRewriteStrategy strategy) {
 		
-		DataPermissionStrategy strategy = MybatisRuntimeContext.getDataPermissionStrategy();
 		Map<String, String> columnMapping = null;
 		if(strategy != null && !strategy.isAllMatch()) {
 			String[] columns = strategy.getTableStrategy(table.getName()).columns();
@@ -447,7 +448,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				withSoftDelete = true;
 				continue;
 			}
-			if(sharddingTenant && fieldName.equals(tenantPropName)) {
+			if(!strategy.isIgnoreTenant() && fieldName.equals(tenantPropName)) {
 				column = tenantColumnName;
 				String currentTenantId = CurrentRuntimeContext.getTenantId();
 				if(currentTenantId == null)throw new MendmixBaseException("无法获取当前租户ID");
@@ -493,7 +494,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			whereExpression = new AndExpression(new Parenthesis(permExpression), new Parenthesis(whereExpression));
 		}
 		//软删除
-		if(withSoftDelete) {
+		if(withSoftDelete && !strategy.isIgnoreSoftDelete()) {
 			EqualsTo equalsTo = new EqualsTo();
 			equalsTo.setLeftExpression(new Column(table, softDeleteColumnName));
 			equalsTo.setRightExpression(new StringValue(softDeleteFalseValue));

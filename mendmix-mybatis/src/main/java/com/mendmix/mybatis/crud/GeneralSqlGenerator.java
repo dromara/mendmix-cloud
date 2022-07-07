@@ -22,6 +22,7 @@ import org.apache.ibatis.session.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mendmix.mybatis.crud.builder.BatchUpdateByPrimaryKeysBuilder;
 import com.mendmix.mybatis.crud.builder.CountAllBuilder;
 import com.mendmix.mybatis.crud.builder.DeleteByPrimaryKeyBuilder;
 import com.mendmix.mybatis.crud.builder.InsertBuilder;
@@ -66,6 +67,7 @@ public class GeneralSqlGenerator {
 			new SelectByPrimaryKeyBuilder().build(configuration, languageDriver, entity);
 			new SelectByPrimaryKeysBuilder().build(configuration, languageDriver, entity);
 			new CountAllBuilder().build(configuration, languageDriver, entity);
+			new BatchUpdateByPrimaryKeysBuilder().build(configuration, languageDriver, entity);
 			log.info("MENDMIX-TRACE-LOGGGING-->> generate autoCrud for:[{}] finish",entity.getEntityClass().getName());
 		}
 	}

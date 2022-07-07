@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DataPermissionItem {
+public @interface TablePermissionStrategy {
 
 	String table();
 	String[] columns() default {};

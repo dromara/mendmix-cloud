@@ -15,6 +15,6 @@ public @interface DataPermission {
 	 * 定义表的策略
 	 * @return
 	 */
-	DataPermissionItem[] strategy() default {};
+	TablePermissionStrategy[] strategy() default {};
 
 }

@@ -60,7 +60,7 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 		
 		if(method.isAnnotationPresent(TenantIgnore.class)){	
 			MybatisRuntimeContext.setIgnoreTenant(true);
-		}else if(!MybatisRuntimeContext.isIgnoreTenantMode()){
+		}else {
 			//忽略多租户
 			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 			if(currentUser != null 
