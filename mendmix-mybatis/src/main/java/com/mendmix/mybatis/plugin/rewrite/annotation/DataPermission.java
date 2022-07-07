@@ -10,6 +10,8 @@ import java.lang.annotation.Target;
 @Target(METHOD)
 public @interface DataPermission {
 	
+	boolean ignore() default false;
+	
 	boolean handleJoin() default true;
 	/**
 	 * 定义表的策略

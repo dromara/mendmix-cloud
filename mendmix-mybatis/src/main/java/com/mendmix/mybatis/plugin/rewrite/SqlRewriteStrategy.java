@@ -32,6 +32,7 @@ public class SqlRewriteStrategy {
 	
 	public void setDataPermission(DataPermission annotation) {
 		handleJoin = annotation.handleJoin();
+		ignoreColumnPerm = annotation.ignore();
 		if(annotation.strategy().length > 0) {
 			allMatch = false;
 			tableStrategies = new HashMap<>(annotation.strategy().length);

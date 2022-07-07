@@ -88,11 +88,7 @@ public class MybatisRuntimeContext {
 	public static void setIgnoreSoftDeleteConditon(boolean ignore){
 		getSqlRewriteStrategy().setIgnoreSoftDelete(ignore);
 	}
-	
-	public static void setIgnoreDataPermission(boolean ignore){
-		getSqlRewriteStrategy().setIgnoreColumnPerm(ignore);
-	}
-	
+
 	public static void setDataPermissionStrategy(DataPermission annotation) {
 		getSqlRewriteStrategy().setDataPermission(annotation);
 	}

@@ -26,7 +26,6 @@ import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.mybatis.MybatisConfigs;
 import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.plugin.rewrite.annotation.DataPermission;
-import com.mendmix.mybatis.plugin.rewrite.annotation.DatapermissionIgnore;
 import com.mendmix.mybatis.plugin.rewrite.annotation.RewriteIgnore;
 import com.mendmix.mybatis.plugin.rewrite.annotation.SofeDeleteIgnore;
 import com.mendmix.mybatis.plugin.rewrite.annotation.TenantIgnore;
@@ -76,10 +75,6 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 		
 		if(method.isAnnotationPresent(RewriteIgnore.class)){	
 			MybatisRuntimeContext.setIgnoreSqlRewrite(true);
-		}
-		
-		if(method.isAnnotationPresent(DatapermissionIgnore.class)){	
-			MybatisRuntimeContext.setIgnoreDataPermission(true);
 		}
 		
 		if(method.isAnnotationPresent(SofeDeleteIgnore.class)){	
