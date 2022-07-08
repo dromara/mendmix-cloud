@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 import com.mendmix.common.MendmixBaseException;
+import com.mendmix.common.util.JsonUtils;
 import com.mendmix.cos.BucketConfig;
 import com.mendmix.cos.CObjectMetadata;
 import com.mendmix.cos.CUploadObject;
@@ -73,6 +74,8 @@ public class HuaweicloudProvider extends AbstractProvider {
 		}
         ObsConfiguration obsConfiguration = new ObsConfiguration();
         obsConfiguration.setEndPoint(endpoint);
+        obsConfiguration.setSocketTimeout(30000);
+        obsConfiguration.setConnectionTimeout(5000);
         obsClient = new ObsClient(conf.getAccessKey(), conf.getSecretKey(), obsConfiguration);
     }
 
@@ -90,7 +93,7 @@ public class HuaweicloudProvider extends AbstractProvider {
     @Override
     public void createBucket(String bucketName, boolean isPrivate) {
         if (existsBucket(bucketName)) {
-            throw new RuntimeException("bucket[" + bucketName + "] 已经存在");
+            throw new MendmixBaseException("bucket[" + bucketName + "] 已经存在");
         }
         CreateBucketRequest request = new CreateBucketRequest(bucketName, conf.getRegionName());
         ObsBucket bucket = new ObsBucket();
@@ -114,7 +117,7 @@ public class HuaweicloudProvider extends AbstractProvider {
         ObjectListing objectListing = obsClient.listObjects(bucketName);
         if (objectListing != null && !objectListing.getObjects().isEmpty()) {
             logger.error("MENDMIX-TRACE-LOGGGING-->> 桶[{}]不为空， 不能删除", bucketName);
-            throw new RuntimeException("桶["+bucketName+"]不为空， 不能删除");
+            throw new MendmixBaseException("桶["+bucketName+"]不为空， 不能删除");
         }
         obsClient.deleteBucket(bucketName);
     }
@@ -146,42 +149,43 @@ public class HuaweicloudProvider extends AbstractProvider {
         String fileKey = object.getFileKey();
         byte[] bytes = object.getBytes();
         long size = 0;
-        PutObjectResult putObjectResult=null;
-        try {
-        	ObjectMetadata metadata = new ObjectMetadata();
-            if(object.getMimeType() != null) {
-            	metadata.setContentType(object.getMimeType());
-            }
-            if (file != null) {
-                putObjectResult = obsClient.putObject(bucketName, fileKey, file, metadata);
-                size = file.length();
-            } else if (bytes != null) {
-                inputStream = new ByteArrayInputStream(bytes);
-                putObjectResult = obsClient.putObject(bucketName, fileKey, inputStream,metadata);
-                size = bytes.length;
-                inputStream.close();
-            } else if (inputStream != null) {
-                putObjectResult=obsClient.putObject(bucketName, fileKey, inputStream,metadata);
-                size=inputStream.available();
-            }else{
-                throw new MendmixBaseException("upload object is NULL");
-            }
-            if (putObjectResult != null) {
-                AccessControlList acl = new AccessControlList();
-                if (!isBucketPrivate(bucketName)) {
-                    acl=AccessControlList.REST_CANNED_PUBLIC_READ;
-                }
-                obsClient.setObjectAcl(bucketName, fileKey, acl);
-                CUploadResult uploadResult = new CUploadResult(fileKey, getDownloadUrl(object.getBucketName(),fileKey, 300), null);
-                uploadResult.setMimeType(object.getMimeType());
-                uploadResult.setFileSize(size);
-                return uploadResult;
-            }
-        } catch (Exception e) {
-            logger.error(String.format("MENDMIX-TRACE-LOGGGING-->> 上传文件出错, bucketName:%s, fileKey:%s", bucketName, fileKey), e);
-            throw new MendmixBaseException("上传文件错误");
+        PutObjectResult result=null;
+        ObjectMetadata metadata = new ObjectMetadata();
+        if(object.getMimeType() != null) {
+        	metadata.setContentType(object.getMimeType());
         }
-        return null;
+        if (file != null) {
+            result = obsClient.putObject(bucketName, fileKey, file, metadata);
+            size = file.length();
+        } else if (bytes != null) {
+            inputStream = new ByteArrayInputStream(bytes);
+            result = obsClient.putObject(bucketName, fileKey, inputStream,metadata);
+            size = bytes.length;
+        } else if (inputStream != null) {
+            result=obsClient.putObject(bucketName, fileKey, inputStream,metadata);
+        }else{
+            throw new MendmixBaseException("upload object is NULL");
+        }
+        if (result.getStatusCode() == 200) {
+        	CUploadResult uploadResult = new CUploadResult();
+        	uploadResult.setFileKey(fileKey);
+        	if(result.getObjectUrl() != null) {
+        		uploadResult.setFileUrl(result.getObjectUrl());
+        	}else {
+        		uploadResult.setFileUrl(getDownloadUrl(bucketName, fileKey, 3600));
+        	}
+        	uploadResult.setMimeType(object.getMimeType());
+            uploadResult.setFileSize(size);
+        	if(size == 0 || StringUtils.isBlank(object.getMimeType())) {
+        		metadata = obsClient.getObjectMetadata(bucketName, result.getObjectKey());
+        		uploadResult.setMimeType(metadata.getContentType());
+                uploadResult.setFileSize(metadata.getContentLength());
+        	}
+            return uploadResult;
+        }else {
+        	logger.warn("UPLOAD_ERROR:{}",JsonUtils.toJson(result));
+        	throw new MendmixBaseException("上传失败");
+        }
     }
 
     @Override
@@ -282,7 +286,7 @@ public class HuaweicloudProvider extends AbstractProvider {
     @Override
     protected String buildBucketUrlPrefix(String bucketName) {
     	//mendmix.obs.cn-south-1.myhuaweicloud.com
-    	return String.format("https://%s.obs.%s.myhuaweicloud.com", bucketName,conf.getSecretKey());
+    	return String.format("https://%s.obs.%s.myhuaweicloud.com", bucketName,conf.getRegionName());
     }
 
     @Override
@@ -301,7 +305,7 @@ public class HuaweicloudProvider extends AbstractProvider {
 
     public boolean isBucketPrivate(String bucketName){
         if (!existsBucket(bucketName)) {
-            throw new RuntimeException("bucket["+bucketName+"]不存在");
+            throw new MendmixBaseException("bucket["+bucketName+"]不存在");
         }
         AccessControlList acl = obsClient.getBucketAcl(bucketName);
         Set<GrantAndPermission> grants = acl.getGrants();

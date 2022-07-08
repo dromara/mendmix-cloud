@@ -106,6 +106,9 @@ public abstract class AbstractProvider implements CosProvider{
 				return config.getUrlPrefix();
 			}
 			String urlPrefix = buildBucketUrlPrefix(bucketName);
+			if(!urlPrefix.endsWith("/")) {
+				urlPrefix = urlPrefix.concat("/");
+			}
 			config.setUrlPrefix(urlPrefix);
 			return urlPrefix;
 		}

@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.mendmix.common.util.ResourceUtils;
 
 import net.sf.jmimemagic.Magic;
 import net.sf.jmimemagic.MagicMatch;
@@ -38,6 +39,7 @@ import net.sf.jmimemagic.MagicMatch;
 @JsonInclude(Include.NON_NULL)
 public class CUploadObject {
 
+	private static boolean fileWithDate = ResourceUtils.getBoolean("mendmix.cos.fileWithDate", true);
 	private String bucketName;
 	private String fileKey;
 	private String extension;
@@ -179,12 +181,16 @@ public class CUploadObject {
 			if(StringUtils.isNotBlank(this.folderPath)){
 				builder.append(FilePathHelper.formatDirectoryPath(folderPath));
 			}
-			builder.append(FilePathHelper.genTimePathRandomFilePath(extension));
+			if(fileWithDate) {
+				builder.append(FilePathHelper.genTimePathRandomFilePath(extension));
+			}else {
+				builder.append(FilePathHelper.genRandomFileName(extension));
+			}
 			fileKey = builder.toString();
 		}
 		
-		if(!fileKey.startsWith(FilePathHelper.DIR_SPLITER)) {
-			fileKey = FilePathHelper.DIR_SPLITER + fileKey;
+		if(fileKey.startsWith(FilePathHelper.DIR_SPLITER)) {
+			fileKey = fileKey.substring(1);
 		}
 		
 		return fileKey;

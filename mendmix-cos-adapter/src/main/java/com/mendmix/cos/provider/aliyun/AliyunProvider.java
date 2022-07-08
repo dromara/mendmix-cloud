@@ -263,7 +263,7 @@ public class AliyunProvider extends AbstractProvider{
 
 	@Override
 	protected String buildBucketUrlPrefix(String bucketName) {
-		return String.format("https://%s.oss-%s.aliyuncs.com", bucketName,conf.getSecretKey());
+		return String.format("https://%s.oss-%s.aliyuncs.com", bucketName,conf.getRegionName());
 	}
 
 
