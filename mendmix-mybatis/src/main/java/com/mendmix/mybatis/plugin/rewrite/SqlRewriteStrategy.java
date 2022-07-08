@@ -24,14 +24,11 @@ public class SqlRewriteStrategy {
 	
 	private boolean allMatch = true;
 	
-	private boolean handleJoin = true; 
-	
 	private boolean handleOrderBy = true; 
 	
 	private Map<String, TablePermissionStrategy> tableStrategies;
 	
 	public void setDataPermission(DataPermission annotation) {
-		handleJoin = annotation.handleJoin();
 		ignoreColumnPerm = annotation.ignore();
 		if(annotation.strategy().length > 0) {
 			allMatch = false;
@@ -44,7 +41,6 @@ public class SqlRewriteStrategy {
 	
 	public SqlRewriteStrategy(boolean allMatch, Map<String, TablePermissionStrategy> strategies) {
 		this.allMatch = allMatch;
-		this.handleJoin = allMatch;
 		this.tableStrategies = strategies;
 	}
 	
@@ -91,14 +87,6 @@ public class SqlRewriteStrategy {
 
 	public void setHandleOrderBy(boolean handleOrderBy) {
 		this.handleOrderBy = handleOrderBy;
-	}
-
-	public boolean isHandleJoin(String table) {
-		if(!this.handleJoin)return false;
-		if(!this.allMatch && !hasTableStrategy(table)) {
-			return false;
-		}
-		return true;
 	}
 
 	public TablePermissionStrategy getTableStrategy(String table) {

@@ -381,9 +381,6 @@ public class SqlRewriteHandler implements InterceptorHandler {
 					for (Join join : joins) {
 						if(join.getRightItem() instanceof Table) {
 							table = (Table) join.getRightItem();
-							if(strategy == null || !strategy.isHandleJoin(table.getName())) {
-								continue;
-							}
 							if(logger.isTraceEnabled()) {
 								logger.trace("_mybatis_sqlRewrite_trace processJoinTable ->table:{}",table.getName());
 							}
