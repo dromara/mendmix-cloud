@@ -49,7 +49,6 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-
 public class RSA {
 	private static final String RSA_ALGORITHM = "RSA";
 
@@ -92,9 +91,9 @@ public class RSA {
     /**
      * 生成RSA密匙对
      * @param keySize
-     * @return [私钥，公钥]
+     * @return RSAKeyPair
      */
-    public static String[] generateKeyPair(int keySize) { 
+    public static RSAKeyPair generateKeyPair(int keySize) { 
     	
         // KeyPairGenerator类用于生成公钥和私钥对，基于RSA算法生成对象  
         KeyPairGenerator keyPairGen = null;  
@@ -113,12 +112,27 @@ public class RSA {
         // 得到公钥  
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();  
         
+        return new RSAKeyPair(privateKey, publicKey);
+    }  
+
+    /**
+     * 生成RSA密匙对
+     * @param keySize
+     * @return [pubkey,prikey]
+     */
+    public static String[] generateKeyStrPair(int keySize) { 
+    	
+    	RSAKeyPair keyPair = generateKeyPair(keySize);
+        // 得到私钥  
+        RSAPrivateKey privateKey = keyPair.getPrivateKey();  
+        // 得到公钥  
+        RSAPublicKey publicKey = keyPair.getPublicKey();  
         try {  
             // 得到公钥字符串  
             String publicKeyString = Base64.encodeToString(publicKey.getEncoded(),true);  
             // 得到私钥字符串  
             String privateKeyString = Base64.encodeToString(privateKey.getEncoded(),true);  
-            return new String[]{privateKeyString,publicKeyString};
+            return new String[]{publicKeyString,privateKeyString};
         } catch (Exception e) {  
             throw new RuntimeException(e);
         }  
@@ -570,5 +584,26 @@ public class RSA {
             e.printStackTrace();
         }
         return resultDatas;
+    }
+    
+    public  static class RSAKeyPair {
+    	private RSAPrivateKey privateKey;
+    	private RSAPublicKey publicKey;
+
+    	public RSAKeyPair(RSAPrivateKey privateKey, RSAPublicKey publicKey) {
+    		this.privateKey = privateKey;
+    		this.publicKey = publicKey;
+    	}
+
+    	public RSAPrivateKey getPrivateKey() {
+    		return privateKey;
+    	}
+
+    	public RSAPublicKey getPublicKey() {
+    		return publicKey;
+    	}
+    	
+    	
+
     }
 }

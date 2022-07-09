@@ -28,7 +28,7 @@ import com.mendmix.spring.InterceptorHanlder;
 /**
  * 
  * <br>
- * Class Name   : JeesuiteSpringBaseInterceptor
+ * Class Name   : MendmixSpringBaseInterceptor
  *
  * @author jiangwei
  * @version 1.0.0

@@ -22,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.crypt.Base58;
-import com.mendmix.common.crypt.DES;
 
 /**
  * 生成token
@@ -58,11 +57,7 @@ public class TokenGenerator {
 	public static String generateWithSign(String tokenType){
 		String timeString = String.valueOf(System.currentTimeMillis());
 		String str = DigestUtils.md5Short(timeString).concat(timeString);	
-		if(tokenType == null){
-			return SimpleCryptUtils.encrypt(str);
-		}
-		String cryptKey = getCryptKey(tokenType);
-		return DES.encrypt(cryptKey, str);
+		return SimpleCryptUtils.encrypt(str);
 	}
 	
 	
@@ -74,31 +69,16 @@ public class TokenGenerator {
 	 * 验证带签名信息的token
 	 */
 	public static void validate(String tokenType,String token,boolean validateExpire){
-		long timestamp = 0;
+		long timestamp;
 		Date date = new Date();
 		try {
-			if(tokenType == null){
-				timestamp = Long.parseLong(SimpleCryptUtils.decrypt(token).substring(6));
-			}else{ 
-				String cryptKey = getCryptKey(tokenType);
-				timestamp = Long.parseLong(DES.decrypt(cryptKey,token).substring(6));
-			}
+			timestamp = Long.parseLong(SimpleCryptUtils.decrypt(token).substring(6));
 		} catch (Exception e) {
 			throw new MendmixBaseException(403, "token格式错误");
 		}
 		if(validateExpire && date.getTime() - timestamp > EXPIRE){
 			throw new MendmixBaseException(403, "token已过期");
 		}
-	}
-	
-	private static String getCryptKey(String tokenType){
-		String key = StringUtils.EMPTY;
-		if(StringUtils.isNotBlank(tokenType)){
-			key = ResourceUtils.getAndValidateProperty(tokenType + ".cryptKey");
-		}else {			
-			key  = SimpleCryptUtils.GLOBAL_CRYPT_KEY;
-		}
-		return key;
 	}
 	
 	public static void main(String[] args) {

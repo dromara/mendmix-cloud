@@ -1,17 +1,5 @@
-/*
- * Copyright 2016-2022 www.mendmix.com.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/**
+ * 
  */
 package com.mendmix.common.crypt;
 
@@ -26,13 +14,15 @@ import javax.crypto.spec.SecretKeySpec;
  * @date 2017年1月14日
  */
 public class AES {
+
+	private static final String ALGORITHM = "AES";
 	/**
 	 * 生成密钥
 	 * @throws Exception 
 	 */
 	public static byte[] initKey() throws Exception{
 		//密钥生成器
-		KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+		KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITHM);
 		//初始化密钥生成器
 		keyGen.init(128);  //默认128，获得无政策权限后可用192或256
 		//生成密钥
@@ -46,9 +36,9 @@ public class AES {
 	 */
 	public static byte[] encrypt(byte[] data, byte[] key) throws Exception{
 		//恢复密钥
-		SecretKey secretKey = new SecretKeySpec(key, "AES");
+		SecretKey secretKey = new SecretKeySpec(key, ALGORITHM);
 		//Cipher完成加密
-		Cipher cipher = Cipher.getInstance("AES");
+		Cipher cipher = Cipher.getInstance(ALGORITHM);
 		//根据密钥对cipher进行初始化
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 		//加密
@@ -61,9 +51,9 @@ public class AES {
 	 */
 	public static byte[] decrypt(byte[] data, byte[] key) throws Exception{
 		//恢复密钥生成器
-		SecretKey secretKey = new SecretKeySpec(key, "AES");
+		SecretKey secretKey = new SecretKeySpec(key, ALGORITHM);
 		//Cipher完成解密
-		Cipher cipher = Cipher.getInstance("AES");
+		Cipher cipher = Cipher.getInstance(ALGORITHM);
 		//根据密钥对cipher进行初始化
 		cipher.init(Cipher.DECRYPT_MODE, secretKey);
 		byte[] plain = cipher.doFinal(data);

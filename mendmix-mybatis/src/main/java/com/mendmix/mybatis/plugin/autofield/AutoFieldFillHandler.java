@@ -30,6 +30,7 @@ import javax.persistence.Id;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.SqlCommandType;
 
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
@@ -156,19 +157,20 @@ public class AutoFieldFillHandler implements InterceptorHandler {
         Field[] fields = methodFieldMappings.get(orignMappedStatement.getId());
 		if(fields == null) return null;
 
+		boolean updateCommand = SqlCommandType.UPDATE.equals(invocation.getMappedStatement().getSqlCommandType());
 		if(orignMappedStatement.getId().endsWith(INSERT_LIST_METHOD_NAME)) {
 			if(parameter instanceof Map) {
 				try {
 					List<Object> list = (List<Object>) ((Map<String, Object>)parameter).get("arg0");
 					for (Object obj : list) {
-						setFieldValue(fields,obj);
+						setFieldValue(fields,obj,updateCommand);
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		}else {
-			setFieldValue(fields,parameter);
+			setFieldValue(fields,parameter,updateCommand);
 		}
 		
 		return null;
@@ -176,7 +178,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 
 	
 
-	private void setFieldValue(Field[] fields, Object parameter) {
+	private void setFieldValue(Field[] fields, Object parameter,boolean updateCommand) {
 		String tmpVal;
 		if(fields[0] != null && getIdGenerator() != null && isNullValue(parameter, fields[0])) {
 			Serializable id = idGenerator.nextId();
@@ -188,15 +190,15 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 			try {fields[0].set(parameter, id);} catch (Exception e) {}
 		}
 		
-		if(fields[1] != null && (tmpVal = CurrentRuntimeContext.getCurrentUserId()) != null && isNullValue(parameter, fields[1])) {
+		if(fields[1] != null && (tmpVal = CurrentRuntimeContext.getCurrentUserId()) != null && (updateCommand || isNullValue(parameter, fields[1]))) {
 			try {fields[1].set(parameter, tmpVal);} catch (Exception e) {}
 		}
 		
-		if(fields[2] != null && isNullValue(parameter, fields[2])) {
+		if(fields[2] != null && (updateCommand || isNullValue(parameter, fields[2]))) {
 			try {fields[2].set(parameter, new Date());} catch (Exception e) {}
 		}
 		
-		if(fields.length > 3 && fields[3] != null && (tmpVal = CurrentRuntimeContext.getTenantId()) != null && isNullValue(parameter, fields[3])) {
+		if(fields.length > 3 && fields[3] != null && (tmpVal = CurrentRuntimeContext.getTenantId()) != null && (updateCommand || isNullValue(parameter, fields[3]))) {
 			try {fields[3].set(parameter, tmpVal);} catch (Exception e) {}
 		}
 		

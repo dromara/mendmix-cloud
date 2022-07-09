@@ -16,6 +16,7 @@
 package com.mendmix.mybatis;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,8 +26,11 @@ import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.mybatis.datasource.DataSourceContextVals;
 import com.mendmix.mybatis.plugin.cache.CacheHandler;
+import com.mendmix.mybatis.plugin.rewrite.DataPermissionItem;
 import com.mendmix.mybatis.plugin.rewrite.SqlRewriteStrategy;
+import com.mendmix.mybatis.plugin.rewrite.UserDataPermissionProvider;
 import com.mendmix.mybatis.plugin.rewrite.annotation.DataPermission;
+import com.mendmix.spring.InstanceFactory;
 
 /**
  * 
@@ -45,7 +49,29 @@ public class MybatisRuntimeContext {
 	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
 	private static final String CONTEXT_REWRITE_STRATEGY = "_ctx_rewrite_strategy_";
 	
+	private static UserDataPermissionProvider  userDataPermissionProvider;
+	
+	static {
+		userDataPermissionProvider = InstanceFactory.getInstance(UserDataPermissionProvider.class);
+	}
  	
+	private static UserDataPermissionProvider getUserDataPermissionProvider() {
+		if(userDataPermissionProvider != null)return userDataPermissionProvider;
+		synchronized (MybatisRuntimeContext.class) {
+			if(userDataPermissionProvider != null)return userDataPermissionProvider;
+			userDataPermissionProvider = InstanceFactory.getInstance(UserDataPermissionProvider.class);
+			if(userDataPermissionProvider == null) {
+				userDataPermissionProvider = new UserDataPermissionProvider() {	
+					@Override
+					public List<DataPermissionItem> findUserPermissions(String userId) {
+						return null;
+					}
+				};
+			}
+		}
+		return userDataPermissionProvider;
+	}
+
 	public static String getContextParam(String paramName){
 		if(StringUtils.isBlank(paramName))return null;
 		if(CacheHandler.CURRENT_USER_CONTEXT_NAME.equals(paramName)){
@@ -153,7 +179,22 @@ public class MybatisRuntimeContext {
 	}
 	
 	public static Map<String, String[]> getDataPermissionValues(){
-		return ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
+		final Map<String, String[]> valueMaps = ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
+		if(valueMaps == null) {
+			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+			if(currentUser == null)return null;
+			List<DataPermissionItem> permissions = getUserDataPermissionProvider().findUserPermissions(currentUser.getId());
+			if(permissions == null)return null;
+			for (DataPermissionItem item : permissions) {
+				if(item.isAllMatch())continue;
+				if(item.getValues() == null || item.getValues().isEmpty()) {
+					addDataPermissionValues(item.getFieldName(), new String[0]);
+				}else {
+					addDataPermissionValues(item.getFieldName(), item.getValues().toArray(new String[0]));
+				}
+			}
+		}
+		return valueMaps;
 	}
 	
 

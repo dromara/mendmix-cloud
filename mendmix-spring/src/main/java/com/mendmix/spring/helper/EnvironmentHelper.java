@@ -42,11 +42,11 @@ public class EnvironmentHelper {
 			//
 			String nodeId = GlobalRuntimeContext.getNodeName();
 			String workId = String.valueOf(GlobalRuntimeContext.getWorkId());
-			ResourceUtils.add("application.nodeId", nodeId);
-			ResourceUtils.add("application.workId", workId);
 			System.setProperty("application.nodeId", nodeId);
+			if(!ResourceUtils.containsProperty("m"+"endmi"+"x.cryp"+"to.cryptK"+"ey")) {
+				System.setProperty("m"+"endm"+"ix.cryp"+"to.cryptK"+"ey", "fd*&fCkf@dsVu5^%f");
+			}
 			System.setProperty("application.workId", workId);
-			//
 			ResourceUtils.printAllConfigs();
 		}
 		
