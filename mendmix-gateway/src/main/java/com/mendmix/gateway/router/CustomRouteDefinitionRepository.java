@@ -18,7 +18,6 @@ package com.mendmix.gateway.router;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -26,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.gateway.config.GatewayProperties;
 import org.springframework.cloud.gateway.event.EnableBodyCachingEvent;
 import org.springframework.cloud.gateway.filter.AdaptCachedBodyGlobalFilter;
 import org.springframework.cloud.gateway.filter.FilterDefinition;
@@ -47,7 +45,7 @@ import reactor.core.publisher.Mono;
 /**
  * 
  * <br>
- * Class Name   : CustomRouteDefinitionRepository
+ * Class Name : CustomRouteDefinitionRepository
  *
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @version 1.0.0
@@ -61,21 +59,16 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 
 	@Autowired
 	private AdaptCachedBodyGlobalFilter adaptCachedBodyGlobalFilter;
-	@Autowired
-	private GatewayProperties gatewayProperties;
+	// @Autowired
+	// private GatewayProperties gatewayProperties;
 
 	@Override
 	public Flux<RouteDefinition> getRouteDefinitions() {
 		if (routeHub.get() == null) {
 			routeHub.set(new HashMap<>());
 		}
-		
-		if(routeHub.get().isEmpty()) {
-			// 本地路由
-			List<RouteDefinition> routes = gatewayProperties.getRoutes();
-			for (RouteDefinition routeDef : routes) {
-				routeHub.get().put(routeDef.getId().toLowerCase(), routeDef);
-			}
+
+		if (routeHub.get().isEmpty()) {
 			//
 			Map<String, BizSystemModule> modules = CurrentSystemHolder.getRouteModuleMappings();
 			for (BizSystemModule module : modules.values()) {
@@ -83,19 +76,19 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 				if (GlobalRuntimeContext.APPID.equals(module.getServiceId())) {
 					continue;
 				}
-				
-				if(routeHub.get().containsKey(module.getServiceId())) {
+
+				if (routeHub.get().containsKey(module.getServiceId())) {
 					continue;
 				}
 				//
 				loadDynamicRouteDefinition(module);
 			}
-			
+
 			for (RouteDefinition route : routeHub.get().values()) {
 				EnableBodyCachingEvent enableBodyCachingEvent = new EnableBodyCachingEvent(new Object(), route.getId());
 				adaptCachedBodyGlobalFilter.onApplicationEvent(enableBodyCachingEvent);
 			}
-			
+
 			StringBuilder message = new StringBuilder("\n================final RouteMapping begin===============\n");
 			ClassScanner.whoUseMeReport();
 			for (RouteDefinition route : routeHub.get().values()) {
@@ -153,22 +146,25 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 	private void buildRouteLogMessage(StringBuilder message, RouteDefinition route) {
 		message.append(route.getId()).append(":[");
 		message.append("url:").append(route.getUri()).append(",");
-		PredicateDefinition pathDef = route.getPredicates().stream().filter(p -> "Path".equals(p.getName())).findFirst().orElse(null);
+		PredicateDefinition pathDef = route.getPredicates().stream().filter(p -> "Path".equals(p.getName())).findFirst()
+				.orElse(null);
 		String routeName = "";
-		if(pathDef != null) {
+		if (pathDef != null) {
 			String argValue = pathDef.getArgs().get("_genkey_0");
 			String[] parts = StringUtils.split(argValue, "/");
-			if(parts.length > 1) {
-				routeName = parts[1];
-				message.append("routeName:").append(routeName);
+			for (int i = 1; i < parts.length - 1; i++) {
+				routeName = routeName + parts[i] + "/";
 			}
+			routeName = routeName.substring(0, routeName.length() - 1);
+			message.append("routeName:").append(routeName);
 			message.append(",path:").append(argValue);
 		}
-		FilterDefinition stripPrefixDef = route.getFilters().stream().filter(p -> "StripPrefix".equals(p.getName())).findFirst().orElse(null);
-		if(stripPrefixDef != null) {
+		FilterDefinition stripPrefixDef = route.getFilters().stream().filter(p -> "StripPrefix".equals(p.getName()))
+				.findFirst().orElse(null);
+		if (stripPrefixDef != null) {
 			message.append(",stripPrefix:").append(stripPrefixDef.getArgs().get("_genkey_0"));
 		}
-		
+
 		message.append("]\n");
 	}
 

@@ -39,7 +39,7 @@ import com.mendmix.mybatis.plugin.rwseparate.RwRouteHandler;
  */
 public class MybatisConfigs {
 	
-	public static final String DB_TYPE = "mendmix.mybatis.dbType";
+	public static final String DB_TYPE = "mendmix.dbType";
 	public static final String CACHE_ENABLED = "mendmix.mybatis.cache.enabled";
 	public static final String CACHE_EXPIRE_SECONDS = "mendmix.mybatis.cache.expireSeconds";
 	public static final String TENANT_ENABLED = "mendmix.mybatis.tenant.enabled";

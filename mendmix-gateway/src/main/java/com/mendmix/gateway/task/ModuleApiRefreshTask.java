@@ -92,8 +92,7 @@ public class ModuleApiRefreshTask implements SubTimerTask {
 				url = module.getMetadataUri();
 				if(url == null)return;
 				logger.debug("MENDMIX-TRACE-LOGGGING-->> initModuleApiInfos begin -> serviceId:{},url:{}",module.getServiceId(),url);
-				HttpRequestEntity httpRequestEntity = HttpRequestEntity.get(url).backendInternalCall();
-				apiInfos = httpRequestEntity.execute().toObject(AppMetadata.class).getApis();
+				apiInfos = HttpRequestEntity.get(url).execute().toObject(AppMetadata.class).getApis();
 			}
 		} catch (Exception e) {
 			boolean ignore = e instanceof NullPointerException;
@@ -101,10 +100,6 @@ public class ModuleApiRefreshTask implements SubTimerTask {
 				MendmixBaseException ex = (MendmixBaseException) e;
 				ignore = ex.getCode() == 404 || ex.getCode() == 401 || ex.getCode() == 403;
 			}
-			if(ignore) {
-				logger.info("MENDMIX-TRACE-LOGGGING-->> {} can't work,retry fetch apis from PaaS-admin",module.getMetadataUri());
-			}
-			
 			logger.warn("MENDMIX-TRACE-LOGGGING-->> initModuleApiInfos error -> serviceId:{},error:{}",module.getServiceId(),e.getMessage());
 		}
 		

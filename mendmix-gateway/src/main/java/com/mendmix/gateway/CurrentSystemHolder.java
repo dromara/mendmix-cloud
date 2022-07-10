@@ -27,13 +27,10 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.gateway.config.GatewayProperties;
 import org.springframework.cloud.gateway.filter.FilterDefinition;
 import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
-import org.springframework.cloud.gateway.route.RouteDefinition;
 
 import com.mendmix.common.GlobalRuntimeContext;
-import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.http.HostMappingHolder;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.api.SystemMgtApi;
@@ -177,7 +174,8 @@ public class CurrentSystemHolder {
 			module.format();
 		}
 
-		StringBuilder logBuilder = new StringBuilder("MENDMIX-TRACE-LOGGGING-->> \n============load systems begin================");
+		StringBuilder logBuilder = new StringBuilder(
+				"MENDMIX-TRACE-LOGGGING-->> \n============load systems begin================");
 		logBuilder.append("\nmainSystem:\n -").append(mainSystem.toString());
 		if (multiSystemMode) {
 			logBuilder.append("\nmountSystem:");
@@ -251,8 +249,8 @@ public class CurrentSystemHolder {
 		List<BizSystemModule> modules = system.getModules();
 		for (BizSystemModule module : modules) {
 			if (localModules.contains(module)) {
-				log.info("MENDMIX-TRACE-LOGGGING-->> ignore reduplicate module[{}-{}]!!!!!",
-						module.getRouteName(), module.getServiceId());
+				log.info("MENDMIX-TRACE-LOGGGING-->> ignore reduplicate module[{}-{}]!!!!!", module.getRouteName(),
+						module.getServiceId());
 				continue;
 			}
 			if (StringUtils.isAnyBlank(module.getRouteName(), module.getProxyUri())) {
@@ -281,6 +279,7 @@ public class CurrentSystemHolder {
 			for (BizSystemModule module : localModules) {
 				routeModuleMappings.put(module.getRouteName(), module);
 				routeNames.add(module.getRouteName());
+				modules.add(module);
 			}
 
 			// 网关本身
@@ -301,9 +300,6 @@ public class CurrentSystemHolder {
 		if (localModules != null)
 			return;
 		localModules = new ArrayList<>();
-
-		List<RouteDefinition> defaultRouteDefs = InstanceFactory.getInstance(GatewayProperties.class).getRoutes();
-
 		Properties properties = ResourceUtils.getAllProperties("spring.cloud.gateway.routes");
 		Set<Entry<Object, Object>> entrySet = properties.entrySet();
 
@@ -313,45 +309,33 @@ public class CurrentSystemHolder {
 			if (entry.getKey().toString().endsWith(".id")) {
 				prefix = entry.getKey().toString().replace(".id", "");
 				module = new BizSystemModule();
-				module.setDefaultRoute(true);
 				module.setServiceId(entry.getValue().toString());
 				module.setProxyUri(properties.getProperty(prefix + ".uri"));
+				PredicateDefinition pathPredicate = new PredicateDefinition(
+						properties.getProperty(prefix + ".predicates[0]"));
+				String pathPredicateValue = pathPredicate.getArgs().get("_genkey_0");
+				if (!pathPredicateValue.startsWith(GatewayConfigs.PATH_PREFIX)) {
+					log.warn("ZVOS-FRAMEWORK-STARTUP-LOGGGING-->> route_format_error ->routeId:{},pathPredicateValue",
+							entry.getKey(), pathPredicateValue);
+					throw new IllegalArgumentException("route path must startWith:" + GatewayConfigs.PATH_PREFIX);
+				}
 				//
-				updateModuleRouteInfos(module, defaultRouteDefs);
+				String[] parts = StringUtils.split(pathPredicateValue, "/");
+				String routeName = "";
+				for (int i = 1; i < parts.length - 1; i++) {
+					routeName = routeName + parts[i] + "/";
+				}
+				routeName = routeName.substring(0, routeName.length() - 1);
+				module.setRouteName(routeName);
+				//
+				FilterDefinition filterDefinition = new FilterDefinition(
+						properties.getProperty(prefix + ".filters[0]"));
+				String stripPrefix = filterDefinition.getArgs().get("_genkey_0");
+				module.setStripPrefix(Integer.parseInt(stripPrefix));
 				localModules.add(module);
-				HostMappingHolder.addProxyUrlMapping(module.getServiceId(), module.getProxyUri());
 			}
 		}
 
-	}
-
-	/**
-	 * @param module
-	 * @param definition
-	 */
-	private static void updateModuleRouteInfos(BizSystemModule module, List<RouteDefinition> defaultRouteDefs) {
-		RouteDefinition routeDef = defaultRouteDefs.stream()
-				.filter(def -> StringUtils.equalsIgnoreCase(module.getServiceId(), def.getId())).findFirst()
-				.orElse(null);
-		if (routeDef == null)
-			return;
-		FilterDefinition stripPrefixDef = routeDef.getFilters().stream().filter(p -> "StripPrefix".equals(p.getName()))
-				.findFirst().orElse(null);
-		int stripPrefix = 0;
-		if (stripPrefixDef != null) {
-			stripPrefix = Integer.parseInt(stripPrefixDef.getArgs().get("_genkey_0"));
-		}
-		module.setStripPrefix(stripPrefix);
-		PredicateDefinition pathDef = routeDef.getPredicates().stream().filter(p -> "Path".equals(p.getName()))
-				.findFirst().orElse(null);
-		if (pathDef != null) {
-			String pathPattern = pathDef.getArgs().get("_genkey_0");
-			if (!pathPattern.startsWith(GatewayConfigs.PATH_PREFIX)) {
-				throw new MendmixBaseException("route path must startWith:" + GatewayConfigs.PATH_PREFIX);
-			}
-			String[] parts = StringUtils.split(pathPattern, "/");
-			module.setRouteName(parts[1]);
-		}
 	}
 
 }

@@ -81,13 +81,16 @@ public class BizSystemModule {
 	
 
 	public void format() {
-		if(this.stripPrefix < 0) {
+		if(this.stripPrefix < 0) {//route:spu,proxyUri:lb://mall-product-svc
+			//route:spu,proxyUri:lb://mall-product-svc/spu
+			//route:mall/spu,proxyUri:lb://mall-product-svc/spu
 			this.stripPrefix = StringUtils.countMatches(getRouteName(), "/") + 2;
-			if(getProxyUri().endsWith("/" + getRouteName())) {
-				proxyUri = proxyUri.substring(0,proxyUri.lastIndexOf(getRouteName()) - 1);
-				stripPrefix = 1;
-			}
-		}
+			if(StringUtils.countMatches(getProxyUri(), "/") > 2) {
+				String removeSchema = StringUtils.splitByWholeSeparator(proxyUri, "://")[1];
+				String path = removeSchema.substring(removeSchema.indexOf("/"));
+				this.stripPrefix = this.stripPrefix - StringUtils.countMatches(getRouteName().replace(path, ""), "/") - 1;
+				proxyUri = proxyUri.replace(path, "");
+			}}
 	}
 
 	public String getSystemId() {
@@ -229,15 +232,16 @@ public class BizSystemModule {
 	}
 	
 	public static String resolveRealUri(BizSystemModule module,String uri) {
-		if(uri.startsWith(GatewayConfigs.PATH_PREFIX + "/"))return uri;
-		if(module.isGateway()) {
+		if(module.isGateway() || module.getStripPrefix() == 1) {
+			if(uri.startsWith(GatewayConfigs.PATH_PREFIX + "/")) {
+				return uri;
+			}
 			return GatewayConfigs.PATH_PREFIX + uri;
 		}else {
-			if(module.getStripPrefix() == 1) {
-				uri = GatewayConfigs.PATH_PREFIX + uri;
-			}else {
-				uri = String.format("%s/%s/%s", GatewayConfigs.PATH_PREFIX,module.getRouteName(),uri);
+			if(uri.startsWith(GatewayConfigs.PATH_PREFIX + "/" + module.getRouteName() + "/")) {
+				return uri;
 			}
+			uri = String.format("%s/%s/%s", GatewayConfigs.PATH_PREFIX,module.getRouteName(),uri);
 		}
 		return uri.replace("//", "/");
 	}

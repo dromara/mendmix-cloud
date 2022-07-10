@@ -35,13 +35,13 @@
 	    <property name="groupName" value="default" />
 		<property name="configLocation" value="classpath:mybatis-configuration.xml" />
 		<property name="mapperLocations" value="classpath:mapper/*Mapper.xml" />
-		<property name="typeAliasesPackage" value="com.mendmix.mybatis.test.entity" />
+		<property name="typeAliasesPackage" value="com.mendmix.example.dao.entity" />
 		<property name="dataSource" ref="routeDataSource" />
 	</bean>
 	
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="sqlSessionFactoryBeanName" value="aarouteSqlSessionFactory" />
-		<property name="basePackage" value="com.mendmix.mybatis.test.mapper" />
+		<property name="basePackage" value="com.mendmix.example.dao.mapper" />
 	</bean>
 
 </beans>

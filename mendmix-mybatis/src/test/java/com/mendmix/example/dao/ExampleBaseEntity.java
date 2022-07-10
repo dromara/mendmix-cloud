@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mendmix.mybatis.test.entity;
+package com.mendmix.example.dao;
 
 import javax.persistence.Column;
 
@@ -26,9 +26,9 @@ import com.mendmix.mybatis.plugin.autofield.annotation.UpdatedBy;
 /**
  * 
  * <br>
- * Class Name   : StandardBaseEntity
+ * Class Name   : ExampleBaseEntity
  */
-public abstract class TestBaseEntity extends BaseEntity {
+public abstract class ExampleBaseEntity extends BaseEntity {
 
 	private static final long serialVersionUID = 1L;
 
@@ -47,6 +47,11 @@ public abstract class TestBaseEntity extends BaseEntity {
 	@UpdatedAt
     @Column(name = "updated_at",updatable = true)
     private java.util.Date updatedAt;
+	
+	/**
+     * 删除状态（0：否，1：已删除）
+     */
+    private Boolean deleted;
 
     public String getCreatedBy() {
         return createdBy;
@@ -78,4 +83,14 @@ public abstract class TestBaseEntity extends BaseEntity {
     public void setUpdatedAt(java.util.Date updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+	public Boolean getDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(Boolean deleted) {
+		this.deleted = deleted;
+	}
+    
+    
 }

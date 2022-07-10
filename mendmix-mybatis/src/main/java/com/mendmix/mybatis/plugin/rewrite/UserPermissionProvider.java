@@ -22,7 +22,7 @@ import java.util.List;
  * @author <a href="mailto:vakinge@gmail.com">vakinge</a>
  * @date Jul 9, 2022
  */
-public interface UserDataPermissionProvider {
+public interface UserPermissionProvider {
 
 	List<DataPermissionItem> findUserPermissions(String userId);
 }

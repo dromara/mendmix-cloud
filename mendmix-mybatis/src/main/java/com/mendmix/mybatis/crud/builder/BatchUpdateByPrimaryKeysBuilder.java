@@ -76,9 +76,8 @@ public class BatchUpdateByPrimaryKeysBuilder  extends AbstractMethodBuilder{
 		if(!selective)set.deleteCharAt(set.length() - 1);
 		set.append("</trim>");
 
-		String sql = String.format(SqlTemplate.BATCH_UPDATE_BY_KEYS, tableMapper.getName(),set.toString(),idColumn,idProperty);
-
-		return String.format(SqlTemplate.SCRIPT_TEMAPLATE, sql);
+		String sql = String.format(SqlTemplate.BATCH_UPDATE_BY_KEYS, tableMapper.getName(),set.toString(),idColumn);
+		return sql;
 	}
 
 

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mendmix.example.dao.mapper.ExampleStaffEntityMapper">
+  <resultMap id="BaseResultMap" type="com.mendmix.example.dao.entity.ExampleStaffEntity">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="mobile" jdbcType="CHAR" property="mobile" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="type" jdbcType="SMALLINT" property="type" />
+    <result column="status" jdbcType="SMALLINT" property="status" />
+    <result column="dept_id" jdbcType="VARCHAR" property="deptId" />
+    <result column="created_at" jdbcType="TIMESTAMP" property="createdAt" />
+    <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
+    <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
+    <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
+    <result column="version" jdbcType="INTEGER" property="version" />
+    <result column="deleted" jdbcType="BIT" property="deleted" />
+    <result column="department_name" jdbcType="VARCHAR" property="departmentName" />
+    <result column="company_name" jdbcType="VARCHAR" property="companyName" />
+  </resultMap>
+  
+  <select id="findListByParam" resultMap="BaseResultMap">
+      SELECT
+         s.*,
+         d.name as department_name,
+         c.name as company_name
+      FROM staff s
+      LEFT JOIN department d ON d.id = s.dept_id
+      LEFT JOIN company c ON c.id = d.company_id
+      <where>
+          <if test="type != null">AND s.type=#{type}</if>
+          <if test="status != null">AND s.status=#{status}</if>
+      </where>
+  </select>
+    
+</mapper>

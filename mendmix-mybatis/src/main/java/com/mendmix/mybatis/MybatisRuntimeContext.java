@@ -28,7 +28,7 @@ import com.mendmix.mybatis.datasource.DataSourceContextVals;
 import com.mendmix.mybatis.plugin.cache.CacheHandler;
 import com.mendmix.mybatis.plugin.rewrite.DataPermissionItem;
 import com.mendmix.mybatis.plugin.rewrite.SqlRewriteStrategy;
-import com.mendmix.mybatis.plugin.rewrite.UserDataPermissionProvider;
+import com.mendmix.mybatis.plugin.rewrite.UserPermissionProvider;
 import com.mendmix.mybatis.plugin.rewrite.annotation.DataPermission;
 import com.mendmix.spring.InstanceFactory;
 
@@ -49,19 +49,19 @@ public class MybatisRuntimeContext {
 	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
 	private static final String CONTEXT_REWRITE_STRATEGY = "_ctx_rewrite_strategy_";
 	
-	private static UserDataPermissionProvider  userDataPermissionProvider;
+	private static UserPermissionProvider  userPermissionProvider;
 	
 	static {
-		userDataPermissionProvider = InstanceFactory.getInstance(UserDataPermissionProvider.class);
+		userPermissionProvider = InstanceFactory.getInstance(UserPermissionProvider.class);
 	}
- 	
-	private static UserDataPermissionProvider getUserDataPermissionProvider() {
-		if(userDataPermissionProvider != null)return userDataPermissionProvider;
+
+	private static UserPermissionProvider getUserPermissionProvider() {
+		if(userPermissionProvider != null)return userPermissionProvider;
 		synchronized (MybatisRuntimeContext.class) {
-			if(userDataPermissionProvider != null)return userDataPermissionProvider;
-			userDataPermissionProvider = InstanceFactory.getInstance(UserDataPermissionProvider.class);
-			if(userDataPermissionProvider == null) {
-				userDataPermissionProvider = new UserDataPermissionProvider() {	
+			if(userPermissionProvider != null)return userPermissionProvider;
+			userPermissionProvider = InstanceFactory.getInstance(UserPermissionProvider.class);
+			if(userPermissionProvider == null) {
+				userPermissionProvider = new UserPermissionProvider() {	
 					@Override
 					public List<DataPermissionItem> findUserPermissions(String userId) {
 						return null;
@@ -69,7 +69,7 @@ public class MybatisRuntimeContext {
 				};
 			}
 		}
-		return userDataPermissionProvider;
+		return userPermissionProvider;
 	}
 
 	public static String getContextParam(String paramName){
@@ -183,7 +183,7 @@ public class MybatisRuntimeContext {
 		if(valueMaps == null) {
 			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 			if(currentUser == null)return null;
-			List<DataPermissionItem> permissions = getUserDataPermissionProvider().findUserPermissions(currentUser.getId());
+			List<DataPermissionItem> permissions = getUserPermissionProvider().findUserPermissions(currentUser.getId());
 			if(permissions == null)return null;
 			for (DataPermissionItem item : permissions) {
 				if(item.isAllMatch())continue;

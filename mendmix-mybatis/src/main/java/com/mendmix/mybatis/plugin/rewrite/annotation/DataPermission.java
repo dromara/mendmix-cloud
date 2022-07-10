@@ -12,6 +12,8 @@ public @interface DataPermission {
 	
 	boolean ignore() default false;
 	
+	boolean handleJoin() default true;
+	
 	/**
 	 * 定义表的策略
 	 * @return

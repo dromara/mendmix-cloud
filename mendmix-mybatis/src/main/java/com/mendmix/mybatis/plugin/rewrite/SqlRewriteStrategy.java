@@ -26,10 +26,13 @@ public class SqlRewriteStrategy {
 	
 	private boolean handleOrderBy = true; 
 	
+	private boolean handleJoin = true; 
+	
 	private Map<String, TablePermissionStrategy> tableStrategies;
 	
 	public void setDataPermission(DataPermission annotation) {
 		ignoreColumnPerm = annotation.ignore();
+		handleJoin = annotation.handleJoin();
 		if(annotation.strategy().length > 0) {
 			allMatch = false;
 			tableStrategies = new HashMap<>(annotation.strategy().length);
@@ -90,10 +93,12 @@ public class SqlRewriteStrategy {
 	}
 
 	public TablePermissionStrategy getTableStrategy(String table) {
+		if(tableStrategies == null)return null;
 		return tableStrategies.get(table);
 	}
 	
 	public boolean hasTableStrategy(String table) {
+		if(tableStrategies == null)return false;
 		return tableStrategies.containsKey(table);
 	}
 	
@@ -101,4 +106,10 @@ public class SqlRewriteStrategy {
 		if(allMatch)return allMatch;
 		return tableStrategies.containsKey(table) ? getTableStrategy(table).handleOwner() : true;
 	}
+
+	public boolean isHandleJoin() {
+		return handleJoin;
+	}
+	
+	
 }

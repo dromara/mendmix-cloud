@@ -16,6 +16,7 @@
  */
 package com.mendmix.common.model;
 
+import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.constants.PermissionLevel;
 
 /**
@@ -41,6 +42,9 @@ public class ApiInfo extends ApiModel{
 	}
 	
 	public String getIdentifier() {
+		if(identifier == null && getUri() != null && getMethod() != null) {
+			identifier = new StringBuilder(getMethod()).append(GlobalConstants.UNDER_LINE).append(getUri()).toString();
+		}
 		return identifier;
 	}
 	public void setIdentifier(String identifier) {

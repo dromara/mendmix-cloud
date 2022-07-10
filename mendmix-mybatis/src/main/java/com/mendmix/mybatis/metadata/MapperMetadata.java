@@ -122,6 +122,11 @@ public class MapperMetadata {
 				//
 				mapperMethods.put(method.getName(),new MapperMethod(method, fullName, sqlType));
 			}
+            //
+            List<ColumnMetadata> columns = MetadataHelper.getTableColumnMappers(tableName);
+    		for (ColumnMetadata column : columns) {
+    			propToColumnMappings.put(column.getProperty(), column.getColumn());
+    		}
 		} catch (Exception e) {
 			log.info("MENDMIX-TRACE-LOGGGING-->> parse mapper error -> mapperClassName:{}",mapperClassName,e);
 		}
@@ -246,11 +251,6 @@ public class MapperMetadata {
 		entityClass = (Class<?>) genericTypes[0];
 		//
 		entityMetadata = MetadataHelper.getEntityMapper(entityClass);
-		
-		List<ColumnMetadata> columns = MetadataHelper.getTableColumnMappers(tableName);
-		for (ColumnMetadata column : columns) {
-			propToColumnMappings.put(column.getProperty(), column.getColumn());
-		}
 	}
 
 	public static class MapperMethod {

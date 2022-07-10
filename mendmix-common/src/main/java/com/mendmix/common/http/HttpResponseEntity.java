@@ -15,6 +15,7 @@
  */
 package com.mendmix.common.http;
 
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,7 +41,7 @@ import com.mendmix.common.util.JsonUtils;
  * @version 1.0.0
  * @date Apr 29, 2021
  */
-public class HttpResponseEntity {
+public class HttpResponseEntity implements Serializable{
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -112,7 +113,7 @@ public class HttpResponseEntity {
 		
 	}
 	
-	public <T> T toBean(Class<T> clazz) {
+	public <T> T toObject(Class<T> clazz) {
 		String json = getUnwrapBody();
 		if(!isJson)return null;
 		return JsonUtils.toObject(json, clazz);
@@ -129,17 +130,17 @@ public class HttpResponseEntity {
 		return value;
 	}
 	
-	public <T> T toObject(Class<T> clazz) {
-		String unwrapBody = getUnwrapBody();
+	public <T> T toObject(Class<T> clazz,String selectNode) {
+		String json = getUnwrapBody();
 		if(!isJson)return null;
-		String json = JsonUtils.getJsonNodeValue(unwrapBody, null);
+		json = JsonUtils.getJsonNodeValue(json, selectNode);
 		return JsonUtils.toObject(json, clazz);
 	}
 	
 	public <T> List<T> toList(Class<T> clazz,String selectNode) {
-		String unwrapBody = getUnwrapBody();
+		String json = getUnwrapBody();
 		if(!isJson)return null;
-		String json = JsonUtils.getJsonNodeValue(unwrapBody, selectNode);
+		json = JsonUtils.getJsonNodeValue(json, selectNode);
 		return JsonUtils.toList(json, clazz);
 	}
 	

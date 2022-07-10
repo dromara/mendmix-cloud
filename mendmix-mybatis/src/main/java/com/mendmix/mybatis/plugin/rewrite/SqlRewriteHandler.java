@@ -99,8 +99,6 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private static final String FRCH_ITEM_PREFIX = "__frch_item_";
 	private static final String QUERY_FUZZY_CHAR = "%";
 	
-	private Map<String, LinkedHashMap<String,String>> dataPermMappings = new HashMap<>();
-	
 	private static boolean dynaDataPermEnaled = false;
 	//<alias,column>
 	private Map<String,String> globalDataPermColumnMappings = new HashMap<>();
@@ -173,14 +171,22 @@ public class SqlRewriteHandler implements InterceptorHandler {
 					continue;
 				if(tenantPropName == null)tenantPropName = tenantColumn.getProperty();
 				
-				if (!dataPermMappings.containsKey(mapper.getTableName())) {
-					dataPermMappings.put(mapper.getTableName(), new LinkedHashMap<>());
+				if (!tableDataPermColumnMappings.containsKey(mapper.getTableName())) {
+					tableDataPermColumnMappings.put(mapper.getTableName(), new LinkedHashMap<>());
 				}
-				dataPermMappings.get(mapper.getTableName()).put(tenantPropName, tenantColumnName);
+				tableDataPermColumnMappings.get(mapper.getTableName()).put(tenantPropName, tenantColumnName);
 			}
 		}
 		
-		logger.info("MENDMIX-TRACE-LOGGGING-->> dataProfileMappings >> {}",dataPermMappings);
+		StringBuilder logBuilder = new StringBuilder("MENDMIX-TRACE-LOGGGING-->> \nsqlRewrite rules:");
+		if(columnSharddingTenant)logBuilder.append("\n - tenantSharddingColumn:").append(tenantColumnName);
+		if(deptColumnName != null)logBuilder.append("\n - deptColumnName:").append(deptColumnName);
+		if(ownerColumnName != null)logBuilder.append("\n - createdByColumnName:").append(ownerColumnName);
+		if(softDeleteColumnName != null)logBuilder.append("\n - softDeleteColumn:").append(softDeleteColumnName);
+		if(softDeleteFalseValue != null)logBuilder.append("\n - softDeleteFalseValue:").append(softDeleteFalseValue);
+		logBuilder.append("\n - globalDataPermColumnMappings:").append(globalDataPermColumnMappings);
+		logBuilder.append("\n - tableDataPermColumnMappings:").append(tableDataPermColumnMappings);
+		logger.info(logBuilder.toString());
 	}
 	
 	private void initColumnConfig(List<MapperMetadata> mappers,String column,List<String> mapperNames) {
@@ -196,10 +202,10 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				softDeletePropName = columnMetadata.getProperty();
 			}
 			tmpTables.add(mapper.getTableName());
-			if(!dataPermMappings.containsKey(mapper.getTableName())) {
-				dataPermMappings.put(mapper.getTableName(), new LinkedHashMap<>());
+			if(!tableDataPermColumnMappings.containsKey(mapper.getTableName())) {
+				tableDataPermColumnMappings.put(mapper.getTableName(), new LinkedHashMap<>());
 			}
-			dataPermMappings.get(mapper.getTableName()).put(columnMetadata.getProperty(), column);
+			tableDataPermColumnMappings.get(mapper.getTableName()).put(columnMetadata.getProperty(), column);
 		}
 		//
 		for (MapperMetadata mapper : mappers) {
@@ -297,15 +303,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private void rewriteSql(InvocationVals invocation,SqlRewriteStrategy rewriteStrategy) {
 		String orignSql = invocation.getSql();
 		PageParams pageParam = invocation.getPageParam();
-
+        //
 		rewriteStrategy.setIgnoreTenant(!columnSharddingTenant || rewriteStrategy.isIgnoreTenant());
-
-		boolean softDelete = !rewriteStrategy.isIgnoreSoftDelete() && (
-				softDeleteMappedStatements.contains(invocation.getMapperNameSpace()) 
-				|| softDeleteMappedStatements.contains(invocation.getMappedStatement().getId())
-			);
-		rewriteStrategy.setIgnoreSoftDelete(!softDelete);
-		
 
 		Map<String, String[]> dataPermValues = invocation.getDataPermValues();
 		if(dataPermValues != null && dataPermValues.containsKey(orgBasePermKey)) {
@@ -364,14 +363,14 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			FromItem fromItem = select.getFromItem();
 			if(fromItem instanceof Table) {
 				Table table = (Table) fromItem;
-				if(strategy != null && !strategy.isAllMatch() && !strategy.hasTableStrategy(table.getName())) {
+				if(!strategy.isAllMatch() && !strategy.hasTableStrategy(table.getName())) {
 					return;
 				}
 				if(logger.isTraceEnabled()) {
 					logger.trace("_mybatis_sqlRewrite_trace processMainTable ->table:{}",table.getName());
 				}
 				//
-				Expression newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues,strategy);
+				Expression newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues,strategy,false);
 				select.setWhere(newWhereExpression);
 				//
 				handleTableOrderBy(select, table, invocation);
@@ -385,10 +384,10 @@ public class SqlRewriteHandler implements InterceptorHandler {
 								logger.trace("_mybatis_sqlRewrite_trace processJoinTable ->table:{}",table.getName());
 							}
 							if(join.isInner()) {
-								newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues, strategy);
+								newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues, strategy,true);
 								select.setWhere(newWhereExpression);
 							}else {
-								newWhereExpression = handleTableDataPermission(join.getOnExpression(), table, dataPermValues, strategy);
+								newWhereExpression = handleTableDataPermission(join.getOnExpression(), table, dataPermValues, strategy,true);
 								join.setOnExpression(newWhereExpression);
 							}
 						}else {
@@ -413,21 +412,27 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 	}
 	
-	private Expression handleTableDataPermission(Expression whereExpression,Table table,Map<String, String[]> dataMapping,SqlRewriteStrategy strategy) {
+	private Expression handleTableDataPermission(Expression whereExpression,Table table,Map<String, String[]> dataMapping,SqlRewriteStrategy strategy,boolean isJoin) {
 		
 		Map<String, String> columnMapping = null;
-		if(strategy != null && !strategy.isAllMatch()) {
-			String[] columns = strategy.getTableStrategy(table.getName()).columns();
-			if(columns.length > 0) {
-				columnMapping = new HashMap<>(columns.length);
-				for (String column : columns) {
-					columnMapping.put(getDataPermColumnAlias(table.getName(), column),column);
+		boolean handleDataPerm = !isJoin || strategy.isHandleJoin() || strategy.hasTableStrategy(table.getName());
+		if(handleDataPerm) {
+			if(!strategy.isAllMatch()) {
+				String[] columns = strategy.getTableStrategy(table.getName()).columns();
+				if(columns.length > 0) {
+					columnMapping = new HashMap<>(columns.length);
+					for (String column : columns) {
+						columnMapping.put(getDataPermColumnAlias(table.getName(), column),column);
+					}
+					mergeTableColumnMapping(columnMapping, table.getName(), tenantPropName,softDeletePropName,deptPropName);
 				}
-				mergeTableColumnMapping(columnMapping, table.getName(), tenantPropName,softDeletePropName,deptPropName);
 			}
-		}
-		if(columnMapping == null) {
-			columnMapping = tableDataPermColumnMappings.get(table.getName());
+			if(columnMapping == null) {
+				columnMapping = tableDataPermColumnMappings.get(table.getName());
+			}
+		}else {
+			columnMapping = new HashMap<>(2);
+			mergeTableColumnMapping(columnMapping, table.getName(), tenantPropName,softDeletePropName);
 		}
 		
 		if(columnMapping == null || columnMapping.isEmpty()) {
