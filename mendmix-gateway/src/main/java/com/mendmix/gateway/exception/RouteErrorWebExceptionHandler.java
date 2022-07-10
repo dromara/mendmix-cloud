@@ -31,7 +31,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.gateway.CurrentSystemHolder;
-import com.mendmix.gateway.helper.RuequestHelper;
+import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.logging.helper.LogMessageFormat;
 
@@ -67,7 +67,7 @@ public class RouteErrorWebExceptionHandler  extends DefaultErrorWebExceptionHand
 		errorAttributes.put(GlobalConstants.PARAM_MSG, msg);
 		errorAttributes.put(GlobalConstants.PARAM_CODE, code);
 		Map<String, String> data = new HashMap<>(2);
-		String routeName = RuequestHelper.resolveRouteName(request.path());
+		String routeName = RequestContextHelper.resolveRouteName(request.path());
 		BizSystemModule module = CurrentSystemHolder.getModule(routeName);
 		data.put("serviceId", module.getServiceId());
 		data.put("path", request.path());

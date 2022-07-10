@@ -24,7 +24,7 @@ import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.util.TokenGenerator;
 import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.GatewayConstants;
-import com.mendmix.gateway.helper.RuequestHelper;
+import com.mendmix.gateway.helper.RequestContextHelper;
 
 /**
  * 
@@ -43,8 +43,8 @@ public class SpecUnauthorizedHandler {
 		ServerHttpRequest request = exchange.getRequest();
 		
 		boolean pass = false;
-		if(!RuequestHelper.getCurrentModule(exchange).isGateway()) {
-			pass = GatewayConfigs.openApiEnabled && request.getHeaders().containsKey(GatewayConstants.X_SIGN_HEADER);
+		if(!RequestContextHelper.getCurrentModule(exchange).isGateway()) {
+			pass = GatewayConfigs.openApiEnabled && request.getHeaders().containsKey(GatewayConstants.OPEN_SIGN_HEADER);
 		}
 		if(!pass) {
 			pass = isIpWhilelistAccess(request);
@@ -66,7 +66,7 @@ public class SpecUnauthorizedHandler {
 	private boolean isIpWhilelistAccess(ServerHttpRequest request) {
 
 		if(!GatewayConfigs.anonymousIpWhilelist.isEmpty()) {
-			String clientIp = RuequestHelper.getIpAddr(request);
+			String clientIp = RequestContextHelper.getIpAddr(request);
 			if(GatewayConfigs.anonymousIpWhilelist.contains(clientIp))return true;
 		}
 		

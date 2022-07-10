@@ -52,6 +52,12 @@
 			<artifactId>mendmix-logging</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.mendmix</groupId>
+			<artifactId>mendmix-cache</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>

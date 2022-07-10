@@ -26,6 +26,7 @@ import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.server.ServerWebExchange;
 
@@ -51,7 +52,7 @@ import com.mendmix.gateway.model.BizSystemModule;
  * @version 1.0.0
  * @date May 14, 2022
  */
-public class RuequestHelper {
+public class RequestContextHelper {
 
 	private static final String WEBSOCKET_KEYS = "sec-websocket-key";
 
@@ -104,6 +105,22 @@ public class RuequestHelper {
 
 	public static boolean isWebSocketRequest(ServerHttpRequest request) {
 		return request.getHeaders().containsKey(WEBSOCKET_KEYS);
+	}
+	
+	public static final boolean isMultipartContent(ServerHttpRequest request) {
+		if (!HttpMethod.POST.name().equalsIgnoreCase(request.getMethodValue())) {
+			return false;
+		}
+		MediaType contentType = request.getHeaders().getContentType();
+		if (contentType == null) {
+			return false;
+		}
+		
+		if(MediaType.MULTIPART_FORM_DATA.getType().equals(contentType.getType())) {
+			return true;
+		}
+		
+		return false;
 	}
 
 	public static String resolveRouteName(String uri) {

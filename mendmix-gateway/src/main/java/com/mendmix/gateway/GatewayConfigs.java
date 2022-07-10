@@ -44,6 +44,10 @@ public class GatewayConfigs extends AppConfigs {
 	public static final boolean openApiEnabled = ResourceUtils.getBoolean("mendmix.openapi.enabled", false);
 	public static final boolean openApiScopeEnabled = ResourceUtils.getBoolean("mendmix.openapi.apiscope.enabled", false);
 	
+	public static final long REQUEST_TIME_OFFSET_THRESHOLD = ResourceUtils.getLong("mendmix.timestamp.offset.threshold.ms", 60000 * 5);
+	public static final boolean WEB_REQUEST_SIGN_ENABLED = ResourceUtils.getBoolean("mendmix.webrequest.sign.enabled");
+	
+	
 	public static final List<String> ignoreRewriteRoutes = ResourceUtils.getList("mendmix.response.rewrite.ignore-routes");
 	
 }

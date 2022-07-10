@@ -22,12 +22,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -55,7 +54,6 @@ import reactor.core.publisher.Mono;
  */
 public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 
-	private static Logger logger = LoggerFactory.getLogger("com.mendmix.gateway");
 
 	private static final String GZIP_ENCODE = "gzip";
 
@@ -68,7 +66,7 @@ public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 
 	public static void setHandlers(List<PostFilterHandler> handlers) {
 		if (handlers.size() > 1) {
-			handlers.stream().sorted(Comparator.comparing(PostFilterHandler::order));
+			handlers = handlers.stream().sorted(Comparator.comparing(PostFilterHandler::order)).collect(Collectors.toList());
 		}
 		RewriteBodyServerHttpResponse.handlers = handlers;
 	}

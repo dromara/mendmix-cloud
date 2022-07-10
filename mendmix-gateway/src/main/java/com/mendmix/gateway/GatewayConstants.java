@@ -25,8 +25,9 @@ public class GatewayConstants {
 	public static final String CONTEXT_CURRENT_API = "ctx-current-api";
 	public static final String CACHED_REQUEST_BODY_STR_ATTR = "cachedRequestBodyStr";
 	
-	public static final String X_SIGN_HEADER = "x-open-sign";
-	public static final String APP_ID_HEADER = "x-open-clientId";
+	public static final String REQ_SIGN_HEADER = "x-sign";
+	public static final String OPEN_SIGN_HEADER = "x-open-sign";
+	public static final String OPEN_APP_ID_HEADER = "x-open-clientId";
 	public static final String TIMESTAMP_HEADER = "timestamp";
 	
 }

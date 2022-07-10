@@ -24,7 +24,6 @@ import org.springframework.core.env.PropertySource;
 
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.util.ResourceUtils;
-import com.mendmix.common.util.WhoUseMeReporter;
 
 public class EnvironmentHelper {
 	
@@ -49,8 +48,6 @@ public class EnvironmentHelper {
 			System.setProperty("application.workId", workId);
 			ResourceUtils.printAllConfigs();
 		}
-		
-		WhoUseMeReporter.report();
 	}
 	
 

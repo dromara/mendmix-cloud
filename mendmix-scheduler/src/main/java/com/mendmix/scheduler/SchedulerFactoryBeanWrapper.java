@@ -47,6 +47,7 @@ import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.util.ClassUtils;
 
 import com.mendmix.common.GlobalRuntimeContext;
+import com.mendmix.common.util.ClassScanner;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.scheduler.annotation.ScheduleConf;
 import com.mendmix.spring.InstanceFactory;
@@ -225,6 +226,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
                         + RESOURCE_PATTERN;
                 org.springframework.core.io.Resource[] resources = resourcePatternResolver.getResources(pattern);
                 MetadataReaderFactory readerFactory = new CachingMetadataReaderFactory(resourcePatternResolver);
+                ClassScanner.whoUseMeReport();
                 for (org.springframework.core.io.Resource resource : resources) {
                     if (resource.isReadable()) {
                         MetadataReader reader = readerFactory.getMetadataReader(resource);

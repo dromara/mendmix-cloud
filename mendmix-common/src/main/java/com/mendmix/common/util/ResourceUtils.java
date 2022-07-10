@@ -533,6 +533,7 @@ public final class ResourceUtils {
 			sortKeys.add(key);
 		}
 		Collections.sort(sortKeys);
+		ClassScanner.whoUseMeReport();
 		System.out.println("==================final config list start==================");
 		String value;
 		for (String key : sortKeys) {

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +40,8 @@ import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.filter.pre.GlobalHeaderHanlder;
 import com.mendmix.gateway.filter.pre.RequestLogHanlder;
-import com.mendmix.gateway.filter.pre.SignatureRequestHandler;
-import com.mendmix.gateway.helper.RuequestHelper;
+import com.mendmix.gateway.filter.pre.OpenApiSignatureHandler;
+import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
 
 import reactor.core.publisher.Mono;
@@ -67,7 +68,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered,Asyn
 		}
 		
 		if(GatewayConfigs.openApiEnabled) {
-			handlers.add(new SignatureRequestHandler());
+			handlers.add(new OpenApiSignatureHandler());
 		}
 
 		boolean has = filterHandlers != null && filterHandlers.length > 0 && filterHandlers[0] != null;
@@ -77,7 +78,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered,Asyn
 			}
 		}
 		if(handlers.size() > 1) {			
-			handlers.stream().sorted(Comparator.comparing(PreFilterHandler::order));
+			handlers = handlers.stream().sorted(Comparator.comparing(PreFilterHandler::order)).collect(Collectors.toList());
 		}
 
 	}
@@ -93,7 +94,7 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered,Asyn
     		return chain.filter(exchange);
     	}
     	
-    	BizSystemModule module = RuequestHelper.getCurrentModule(exchange);
+    	BizSystemModule module = RequestContextHelper.getCurrentModule(exchange);
     	try {
     		Builder requestBuilder = exchange.getRequest().mutate();
     		for (PreFilterHandler handler : handlers) {

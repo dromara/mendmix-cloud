@@ -42,7 +42,7 @@ import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.GatewayConfigs;
-import com.mendmix.gateway.helper.RuequestHelper;
+import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystem;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.gateway.model.BizSystemPortal;
@@ -136,7 +136,7 @@ public class GlobalFilter implements WebFilter {
 	
 	private void beforeAuthentication(ServerWebExchange exchange) {
 		ServerHttpRequest request = exchange.getRequest();
-		String domain = RuequestHelper.getOriginDomain(request);
+		String domain = RequestContextHelper.getOriginDomain(request);
 		BizSystemPortal portal = CurrentSystemHolder.getSystemPortal(domain);
 		if(portal != null) {
 			CurrentRuntimeContext.setTenantId(portal.getTenantId());
@@ -179,7 +179,7 @@ public class GlobalFilter implements WebFilter {
 	private void afterAuthentication(ServerWebExchange exchange,AuthUser currentUser) {
 		if(!GatewayConfigs.actionLogEnabled)return;
 		ServerHttpRequest request = exchange.getRequest();
-		BizSystemModule module = CurrentSystemHolder.getModule(RuequestHelper.resolveRouteName(request.getPath().value()));
+		BizSystemModule module = CurrentSystemHolder.getModule(RequestContextHelper.resolveRouteName(request.getPath().value()));
 		
 		ApiInfo apiInfo = module.getApiInfo(request.getMethodValue(), request.getPath().value());
 		boolean logging = apiInfo != null ? apiInfo.isActionLog() : true;
@@ -187,7 +187,7 @@ public class GlobalFilter implements WebFilter {
 			logging = !GatewayConfigs.actionLogGetMethodIngore || !request.getMethod().equals(HttpMethod.GET);
 		}
 		if(logging){
-			String clientIp = RuequestHelper.getIpAddr(request);
+			String clientIp = RequestContextHelper.getIpAddr(request);
 			ActionLog actionLog = ActionLogCollector.onRequestStart(request.getMethodValue(),request.getPath().value(),clientIp).apiMeta(apiInfo);
 		    exchange.getAttributes().put(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME, actionLog);
 		}

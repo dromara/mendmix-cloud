@@ -32,7 +32,7 @@ import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.filter.post.ResponseLogHandler;
 import com.mendmix.gateway.filter.post.ResponseRewriteHandler;
 import com.mendmix.gateway.filter.post.RewriteBodyServerHttpResponse;
-import com.mendmix.gateway.helper.RuequestHelper;
+import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
 
 import reactor.core.publisher.Mono;
@@ -80,12 +80,12 @@ public abstract class AbstracResponseFilter implements GlobalFilter, Ordered, In
     		return chain.filter(exchange);
     	}
     	
-    	if(RuequestHelper.isWebSocketRequest(exchange.getRequest())) {
+    	if(RequestContextHelper.isWebSocketRequest(exchange.getRequest())) {
     		return chain.filter(exchange);
     	}
     	
     	//
-    	BizSystemModule module = RuequestHelper.getCurrentModule(exchange);
+    	BizSystemModule module = RequestContextHelper.getCurrentModule(exchange);
     	RewriteBodyServerHttpResponse newResponse = new RewriteBodyServerHttpResponse(exchange,module);
     	return chain.filter(exchange.mutate().response(newResponse).build()).then(Mono.fromRunnable(() -> {
 			Long start = exchange.getAttribute(GatewayConstants.CONTEXT_REQUEST_START_TIME);

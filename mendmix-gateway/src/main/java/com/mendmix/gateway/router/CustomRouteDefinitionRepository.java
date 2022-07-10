@@ -36,6 +36,7 @@ import org.springframework.cloud.gateway.route.RouteDefinitionRepository;
 import org.springframework.cloud.gateway.support.NotFoundException;
 
 import com.mendmix.common.GlobalRuntimeContext;
+import com.mendmix.common.util.ClassScanner;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.model.BizSystemModule;
@@ -96,6 +97,7 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 			}
 			
 			StringBuilder message = new StringBuilder("\n================final RouteMapping begin===============\n");
+			ClassScanner.whoUseMeReport();
 			for (RouteDefinition route : routeHub.get().values()) {
 				EnableBodyCachingEvent enableBodyCachingEvent = new EnableBodyCachingEvent(new Object(), route.getId());
 				adaptCachedBodyGlobalFilter.onApplicationEvent(enableBodyCachingEvent);

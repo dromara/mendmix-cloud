@@ -22,7 +22,7 @@ import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.filter.PostFilterHandler;
-import com.mendmix.gateway.helper.RuequestHelper;
+import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.logging.integrate.ActionLog;
 import com.mendmix.logging.integrate.ActionLogCollector;
@@ -59,7 +59,7 @@ public class ResponseLogHandler implements PostFilterHandler {
 		
 		if(bodyIgnore)return respBodyAsString;
 		
-		ApiInfo apiInfo = RuequestHelper.getCurrentApi(exchange);
+		ApiInfo apiInfo = RequestContextHelper.getCurrentApi(exchange);
 		if(apiInfo != null && !apiInfo.isResponseLog()) {
         	return respBodyAsString;
         }

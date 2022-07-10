@@ -16,7 +16,6 @@
 package com.mendmix.gateway.filter.pre;
 
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.web.server.ServerWebExchange;
@@ -24,7 +23,7 @@ import org.springframework.web.server.ServerWebExchange;
 import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.gateway.filter.PreFilterHandler;
-import com.mendmix.gateway.helper.RuequestHelper;
+import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.logging.integrate.ActionLog;
 import com.mendmix.logging.integrate.ActionLogCollector;
@@ -45,7 +44,7 @@ public class RequestLogHanlder implements PreFilterHandler {
 	@Override
 	public Builder process(ServerWebExchange exchange,BizSystemModule module,Builder requestBuilder) {
 		
-		if(RuequestHelper.isWebSocketRequest(exchange.getRequest())) {
+		if(RequestContextHelper.isWebSocketRequest(exchange.getRequest())) {
     	   return requestBuilder;
     	}
 		
@@ -54,14 +53,14 @@ public class RequestLogHanlder implements PreFilterHandler {
 		actionLog.setModuleId(module.getServiceId());
 		
 		ServerHttpRequest request = exchange.getRequest();
-		ApiInfo apiInfo = RuequestHelper.getCurrentApi(exchange);
+		ApiInfo apiInfo = RequestContextHelper.getCurrentApi(exchange);
         if(apiInfo != null && !apiInfo.isRequestLog()) {
         	return requestBuilder;
         }
         actionLog.setQueryParameters(JsonUtils.toJson(request.getQueryParams()));
-        if(HttpMethod.POST.equals(request.getMethod()) && !isMultipartRequest(request)) {
+        if(HttpMethod.POST.equals(request.getMethod()) && !RequestContextHelper.isMultipartContent(request)) {
         	try {
-        		String data = RuequestHelper.getCachingBodyString(exchange);
+        		String data = RequestContextHelper.getCachingBodyString(exchange);
         		actionLog.setRequestData(data);
         	} catch (Exception e) {
         		throw new RuntimeException(e); 
@@ -74,13 +73,8 @@ public class RequestLogHanlder implements PreFilterHandler {
 
 	@Override
 	public int order() {
-		return 2;
+		return 9;
 	}
-	
-	private boolean isMultipartRequest(ServerHttpRequest request) {
-		MediaType mediaType = request.getHeaders().getContentType();
-		return mediaType.getType().equals(MediaType.MULTIPART_RELATED.getType())
-				|| mediaType.equals(MediaType.APPLICATION_OCTET_STREAM);
-	}
+
 
 }

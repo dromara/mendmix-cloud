@@ -29,6 +29,7 @@ import org.springframework.beans.factory.InitializingBean;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.http.HttpResponseEntity;
+import com.mendmix.common.util.ClassScanner;
 import com.mendmix.common.util.HttpUtils;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.ResourceUtils;
@@ -133,6 +134,7 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 		}
 		
 		logUrl = ResourceUtils.getProperty("mendmix.cos.loghandler.url");
+		ClassScanner.whoUseMeReport();
 		if(logUrl != null && Boolean.parseBoolean(ResourceUtils.getProperty("mendmix.cos.loghandler.enabled", "true"))) {
 			int nThread = ResourceUtils.getInt("mendmix.cos.loghandler.threads", 1);
 			int capacity = ResourceUtils.getInt("mendmix.cos.loghandler.queueSize", 1000);

@@ -31,6 +31,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.mendmix.common.MendmixBaseException;
+import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.util.DigestUtils;
 import com.mendmix.common.util.JsonUtils;
@@ -39,7 +40,7 @@ import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.filter.PreFilterHandler;
-import com.mendmix.gateway.helper.RuequestHelper;
+import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.gateway.model.OpenApiConfig;
 import com.mendmix.gateway.security.OpenApiConfigProvider;
@@ -51,13 +52,13 @@ import com.mendmix.spring.InstanceFactory;
  * 
  * 
  * <br>
- * Class Name : SignatureRequestHandler
+ * Class Name : OpenApiSignatureHandler
  *
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @version 1.0.0
  * @date 2021-04-23
  */
-public class SignatureRequestHandler implements PreFilterHandler {
+public class OpenApiSignatureHandler implements PreFilterHandler {
 
 	static Logger logger = LoggerFactory.getLogger("com.mendmix.gateway");
 	
@@ -114,7 +115,7 @@ public class SignatureRequestHandler implements PreFilterHandler {
 	public Builder process(ServerWebExchange exchange, BizSystemModule module, Builder requestBuilder) {
 
 		HttpHeaders headers = exchange.getRequest().getHeaders();
-		String sign = headers.getFirst(GatewayConstants.X_SIGN_HEADER);
+		String sign = headers.getFirst(GatewayConstants.OPEN_SIGN_HEADER);
 		if (StringUtils.isBlank(sign)) {
 			return requestBuilder;
 		}
@@ -123,16 +124,16 @@ public class SignatureRequestHandler implements PreFilterHandler {
 		if (apiInfo == null || !apiInfo.isOpenApi()) {
 			throw new MendmixBaseException(500,"该接口未开放访问权限");
 		}
-		String timestamp = headers.getFirst(GatewayConstants.TIMESTAMP_HEADER);
-		String clientId = headers.getFirst(GatewayConstants.APP_ID_HEADER);
+		String timestamp = validateTimeStamp(headers);
+		String clientId = headers.getFirst(GatewayConstants.OPEN_APP_ID_HEADER);
 
-		if (StringUtils.isAnyBlank(timestamp, clientId)) {
+		if (StringUtils.isAnyBlank(clientId)) {
 			throw new MendmixBaseException(400,"认证头信息不完整");
 		}
 
 		OpenApiConfig openApiConfig = getOpenApiConfig(clientId);
 
-		Object body = RuequestHelper.getCachingBodyString(exchange);
+		Object body = RequestContextHelper.getCachingBodyString(exchange);
 		Map<String, Object> map = JsonUtils.toHashMap(body.toString(), Object.class);
 		if(map == null)map = new HashMap<>();
 		MultiValueMap<String, String> queryParams = exchange.getRequest().getQueryParams();
@@ -159,6 +160,8 @@ public class SignatureRequestHandler implements PreFilterHandler {
 			}
 		}
 		
+		ThreadLocalContext.set(GatewayConstants.CONTEXT_TRUSTED_REQUEST, Boolean.TRUE);
+		
 		ActionLog actionLog = exchange.getAttribute(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME);
 		if(actionLog != null) {
 			actionLog.setUserId(clientId);
@@ -168,10 +171,23 @@ public class SignatureRequestHandler implements PreFilterHandler {
 
 		return requestBuilder;
 	}
+	
+	private String validateTimeStamp(HttpHeaders headers) {
+		String timestamp = headers.getFirst(GatewayConstants.TIMESTAMP_HEADER);
+		if (StringUtils.isBlank(timestamp)) {
+			throw new MendmixBaseException("请求头[timestamp]缺失");
+		}
+
+		long diff = Math.abs(System.currentTimeMillis() - Long.parseLong(timestamp));
+		if (diff > GatewayConfigs.REQUEST_TIME_OFFSET_THRESHOLD) {
+			throw new MendmixBaseException("timestamp范围失效");
+		}
+		return timestamp;
+	}
 
 	@Override
 	public int order() {
-		return 0;
+		return 1;
 	}
 
 	@Override

@@ -83,7 +83,7 @@ public class GlobalHeaderHanlder implements PreFilterHandler {
 
 	@Override
 	public int order() {
-		return 1;
+		return 8;
 	}
 
 }

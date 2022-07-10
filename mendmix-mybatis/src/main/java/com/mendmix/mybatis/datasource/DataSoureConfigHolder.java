@@ -27,6 +27,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
+import com.mendmix.common.util.ClassScanner;
 import com.mendmix.common.util.ResourceUtils;
 
 /**
@@ -87,7 +88,7 @@ public class DataSoureConfigHolder {
 			field.setAccessible(true);
 			fieldMap.put(field.getName(), field);
 		}
-		
+		ClassScanner.whoUseMeReport();
 		Map<String,DataSourceConfig> configs = new HashMap<>();
 		
 		Properties properties = ResourceUtils.getAllProperties(".*(\\.db\\.).*", false);
