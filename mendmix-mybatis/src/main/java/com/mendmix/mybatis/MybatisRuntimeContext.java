@@ -45,6 +45,7 @@ public class MybatisRuntimeContext {
 
 
 	private static final String CONTEXT_TRANS_ON_KEY = "_ctx_trans_on_";
+	private static final String CONTEXT_FORCE_MASTER_KEY = "_ctx_force_master_";
 	private static final String CONTEXT_DATASOURCE_KEY = "_ctx_ds_";
 	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
 	private static final String CONTEXT_REWRITE_STRATEGY = "_ctx_rewrite_strategy_";
@@ -89,7 +90,7 @@ public class MybatisRuntimeContext {
 	public static void setTransactionalMode(boolean on){
 		ThreadLocalContext.set(CONTEXT_TRANS_ON_KEY, String.valueOf(on));
 		if(on){
-			userMaster();
+			forceUseMaster();
 		}
 	}
 	
@@ -132,6 +133,14 @@ public class MybatisRuntimeContext {
 		return ThreadLocalContext.isEmpty();
 	}
 	
+	public static void forceUseMaster(){
+		ThreadLocalContext.set(CONTEXT_FORCE_MASTER_KEY, String.valueOf(true));
+	}
+	
+	public static boolean isForceUseMaster(){
+		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_TRANS_ON_KEY));
+	}
+	
 	/**
 	 * 设置是否使用从库
 	 * 
@@ -145,13 +154,9 @@ public class MybatisRuntimeContext {
 	/**
 	 * 设置强制使用master库
 	 */
-	public static void userMaster(){
+	public static void useMaster(){
 		DataSourceContextVals vals = MybatisRuntimeContext.getDataSourceContextVals();
 		vals.master = true;
-	}
-	
-	public static boolean isRwRouteAssigned() {
-		return MybatisRuntimeContext.getDataSourceContextVals().master != null;
 	}
 	
 	public static boolean isUseMaster() {
@@ -202,6 +207,7 @@ public class MybatisRuntimeContext {
 	 * 清理每一次数据库操作的上下文
 	 */
 	public static void unsetEveryTime(){
+		if(isForceUseMaster())return;
 		ThreadLocalContext.remove(CONTEXT_DATASOURCE_KEY);
 	}
 	

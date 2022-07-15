@@ -53,8 +53,8 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 			MybatisRuntimeContext.setTransactionalMode(true);
 		}
 		
-		if(!MybatisRuntimeContext.isRwRouteAssigned() && method.isAnnotationPresent(UseMaster.class)){				
-			MybatisRuntimeContext.userMaster();
+		if(method.isAnnotationPresent(UseMaster.class)){				
+			MybatisRuntimeContext.forceUseMaster();
 		}
 		
 		if(method.isAnnotationPresent(TenantIgnore.class)){	
@@ -86,8 +86,6 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 	public void postHandler(Method method, Object result, Exception ex) {}
 
 	@Override
-	public void destory() {
-		MybatisRuntimeContext.unsetEveryTime();
-	}
+	public void destory() {}
 
 }
