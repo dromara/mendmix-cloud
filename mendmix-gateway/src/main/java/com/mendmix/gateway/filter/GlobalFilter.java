@@ -98,6 +98,10 @@ public class GlobalFilter implements WebFilter {
 				if(!specUnauthorizedHandler.customAuthentication(exchange)) {
 					return writeErrorResponse(response, e);
 				}
+				if(request.getHeaders().containsKey(CustomRequestHeaders.HEADER_AUTH_USER)) {
+					AuthUser authUser = AuthUser.decode(request.getHeaders().getFirst(CustomRequestHeaders.HEADER_AUTH_USER));
+					CurrentRuntimeContext.setAuthUser(authUser);
+				}
 			}catch (ForbiddenAccessException e) {	
 				clearContextAttributes(exchange);
 				return writeErrorResponse(response, e);

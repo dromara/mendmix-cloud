@@ -135,7 +135,6 @@ public class MendmixMybatisInterceptor implements Interceptor,DisposableBean{
 					e.printStackTrace();
 				}
 			}
-			MybatisRuntimeContext.unsetEveryTime();
 		}
 		
 	}

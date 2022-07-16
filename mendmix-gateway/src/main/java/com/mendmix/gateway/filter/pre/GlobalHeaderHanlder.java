@@ -51,27 +51,46 @@ public class GlobalHeaderHanlder implements PreFilterHandler {
 			reqBuilder.header(CustomRequestHeaders.HEADER_REQUEST_ID, TokenGenerator.generate());
 		}
 		reqBuilder.header(CustomRequestHeaders.HEADER_INVOKER_IS_GATEWAY, Boolean.TRUE.toString());
-
+		if (!headers.containsKey(CustomRequestHeaders.HEADER_REQUEST_ID)) {
+			reqBuilder.header(CustomRequestHeaders.HEADER_REQUEST_ID, TokenGenerator.generate());
+		}
+		if (!headers.containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)) {
+			reqBuilder.header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generateWithSign());
+		}
+		String clientType = CurrentRuntimeContext.getClientType();
+		if (clientType != null) {
+			reqBuilder.header(CustomRequestHeaders.HEADER_CLIENT_TYPE, clientType);
+		}
+		
+		String systemId = CurrentRuntimeContext.getSystemId();
+		if (systemId != null) {
+			reqBuilder.header(CustomRequestHeaders.HEADER_SYSTEM_ID, systemId);
+		}
+		
+		String platformType = CurrentRuntimeContext.getPlatformType();
+		if (platformType != null) {
+			reqBuilder.header(CustomRequestHeaders.HEADER_PLATFORM_TYPE, platformType);
+		}
 		//
 		Boolean trustedRequest = ThreadLocalContext.get(GatewayConstants.CONTEXT_TRUSTED_REQUEST, false);
-		// 上下文header
-		Map<String, String> contextHeaders = RequestHeaderBuilder.getHeaders();
 		// 移除敏感header
 		if (!trustedRequest) {
 			for (final String headerName : RequestHeaderBuilder.sensitiveHeaders) {
 				if (headers.containsKey(headerName)) {
 					reqBuilder.headers(httpHeaders -> httpHeaders.remove(headerName));
-					contextHeaders.remove(headerName);
 				}
 			}
 		}
-		//
-		contextHeaders.forEach((k, v) -> {
-			reqBuilder.header(k, v);
-		});
 
+		// 当前租户
+		if (!trustedRequest || !headers.containsKey(CustomRequestHeaders.HEADER_TENANT_ID)) {
+			String tenantId = CurrentRuntimeContext.getTenantId(false);
+			if (tenantId != null) {
+				reqBuilder.header(CustomRequestHeaders.HEADER_TENANT_ID, tenantId);
+			}
+		}
 		// 当前登录用户
-		if (!contextHeaders.containsKey(CustomRequestHeaders.HEADER_AUTH_USER)) {
+		if (!trustedRequest || !headers.containsKey(CustomRequestHeaders.HEADER_AUTH_USER)) {
 			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 			if (currentUser != null) {
 				reqBuilder.header(CustomRequestHeaders.HEADER_AUTH_USER, currentUser.toEncodeString());

@@ -202,13 +202,4 @@ public class MybatisRuntimeContext {
 		return valueMaps;
 	}
 	
-
-	/**
-	 * 清理每一次数据库操作的上下文
-	 */
-	public static void unsetEveryTime(){
-		if(isForceUseMaster())return;
-		ThreadLocalContext.remove(CONTEXT_DATASOURCE_KEY);
-	}
-	
 }

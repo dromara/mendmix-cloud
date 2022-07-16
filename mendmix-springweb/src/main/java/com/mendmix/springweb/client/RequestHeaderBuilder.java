@@ -73,6 +73,16 @@ public class RequestHeaderBuilder {
 			headers.put(CustomRequestHeaders.HEADER_CLIENT_TYPE, clientType);
 		}
 		
+		String systemId = CurrentRuntimeContext.getSystemId();
+		if (systemId != null) {
+			headers.put(CustomRequestHeaders.HEADER_SYSTEM_ID, systemId);
+		}
+		
+		String platformType = CurrentRuntimeContext.getPlatformType();
+		if (platformType != null) {
+			headers.put(CustomRequestHeaders.HEADER_PLATFORM_TYPE, platformType);
+		}
+		
 		return headers;
 	}
 }

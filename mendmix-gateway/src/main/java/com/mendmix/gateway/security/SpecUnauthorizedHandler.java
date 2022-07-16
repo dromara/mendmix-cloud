@@ -74,9 +74,8 @@ public class SpecUnauthorizedHandler {
 	}
 	
 	private boolean isInternalTrustedAccess(ServerHttpRequest request) {
-		String header = request.getHeaders().getFirst(CustomRequestHeaders.HEADER_IGNORE_AUTH);
-		String header1 = request.getHeaders().getFirst(CustomRequestHeaders.HEADER_INTERNAL_REQUEST);
-		if(Boolean.parseBoolean(header) && Boolean.parseBoolean(header1)) {
+		String header = request.getHeaders().getFirst(CustomRequestHeaders.HEADER_INTERNAL_REQUEST);
+		if(Boolean.parseBoolean(header)) {
 			if(validateInvokeToken(request)) {
 				ThreadLocalContext.set(GatewayConstants.CONTEXT_TRUSTED_REQUEST, Boolean.TRUE);
 				return true;
@@ -106,7 +105,9 @@ public class SpecUnauthorizedHandler {
 		try {
 			TokenGenerator.validate(token, true);
 			return true;
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			System.err.println("validate [x-invoke-token = "+token+"] error" + e.getMessage());
+		}
 		
 		return false;
 	}

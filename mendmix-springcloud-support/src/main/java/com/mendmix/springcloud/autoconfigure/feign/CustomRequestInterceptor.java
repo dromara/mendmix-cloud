@@ -40,7 +40,8 @@ public class CustomRequestInterceptor implements RequestInterceptor {
 		template.header(CustomRequestHeaders.HEADER_HTTP_STATUS_KEEP, Boolean.TRUE.toString());
 		//标记不需要封装
 		template.header(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
-				
+		//内网访问
+		template.header(CustomRequestHeaders.HEADER_INTERNAL_REQUEST, Boolean.TRUE.toString());
 	}
 
 }
