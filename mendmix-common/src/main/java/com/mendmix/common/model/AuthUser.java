@@ -100,7 +100,7 @@ public class AuthUser {
 	
 	public String toEncodeString(){
 		StringBuilder builder = new StringBuilder();
-		builder.append(id).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(id)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(name)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(type)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(deptId)).append(CONTACT_CHAR);

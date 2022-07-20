@@ -41,6 +41,12 @@ public class SelectOption {
 		this.text = text;
 	}
 	
+	public String getId() {
+		return value;
+	}
 	
+	public String getLabel() {
+		return text;
+	}
 	
 }

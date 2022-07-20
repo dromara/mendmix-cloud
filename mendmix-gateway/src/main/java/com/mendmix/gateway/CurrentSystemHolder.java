@@ -18,6 +18,7 @@ package com.mendmix.gateway;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -246,11 +247,14 @@ public class CurrentSystemHolder {
 		systems.add(system);
 		//
 		BizSystemModule gatewayModule = null; // 网关模块
-		List<BizSystemModule> modules = system.getModules();
-		for (BizSystemModule module : modules) {
-			if (localModules.contains(module)) {
-				log.info("MENDMIX-TRACE-LOGGGING-->> ignore reduplicate module[{}-{}]!!!!!", module.getRouteName(),
-						module.getServiceId());
+		Iterator<BizSystemModule> iterator = system.getModules().iterator();
+		while(iterator.hasNext()) {
+			BizSystemModule module = iterator.next();
+			if(localModules.contains(module)) {
+				BizSystemModule matchLocalModule = localModules.stream().filter(o -> o.equals(module)).findFirst().orElse(null);
+				matchLocalModule.setId(module.getId());
+				iterator.remove();
+				log.info("MENDMIX-TRACE-LOGGGING-->> merge local module[{}-{}]!!!!!",module.getRouteName(),module.getServiceId());
 				continue;
 			}
 			if (StringUtils.isAnyBlank(module.getRouteName(), module.getProxyUri())) {
@@ -279,14 +283,14 @@ public class CurrentSystemHolder {
 			for (BizSystemModule module : localModules) {
 				routeModuleMappings.put(module.getRouteName(), module);
 				routeNames.add(module.getRouteName());
-				modules.add(module);
+				system.getModules().add(module);
 			}
 
 			// 网关本身
 			if (gatewayModule == null) {
 				gatewayModule = new BizSystemModule();
 				gatewayModule.setServiceId(GlobalRuntimeContext.APPID);
-				modules.add(gatewayModule);
+				system.getModules().add(gatewayModule);
 			}
 			gatewayModule.setRouteName(GlobalRuntimeContext.APPID);
 			gatewayModule.setStripPrefix(0);

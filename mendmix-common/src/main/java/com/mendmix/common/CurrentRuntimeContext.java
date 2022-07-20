@@ -97,7 +97,7 @@ public class CurrentRuntimeContext {
 
 	public static String getCurrentUserId() {
 		AuthUser currentUser = getCurrentUser();
-		return currentUser == null ? null : currentUser.getId();
+		return currentUser == null ? null : StringUtils.defaultString(currentUser.getId(),currentUser.getName());
 	}
 
 	public static AuthUser getCurrentUser() {
