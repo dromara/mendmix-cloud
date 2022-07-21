@@ -47,6 +47,8 @@ public class BizSystemModule {
     private boolean bodyRewriteIgnore;
     
     private int stripPrefix = -1;
+    
+    private String httpBaseUri;
 
     @JsonIgnore
     private Map<Pattern, ApiInfo> wildcardUris = new HashMap<>();
@@ -200,6 +202,7 @@ public class BizSystemModule {
 	
 	
 	public String getHttpBaseUri() {
+		if(httpBaseUri != null)return httpBaseUri;
 		//http://127.0.0.1
 		//lb://paas-sysmgt-svc
 		//ws://127.0.0.1:8081
@@ -208,11 +211,16 @@ public class BizSystemModule {
 			return null;
 		}
 		if(getProxyUri().startsWith("http")) {
-			return getProxyUri();
+			httpBaseUri = getProxyUri();
 		}else if(getProxyUri().contains("lb://")) {
-			return getProxyUri().replace("lb://", "http://");
+			httpBaseUri = getProxyUri().replace("lb://", "http://");
 		}
-		return null;
+		if(stripPrefix == 0) {
+			httpBaseUri = String.format("%s%s/%s", httpBaseUri,GatewayConfigs.PATH_PREFIX,routeName);
+		}else if(stripPrefix == 1) {
+			httpBaseUri = String.format("%s/%s", httpBaseUri,routeName);
+		}
+		return httpBaseUri;
 	}
 	
 	public String getMetadataUri() {

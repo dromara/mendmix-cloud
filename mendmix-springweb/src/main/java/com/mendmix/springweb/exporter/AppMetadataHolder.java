@@ -138,6 +138,7 @@ public class AppMetadataHolder {
 					}
 
 					apiInfo = new ApiInfo();
+					apiInfo.setClassName(className);
 					if (apiUri == null) {
 						apiUri = baseUri;
 					} else {
@@ -258,13 +259,6 @@ public class AppMetadataHolder {
 	private static String addFirstPathSeparator(String uri) {
 		if(uri.startsWith(GlobalConstants.PATH_SEPARATOR))return uri;
 		return GlobalConstants.PATH_SEPARATOR + uri;
-	}
-	
-	private static void addSingleClassName(List<String> result, String className) {
-		try {
-			Class.forName(className);
-			result.add(className);
-		} catch (ClassNotFoundException e) {}
 	}
 
 }

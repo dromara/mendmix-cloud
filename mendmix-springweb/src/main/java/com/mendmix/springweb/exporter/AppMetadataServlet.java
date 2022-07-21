@@ -16,36 +16,48 @@
 package com.mendmix.springweb.exporter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.WebUtils;
+import com.mendmix.springweb.model.AppMetadata;
 
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年4月17日
  */
-@WebServlet(urlPatterns = "/metadata", description = "应用信息")
+// @WebServlet(urlPatterns = "/metadata", description = "应用信息")
 public class AppMetadataServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
 	
-private static String metadataJSON;
+	public static final String DEFAULT_URI = "/metadata";
 	
+	private Map<String, String> uriSubPackageMappings = new HashMap<>();
+
+	private static AppMetadata metadata;
 	
+	public void addUriSubPackageMapping(String uri,String subPackage) {
+		uriSubPackageMappings.put(uri, subPackage);
+	}
+
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		metadataJSON = JsonUtils.toJson(AppMetadataHolder.getMetadata());
+		metadata = AppMetadataHolder.getMetadata();
 	}
-	
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		doPost(req, resp);
@@ -53,11 +65,25 @@ private static String metadataJSON;
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		if(!WebUtils.isInternalRequest(req)){
+		if (!WebUtils.isInternalRequest(req)) {
 			WebUtils.responseOutJson(resp, JsonUtils.toJson(new WrapperResponse<>(403, "外网禁止访问")));
 			return;
 		}
-		WebUtils.responseOutJson(resp, metadataJSON);
+		AppMetadata _metadata;
+		if(uriSubPackageMappings.containsKey(req.getRequestURI())) {
+			String packageName = uriSubPackageMappings.get(req.getRequestURI());
+			_metadata = new AppMetadata();
+			List<ApiInfo> apis = new ArrayList<>();
+			for (ApiInfo apiInfo : metadata.getApis()) {
+				if(apiInfo.getClassName().contains(packageName)) {
+					apis.add(apiInfo);
+				}
+			}
+			_metadata.setApis(apis);
+		}else {
+			_metadata = metadata;
+		}
+		WebUtils.responseOutJson(resp, JsonUtils.toJson(_metadata));
 	}
 
 	@Override

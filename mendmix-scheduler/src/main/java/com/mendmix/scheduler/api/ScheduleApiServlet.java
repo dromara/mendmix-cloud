@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -47,7 +46,7 @@ import com.mendmix.scheduler.registry.AbstarctJobRegistry;
  * @version 1.0.0
  * @date 2021-04-05
  */
-@WebServlet(urlPatterns = "/scheduler/*", description = "定时任务API")
+//@WebServlet(urlPatterns = "/scheduler/*", description = "定时任务API")
 public class ScheduleApiServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
@@ -65,7 +64,7 @@ public class ScheduleApiServlet extends HttpServlet {
 		String respJson = null;
 		if(!WebUtils.isInternalRequest(req)) {
 			respJson = "{\"code\": 403}";
-		}else if("status".equals(act)) {
+		}else if("list".equals(act)) {
 			JobGroupInfo info = new JobGroupInfo();
 			info.setName(JobContext.getContext().getGroupName());
 			info.setClusterNodes(new ArrayList<>(JobContext.getContext().getActiveNodes()));

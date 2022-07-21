@@ -113,7 +113,7 @@ public class GlobalInternalScheduleService implements InitializingBean, Disposab
 			taskStat.task.doSchedule();
 			taskStat.lastFireTime = currentTime;
 		} catch (Exception e) {
-			log.error("MENDMIX-TRACE-LOGGGING-->> InternalSchedule[{}] execute Error:{}", taskStat.taskName,ExceptionUtils.getMessage(e));
+			log.error("MENDMIX-TRACE-LOGGGING-->> InternalSchedule["+taskStat.taskName+"] execute",e);
 		} finally {
 			taskStat.running = false;
 		}

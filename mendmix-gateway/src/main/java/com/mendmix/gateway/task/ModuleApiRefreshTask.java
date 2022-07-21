@@ -107,6 +107,9 @@ public class ModuleApiRefreshTask implements SubTimerTask {
 			for (ApiInfo api : apiInfos) {
 				module.addApiInfo(api);
 			}
+			if(module.getApiInfos() == null) {
+				module.setApiInfos(new HashMap<>(0));
+			}
 			logger.info("MENDMIX-TRACE-LOGGGING-->> initModuleApiInfos end -> serviceId:{},apiNums:{}",module.getServiceId(),module.getApiInfos().size());
 		}
 	}

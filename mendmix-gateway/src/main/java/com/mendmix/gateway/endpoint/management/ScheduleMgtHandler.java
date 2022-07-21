@@ -49,6 +49,7 @@ public class ScheduleMgtHandler implements MgtHandler {
 				if(module.isGlobal() || module.isGateway())continue;
 				if(ignoreServiceIds.contains(module.getServiceId()))continue;
 				list.addAll(fetchModuleJobs(module));
+				
 			}
 			return list;
 		}else if(handleParam.isPostMethod()) {
