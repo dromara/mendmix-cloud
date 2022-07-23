@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.util.SimpleCryptUtils;
 
 
@@ -33,6 +34,7 @@ import com.mendmix.common.util.SimpleCryptUtils;
  */
 public class AuthUser {
 
+	private static final long EXP = 60 * 60 * 1000;
 	private static final String CONTACT_CHAR = "#";
 	private static final String PLACEHOLDER_CHAR = "{-}";
 	
@@ -108,6 +110,7 @@ public class AuthUser {
 		builder.append(trimToPlaceHolder(principalType)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(principalId)).append(CONTACT_CHAR);
 		builder.append(admin).append(CONTACT_CHAR);
+		builder.append(System.currentTimeMillis()).append(CONTACT_CHAR);
 		return SimpleCryptUtils.encrypt(builder.toString());
 	}
 	
@@ -116,6 +119,10 @@ public class AuthUser {
 		if(StringUtils.isBlank(encodeString))return null;
 		encodeString = SimpleCryptUtils.decrypt(encodeString);
 		String[] splits = encodeString.split(CONTACT_CHAR);
+		//
+		if(System.currentTimeMillis() - Long.parseLong(splits[splits.length - 1]) > EXP) {
+			throw new MendmixBaseException("用户信息失效");
+		}
 		AuthUser user = new AuthUser();
 		user.setId(placeHolderToNull(splits[0]));
 		user.setName(placeHolderToNull(splits[1]));

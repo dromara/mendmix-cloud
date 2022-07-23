@@ -41,7 +41,10 @@ public class CurrentRuntimeContext {
 	
 	private static List<String> contextHeaders = Arrays.asList( 
 			CustomRequestHeaders.HEADER_FROWARDED_FOR,
+			CustomRequestHeaders.HEADER_INVOKE_TOKEN,
+			CustomRequestHeaders.HEADER_AUTH_USER,
 			CustomRequestHeaders.HEADER_TENANT_ID,
+			CustomRequestHeaders.HEADER_SYSTEM_ID,
 			CustomRequestHeaders.HEADER_CLIENT_TYPE, 
 			CustomRequestHeaders.HEADER_PLATFORM_TYPE,
 			CustomRequestHeaders.HEADER_INVOKER_APP_ID, 
@@ -56,35 +59,38 @@ public class CurrentRuntimeContext {
 				continue;
 			headerVal = headers.get(headerName);
 			if (headerVal != null) {
-				setContextVal(headerName, headerVal);
-			}
-		}
-        //
-		if (headers.containsKey(CustomRequestHeaders.HEADER_AUTH_USER)) {
-			headerVal = headers.get(CustomRequestHeaders.HEADER_AUTH_USER);
-			AuthUser user = AuthUser.decode(headerVal);
-			if (user != null) {
-				ThreadLocalContext.set(CustomRequestHeaders.HEADER_AUTH_USER, user);
+				if(CustomRequestHeaders.HEADER_AUTH_USER.equals(headerName)) {
+					AuthUser user = AuthUser.decode(headerVal);
+					if (user != null) {
+						ThreadLocalContext.set(CustomRequestHeaders.HEADER_AUTH_USER, user);
+					}
+				}else {
+					setContextVal(headerName, headerVal);
+				}
 			}
 		}
 	}
 
 	public static void addContextHeader(String name,String value) {
-		if(contextHeaders.contains(name)){
-			setContextVal(name, value);
-		}else if(CustomRequestHeaders.HEADER_AUTH_USER.equals(name)) {
+		if(CustomRequestHeaders.HEADER_AUTH_USER.equals(name)) {
 			AuthUser user = AuthUser.decode(value);
 			if (user != null) {
 				ThreadLocalContext.set(CustomRequestHeaders.HEADER_AUTH_USER, user);
 			}
+		}else if(contextHeaders.contains(name)){
+			setContextVal(name, value);
 		}
 	}
 
-	public static Map<String, String> getCustomHeaders() {
+	public static Map<String, String> getContextHeaders() {
 		Map<String, String> map = new HashMap<>();
 		String headerVal;
 		for (String headerName : contextHeaders) {
-			headerVal = getContextVal(headerName, false);
+			if(CustomRequestHeaders.HEADER_AUTH_USER.equals(headerName)) {
+				headerVal = getCurrentUser().toEncodeString();
+			}else {
+				headerVal = getContextVal(headerName, false);
+			}
 			if(headerVal == null)continue;
 			map.put(headerName, headerVal);
 		}

@@ -73,6 +73,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			throws Exception {
 
 		ThreadLocalContext.unset();
+		ThreadLocalContext.set(ThreadLocalContext.REQUEST_CONTEXT_KEY, request);
 		
 		Enumeration<String> headerNames = request.getHeaderNames();
 		String headerName;

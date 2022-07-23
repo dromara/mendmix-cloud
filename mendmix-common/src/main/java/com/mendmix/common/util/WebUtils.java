@@ -253,6 +253,7 @@ public class WebUtils {
 		System.out.println("============Request start==============");
 		System.out.println("uri:" + request.getRequestURI());
 		System.out.println("method:" + request.getMethod());
+		System.out.println("clientIP:" + IpUtils.getIpAddr(request));
 		Enumeration<String> headerNames = request.getHeaderNames();
 		String headerName;
 		while(headerNames.hasMoreElements()) {

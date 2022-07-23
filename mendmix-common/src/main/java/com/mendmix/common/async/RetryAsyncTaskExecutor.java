@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
+import com.mendmix.common.util.LogMessageFormat;
 
 /**
  * 异步任务执行器
@@ -53,7 +54,7 @@ public class RetryAsyncTaskExecutor {
 		if(defaultExecutor != null)return defaultExecutor;
 		synchronized (RetryAsyncTaskExecutor.class) {
 			if(defaultExecutor != null)return defaultExecutor;
-			defaultExecutor = new RetryAsyncTaskExecutor("__default", 10, 2000, 1);
+			defaultExecutor = new RetryAsyncTaskExecutor("__default", 10, 2000, 2);
 		}
 		return defaultExecutor;
 	}
@@ -80,7 +81,7 @@ public class RetryAsyncTaskExecutor {
 	}
 	
 	private void executeWithRetry(RetryTask task,int execNums) {
-		final String tenantId = CurrentRuntimeContext.getTenantId();
+		final Map<String, String> contextHeaders = CurrentRuntimeContext.getContextHeaders();
 		if(execNums >= maxRetry){	
 			logger.warn("MENDMIX-TRACE-LOGGGING-->> {} executeWithRetry over maxRetry[{}]",task.traceId(),maxRetry);
 			onFinalErrorProcess(task);
@@ -95,7 +96,9 @@ public class RetryAsyncTaskExecutor {
 		executor.execute(new Runnable() {
 			@Override
 			public void run() {
-				if(tenantId != null)CurrentRuntimeContext.setTenantId(tenantId);
+				contextHeaders.forEach( (k,v) ->{
+					CurrentRuntimeContext.addContextHeader(k, v);
+				} );
 				traceIdHolder.set(task.traceId());
 				try {
 					boolean result = task.process();

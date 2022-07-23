@@ -22,6 +22,7 @@ import java.util.Map;
 
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.http.HttpRequestEntity;
+import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.model.BizSystemModule;
 
@@ -40,16 +41,23 @@ public class ScheduleMgtHandler implements MgtHandler {
 		return "schedule";
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Object handleRequest(String actName, HandleParam handleParam) {
-		if("list".equals(actName)) {
+		if("jobs".equals(actName)) {
 			Collection<BizSystemModule> modules = CurrentSystemHolder.getModules();
 			List<Map> list = new ArrayList<>();
+			
+			List<String> loadModuleKeys = new ArrayList<>();
+			List<Map> perJobs;
 			for (BizSystemModule module : modules) {
 				if(module.isGlobal() || module.isGateway())continue;
+				if(loadModuleKeys.contains(module.getProxyUri()))continue;
 				if(ignoreServiceIds.contains(module.getServiceId()))continue;
-				list.addAll(fetchModuleJobs(module));
-				
+				perJobs = fetchModuleJobs(module);
+				if(perJobs == null || perJobs.isEmpty())continue;
+				list.addAll(perJobs);
+				loadModuleKeys.add(module.getProxyUri());
 			}
 			return list;
 		}else if(handleParam.isPostMethod()) {
@@ -61,10 +69,9 @@ public class ScheduleMgtHandler implements MgtHandler {
 	
 	@SuppressWarnings("rawtypes")
 	private List<Map> fetchModuleJobs(BizSystemModule module) {
-		
+		String url = module.getHttpBaseUri() + "/scheduler/list";
 		List<Map> jobs;
 		try {
-			String url = module.getHttpBaseUri() + "/scheduler/status";
 			jobs = HttpRequestEntity.get(url).backendInternalCall().execute().toList(Map.class,"jobs");
 		} catch (MendmixBaseException e) {
 			if(e.getCode() == 404 || e.getCode() == 401 || e.getCode() == 403) {

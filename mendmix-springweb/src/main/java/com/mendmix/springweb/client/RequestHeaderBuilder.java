@@ -43,7 +43,7 @@ public class RequestHeaderBuilder {
 	}
 	
 	public static Map<String, String> getHeaders(){
-		Map<String, String> headers = CurrentRuntimeContext.getCustomHeaders();
+		Map<String, String> headers = CurrentRuntimeContext.getContextHeaders();
 		//
 		Map<String, String> appHeaders = null;
 		if(headerProvider != null)appHeaders = headerProvider.headers();

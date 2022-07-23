@@ -87,7 +87,7 @@ public class HttpRequestEntity {
 	}
 	
 	public HttpRequestEntity internalCall() {
-		if (!headers.containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)) {
+		if (!getHeaders().containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)) {
 			header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generate());
 		}
 		return header(CustomRequestHeaders.HEADER_INTERNAL_REQUEST, Boolean.TRUE.toString());
@@ -101,6 +101,8 @@ public class HttpRequestEntity {
 	}
 
 	public HttpRequestEntity useContext() {
+		Map<String, String> contextHeaders = CurrentRuntimeContext.getContextHeaders();
+		headers(contextHeaders);
 		if (!getHeaders().containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)) {
 			header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generateWithSign());
 		}
@@ -109,17 +111,7 @@ public class HttpRequestEntity {
 				&& (currentUser = CurrentRuntimeContext.getCurrentUser()) != null) {
 			header(CustomRequestHeaders.HEADER_AUTH_USER, currentUser.toEncodeString());
 		}
-		String systemId = CurrentRuntimeContext.getSystemId();
-		if (systemId != null) {
-			header(CustomRequestHeaders.HEADER_SYSTEM_ID, systemId);
-		}
-
-		String tenantId = CurrentRuntimeContext.getTenantId(false);
-		if (tenantId != null) {
-			header(CustomRequestHeaders.HEADER_TENANT_ID, tenantId);
-		}
-		header(CustomRequestHeaders.HEADER_RESP_KEEP, Boolean.TRUE.toString());
-
+		
 		return this;
 	}
 

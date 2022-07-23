@@ -173,6 +173,14 @@ public class CurrentSystemHolder {
 		//
 		for (BizSystemModule module : routeModuleMappings.values()) {
 			module.format();
+			//
+			if (!module.isGateway() && !HostMappingHolder.containsProxyUrlMapping(module.getServiceId())) {
+				if (module.getProxyUri().startsWith("http") || module.getStripPrefix() != 2) {
+					HostMappingHolder.addProxyUrlMapping(module.getServiceId(), module.getHttpBaseUri());
+					log.info("MENDMIX-TRACE-LOGGGING-->> add host mapping : {} = {}", module.getServiceId(),
+							HostMappingHolder.getProxyUrlMapping(module.getServiceId()));
+				} 
+			}
 		}
 
 		StringBuilder logBuilder = new StringBuilder(
@@ -209,16 +217,6 @@ public class CurrentSystemHolder {
 					continue;
 				module.setGlobal(true);
 				module.setSystemId(mainSystem.getId());
-				if (!HostMappingHolder.containsProxyUrlMapping(module.getServiceId())) {
-					if (module.getProxyUri().endsWith("/" + module.getRouteName())) {
-						HostMappingHolder.addProxyUrlMapping(module.getServiceId(), module.getProxyUri());
-					} else {
-						String mappingValue = StringUtils.split(module.getProxyUri(), "/")[1];
-						HostMappingHolder.addProxyUrlMapping(module.getServiceId(), mappingValue);
-					}
-					log.info("MENDMIX-TRACE-LOGGGING-->> add host mapping : {} = {}", module.getServiceId(),
-							HostMappingHolder.getProxyUrlMapping(module.getServiceId()));
-				}
 				mainSystem.getModules().add(module);
 			}
 		}

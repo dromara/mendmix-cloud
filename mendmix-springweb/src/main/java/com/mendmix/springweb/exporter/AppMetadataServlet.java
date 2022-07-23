@@ -66,6 +66,7 @@ public class AppMetadataServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		if (!WebUtils.isInternalRequest(req)) {
+			WebUtils.printRequest(req);
 			WebUtils.responseOutJson(resp, JsonUtils.toJson(new WrapperResponse<>(403, "外网禁止访问")));
 			return;
 		}
