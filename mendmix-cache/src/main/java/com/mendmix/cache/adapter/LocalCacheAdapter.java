@@ -17,29 +17,35 @@ package com.mendmix.cache.adapter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.mendmix.cache.CacheAdapter;
-import com.mendmix.cache.CacheExpires;
 
 @SuppressWarnings("unchecked")
 public class LocalCacheAdapter implements CacheAdapter {
 
-	private Cache<String, Object> cache;
-
-	public LocalCacheAdapter() {
-		cache = CacheBuilder.newBuilder()  //
-				.maximumSize(10000)  //
-				.expireAfterWrite(CacheExpires.IN_1DAY, TimeUnit.SECONDS)  //
-				.build();
+	private Cache<String,Object> cache;
+	
+	
+	public Cache<String, Object> getCache() {
+		return cache;
 	}
 
+	public LocalCacheAdapter(int timeToLiveSeconds) {
+		cache =  CacheBuilder
+				.newBuilder()
+				.maximumSize(10000)
+				.expireAfterWrite(timeToLiveSeconds, TimeUnit.SECONDS)
+				.build();
+	}
 	
 	@Override
 	public <T> T get(String key) {
@@ -59,7 +65,7 @@ public class LocalCacheAdapter implements CacheAdapter {
 	}
 
 	@Override
-	public String getString(String key) {
+	public String getStr(String key) {
 		return get(key);
 	}
 
@@ -70,82 +76,22 @@ public class LocalCacheAdapter implements CacheAdapter {
 	}
 
 	@Override
-	public void setString(String key, Object value, long expireSeconds) {
+	public void setStr(String key, String value, long expireSeconds) {
 		set(key, value, expireSeconds);
 	}
 
 	@Override
 	public void remove(String... keys) {
-		if(keys.length == 1) {
-			cache.invalidate(keys[0]);
+		if(keys != null && keys.length > 0 && keys[0] != null) {
+			cache.invalidateAll(Arrays.asList(keys));
 		}else {
-			cache.invalidateAll(Arrays.asList(keys));	
+			cache.invalidateAll();
 		}
-		
 	}
 
 	@Override
 	public boolean exists(String key) {
 		return get(key) != null;
-	}
-
-	@Override
-	public void addListItems(String key, String... items) {
-		List<String> list = get(key);
-		if(list == null) {
-			synchronized (cache) {
-				list = new ArrayList<>();
-				cache.put(key, list);
-			}
-		}
-		
-		for (String item : items) {
-			list.add(item);
-		}
-	}
-
-	@Override
-	public List<String> getListItems(String key, int start, int end) {
-		List<String> list = get(key);
-		if(list == null)return new ArrayList<>(0);
-		if(list.size() <= end + 1)return list;
-		return list.subList(start, end);
-	}
-
-	@Override
-	public long getListSize(String key) {
-		List<String> list = get(key);
-		return list == null ? 0 : list.size();
-	}
-
-	@Override
-	public boolean setIfAbsent(String key, String value, long expireSeconds) {
-		if(exists(key))return false;
-		set(key, value, expireSeconds);
-		return true;
-	}
-
-	@Override
-	public void setMapItem(String key, String field, String value)  {
-		Map<String, String> map = getMap(key);
-		if(map == null) {
-			synchronized (cache) {
-				map = new HashMap<>();
-				cache.put(key, map);
-			}
-		}
-		map.put(field, value);
-	}
-
-	@Override
-	public Map<String, String> getMap(String key) {
-		return get(key);
-	}
-
-	@Override
-	public String getMapItem(String key, String field) {
-		Map<String, String> map = getMap(key);
-		return map == null ? null : map.get(field);
 	}
 
 	@Override
@@ -155,27 +101,100 @@ public class LocalCacheAdapter implements CacheAdapter {
 		if(value instanceof ExpireableObject) {
 			((ExpireableObject)value).setExpireAt(System.currentTimeMillis() + expireSeconds * 1000);
 		}
-	}
-
-	@Override
-	public void setExpireAt(String key, Date expireAt) {
-		Object value = cache.getIfPresent(key);
-		if(value == null)return;
-		if(value instanceof ExpireableObject) {
-			((ExpireableObject)value).setExpireAt(expireAt.getTime());
-		}
 		
 	}
 
 	@Override
-	public long getTtl(String key) {
-		Object value = cache.getIfPresent(key);
-		if(value == null)return 0;
-		if(value instanceof ExpireableObject) {
-			long diff = ((ExpireableObject)value).getExpireAt() - System.currentTimeMillis();
-			return diff < 0 ? 0 : diff/1000;
-		}
-		return -1;
+	public boolean setIfAbsent(String key, Object value,long timeout,TimeUnit timeUnit) {
+		if(exists(key))return false;
+		set(key, value, timeUnit.toSeconds(timeout));
+		return true;
 	}
 
+
+	@Override
+	public long size(String key) {
+		return cache.size();
+	}
+
+	@Override
+	public void addStrItemToList(String key, String item) {
+		List<String> items = (List<String>) cache.getIfPresent(key);
+		if(items == null) {
+			items = new ArrayList<>();
+			cache.put(key, items);
+		}
+		items.add(item);
+	}
+
+	@Override
+	public List<String> getStrListItems(String key, int start, int end) {
+		List<String> items = (List<String>) cache.getIfPresent(key);
+		if(items == null)return new ArrayList<>(0);
+		if(start >= items.size()) {
+			return items;
+		}
+		if(end >= items.size()) {
+			end = items.size() - 1;
+		}
+		return items.subList(start, end);
+	}
+
+	@Override
+	public long getListSize(String key) {
+		List<String> items = (List<String>) cache.getIfPresent(key);
+		return items == null ? 0 : items.size();
+	}
+	
+	@Override
+	public long getExpireIn(String key,TimeUnit timeUnit) {
+		ExpireableObject expireableObject = (ExpireableObject) cache.getIfPresent(key);
+		if(expireableObject == null)return -1L;
+		long millis = expireableObject.getExpireAt() - System.currentTimeMillis();
+		if(millis < 0)return -1L;
+		return timeUnit.convert(millis, TimeUnit.MILLISECONDS);
+	}
+
+	@Override
+	public void setMapValue(String key, String field, Object value) {
+		Map<String, Object> map = (Map<String, Object>) cache.getIfPresent(key);	
+		if(map == null) {
+			map = new HashMap<String, Object>();
+			cache.put(key, map);
+		}
+		map.put(field, value);
+	}
+
+	@Override
+	public void setMapValues(String key, Map<String,Object> map) {
+		map.forEach( (field, value) -> {
+			setMapValue(key, field, value);
+		} );
+	}
+	
+	@Override
+	public <T> T getMapValue(String key, String field) {
+		Map<String, Object> map = (Map<String, Object>) cache.getIfPresent(key);
+		return map == null ? null : (T)map.get(field);
+	}
+	
+	@Override
+	public <T> Map<String, T> getMapValues(String key, Collection<String> fields) {
+		if(fields == null || fields.isEmpty())return new HashMap<>(0);
+		Map<String, T> result = new HashMap<>(fields.size());
+		T value;
+        for (String field : fields) {
+        	value = getMapValue(key, field);
+        	if(value == null)continue;
+        	result.put(field, value);
+		}
+        return result;
+	}
+
+	@Override
+	public Set<String> getKeys(String pattern) {
+		return new HashSet<>(0);
+	}
+	
+	
 }

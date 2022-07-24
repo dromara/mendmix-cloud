@@ -48,7 +48,7 @@ public class DataSourceConfig {
 	
 	//
 	private String driverClassName;
-	private Boolean testWhileIdle;
+	private Boolean testWhileIdle = true;
 	private String validationQuery;
 	private Integer maxActive;
 	private Integer initialSize;
@@ -56,8 +56,8 @@ public class DataSourceConfig {
 	private Long maxWait;
 	private Long minEvictableIdleTimeMillis;
 	private Long timeBetweenEvictionRunsMillis;
-	private Boolean testOnBorrow;
-	private Boolean testOnReturn;
+	private Boolean testOnBorrow  = false;
+	private Boolean testOnReturn = true;
 	
 	
 	

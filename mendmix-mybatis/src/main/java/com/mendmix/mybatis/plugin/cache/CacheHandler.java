@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.persistence.Id;
@@ -209,7 +210,7 @@ public class CacheHandler implements InterceptorHandler {
 			if(!metadata.concurrency){
 				String concurrentLockKey = "concurrent:" + cacheKey;
 				invocationVal.setConcurrentLockKey(concurrentLockKey);
-				getLock = CacheUtils.setIfAbsent(concurrentLockKey, "1", 30);
+				getLock = CacheUtils.setIfAbsent(concurrentLockKey, "1", 30,TimeUnit.SECONDS);
 				if(!getLock){
 					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process notGetConcurrentLock -> mapperId:{}",mt.getId());
 					return BLOCK_ON_CONCURRENT_LOCK_RETURN;
@@ -235,7 +236,7 @@ public class CacheHandler implements InterceptorHandler {
 				}
 			}else{
 				//新根据缓存KEY找到与按ID缓存的KEY
-				String refCacheKey = nullValueCache ? CacheUtils.get(cacheKey) : CacheUtils.getString(cacheKey);
+				String refCacheKey = nullValueCache ? CacheUtils.get(cacheKey) : CacheUtils.getStr(cacheKey);
 				if(refCacheKey != null){
 					if(nullPlaceholder = (nullValueCache && NULL_PLACEHOLDER.equals(refCacheKey))){
 						cacheObject = NULL_PLACEHOLDER;
@@ -292,7 +293,7 @@ public class CacheHandler implements InterceptorHandler {
 						//唯一索引（业务上）
 						cacheUniqueSelectRef(invocationVal,result, mt, cacheKey);
 					}else if(metadata.groupRalated){//结果为集合的情况，增加key到cacheGroup
-						CacheUtils.addListItems(metadata.cacheGroupKey, cacheKey);
+						CacheUtils.addStrItemToList(metadata.cacheGroupKey, cacheKey);
 					}
 				}else{
 					//之前没有按主键的缓存，增加按主键缓存
@@ -394,7 +395,7 @@ public class CacheHandler implements InterceptorHandler {
 		if(nullValueCache){
 			CacheUtils.set(fieldCacheKey, idCacheKey, expired);
 		}else{
-			CacheUtils.setString(fieldCacheKey, idCacheKey, expired);
+			CacheUtils.setStr(fieldCacheKey, idCacheKey, expired);
 		}
 	}
 	
@@ -799,7 +800,7 @@ public class CacheHandler implements InterceptorHandler {
 		List<String> keys;
 		for (int i = 0; i <= keyCount; i+=batchSize) {
 			toIndex = (i + batchSize) > keyCount ? keyCount : (i + batchSize);
-			keys = CacheUtils.getListItems(cacheGroupKey,i, toIndex);
+			keys = CacheUtils.getStrListItems(cacheGroupKey,i, toIndex);
 			if(keys.isEmpty())break;
 			//
 			if(withPrefixs) {

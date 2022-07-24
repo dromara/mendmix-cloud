@@ -15,41 +15,47 @@
  */
 package com.mendmix.cache;
 
-import java.util.Date;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public interface CacheAdapter {
 
 	<T> T get(String key);
-	
-	String getString(String key);
-	
-	void set(String key,Object value,long expireSeconds);
-	
-	void setString(String key,Object value,long expireSeconds);
-	
-	void remove(String...keys);
-	
+
+	String getStr(String key);
+
+	void set(String key, Object value, long expireSeconds);
+
+	void setStr(String key, String value, long expireSeconds);
+
+	void remove(String... keys);
+
 	boolean exists(String key);
 
-	void addListItems(String key,String ...items);
-	
-	List<String> getListItems(String key,int start,int end);
-	
+	long size(String key);
+
+	long getExpireIn(String key, TimeUnit timeUnit);
+
+	void setExpire(String key, long expireSeconds);
+
+	boolean setIfAbsent(String key, Object value, long timeout, TimeUnit timeUnit);
+
+	void addStrItemToList(String key, String item);
+
+	List<String> getStrListItems(String key, int start, int end);
+
 	long getListSize(String key);
-	
-	boolean setIfAbsent(String key,String value,long expireSeconds);
-	
-	void setMapItem(String key,String field,String value);
-	
-	Map<String, String> getMap(String key);
-	
-	String getMapItem(String key,String field);
-	
-	void setExpire(String key,long expireSeconds);
-	
-	void setExpireAt(String key,Date expireAt);
-	
-	long getTtl(String key);
+
+	void setMapValue(String key, String field, Object value);
+
+	void setMapValues(String key, Map<String, Object> map);
+
+	<T> T getMapValue(String key, String field);
+
+	<T> Map<String, T> getMapValues(String key, Collection<String> fields);
+
+	Set<String> getKeys(String pattern);
 }

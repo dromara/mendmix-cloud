@@ -28,6 +28,9 @@ public class StringConverter {
 	private static List<String> sensitiveKeys = new ArrayList<>(
 			Arrays.asList("password", "key", "secret", "token", "credentials"));
 
+	private static String[] paddingzeros = new String[] { "", "0", "00", "000", "0000", "00000", "000000", "0000000",
+			"00000000", "000000000" };
+
 	public static String hideSensitiveKeyValue(String key, String value) {
 		if (StringUtils.isAnyBlank(key, value))
 			return "";
@@ -40,7 +43,7 @@ public class StringConverter {
 		}
 		return is ? getDesensitizedValue(value) : value;
 	}
-	
+
 	public static String getDesensitizedValue(String value) {
 		int length = value.length();
 		if (length <= 2) {
@@ -50,69 +53,76 @@ public class StringConverter {
 		StringBuilder builder = new StringBuilder();
 		builder.append(value.substring(0, partLen));
 		int asteriskNums = partLen;
-		if(partLen <= 3 && length > partLen * 3) {
+		if (partLen <= 3 && length > partLen * 3) {
 			asteriskNums = partLen + 1;
 		}
 		for (int i = 0; i < asteriskNums; i++) {
-			builder.append(GlobalConstants.ASTERISK);	
+			builder.append(GlobalConstants.ASTERISK);
 		}
 		builder.append(value.substring(partLen + asteriskNums));
-			
+
 		return builder.toString();
 	}
-	
-	
+
 	public static String toCamelCase(String underlineStr) {
-        if (underlineStr == null) {
-            return null;
-        }
-        if(!underlineStr.contains(GlobalConstants.UNDER_LINE)) {
-        	return underlineStr;
-        }
-        // 分成数组
-        char[] charArray = underlineStr.toCharArray();
-        // 判断上次循环的字符是否是"_"
-        boolean underlineBefore = false;
-        StringBuffer buffer = new StringBuffer();
-        for (int i = 0, l = charArray.length; i < l; i++) {
-            // 判断当前字符是否是"_",如果跳出本次循环
-            if (charArray[i] == 95) {
-                underlineBefore = true;
-            } else if (underlineBefore) {
-                // 如果为true，代表上次的字符是"_",当前字符需要转成大写
-                buffer.append(charArray[i] -= 32);
-                underlineBefore = false;
-            } else {
-                // 不是"_"后的字符就直接追加
-                buffer.append(charArray[i]);
-            }
-        }
-        return buffer.toString();
-    }
+		if (underlineStr == null) {
+			return null;
+		}
+		if (!underlineStr.contains(GlobalConstants.UNDER_LINE)) {
+			return underlineStr;
+		}
+		// 分成数组
+		char[] charArray = underlineStr.toCharArray();
+		// 判断上次循环的字符是否是"_"
+		boolean underlineBefore = false;
+		StringBuffer buffer = new StringBuffer();
+		for (int i = 0, l = charArray.length; i < l; i++) {
+			// 判断当前字符是否是"_",如果跳出本次循环
+			if (charArray[i] == 95) {
+				underlineBefore = true;
+			} else if (underlineBefore) {
+				// 如果为true，代表上次的字符是"_",当前字符需要转成大写
+				buffer.append(charArray[i] -= 32);
+				underlineBefore = false;
+			} else {
+				// 不是"_"后的字符就直接追加
+				buffer.append(charArray[i]);
+			}
+		}
+		return buffer.toString();
+	}
 
 	public static String toUnderlineCase(String camelCaseStr) {
-        if (camelCaseStr == null) {
-            return null;
-        }
-        // 将驼峰字符串转换成数组
-        char[] charArray = camelCaseStr.toCharArray();
-        StringBuffer buffer = new StringBuffer();
-        //处理字符串
-        for (int i = 0, l = charArray.length; i < l; i++) {
-            if (charArray[i] >= 65 && charArray[i] <= 90) {
-                buffer.append(GlobalConstants.UNDER_LINE).append(charArray[i] += 32);
-            } else {
-                buffer.append(charArray[i]);
-            }
-        }
-        return buffer.toString();
-    }
-	
-	
+		if (camelCaseStr == null) {
+			return null;
+		}
+		// 将驼峰字符串转换成数组
+		char[] charArray = camelCaseStr.toCharArray();
+		StringBuffer buffer = new StringBuffer();
+		// 处理字符串
+		for (int i = 0, l = charArray.length; i < l; i++) {
+			if (charArray[i] >= 65 && charArray[i] <= 90) {
+				buffer.append(GlobalConstants.UNDER_LINE).append(charArray[i] += 32);
+			} else {
+				buffer.append(charArray[i]);
+			}
+		}
+		return buffer.toString();
+	}
+
+	public static String paddingZeros(String str, int expectLength) {
+		// 补0
+		int len = expectLength - str.length();
+		if (len > 0) {
+			str = paddingzeros[len] + str;
+		}
+		return str;
+	}
+
 	public static void main(String[] args) {
 		System.out.println(toCamelCase("userName"));
-        System.out.println(toCamelCase("user_name"));
-        System.out.println(toUnderlineCase("userName"));
-    }
-	
+		System.out.println(toCamelCase("user_name"));
+		System.out.println(toUnderlineCase("userName"));
+	}
+
 }

@@ -44,8 +44,8 @@ public class RSAKeyPairHolder {
 		String privateyKeyString = ResourceUtils.getProperty("application.decrypt.privateyKey");
 		publicKeyString = ResourceUtils.getProperty("application.decrypt.publicKey");
 		if(privateyKeyString == null) {
-			privateyKeyString = CacheUtils.getString("privateyKey:" + GlobalRuntimeContext.SYSTEM_ID);
-			publicKeyString = CacheUtils.getString("publicKey:" + GlobalRuntimeContext.SYSTEM_ID);
+			privateyKeyString = CacheUtils.getStr("privateyKey:" + GlobalRuntimeContext.SYSTEM_ID);
+			publicKeyString = CacheUtils.getStr("publicKey:" + GlobalRuntimeContext.SYSTEM_ID);
 		}
 		
 		if (StringUtils.isNoneBlank(privateyKeyString, publicKeyString)) {
@@ -63,8 +63,8 @@ public class RSAKeyPairHolder {
 			appPublicKey = rsaKeyPair.getPublicKey();
 			publicKeyString = Base64.getEncoder().encodeToString(appPublicKey.getEncoded());
 			privateyKeyString = Base64.getEncoder().encodeToString(appPrivateKey.getEncoded());
-			CacheUtils.setString("privateyKey:" + GlobalRuntimeContext.SYSTEM_ID, privateyKeyString,CacheExpires.todayEndSeconds());
-			CacheUtils.setString("publicKey:" + GlobalRuntimeContext.SYSTEM_ID, publicKeyString,CacheExpires.todayEndSeconds());
+			CacheUtils.setStr("privateyKey:" + GlobalRuntimeContext.SYSTEM_ID, privateyKeyString,CacheExpires.todayEndSeconds());
+			CacheUtils.setStr("publicKey:" + GlobalRuntimeContext.SYSTEM_ID, publicKeyString,CacheExpires.todayEndSeconds());
 		}
 	}
 

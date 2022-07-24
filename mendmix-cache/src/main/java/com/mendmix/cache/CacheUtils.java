@@ -15,108 +15,122 @@
  */
 package com.mendmix.cache;
 
-import java.util.Date;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.mendmix.cache.adapter.LocalCacheAdapter;
-import com.mendmix.spring.InstanceFactory;
+import com.mendmix.cache.adapter.RedisCacheAdapter;
+import com.mendmix.common.async.ICaller;
+import com.mendmix.common.util.ResourceUtils;
 
 public class CacheUtils {
-
+	
+	private static boolean redis;
 	private static CacheAdapter cacheAdapter;
 	
+	static {
+		if(ResourceUtils.containsAnyProperty("spring.redis.host","spring.redis.sentinel.nodes","spring.redis.cluster.nodes")) {
+			cacheAdapter = new RedisCacheAdapter();
+			redis = true;
+		}else {
+			cacheAdapter = new LocalCacheAdapter(3600);
+		}
+	}
 	
-	public static void setCacheAdapter(CacheAdapter cacheAdapter) {
-		CacheUtils.cacheAdapter = cacheAdapter;
+	public static boolean isRedis() {
+		return redis;
 	}
 
 	public static CacheAdapter getCacheAdapter() {
-		if(cacheAdapter == null) {
-			synchronized (CacheUtils.class) {
-				cacheAdapter = InstanceFactory.getInstance(CacheAdapter.class);
-			}
-			if(cacheAdapter == null) {
-				cacheAdapter = new LocalCacheAdapter();
-			}
-		}
 		return cacheAdapter;
 	}
-
+	
+	public static <T> T queryTryCache(String cacheKey,ICaller<T> dataCaller,long expireSeconds){
+		T result = cacheAdapter.get(cacheKey);
+		if(result == null){
+			result = dataCaller.call();
+			if(result != null){
+				cacheAdapter.set(cacheKey, result, expireSeconds);
+		    }
+		}
+		return result;
+	}
+	
+	
 	public static <T> T get(String key) {
-		return getCacheAdapter().get(key);
+		return cacheAdapter.get(key);
 	}
-
-	
-	public static String getString(String key) {
-		return getCacheAdapter().getString(key);
+		
+	public static String getStr(String key) {
+		return cacheAdapter.getStr(key);
 	}
-
-	
-	public static void set(String key, Object value, long expireSeconds) {
-		getCacheAdapter().set(key, value, expireSeconds);
+		
+	public static void set(String key,Object value,long expireSeconds) {
+		cacheAdapter.set(key, value, expireSeconds);
 	}
-
-	
-	public static void setString(String key, Object value, long expireSeconds) {
-		getCacheAdapter().setString(key, value, expireSeconds);
+		
+	public static void setStr(String key,String value,long expireSeconds) {
+		cacheAdapter.setStr(key, value, expireSeconds);
 	}
-
-	
-	public static void remove(String... keys) {
-		getCacheAdapter().remove(keys);
+		
+	public static void remove(String...keys) {
+		cacheAdapter.remove(keys);
 	}
-
-	
+		
 	public static boolean exists(String key) {
-		return getCacheAdapter().exists(key);
+		return cacheAdapter.exists(key);
+	}
+		
+	public static long size(String key) {
+		return cacheAdapter.size(key);
+	}
+		
+	public static void setExpire(String key,long expireSeconds) {
+		cacheAdapter.setExpire(key, expireSeconds);
+	}
+		
+	public static boolean setIfAbsent(String key, Object value,long timeout,TimeUnit timeUnit) {
+		return cacheAdapter.setIfAbsent(key, value, timeout, timeUnit);
+	}
+	
+	public static void addStrItemToList(String key, String item) {
+		cacheAdapter.addStrItemToList(key, item);
 	}
 
-	
-	public static void addListItems(String key, String... items) {
-		getCacheAdapter().addListItems(key, items);
+	public static List<String> getStrListItems(String key, int start, int end) {
+		return cacheAdapter.getStrListItems(key, start, end);
 	}
 
-	
-	public static List<String> getListItems(String key, int start, int end) {
-		return getCacheAdapter().getListItems(key, start, end);
-	}
-
-	
 	public static long getListSize(String key) {
-		return getCacheAdapter().getListSize(key);
-	}
-
-	
-	public static boolean setIfAbsent(String key, String value, long expireMillis) {
-		return getCacheAdapter().setIfAbsent(key, value, expireMillis);
-	}
-
-	public Map<String, String> getMap(String key) {
-		return getCacheAdapter().getMap(key);
+		return cacheAdapter.getListSize(key);
 	}
 	
-	public static void setMapItem(String key, String field, String value) {
-		getCacheAdapter().setMapItem(key, field, value);
+	public static long getExpireIn(String key,TimeUnit timeUnit) {
+		return cacheAdapter.getExpireIn(key, timeUnit);
+	}
+	
+	public static void setMapValue(String key, String field, Object value) {
+		cacheAdapter.setMapValue(key, field, value);
+	}
+	
+	public static void setMapValues(String key, Map<String,Object> map){
+		cacheAdapter.setMapValues(key, map);
 	}
 
-	
-	public static String getMapItem(String key, String field) {
-		return getCacheAdapter().getMapItem(key, field);
+
+	public static <T> T getMapValue(String key, String field) {
+		return cacheAdapter.getMapValue(key, field);
 	}
 
-	
-	public static void setExpire(String key, long expireSeconds) {
-		getCacheAdapter().setExpire(key, expireSeconds);
+	public static <T> Map<String, T> getMapValues(String key, Collection<String> fields) {
+		return cacheAdapter.getMapValues(key, fields);
 	}
 
-	
-	public static void setExpireAt(String key, Date expireAt) {
-		getCacheAdapter().setExpireAt(key, expireAt);
+	public static Set<String> getKeys(String pattern) {
+		return cacheAdapter.getKeys(pattern);
 	}
-
 	
-	public static long getTtl(String key) {
-		return getCacheAdapter().getTtl(key);
-	}
 }

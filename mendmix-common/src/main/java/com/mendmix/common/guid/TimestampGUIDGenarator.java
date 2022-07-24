@@ -22,6 +22,7 @@ import org.apache.commons.lang3.RandomUtils;
 
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.util.DateUtils;
+import com.mendmix.common.util.StringConverter;
 
 /**
  * 带时间错信息全局唯一id生成器
@@ -36,8 +37,6 @@ import com.mendmix.common.util.DateUtils;
 public class TimestampGUIDGenarator {
 
 	private static final String TIME_PATTERN = "yyyyMMddHHmmss";
-	private static String[] paddingzeros = new String[]{"","0","00","000","0000","00000","000000","0000000","00000000","000000000"};
-
 	private final AtomicInteger NEXT_COUNTER;
 	private int incrMin;
 	private int incrMax;
@@ -67,12 +66,7 @@ public class TimestampGUIDGenarator {
 			next = NEXT_COUNTER.updateAndGet( (x) -> x >= incrMax ? RandomUtils.nextInt(incrMin, incrMax/2) : x + 1);
 		}
 		String seq = String.valueOf(next);
-		//补0
-		int len = 5 - seq.length();
-		if(len > 0){
-			seq = paddingzeros[len] + seq;   
-		}
-		return seq;
+		return StringConverter.paddingZeros(seq, 5);
 	}
 	
 	public static void main(String[] args) {
