@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.cos.BucketConfig;
@@ -31,7 +32,6 @@ import com.mendmix.cos.CObjectMetadata;
 import com.mendmix.cos.CUploadObject;
 import com.mendmix.cos.CUploadResult;
 import com.mendmix.cos.CosProviderConfig;
-import com.mendmix.cos.FilePathHelper;
 import com.mendmix.cos.UploadTokenParam;
 import com.mendmix.cos.provider.AbstractProvider;
 import com.qiniu.common.QiniuException;
@@ -368,8 +368,8 @@ public class QiniuProvider extends AbstractProvider {
             	String[] reArr = JsonUtils.toObject(re.body().string(), String[].class);
             	if(reArr.length > 0){
             		rs = reArr[0];
-            		if(!rs.endsWith(FilePathHelper.DIR_SPLITER)){
-            			rs = rs.concat(FilePathHelper.DIR_SPLITER);
+            		if(!rs.endsWith(GlobalConstants.PATH_SEPARATOR)){
+            			rs = rs.concat(GlobalConstants.PATH_SEPARATOR);
             		}
             	}
             } else {

@@ -36,6 +36,7 @@ import com.mendmix.common.util.JsonUtils;
  * @version 1.0.0
  * @date 2017年7月11日
  */
+@SuppressWarnings("unchecked")
 @JsonInclude(Include.NON_NULL)
 public class MQMessage {
 
@@ -280,10 +281,20 @@ public class MQMessage {
 	}
 
 	public <T> T toObject(Class<T> clazz) {
+		if(body instanceof String == false) {
+			if(body.getClass() == clazz) {
+				return (T) body;
+			}else {
+				return BeanUtils.copy(body, clazz);
+			}
+		}
 		return JsonUtils.toObject(body.toString(), clazz);
 	}
 
 	public <T> List<T> toList(Class<T> clazz) {
+		if(body instanceof List) {
+			return BeanUtils.copy((List)body, clazz);
+		}
 		return JsonUtils.toList(body.toString(), clazz);
 	}
 

@@ -76,6 +76,13 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka-clients</artifactId>
+			<version>3.0.0</version>
+			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
 			<groupId>org.elasticsearch.client</groupId>
 			<artifactId>elasticsearch-rest-high-level-client</artifactId>
 			<version>7.6.0</version>

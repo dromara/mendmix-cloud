@@ -26,8 +26,6 @@ package com.mendmix.logging.integrate;
  */
 public class LogConstants {
 
-	public static final String LOG_CONTEXT_ENV = "env";
-	public static final String LOG_CONTEXT_APP_ID = "appId";
 	public static final String LOG_CONTEXT_REQUEST_IP = "requestIp";
 	public static final String LOG_CONTEXT_REQUEST_ID = "requestId";
 	public static final String LOG_CONTEXT_CURRENT_USER = "currentUser";

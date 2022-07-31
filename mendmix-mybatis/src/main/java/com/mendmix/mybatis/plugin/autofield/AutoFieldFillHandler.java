@@ -21,8 +21,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -31,6 +31,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
@@ -60,6 +62,8 @@ import com.mendmix.spring.InstanceFactory;
  */
 public class AutoFieldFillHandler implements InterceptorHandler {
 
+	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.mybatis");
+	
 	private static final String INSERT_LIST_METHOD_NAME = "insertList";
 	private static final String ATTR_CONTEXT_NAME = "__attr_cxt_name";
 	private static final String ATTR_VALUE_CONTEXT_NAME = "__attrval_cxt_name:%s:%s";
@@ -178,7 +182,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 
 	
 
-	private void setFieldValue(Field[] fields, Object parameter,boolean updateCommand) {
+	private void setFieldValue(Field[] fields, Object parameter,boolean updateCommand) throws Exception {
 		String tmpVal;
 		if(fields[0] != null && getIdGenerator() != null && isNullValue(parameter, fields[0])) {
 			Serializable id = idGenerator.nextId();
@@ -187,7 +191,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 //			}else if(fields[0].getType() == long.class || fields[0].getType() == Long.class){
 //				id = Long.parseLong(id.toString());
 //			}
-			try {fields[0].set(parameter, id);} catch (Exception e) {}
+			fields[0].set(parameter, id);
 		}
 		
 		if(fields[1] != null && (tmpVal = CurrentRuntimeContext.getCurrentUserId()) != null && (updateCommand || isNullValue(parameter, fields[1]))) {
@@ -199,7 +203,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 		}
 		
 		if(fields.length > 3 && fields[3] != null && (tmpVal = CurrentRuntimeContext.getTenantId()) != null && (updateCommand || isNullValue(parameter, fields[3]))) {
-			try {fields[3].set(parameter, tmpVal);} catch (Exception e) {}
+			fields[3].set(parameter, tmpVal);
 		}
 		
 		//
@@ -215,7 +219,6 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 			return true;
 		}
 	}
-	
 	
 	private boolean hasAnyValue(Field[] fields) {
 		for (Field field : fields) {

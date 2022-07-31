@@ -30,9 +30,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.time.DateUtils;
 
+import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.async.StandardThreadExecutor;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
+import com.mendmix.cos.BucketConfig;
+import com.mendmix.cos.CObjectMetadata;
+import com.mendmix.cos.CUploadObject;
+import com.mendmix.cos.CUploadResult;
+import com.mendmix.cos.CosProviderConfig;
+import com.mendmix.cos.UploadTokenParam;
+import com.mendmix.cos.provider.AbstractProvider;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
@@ -48,14 +56,6 @@ import com.qcloud.cos.region.Region;
 import com.qcloud.cos.transfer.TransferManager;
 import com.qcloud.cos.transfer.Upload;
 import com.tencent.cloud.CosStsClient;
-import com.mendmix.cos.BucketConfig;
-import com.mendmix.cos.CObjectMetadata;
-import com.mendmix.cos.CUploadObject;
-import com.mendmix.cos.CUploadResult;
-import com.mendmix.cos.CosProviderConfig;
-import com.mendmix.cos.FilePathHelper;
-import com.mendmix.cos.UploadTokenParam;
-import com.mendmix.cos.provider.AbstractProvider;
 
 /**
  * 
@@ -286,10 +286,10 @@ public class QcloudProvider extends AbstractProvider {
 		if(bucketName.endsWith(conf.getAppId())) {
 			return bucketName;
 		}
-		if(bucketName.contains(FilePathHelper.MID_LINE) && bucketNamePattern.matcher(bucketName).matches()) {
+		if(bucketName.contains(GlobalConstants.MID_LINE) && bucketNamePattern.matcher(bucketName).matches()) {
 			return bucketName;
 		}
-		return new StringBuilder(bucketName).append(FilePathHelper.MID_LINE).append(conf.getAppId()).toString();
+		return new StringBuilder(bucketName).append(GlobalConstants.MID_LINE).append(conf.getAppId()).toString();
 	}
 
 	@Override

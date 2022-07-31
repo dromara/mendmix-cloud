@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.util.ResourceUtils;
 
 import net.sf.jmimemagic.Magic;
@@ -39,7 +40,7 @@ import net.sf.jmimemagic.MagicMatch;
 @JsonInclude(Include.NON_NULL)
 public class CUploadObject {
 
-	private static boolean fileWithDate = ResourceUtils.getBoolean("mendmix.cos.fileWithDate", true);
+	private static boolean fileWithDate = ResourceUtils.getBoolean("mendmix.cos.fileKeyWithDate", true);
 	private String bucketName;
 	private String fileKey;
 	private String extension;
@@ -63,8 +64,8 @@ public class CUploadObject {
 		this.file = file;
 		this.fileSize = file.length();
 		
-		if(file.getName().contains(FilePathHelper.DOT)){
-			this.extension = file.getName().substring(file.getName().lastIndexOf(FilePathHelper.DOT) + 1);
+		if(file.getName().contains(GlobalConstants.DOT)){
+			this.extension = file.getName().substring(file.getName().lastIndexOf(GlobalConstants.DOT) + 1);
 			this.mimeType = MimeTypeFileExtensionConvert.getFileMimeType(extension);
 		}
 		
@@ -85,8 +86,8 @@ public class CUploadObject {
 		this.inputStream = inputStream;
 		this.mimeType = mimeType;
 		this.fileSize = fileSize;
-		if(StringUtils.isNotBlank(originFileName) && originFileName.contains(FilePathHelper.DOT)){
-			extension = originFileName.substring(originFileName.lastIndexOf(FilePathHelper.DOT));
+		if(StringUtils.isNotBlank(originFileName) && originFileName.contains(GlobalConstants.DOT)){
+			extension = originFileName.substring(originFileName.lastIndexOf(GlobalConstants.DOT));
 		}else if(mimeType != null) {
 			this.extension = MimeTypeFileExtensionConvert.getFileExtension(mimeType);
 		}
@@ -176,23 +177,11 @@ public class CUploadObject {
 	}
 
 	public String getFileKey() {
-		if(StringUtils.isBlank(fileKey)) {
-			StringBuilder builder = new StringBuilder();
-			if(StringUtils.isNotBlank(this.folderPath)){
-				builder.append(FilePathHelper.formatDirectoryPath(folderPath));
-			}
-			if(fileWithDate) {
-				builder.append(FilePathHelper.genTimePathRandomFilePath(extension));
-			}else {
-				builder.append(FilePathHelper.genRandomFileName(extension));
-			}
-			fileKey = builder.toString();
-		}
-		
-		if(fileKey.startsWith(FilePathHelper.DIR_SPLITER)) {
+		if (StringUtils.isBlank(fileKey)) {
+			fileKey = FilePathHelper.genFileKey(this.folderPath, extension, fileWithDate);
+		} else if (fileKey.startsWith(GlobalConstants.PATH_SEPARATOR)) {
 			fileKey = fileKey.substring(1);
 		}
-		
 		return fileKey;
 	}
 

@@ -37,6 +37,7 @@ import com.mendmix.cos.provider.AbstractProvider;
 import com.mendmix.cos.provider.aliyun.AliyunProvider;
 import com.mendmix.cos.provider.aws.AwsProvider;
 import com.mendmix.cos.provider.huawei.HuaweicloudProvider;
+import com.mendmix.cos.provider.local.LocalStorageProvider;
 import com.mendmix.cos.provider.minio.MinioProvider;
 import com.mendmix.cos.provider.qcloud.QcloudProvider;
 import com.mendmix.cos.provider.qiniu.QiniuProvider;
@@ -82,6 +83,10 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 		this.config = config;
 	}
 
+	public CosProviderConfig getConfig() {
+		return config;
+	}
+
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		//
@@ -114,6 +119,12 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 			provider = new MinioProvider(config);
 		}else if(HuaweicloudProvider.NAME.equals(type)) {
 			provider = new HuaweicloudProvider(config);
+		}else if(HuaweicloudProvider.NAME.equals(type)) {
+			provider = new HuaweicloudProvider(config);
+		}else if(LocalStorageProvider.NAME.equals(type)) {
+			config.setAccessKey("accessKey");
+			config.setSecretKey("secretKey");
+			provider = new LocalStorageProvider(config);
 		}else {
 			throw new MendmixBaseException("cos["+type+"] not support");
 		}
@@ -126,8 +137,8 @@ public class CosProviderServiceFacade implements InitializingBean,DisposableBean
 			Map<String, String> urlPrefixMappings = ResourceUtils.getMappingValues("mendmix.cos.bucket.urlPrefix.mapping");
 			if(urlPrefixMappings != null) {
 				urlPrefixMappings.forEach( (bucket,urlPrefix) -> {
-					BucketConfig bucketConfig = provider.getBucketConfig(defaultBucket);
-					bucketConfig.setUrlPrefix(ResourceUtils.getProperty("mendmix.cos.defaultUrlPrefix"));
+					BucketConfig bucketConfig = provider.getBucketConfig(bucket);
+					bucketConfig.setUrlPrefix(urlPrefix);
 					((AbstractProvider)provider).addBucketConfig(bucketConfig);
 				});				
 			}

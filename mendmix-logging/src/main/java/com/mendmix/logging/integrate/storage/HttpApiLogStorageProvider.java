@@ -43,6 +43,17 @@ public class HttpApiLogStorageProvider implements LogStorageProvider {
 	@Value("${mendmix.actionlog.api.baseUrl}/actionlog/details")
 	private String detailsUrl;
 	
+	public HttpApiLogStorageProvider() {}
+	
+	public HttpApiLogStorageProvider(String baseUrl) {
+		if(baseUrl.endsWith("/")) {
+			baseUrl = baseUrl.substring(0,baseUrl.length() - 1);
+		}
+		addUrl = baseUrl + "/actionlog/add";
+		listUrl = baseUrl + "/actionlog/list";
+		detailsUrl = baseUrl + "/actionlog/details";
+	}
+
 	@Override
 	public void storage(ActionLog log) {
 		HttpRequestEntity.post(addUrl).body(log).backendInternalCall().execute();

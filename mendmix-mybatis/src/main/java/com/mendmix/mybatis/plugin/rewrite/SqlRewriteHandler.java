@@ -92,7 +92,7 @@ import net.sf.jsqlparser.statement.select.UnionOp;
  */
 public class SqlRewriteHandler implements InterceptorHandler {
 
-	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.mybatis.plugin");
+	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.mybatis");
 
 	public static final String FRCH_PREFIX = "__frch_";
 	private static final String FRCH_INDEX_PREFIX = "__frch_index_";

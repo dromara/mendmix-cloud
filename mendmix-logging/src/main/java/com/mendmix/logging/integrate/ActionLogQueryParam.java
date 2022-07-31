@@ -19,7 +19,7 @@ import java.util.Date;
 
 public class ActionLogQueryParam {
 
-	private String appId;
+	private String systemId;
 	private String env;
 	private String tenantId;
 	private String platformType;
@@ -34,12 +34,13 @@ public class ActionLogQueryParam {
 	
 	private Date endTime;
 
-	public String getAppId() {
-		return appId;
+
+	public String getSystemId() {
+		return systemId;
 	}
 
-	public void setAppId(String appId) {
-		this.appId = appId;
+	public void setSystemId(String systemId) {
+		this.systemId = systemId;
 	}
 
 	public String getEnv() {

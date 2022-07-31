@@ -42,6 +42,8 @@ public class EnvironmentHelper {
 			String nodeId = GlobalRuntimeContext.getNodeName();
 			String workId = String.valueOf(GlobalRuntimeContext.getWorkId());
 			System.setProperty("application.nodeId", nodeId);
+			System.setProperty("application.id", GlobalRuntimeContext.APPID);
+			System.setProperty("env", GlobalRuntimeContext.ENV);
 			if(!ResourceUtils.containsProperty("m"+"endmi"+"x.cryp"+"to.cryptK"+"ey")) {
 				System.setProperty("m"+"endm"+"ix.cryp"+"to.cryptK"+"ey", "fd*&fCkf@dsVu5^%f");
 			}
@@ -69,7 +71,7 @@ public class EnvironmentHelper {
 			if(source.getName().startsWith("servlet") || source.getName().startsWith("system")){
 				continue;
 			}
-			if(source.getName().contains("applicationConfig: [classpath")) {
+			if(source.getName().contains("classpath")) {
 				continue;
 			}
 			count = 0;

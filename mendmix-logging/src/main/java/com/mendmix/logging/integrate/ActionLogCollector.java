@@ -36,6 +36,7 @@ import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.common.util.TokenGenerator;
 import com.mendmix.logging.helper.LogMessageFormat;
+import com.mendmix.logging.integrate.storage.HttpApiLogStorageProvider;
 import com.mendmix.spring.InstanceFactory;
 
 
@@ -68,6 +69,9 @@ public class ActionLogCollector {
 	
 	static {
 		logStorageProvider = InstanceFactory.getInstance(LogStorageProvider.class);
+		if(logStorageProvider == null && ResourceUtils.containsProperty("mendmix.actionlog.api.baseUrl")) {
+			logStorageProvider = new HttpApiLogStorageProvider(ResourceUtils.getProperty("mendmix.actionlog.api.baseUrl"));
+		}
 		if(logStorageProvider != null) {
 			int maxThreads = ResourceUtils.getInt("actionlog.push.threads",5);
 			int maxQueueSize = ResourceUtils.getInt("actionlog.push.queue.size",2000);

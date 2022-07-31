@@ -18,7 +18,6 @@ package test.lock;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Lock;
 
 import org.apache.commons.lang3.RandomUtils;
 
@@ -54,7 +53,7 @@ public class RedisDistributeLockTest {
 
 		@Override
 		public void run() {
-			Lock lock = new RedisDistributeLock("test",60);
+			RedisDistributeLock lock = new RedisDistributeLock("test",60);
 			try {				
 				lock.lock();
 			} catch (Exception e) {

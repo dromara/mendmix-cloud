@@ -129,7 +129,7 @@ public class TreeModel {
 	}
 	
 	public boolean isLeaf() {
-		return StringUtils.isNotBlank(value);
+		return this.children != null;
 	}
 	
 	

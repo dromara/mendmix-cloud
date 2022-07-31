@@ -60,7 +60,7 @@
 		<spring-cloud-component.version>3.1.1</spring-cloud-component.version>
 		<spring-boot.version>2.6.6</spring-boot.version>
 		<spring-cloud-netflix.version>2.2.10.RELEASE</spring-cloud-netflix.version>
-		<kafka.version>2.7.0</kafka.version>
+		<kafka.version>3.0.0</kafka.version>
 		<zkclient.version>0.10</zkclient.version>
 		<zookeeper.version>3.4.14</zookeeper.version>
 		<jedis.version>3.3.0</jedis.version>

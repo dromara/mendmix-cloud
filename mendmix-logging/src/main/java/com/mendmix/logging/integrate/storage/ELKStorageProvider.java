@@ -18,9 +18,16 @@ package com.mendmix.logging.integrate.storage;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -34,9 +41,12 @@ import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.model.Page;
 import com.mendmix.common.model.PageParams;
 import com.mendmix.common.util.JsonUtils;
@@ -51,15 +61,30 @@ import com.mendmix.logging.integrate.LogStorageProvider;
  * @author <a href="mailto:vakinge@gmail.com">jiangwei</a>
  * @date 2022年5月3日
  */
-public class ESLogStorageProvider implements LogStorageProvider,InitializingBean {
+public class ELKStorageProvider implements LogStorageProvider,InitializingBean {
 
-	private RestHighLevelClient client;
+	private static Logger logger = LoggerFactory.getLogger("com.mendmix.logging");
 	
-	@Value("${jeesuie.actionlog.elasticsearch.index}")
+	@Value("${mendmix.actionlog.elasticsearch.index}")
     private String esindex;
+	@Value("${mendmix.actionlog.topicName}")
+	private String topicName;
+	private String kafkaServers;
+	
+	private RestHighLevelClient client;
+	private KafkaProducer<String, Object> kafkaProducer;
+	
 	
 	@Override
-	public void storage(ActionLog log) {}
+	public void storage(ActionLog log) {
+		String key = log.getRequestId();
+		this.kafkaProducer.send(new ProducerRecord<String, Object>(topicName,key, JsonUtils.toJson(log)), new Callback() {
+			@Override
+			public void onCompletion(RecordMetadata result, Exception ex) {
+			   //TODO
+			}
+		});
+	}
 
 	@Override
 	public Page<ActionLog> pageQuery(PageParams pageParam, ActionLogQueryParam queryParam) {
@@ -88,6 +113,20 @@ public class ESLogStorageProvider implements LogStorageProvider,InitializingBean
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
+		kafkaServers = ResourceUtils.getAnyProperty("mendmix.actionlog.kafka.servers","mendmix.log.kafka.servers");
+		Properties properties = new Properties();
+		properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServers);
+		properties.setProperty(ProducerConfig.CLIENT_ID_CONFIG, "log-client-" + GlobalRuntimeContext.APPID);
+		properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+		properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+		properties.put(ProducerConfig.RETRIES_CONFIG, "1"); 
+		try {			
+			kafkaProducer = new KafkaProducer<>(properties);
+			logger.info("LogKafkaClient start OK !!!!!! -> kafkaServers:{}",kafkaServers);
+		} catch (Exception e) {
+			logger.warn("LogKafkaClient start fail -> kafkaServers:{} ,error:{}" ,kafkaServers,e.getMessage());
+		}
+		//
 		List<String> servers = ResourceUtils.getList("mendmix.actionlog.elasticsearch.servers");
 		
 		HttpHost[] httpHosts = new HttpHost[servers.size()];
@@ -107,7 +146,7 @@ public class ESLogStorageProvider implements LogStorageProvider,InitializingBean
 	
 	private void buildSourceBuilder(SearchSourceBuilder sourceBuilder,ActionLogQueryParam param){
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-        boolQueryBuilder.must(QueryBuilders.matchPhraseQuery("appId",param.getAppId()));
+        boolQueryBuilder.must(QueryBuilders.matchPhraseQuery("systemId",param.getSystemId()));
         if(!StringUtils.isEmpty(param.getEnv())){
             boolQueryBuilder.must(QueryBuilders.matchPhraseQuery("env",param.getEnv()));
         }

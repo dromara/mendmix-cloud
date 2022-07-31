@@ -48,6 +48,8 @@ import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.springweb.AppConfigs;
 import com.mendmix.springweb.model.AppMetadata;
 
+import io.swagger.annotations.ApiOperation;
+
 
 /**
  * @description <br>
@@ -155,6 +157,12 @@ public class AppMetadataHolder {
 						apiInfo.setRequestLog(methodMetadata.requestLog());
 						apiInfo.setResponseLog(methodMetadata.responseLog());
 						apiInfo.setOpenApi(methodMetadata.openApi());
+					}
+					
+					if(StringUtils.isBlank(apiInfo.getName())) {
+						if (method.isAnnotationPresent(ApiOperation.class)) {
+							apiInfo.setName(method.getAnnotation(ApiOperation.class).value());
+						}
 					}
 					
 					if(StringUtils.isBlank(apiInfo.getName())) {
