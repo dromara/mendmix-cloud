@@ -57,5 +57,7 @@ mendmix-cos-adapter | 文件存储适配，目前支持：minIO、七牛、阿�
 <img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/2021-hainajiang.jpeg" width="350" height="360" />
  
  
-## 微信交流群(请先加作者微信)
-<img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/weixin_qrcode.jpeg" width="180" height="180" />
+## 🚀🚀知识星球🚀🚀
+>欢迎加入我的知识星球。提供mendmix各种问题交流，定期分享架构实践、架构案例、面试技巧等。
+
+<img src="https://www.jeesuite.com/assets/images/ads/zsxq-002.png" width="290" height="465" />
