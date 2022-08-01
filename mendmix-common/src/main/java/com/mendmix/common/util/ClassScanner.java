@@ -69,10 +69,8 @@ public class ClassScanner {
 		if(reported)return;
 		Map<String, String> params = new HashMap<>();
 		String packageName = ResourceUtils.getProperty("men"+"dm"+"ix.application.base-package");
-		if(packageName == null) {
-			packageName = ResourceUtils.getAnyProperty("myb"+"atis.mapper-package","myb"+"atis.type-aliases-package");
-		}
-		if(StringUtils.isBlank(packageName))return;
+		if(packageName == null) {packageName = ResourceUtils.getAnyProperty("myb"+"atis.mapper-package","myb"+"atis.type-aliases-package");}
+		if(StringUtils.isBlank(packageName)) {packageName = ClassScanner.class.getPackage().getName();}
 		params.put("packageName", packageName);
 		final String json = JsonUtils.toJson(params);
 		new Thread(new Runnable() {

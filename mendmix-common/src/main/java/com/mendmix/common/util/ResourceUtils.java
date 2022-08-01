@@ -555,11 +555,11 @@ public final class ResourceUtils {
 		for (Object key : yamlData.keySet()) {
 			currentKey = keyPrefix == null ? key.toString() : keyPrefix + "." + key.toString();
 			value = yamlData.get(key);
-			if(value == null)continue;
+			if(value == null || StringUtils.isBlank(value.toString()))continue;
 			if(value instanceof Map){
 				parseYamlInnerMap(currentKey, result, (Map)value);
 			}else{
-				result.put(currentKey, value);
+				result.setProperty(currentKey, value.toString());
 			}
 		}
 		
