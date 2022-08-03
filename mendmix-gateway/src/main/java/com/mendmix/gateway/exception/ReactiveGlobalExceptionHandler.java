@@ -41,7 +41,13 @@ public class ReactiveGlobalExceptionHandler {
 
 		WrapperResponse<?> resp = new WrapperResponse<>();
 		
-		e = (Exception) getActualThrowable(e);
+		Throwable throwable = getActualThrowable(e);
+		if(throwable instanceof Exception) {
+			e = (Exception) throwable;
+		}else {
+			e.printStackTrace();
+			e = new MendmixBaseException(500, e.getMessage());
+		}
 		if (e instanceof MendmixBaseException) {
 			MendmixBaseException e1 = (MendmixBaseException) e;
 			resp.setCode(e1.getCode());
