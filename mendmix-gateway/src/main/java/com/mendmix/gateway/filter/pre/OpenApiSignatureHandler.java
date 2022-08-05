@@ -30,6 +30,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.model.ApiInfo;
@@ -126,10 +127,13 @@ public class OpenApiSignatureHandler implements PreFilterHandler {
 		}
 		String timestamp = validateTimeStamp(headers);
 		String clientId = headers.getFirst(GatewayConstants.OPEN_APP_ID_HEADER);
-
-		if (StringUtils.isAnyBlank(clientId)) {
-			throw new MendmixBaseException(400,"认证头信息不完整");
+		if (StringUtils.isBlank(clientId)) {
+			throw new MendmixBaseException(400,"请求头[x-open-clientId]缺失");
 		}
+		String requestId = exchange.getRequest().getHeaders().getFirst(CustomRequestHeaders.HEADER_REQUEST_ID);
+        if(StringUtils.isBlank(requestId)) {
+        	throw new MendmixBaseException("请求头[x-request-id]缺失");
+        }
 
 		OpenApiConfig openApiConfig = getOpenApiConfig(clientId);
 
@@ -146,7 +150,7 @@ public class OpenApiSignatureHandler implements PreFilterHandler {
 			}
 		}
 		
-		String signBaseString = StringUtils.trimToEmpty(ParameterUtils.mapToQueryParams(map)) + timestamp + openApiConfig.getClientSecret();
+		String signBaseString = StringUtils.trimToEmpty(ParameterUtils.mapToQueryParams(map)) + timestamp + requestId + openApiConfig.getClientSecret();
 		String expectSign = DigestUtils.md5(signBaseString);
 
 		if (!expectSign.equals(sign)) {

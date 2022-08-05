@@ -15,8 +15,6 @@
  */
 package com.mendmix.gateway.filter.pre;
 
-import java.util.Map;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.web.server.ServerWebExchange;

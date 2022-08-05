@@ -24,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.constants.PermissionLevel;
@@ -41,7 +42,6 @@ public class WebApiSignatureHandler implements PreFilterHandler {
 	
 	private static Logger logger = LoggerFactory.getLogger("com.zvosframework.adapter.gateway");
 	
-	private boolean ignoreOnBlankParam = ResourceUtils.getBoolean("application.webrequest.sign.ignoreOnBlankParam", true);
 	private List<String> ignoreUris = ResourceUtils.getList("application.webrequest.sign.ignore.uris");
 	
 	@Override
@@ -66,15 +66,17 @@ public class WebApiSignatureHandler implements PreFilterHandler {
         
         String query = exchange.getRequest().getURI().getQuery();
         String body = RequestContextHelper.getCachingBodyString(exchange);
-        if(ignoreOnBlankParam && StringUtils.isBlank(query) && StringUtils.isBlank(body)) {
-        	return reqBuilder;
-        }
         
 		String timeStamp = validateTimeStamp(exchange.getRequest().getHeaders());
 		
 		String sign = exchange.getRequest().getHeaders().getFirst(GatewayConstants.REQ_SIGN_HEADER);
         if(StringUtils.isBlank(sign)) {
         	throw new MendmixBaseException("请求头[x-sign]缺失");
+        }
+        //
+        String requestId = exchange.getRequest().getHeaders().getFirst(CustomRequestHeaders.HEADER_REQUEST_ID);
+        if(StringUtils.isBlank(requestId)) {
+        	throw new MendmixBaseException("请求头[x-request-id]缺失");
         }
 		
         StringBuilder builder = new StringBuilder();
@@ -85,13 +87,8 @@ public class WebApiSignatureHandler implements PreFilterHandler {
 			builder.append(body);
 		}
 		builder.append(timeStamp);
-		
-        if(sign.length() == 32) {
-        	builder.append(WebConfig.getDegault().getSignSalt());
-        }else {
-        	builder.append(WebConfig.getDegault().getSafeSignSalt());
-        	sign = sign.substring(sign.length() - 32);
-        }
+		builder.append(WebConfig.getDegault().getSafeSignSalt());
+		builder.append(requestId);
 		
 		String signPlainText = builder.toString();
 		String expectSign = DigestUtils.md5(signPlainText);

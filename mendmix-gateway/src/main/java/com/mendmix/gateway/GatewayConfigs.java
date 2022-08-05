@@ -38,7 +38,7 @@ public class GatewayConfigs extends AppConfigs {
 	public static final String PATH_PREFIX = ResourceUtils.getProperty("mendmix.request.pathPrefix", "/api");
 
 	public static final boolean actionLogEnabled = ResourceUtils.getBoolean("mendmix.actionlog.enabled", false);
-	public static final boolean actionLogGetMethodIngore = ResourceUtils.getBoolean("mendmix.actionlog.getMethod.ignore", true);
+	public static final boolean actionLogGetMethodIngore = ResourceUtils.getBoolean("mendmix.actionlog.getmethod.ignore", true);
 	public static final List<String> anonymousIpWhilelist = ResourceUtils.getList("mendmix.acl.anonymous-ip-whilelist");
 	
 	public static final boolean openApiEnabled = ResourceUtils.getBoolean("mendmix.openapi.enabled", false);
