@@ -26,5 +26,5 @@ package com.mendmix.common.async;
  */
 public interface ICaller<V> {
    
-	V call(Object...args);
+	V call() throws Exception;
 }

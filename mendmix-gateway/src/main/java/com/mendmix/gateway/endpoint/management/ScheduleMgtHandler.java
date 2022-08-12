@@ -22,7 +22,6 @@ import java.util.Map;
 
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.http.HttpRequestEntity;
-import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.model.BizSystemModule;
 

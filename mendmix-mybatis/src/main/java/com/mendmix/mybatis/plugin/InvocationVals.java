@@ -25,11 +25,9 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
 
 import com.mendmix.common.model.PageParams;
-import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.plugin.cache.QueryCacheMethodMetadata;
 import com.mendmix.mybatis.plugin.pagination.PageExecutor;
 import com.mendmix.mybatis.plugin.pagination.PaginationHandler;
-import com.mendmix.mybatis.plugin.rewrite.SqlRewriteHandler;
 
 public class InvocationVals {
 

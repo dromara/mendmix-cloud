@@ -17,8 +17,8 @@ package com.mendmix.mybatis.datasource;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.GlobalConstants;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.mybatis.MybatisConfigs;
 
 /**

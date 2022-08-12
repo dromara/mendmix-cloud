@@ -50,7 +50,11 @@ public class SimpleRetry<T> {
 				return doRetry(retries);
 			}else{
 				if(this.errorCaller != null){
-					return errorCaller.call();
+					try {
+						return errorCaller.call();
+					} catch (Exception e2) {
+						throw new RuntimeException(e2);
+					}
 				}else{					
 					throw new RuntimeException(e);
 				}

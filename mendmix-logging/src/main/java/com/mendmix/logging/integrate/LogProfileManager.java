@@ -22,9 +22,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 

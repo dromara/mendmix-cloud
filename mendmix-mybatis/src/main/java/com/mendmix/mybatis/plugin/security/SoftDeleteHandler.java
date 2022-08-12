@@ -18,7 +18,6 @@ package com.mendmix.mybatis.plugin.security;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
 
-import com.mendmix.common.MendmixBaseException;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.plugin.InvocationVals;
 import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;

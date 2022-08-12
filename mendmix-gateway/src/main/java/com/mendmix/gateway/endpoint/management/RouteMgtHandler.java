@@ -15,14 +15,11 @@
  */
 package com.mendmix.gateway.endpoint.management;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.mendmix.common.model.NameValuePair;
 import com.mendmix.common.model.SelectOption;
 import com.mendmix.gateway.CurrentSystemHolder;
-import com.mendmix.spring.InstanceFactory;
 
 /**
  * 

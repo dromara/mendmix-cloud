@@ -19,9 +19,9 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.qcloud.cmq.Topic;
 import com.mendmix.amqp.AbstractProducer;
 import com.mendmix.amqp.MQMessage;
+import com.qcloud.cmq.Topic;
 
 /**
  * 

@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
-import com.mendmix.common.util.LogMessageFormat;
 
 /**
  * 异步任务执行器

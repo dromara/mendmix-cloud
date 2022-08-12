@@ -18,7 +18,6 @@ package test;
 import com.mendmix.common.http.HttpRequestEntity;
 import com.mendmix.common.http.HttpResponseEntity;
 import com.mendmix.common.util.HttpUtils;
-import com.mendmix.common.util.ResourceUtils;
 
 public class HttpUtilsTest {
 

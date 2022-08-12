@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 
-import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.plugin.autofield.AutoFieldFillHandler;
 import com.mendmix.mybatis.plugin.cache.CacheHandler;

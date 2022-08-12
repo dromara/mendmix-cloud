@@ -24,8 +24,8 @@ import org.apache.ibatis.jdbc.SQL;
 
 import com.mendmix.mybatis.crud.builder.AbstractExpressBuilder;
 import com.mendmix.mybatis.metadata.ColumnMetadata;
-import com.mendmix.mybatis.metadata.MetadataHelper;
 import com.mendmix.mybatis.metadata.EntityMetadata;
+import com.mendmix.mybatis.metadata.MetadataHelper;
 
 /**
  * 

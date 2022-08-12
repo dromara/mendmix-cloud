@@ -21,10 +21,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.qcloud.cmq.Message;
 import com.mendmix.amqp.AbstractConsumer;
 import com.mendmix.amqp.MQMessage;
 import com.mendmix.amqp.MessageHandler;
+import com.qcloud.cmq.Message;
 
 /**
  * 

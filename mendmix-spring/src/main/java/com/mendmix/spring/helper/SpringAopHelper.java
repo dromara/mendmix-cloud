@@ -15,10 +15,10 @@
  */
 package com.mendmix.spring.helper;
 
-import java.lang.reflect.Field;  
+import java.lang.reflect.Field;
 
-import org.springframework.aop.framework.AdvisedSupport;  
-import org.springframework.aop.framework.AopProxy;  
+import org.springframework.aop.framework.AdvisedSupport;
+import org.springframework.aop.framework.AopProxy;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.util.ClassUtils;  
   

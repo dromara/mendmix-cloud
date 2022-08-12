@@ -15,12 +15,12 @@
  */
 package com.mendmix.amqp.rabbitmq;
 
+import com.mendmix.amqp.MQMessage;
+import com.mendmix.amqp.MQProducer;
 import com.rabbitmq.client.AMQP.Queue.DeclareOk;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.mendmix.amqp.MQMessage;
-import com.mendmix.amqp.MQProducer;
 
 /**
  * 

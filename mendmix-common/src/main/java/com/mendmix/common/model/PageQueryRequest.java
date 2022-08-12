@@ -15,9 +15,6 @@
  */
 package com.mendmix.common.model;
 
-import com.mendmix.common.model.OrderBy;
-import com.mendmix.common.model.PageParams;
-
 /**
  * 
  * <br>

@@ -40,6 +40,7 @@ public class RedisDistributeLock  {
 	private static StringRedisTemplate stringRedisTemplate;
 
 	private static StringRedisTemplate getRedisTemplate() {
+		if(stringRedisTemplate != null)return stringRedisTemplate;
 		if (stringRedisTemplate == null && CacheUtils.isRedis()) {
 			try {
 				stringRedisTemplate = RedisTemplateGroups.getDefaultStringRedisTemplate();

@@ -51,7 +51,11 @@ public class CacheUtils {
 	public static <T> T queryTryCache(String cacheKey,ICaller<T> dataCaller,long expireSeconds){
 		T result = cacheAdapter.get(cacheKey);
 		if(result == null){
-			result = dataCaller.call();
+			try {
+				result = dataCaller.call();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 			if(result != null){
 				cacheAdapter.set(cacheKey, result, expireSeconds);
 		    }

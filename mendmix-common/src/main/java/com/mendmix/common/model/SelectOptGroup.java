@@ -18,8 +18,6 @@ package com.mendmix.common.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mendmix.common.model.SelectOption;
-
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
