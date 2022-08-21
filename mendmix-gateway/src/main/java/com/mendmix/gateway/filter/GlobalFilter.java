@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
@@ -33,6 +32,8 @@ import org.springframework.web.server.WebFilterChain;
 
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.CustomRequestHeaders;
+import com.mendmix.common.GlobalConstants;
+import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.exception.ForbiddenAccessException;
 import com.mendmix.common.exception.UnauthorizedException;
@@ -96,7 +97,7 @@ public class GlobalFilter implements WebFilter {
 				currentUser = authorizationProvider.doAuthorization(request.getMethodValue(),request.getPath().value());
 			} catch (UnauthorizedException e) {
 				if(!specUnauthorizedHandler.customAuthentication(exchange)) {
-					return writeErrorResponse(response, e);
+					return writeErrorResponse(request,response, e);
 				}
 				if(request.getHeaders().containsKey(CustomRequestHeaders.HEADER_AUTH_USER)) {
 					AuthUser authUser = AuthUser.decode(request.getHeaders().getFirst(CustomRequestHeaders.HEADER_AUTH_USER));
@@ -104,7 +105,7 @@ public class GlobalFilter implements WebFilter {
 				}
 			}catch (ForbiddenAccessException e) {	
 				clearContextAttributes(exchange);
-				return writeErrorResponse(response, e);
+				return writeErrorResponse(request,response, e);
 			}
 			//
 			afterAuthentication(exchange,currentUser);
@@ -197,8 +198,11 @@ public class GlobalFilter implements WebFilter {
 		}
 	}
 	
-	private Mono<Void> writeErrorResponse(ServerHttpResponse response,Exception e){
-		response.getHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+	private Mono<Void> writeErrorResponse(ServerHttpRequest request,ServerHttpResponse response,MendmixBaseException e){
+		if(GlobalConstants.FEIGN_CLIENT.equalsIgnoreCase(request.getHeaders().getFirst(HttpHeaders.USER_AGENT))) {
+			response.setRawStatusCode(e.getCode());
+		}
+		response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8");
 		byte[] bytes = JsonUtils.toJsonBytes(WrapperResponse.fail(e));
 		return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
 	}

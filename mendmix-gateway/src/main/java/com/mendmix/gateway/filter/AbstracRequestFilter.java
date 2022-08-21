@@ -27,10 +27,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.async.AsyncInitializer;
@@ -109,6 +111,10 @@ public abstract class AbstracRequestFilter implements GlobalFilter, Ordered,Asyn
 			}
 			ServerHttpResponse response = exchange.getResponse();
 			byte[] bytes = JsonUtils.toJson(WrapperResponse.fail(e)).getBytes(StandardCharsets.UTF_8);
+			if(GlobalConstants.FEIGN_CLIENT.equalsIgnoreCase(exchange.getRequest().getHeaders().getFirst(HttpHeaders.USER_AGENT))) {
+				response.setRawStatusCode(500);
+			}
+			response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8");
 			return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
 		}
     	

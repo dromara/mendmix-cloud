@@ -19,8 +19,10 @@ import java.util.Map;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 
 import com.mendmix.common.CustomRequestHeaders;
+import com.mendmix.common.GlobalConstants;
 import com.mendmix.springweb.client.RequestHeaderBuilder;
 
 import feign.RequestInterceptor;
@@ -35,7 +37,8 @@ public class CustomRequestInterceptor implements RequestInterceptor {
 		Map<String, String> customHeaders = RequestHeaderBuilder.getHeaders();
 		customHeaders.forEach((k,v)->{					
 			template.header(k, v);
-		});  
+		}); 
+		template.header(HttpHeaders.USER_AGENT, GlobalConstants.FEIGN_CLIENT);
 		//保持原始http状态码
 		template.header(CustomRequestHeaders.HEADER_HTTP_STATUS_KEEP, Boolean.TRUE.toString());
 		//标记不需要封装

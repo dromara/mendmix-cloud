@@ -46,4 +46,6 @@ public class GlobalConstants {
 	
 	public static final String DEFAULT_EXT_FIELDS_NAME = "extFields";
 	public static final String DEFAULT_EXT_VALUES_NAME = "extValues";
+	
+	public static final String FEIGN_CLIENT = "feign-client";
 }
