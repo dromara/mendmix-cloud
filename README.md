@@ -1,4 +1,4 @@
-<div align=center><img src="https://jeesuite.oss-cn-guangzhou.aliyuncs.com/logo.png" width="400" height="100" /></div>
+<div align=center><img src="https://jeesuite-1251121413.cos.ap-guangzhou.myqcloud.com/logo.png" width="400" height="86" /></div>
 
 ## 资源索引
  - [快速开始](https://www.jeesuite.com/guide/getting-started.html)

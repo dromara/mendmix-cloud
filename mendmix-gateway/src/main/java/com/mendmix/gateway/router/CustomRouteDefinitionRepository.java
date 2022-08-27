@@ -34,7 +34,6 @@ import org.springframework.cloud.gateway.route.RouteDefinitionRepository;
 import org.springframework.cloud.gateway.support.NotFoundException;
 
 import com.mendmix.common.GlobalRuntimeContext;
-import com.mendmix.common.util.ClassScanner;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.model.BizSystemModule;
@@ -61,36 +60,32 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 	private AdaptCachedBodyGlobalFilter adaptCachedBodyGlobalFilter;
 	// @Autowired
 	// private GatewayProperties gatewayProperties;
+	
+	private volatile boolean refreshable = true;
 
 	@Override
 	public Flux<RouteDefinition> getRouteDefinitions() {
-		if (routeHub.get() == null) {
-			routeHub.set(new HashMap<>());
+		if(!refreshable) {
+			return Flux.fromIterable(routeHub.get().values());
 		}
-
-		if (routeHub.get().isEmpty()) {
-			//
-			Map<String, BizSystemModule> modules = CurrentSystemHolder.getRouteModuleMappings();
-			for (BizSystemModule module : modules.values()) {
-				// 网关本身
-				if (GlobalRuntimeContext.APPID.equals(module.getServiceId())) {
-					continue;
-				}
-
-				if (routeHub.get().containsKey(module.getServiceId())) {
-					continue;
-				}
-				//
-				loadDynamicRouteDefinition(module);
+		
+		Map<String, BizSystemModule> modules = CurrentSystemHolder.getRouteModuleMappings();
+		Map<String, RouteDefinition> routeDefs = new HashMap<>(modules.size());
+		for (BizSystemModule module : modules.values()) {
+			// 网关本身
+			if (GlobalRuntimeContext.APPID.equals(module.getServiceId())) {
+				continue;
 			}
 
-			for (RouteDefinition route : routeHub.get().values()) {
-				EnableBodyCachingEvent enableBodyCachingEvent = new EnableBodyCachingEvent(new Object(), route.getId());
-				adaptCachedBodyGlobalFilter.onApplicationEvent(enableBodyCachingEvent);
+			if (routeDefs.containsKey(module.getServiceId())) {
+				continue;
 			}
-
+			loadDynamicRouteDefinition(routeDefs,module);
+		}
+		
+		if(!routeDefs.isEmpty()) {
+			routeHub.set(routeDefs);
 			StringBuilder message = new StringBuilder("\n================final RouteMapping begin===============\n");
-			ClassScanner.whoUseMeReport();
 			for (RouteDefinition route : routeHub.get().values()) {
 				EnableBodyCachingEvent enableBodyCachingEvent = new EnableBodyCachingEvent(new Object(), route.getId());
 				adaptCachedBodyGlobalFilter.onApplicationEvent(enableBodyCachingEvent);
@@ -98,8 +93,11 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 			}
 			message.append("================final RouteMapping end===============\n");
 			logger.info(message.toString());
-
+		}else {
+			routeHub.set(new HashMap<>());
 		}
+		
+		refreshable = false;
 
 		return Flux.fromIterable(routeHub.get().values());
 	}
@@ -118,7 +116,7 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 		return Mono.empty();
 	}
 
-	public void loadDynamicRouteDefinition(BizSystemModule module) {
+	public void loadDynamicRouteDefinition(Map<String, RouteDefinition> routeDefs,BizSystemModule module) {
 		String proxyUri = module.getProxyUri();
 		int stripPrefix = module.getStripPrefix();
 		RouteDefinition routeDef = new RouteDefinition();
@@ -129,7 +127,7 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 		routeDef.getPredicates().add(new PredicateDefinition(pathExpr));
 		routeDef.setFilters(new ArrayList<>(1));
 		routeDef.getFilters().add(new FilterDefinition("StripPrefix=" + stripPrefix));
-		routeHub.get().put(routeDef.getId(), routeDef);
+		routeDefs.put(routeDef.getId(), routeDef);
 	}
 
 	@Override

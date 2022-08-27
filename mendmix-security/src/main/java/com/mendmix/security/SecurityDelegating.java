@@ -23,10 +23,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.CurrentRuntimeContext;
+import com.mendmix.common.async.RetryAsyncTaskExecutor;
+import com.mendmix.common.async.RetryTask;
 import com.mendmix.common.constants.PermissionLevel;
 import com.mendmix.common.exception.ForbiddenAccessException;
 import com.mendmix.common.exception.UnauthorizedException;
 import com.mendmix.common.model.AuthUser;
+import com.mendmix.common.util.LogMessageFormat;
 import com.mendmix.common.util.TokenGenerator;
 import com.mendmix.security.model.AccessToken;
 import com.mendmix.security.model.ApiPermission;
@@ -83,8 +86,21 @@ public class SecurityDelegating {
 	public static UserSession doAuthentication(String type,String name,String password){
 		AuthUser userInfo = getInstance().decisionProvider.validateUser(type,name, password);
 		UserSession session = updateSession(userInfo);
-		if(getInstance().decisionProvider.apiAuthzEnabled()) {
-			getInstance().fetchUserPermissions(session);
+		if(!userInfo.isAdmin() && getInstance().decisionProvider.apiAuthzEnabled()) {
+			CurrentRuntimeContext.setAuthUser(userInfo);
+			CurrentRuntimeContext.setSystemId(session.getSystemId());
+			CurrentRuntimeContext.setTenantId(session.getTenanId());
+			RetryAsyncTaskExecutor.execute(new RetryTask() {
+				@Override
+				public String traceId() {
+					return LogMessageFormat.buildLogHeader("fetchUserPermissions", userInfo.getName());
+				}
+				@Override
+				public boolean process() throws Exception {
+					getInstance().fetchUserPermissions(session);
+					return true;
+				}
+			});
 		}
 		return session;
 	}

@@ -49,15 +49,28 @@ public class ModuleApiRefreshTask implements SubTimerTask {
 	@Override
 	public void doSchedule() {
 		List<BizSystem> systems = CurrentSystemHolder.getSystems();
+		boolean changed = false;
 		for (BizSystem system : systems) {
 			for (BizSystemModule module : system.getModules()) {
 				if (module.getApiInfos() == null || moduleMetaChanged(module)) {
 					initModuleApiInfos(module);
-					InstanceFactory.getContext().publishEvent(new DataChangeEvent("moduleApis", new Object()));
+					changed = true;
 				}
 			}
 		}
+		if(changed) {			
+			InstanceFactory.getContext().publishEvent(new DataChangeEvent("moduleApis", new Object()));
+		}
 	}
+	
+	
+
+	@Override
+	public long delay() {
+		return 30000;
+	}
+
+
 
 	@Override
 	public long interval() {

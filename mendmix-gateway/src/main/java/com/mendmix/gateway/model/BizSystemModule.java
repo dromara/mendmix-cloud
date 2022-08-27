@@ -156,6 +156,9 @@ public class BizSystemModule {
 	}
 
 	public void setProxyUri(String proxyUri) {
+		if(proxyUri != null && proxyUri.endsWith("/")) {
+			proxyUri = proxyUri.substring(0,proxyUri.length() - 1);
+		}
 		this.proxyUri = proxyUri;
 	}
 

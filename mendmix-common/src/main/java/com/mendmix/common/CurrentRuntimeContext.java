@@ -86,7 +86,7 @@ public class CurrentRuntimeContext {
 		Map<String, String> map = new HashMap<>();
 		String headerVal;
 		for (String headerName : contextHeaders) {
-			if(CustomRequestHeaders.HEADER_AUTH_USER.equals(headerName)) {
+			if(CustomRequestHeaders.HEADER_AUTH_USER.equals(headerName) && ThreadLocalContext.exists(headerName)) {
 				headerVal = getCurrentUser().toEncodeString();
 			}else {
 				headerVal = getContextVal(headerName, false);

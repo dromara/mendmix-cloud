@@ -110,26 +110,26 @@ public class MendmixMybatisInterceptor implements Interceptor,DisposableBean{
 		InvocationVals invocationVal = new InvocationVals(invocation);
 		
 		Object result = null;
-		boolean proceed = false;
+		boolean cacheHited = false;
 		try {
 			for (InterceptorHandler handler : interceptorHandlers) {
 				result = handler.onInterceptor(invocationVal);
 				if(result != null) {
-					proceed = handler.getClass() == SqlRewriteHandler.class;
+					cacheHited = handler.getClass() == CacheHandler.class;
 					break;
 				}
 			}
 			
 			if(result == null){
 				result = invocation.proceed();
-				proceed = true;
 			}
 
 			return result;
 		} finally {
 			for (InterceptorHandler handler : interceptorHandlers) {
+				if(cacheHited && handler.getClass() == CacheHandler.class)continue;
 				try {					
-					handler.onFinished(invocationVal,proceed ? result : null);
+					handler.onFinished(invocationVal,result);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

@@ -818,8 +818,6 @@ public class CacheHandler implements InterceptorHandler {
 				logger.debug("_clearGroupKey -> group:{},keys:{}",groupName,Arrays.toString(keys.toArray()));
 			}
 		}
-		//
-		CacheUtils.remove(cacheGroupKey);
 	}
 	
 	@Override

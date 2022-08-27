@@ -33,6 +33,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClas
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.mybatis.datasource.DataSourceConfig;
@@ -151,7 +152,13 @@ public class CustomDataSourceMybatisConfiguration implements ApplicationContextA
 		propertyPairs.clear();
 		argValues.add(new BeanValue(sessionFactoryBeanName, true));
 		BeanRegistryHelper.register(registry, sqlSessionTemplateBeanName, sqlSessionTemplateClass, argValues, propertyPairs);
-     
+        //
+		Class<?>  jdbcTemplateClass = JdbcTemplate.class;
+		String jdbcTemplateBeanName = group +  "JdbcTemplate";
+		argValues.clear();
+		propertyPairs.clear();
+		argValues.add(new BeanValue(dataSourceBeanName, true));
+		BeanRegistryHelper.register(registry, jdbcTemplateBeanName, jdbcTemplateClass, argValues, propertyPairs);
 	}
 
 	private String getGroupConfig(String group,String key) {

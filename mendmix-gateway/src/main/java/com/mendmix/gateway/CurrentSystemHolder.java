@@ -38,6 +38,8 @@ import com.mendmix.gateway.api.SystemMgtApi;
 import com.mendmix.gateway.model.BizSystem;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.gateway.model.BizSystemPortal;
+import com.mendmix.gateway.task.ModuleApiRefreshTask;
+import com.mendmix.spring.DataChangeEvent;
 import com.mendmix.spring.InstanceFactory;
 
 /**
@@ -173,6 +175,7 @@ public class CurrentSystemHolder {
 		//
 		for (BizSystemModule module : routeModuleMappings.values()) {
 			module.format();
+			ModuleApiRefreshTask.initModuleApiInfos(module);
 			//
 			if (!module.isGateway() && !HostMappingHolder.containsProxyUrlMapping(module.getServiceId())) {
 				if (module.getProxyUri().startsWith("http") || module.getStripPrefix() != 2) {
@@ -182,6 +185,7 @@ public class CurrentSystemHolder {
 				} 
 			}
 		}
+		InstanceFactory.getContext().publishEvent(new DataChangeEvent("moduleApis", new Object()));
 
 		StringBuilder logBuilder = new StringBuilder(
 				"MENDMIX-TRACE-LOGGGING-->> \n============load systems begin================");
