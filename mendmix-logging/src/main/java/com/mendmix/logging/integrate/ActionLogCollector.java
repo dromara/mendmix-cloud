@@ -99,7 +99,6 @@ public class ActionLogCollector {
 			actionLog.setUserName(currentUser.getName());
 		}
 		actionLog.setClientType(CurrentRuntimeContext.getClientType());
-		actionLog.setPlatformType(CurrentRuntimeContext.getPlatformType());
 		actionLog.setTenantId(CurrentRuntimeContext.getTenantId());
 
 		return actionLog;

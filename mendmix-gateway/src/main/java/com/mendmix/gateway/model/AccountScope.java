@@ -18,7 +18,7 @@ package com.mendmix.gateway.model;
 public class AccountScope {
 
 	private String tenantId;
-	private String principalType;
+	private String systemId;
 	private String principalId;
 	private boolean admin;
 	
@@ -28,11 +28,12 @@ public class AccountScope {
 	public void setTenantId(String tenantId) {
 		this.tenantId = tenantId;
 	}
-	public String getPrincipalType() {
-		return principalType;
+	
+	public String getSystemId() {
+		return systemId;
 	}
-	public void setPrincipalType(String principalType) {
-		this.principalType = principalType;
+	public void setSystemId(String systemId) {
+		this.systemId = systemId;
 	}
 	public String getPrincipalId() {
 		return principalId;

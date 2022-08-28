@@ -83,8 +83,8 @@ public class SecurityDelegating {
 	 * @param name
 	 * @param password
 	 */
-	public static UserSession doAuthentication(String type,String name,String password){
-		AuthUser userInfo = getInstance().decisionProvider.validateUser(type,name, password);
+	public static UserSession doAuthentication(String name,String password){
+		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
 		UserSession session = updateSession(userInfo);
 		if(!userInfo.isAdmin() && getInstance().decisionProvider.apiAuthzEnabled()) {
 			CurrentRuntimeContext.setAuthUser(userInfo);
@@ -105,8 +105,8 @@ public class SecurityDelegating {
 		return session;
 	}
 	
-	public static String doAuthenticationForOauth2(String type,String name,String password){
-		AuthUser userInfo = getInstance().decisionProvider.validateUser(type,name, password);
+	public static String doAuthenticationForOauth2(String name,String password){
+		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
 		String authCode = TokenGenerator.generate();
 		setTemporaryCacheValue(authCode, userInfo, 60);
 		return authCode;

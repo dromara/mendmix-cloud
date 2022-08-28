@@ -37,7 +37,6 @@ public class UserMockUtils {
     		
     		authUser = new AuthUser();
     		authUser.setId(ResourceUtils.getProperty("mendmix.mock.context.user.id","1"));
-    		authUser.setPrincipalType(ResourceUtils.getProperty("mendmix.mock.context.user.principalType","staff"));
     		authUser.setPrincipalId(ResourceUtils.getProperty("mendmix.mock.context.user.principalId","1"));
     		authUser.setName(ResourceUtils.getProperty("mendmix.mock.context.user.name","mockuser"));
     		authUser.setType(ResourceUtils.getProperty("mendmix.mock.context.user.type"));

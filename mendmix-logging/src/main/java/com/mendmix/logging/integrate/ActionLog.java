@@ -47,7 +47,6 @@ public class ActionLog implements Serializable{
 	private String appId;
 	private String env;
 	private String tenantId;
-	private String platformType;
 	private String clientType;
 	private String actionName;
 	private String actionKey;
@@ -128,14 +127,6 @@ public class ActionLog implements Serializable{
 	
 	public void setUserName(String userName) {
 		this.userName = userName;
-	}
-	
-	public String getPlatformType() {
-		return platformType;
-	}
-	
-	public void setPlatformType(String platformType) {
-		this.platformType = platformType;
 	}
 	
 	public String getModuleId() {

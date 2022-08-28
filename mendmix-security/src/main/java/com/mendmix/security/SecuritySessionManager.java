@@ -185,10 +185,6 @@ public class SecuritySessionManager {
 		if(CurrentRuntimeContext.getSystemId() != null) {
 			builder.append(CurrentRuntimeContext.getSystemId());
 		}
-		String platformType = CurrentRuntimeContext.getPlatformType();
-		if(StringUtils.isNotBlank(platformType)) {
-			builder.append(GlobalConstants.UNDER_LINE).append(platformType);
-		}
 		String clientType = CurrentRuntimeContext.getClientType();
 		if(StringUtils.isNotBlank(clientType)) {
 			builder.append(GlobalConstants.UNDER_LINE).append(clientType);

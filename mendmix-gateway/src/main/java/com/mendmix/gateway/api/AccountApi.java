@@ -22,7 +22,7 @@ import com.mendmix.gateway.model.AccountScope;
 
 public interface AccountApi {
 
-	AuthUser validateAccount(String type,String account,String password);
+	AuthUser validateAccount(String account,String password);
 	
 	List<AccountScope> findAccountScopes(String accountId);
 }

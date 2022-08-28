@@ -46,7 +46,6 @@ public class CurrentRuntimeContext {
 			CustomRequestHeaders.HEADER_TENANT_ID,
 			CustomRequestHeaders.HEADER_SYSTEM_ID,
 			CustomRequestHeaders.HEADER_CLIENT_TYPE, 
-			CustomRequestHeaders.HEADER_PLATFORM_TYPE,
 			CustomRequestHeaders.HEADER_INVOKER_APP_ID, 
 			CustomRequestHeaders.HEADER_REQUEST_ID 
 	);
@@ -83,7 +82,7 @@ public class CurrentRuntimeContext {
 	}
 
 	public static Map<String, String> getContextHeaders() {
-		Map<String, String> map = new HashMap<>();
+		Map<String, String> map = new HashMap<>(contextHeaders.size());
 		String headerVal;
 		for (String headerName : contextHeaders) {
 			if(CustomRequestHeaders.HEADER_AUTH_USER.equals(headerName) && ThreadLocalContext.exists(headerName)) {
@@ -145,14 +144,6 @@ public class CurrentRuntimeContext {
 
 	public static String getTenantId(boolean validate) {
 		return getContextVal(CustomRequestHeaders.HEADER_TENANT_ID, validate);
-	}
-
-	public static void setPlatformType(String platformType) {
-		setContextVal(CustomRequestHeaders.HEADER_PLATFORM_TYPE, platformType);
-	}
-
-	public static String getPlatformType() {
-		return getContextVal(CustomRequestHeaders.HEADER_PLATFORM_TYPE, false);
 	}
 
 	public static void setClientType(String clientType) {
