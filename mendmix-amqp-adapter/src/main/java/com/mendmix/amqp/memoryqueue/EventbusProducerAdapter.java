@@ -32,6 +32,7 @@ import com.lmax.disruptor.dsl.ProducerType;
 import com.mendmix.amqp.MQMessage;
 import com.mendmix.amqp.MQProducer;
 import com.mendmix.amqp.MessageHandler;
+import com.mendmix.common.CurrentRuntimeContext;
 
 /**
  * 
@@ -72,6 +73,7 @@ public class EventbusProducerAdapter implements MQProducer {
 
 	@Override
 	public String sendMessage(MQMessage message, boolean async) {
+		message.mergeContextHeaders();
 		RingBuffer<MQMessageEvent> ringBuffer = disruptor.getRingBuffer();
 	    ringBuffer.publishEvent(TRANSLATOR, message);
 		return null;
@@ -105,6 +107,10 @@ public class EventbusProducerAdapter implements MQProducer {
 	static class MQMessageEventHandler implements EventHandler<MQMessageEvent> {
 		public void onEvent(MQMessageEvent event, long sequence, boolean endOfBatch) {
 			MQMessage message = event.get();
+			//上下文
+			if(message.getHeaders() != null) {	
+				CurrentRuntimeContext.addContextHeaders(message.getHeaders());
+			}
 			MessageHandler handler = messageHandlers.get(message.getTopic());
 			if(handler != null){
 				try {

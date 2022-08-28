@@ -15,7 +15,6 @@
  */
 package com.mendmix.amqp.rocketmq;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -28,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.mendmix.amqp.AbstractProducer;
 import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQMessage;
-import com.mendmix.amqp.MessageHeaderNames;
+import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.util.ResourceUtils;
 
 /**
@@ -70,21 +69,9 @@ public class RocketProducerAdapter extends AbstractProducer {
 	public String sendMessage(MQMessage message,boolean async) {
 		Message _message = new Message(message.getTopic(), message.getTag(), message.getBizKey(), message.bodyAsBytes());
 	
-		if(StringUtils.isNotBlank(message.getProduceBy())){
-			_message.putUserProperty(MessageHeaderNames.produceBy.name(), message.getProduceBy());
-		}
-		if(StringUtils.isNotBlank(message.getRequestId())){
-			_message.putUserProperty(MessageHeaderNames.requestId.name(), message.getRequestId());
-		}
-		if(StringUtils.isNotBlank(message.getTenantId())){
-			_message.putUserProperty(MessageHeaderNames.tenantId.name(), message.getTenantId());
-		}
-		if(StringUtils.isNotBlank(message.getCheckUrl())){
-			_message.putUserProperty(MessageHeaderNames.checkUrl.name(), message.getProduceBy());
-		}
-		if(StringUtils.isNotBlank(message.getTransactionId())){
-			_message.putUserProperty(MessageHeaderNames.transactionId.name(), message.getTransactionId());
-		}
+		CurrentRuntimeContext.getContextHeaders().forEach( (k,v) -> {
+			_message.putUserProperty(k, v);
+		} );
 
 		try {
 			if(async){

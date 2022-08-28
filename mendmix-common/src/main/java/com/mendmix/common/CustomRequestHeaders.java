@@ -26,7 +26,6 @@ public class CustomRequestHeaders {
 		public static final String HEADER_AUTH_USER = "x-auth-user";
 		public static final String HEADER_TENANT_ID = "x-tenant-id";
 		public static final String HEADER_CLIENT_TYPE = "x-client-type";
-		public static final String HEADER_PLATFORM_TYPE = "x-platform-type";
 		public static final String HEADER_SYSTEM_ID = "x-system-id";
 		public static final String HEADER_REQUESTED_WITH = "x-requested-with";
 		public static final String HEADER_FORWARDED_HOST = "x-forwarded-host";

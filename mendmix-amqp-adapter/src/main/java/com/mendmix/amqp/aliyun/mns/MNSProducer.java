@@ -37,7 +37,7 @@ public class MNSProducer {
 	public String publishMessage(String topicName,Object data){
 		CloudTopic topic = getTopic(topicName);
 		TopicMessage tMessage = new RawTopicMessage();
-		tMessage.setBaseMessageBody(new MQMessage(topicName, data).toMessageValue(true));
+		tMessage.setBaseMessageBody(new MQMessage(topicName, data).toMessageValue(false));
 		topic.publishMessage(tMessage);
 		
 		return tMessage.getMessageId();

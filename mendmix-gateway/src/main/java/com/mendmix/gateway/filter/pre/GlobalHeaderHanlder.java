@@ -64,11 +64,6 @@ public class GlobalHeaderHanlder implements PreFilterHandler {
 		if (systemId != null) {
 			reqBuilder.header(CustomRequestHeaders.HEADER_SYSTEM_ID, systemId);
 		}
-		
-		String platformType = CurrentRuntimeContext.getPlatformType();
-		if (platformType != null) {
-			reqBuilder.header(CustomRequestHeaders.HEADER_PLATFORM_TYPE, platformType);
-		}
 		//
 		Boolean trustedRequest = ThreadLocalContext.get(GatewayConstants.CONTEXT_TRUSTED_REQUEST, false);
 		// 移除敏感header

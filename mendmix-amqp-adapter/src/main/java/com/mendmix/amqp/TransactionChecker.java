@@ -26,6 +26,6 @@ package com.mendmix.amqp;
  */
 public interface TransactionChecker {
 
-	public static final String TRANSACTION_PARAM_NAME = "transactionId";
-	MessageStatus check(String transactionId);
+	public static final String TRANSACTION_PARAM_NAME = "txId";
+	boolean check(String transactionId);
 }

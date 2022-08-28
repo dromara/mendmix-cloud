@@ -26,6 +26,7 @@ package com.mendmix.amqp;
  */
 public interface MessageHandler {
 
+	default boolean retrieable() {return true;}
 	/**
 	 * 预处理消息（同步）
 	 * @param message

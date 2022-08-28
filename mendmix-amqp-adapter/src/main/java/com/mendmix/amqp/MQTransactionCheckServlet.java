@@ -52,9 +52,9 @@ public class MQTransactionCheckServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		MessageStatus status;
+		boolean status;
 		if(transactionChecker == null){
-			status = MessageStatus.unprocessed;
+			status = true;
 		}else{
 			status = transactionChecker.check(request.getParameter(TransactionChecker.TRANSACTION_PARAM_NAME));
 		}
@@ -62,7 +62,7 @@ public class MQTransactionCheckServlet extends HttpServlet {
 		PrintWriter out = null;  
 		try {  
 	        out = response.getWriter();  
-	        out.append(status.name());  
+	        out.append(String.valueOf(status));  
 	    } catch (IOException e) {  
 	        e.printStackTrace();  
 	    } finally {  

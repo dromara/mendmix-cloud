@@ -44,9 +44,9 @@ public class MessageHandlerDelegate {
 	public void onMessage(String body, String topic) {
 		MQMessage message = MQMessage.build(body);
 		try {
-			//多租户支持
-			if(message.getTenantId() != null) {	
-				CurrentRuntimeContext.setTenantId(message.getTenantId());
+			//上下文
+			if(message.getHeaders() != null) {	
+				CurrentRuntimeContext.addContextHeaders(message.getHeaders());
 			}
 			messageHandler.process(message);
 			if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message.toString());

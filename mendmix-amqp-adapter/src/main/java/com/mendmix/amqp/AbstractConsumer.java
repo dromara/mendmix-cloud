@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import com.mendmix.amqp.MQContext.ActionType;
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
+import com.mendmix.common.async.DelayRetryExecutor;
+import com.mendmix.common.async.ICaller;
 import com.mendmix.common.async.StandardThreadExecutor;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.util.ResourceUtils;
@@ -53,6 +55,8 @@ public abstract class AbstractConsumer implements MQConsumer {
 	protected StandardThreadExecutor fetchExecutor;
 	// 默认处理线程池
 	protected StandardThreadExecutor asyncProcessExecutor;
+	
+	protected DelayRetryExecutor retryExecutor;
 	//
 	protected Semaphore semaphore;
 
@@ -77,6 +81,9 @@ public abstract class AbstractConsumer implements MQConsumer {
 		//
 		this.fetchExecutor = new StandardThreadExecutor(fetchCoreThreads, fetchMaxThreads,0, TimeUnit.SECONDS, fetchMaxThreads * 10,new StandardThreadFactory("messageFetcher"));
 		fetchExecutor.execute(new Worker());
+		
+		//异步重试
+		retryExecutor = new DelayRetryExecutor(1,5000, 1000, 3);
 		
 		logger.info("MENDMIX-TRACE-LOGGGING-->> init fetchExecutor finish -> fetchMaxThreads:{}",fetchMaxThreads);
 		
@@ -124,31 +131,29 @@ public abstract class AbstractConsumer implements MQConsumer {
 	private void consumeMessage(MQMessage message) {
 		MessageHandler messageHandler = messageHandlers.get(message.getTopic());
 		try {	
-			//多租户支持
-			if(message.getTenantId() != null) {	
-				CurrentRuntimeContext.setTenantId(message.getTenantId());
+			//上下文
+			if(message.getHeaders() != null) {	
+				CurrentRuntimeContext.addContextHeaders(message.getHeaders());
 			}
-			//事务消息检查
-            if(message.getTransactionId() != null){
-            	String transactionStatus = message.checkTransactionStatus();
-            	if(transactionStatus != null) {
-            		if(transactionStatus.equals(MessageStatus.processed.name())) {
-						logger.info("MENDMIX-TRACE-LOGGGING-->> MQmessage_TRANSACTION_STATUS_PROCESSED ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
-						//
-						processMessageConsumeLog(message,null);
-						return;
-					}else if(transactionStatus.equals(MessageStatus.notExists.name())) {
-						//考虑发起方事务提交可能延时等情况，这里开启一次重试
-						if(message.getConsumeTimes() > 1) {
-							logger.info("MENDMIX-TRACE-LOGGGING-->> MQmessage_TRANSACTION_STATUS_INVALID ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
-							//
-							processMessageConsumeLog(message,new IllegalArgumentException("transactionId["+message.getTransactionId()+"] not found"));
+			//消息状态检查
+			if(!message.originStatusCompleted()) {
+				if(message.getConsumeTimes() <= 1) {
+					retryExecutor.submit("message:"+message.getMsgId(), new ICaller<Void>() {
+						@Override
+						public Void call() throws Exception{
+							if(message.originStatusCompleted()) {
+								messageHandler.process(message);
+							}
+							return null;
 						}
-						return;
-					}
-            	}
-				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQmessage_TRANSACTION_STATUS_VALID -> topic:{},transactionId:{}",message.getTopic(),message.getTransactionId());
-			}
+					});
+				}else {
+					logger.info("MENDMIX-TRACE-LOGGGING-->> MQmessage_TRANSACTION_STATUS_INVALID ->topic:{},txId:{}",message.getTopic(),message.getTxId());
+					processMessageConsumeLog(message,new IllegalArgumentException("txId["+message.getTxId()+"] not found"));
+				}
+				logger.info("MQmessage_CONSUME_ABORT_ADD_RETRY -> message:{}",message.logString());
+				return;
+        	}
 			messageHandler.process(message);
 			//处理成功，删除
 			processMessageConsumeLog(message,null);
@@ -157,7 +162,17 @@ public abstract class AbstractConsumer implements MQConsumer {
 			}
 		}catch (Exception e) {
 			logger.error(String.format("MENDMIX-TRACE-LOGGGING-->> MQmessage_CONSUME_ERROR -> [%s]",message.logString()),e);
-			processMessageConsumeLog(message,e);
+			if(messageHandler.retrieable()) {
+				retryExecutor.submit("message:"+message.getMsgId(), new ICaller<Void>() {
+					@Override
+					public Void call() throws Exception{
+						messageHandler.process(message);
+						return null;
+					}
+				});
+			}else {
+				processMessageConsumeLog(message,e);
+			}
 		} finally {
 			ThreadLocalContext.unset();
 			//释放信号量

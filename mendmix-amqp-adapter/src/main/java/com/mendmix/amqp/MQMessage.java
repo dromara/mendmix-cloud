@@ -16,13 +16,16 @@
 package com.mendmix.amqp;
 
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.util.BeanUtils;
 import com.mendmix.common.util.HttpUtils;
 import com.mendmix.common.util.JsonUtils;
@@ -40,21 +43,19 @@ import com.mendmix.common.util.JsonUtils;
 @JsonInclude(Include.NON_NULL)
 public class MQMessage {
 
-	private String requestId;
-	private String tenantId;
-	private String produceAppId;
-	private String produceBy;
-	private String transactionId;
-	private String checkUrl;
+	private String msgId;
 	private String topic;
 	private String tag;
 	private String bizKey;
 	private Object body;
+	private String checkUrl;
+	private String txId;
+	private Map<String, String> headers;
 	@JsonIgnore
 	private Long processTime; //处理时间
 	private Long deliverTime; //定时消息
 	//=======================
-	private String msgId;
+	
 	private Integer partition;
 	@JsonIgnore
 	private long offset;
@@ -62,8 +63,7 @@ public class MQMessage {
 	@JsonIgnore
 	private Object originMessage;
 
-	public MQMessage() {
-	}
+	public MQMessage() {}
 
 	public static MQMessage build(String json) {
 		MQMessage message = JsonUtils.toObject(json, MQMessage.class);
@@ -82,6 +82,7 @@ public class MQMessage {
 	}
 
 	public MQMessage(String topic, String tag, String bizKey, Object body) {
+		this();
 		this.topic = MQContext.rebuildWithNamespace(topic);
 		this.tag = tag;
 		this.bizKey = bizKey;
@@ -92,54 +93,6 @@ public class MQMessage {
 		}
 	}
 
-	public String getTenantId() {
-		return tenantId;
-	}
-
-	public void setTenantId(String tenantId) {
-		this.tenantId = tenantId;
-	}
-
-	public String getRequestId() {
-		return requestId;
-	}
-
-	public void setRequestId(String requestId) {
-		this.requestId = requestId;
-	}
-	
-	
-
-	public String getProduceAppId() {
-		return produceAppId;
-	}
-
-	public void setProduceAppId(String produceAppId) {
-		this.produceAppId = produceAppId;
-	}
-
-	public String getProduceBy() {
-		return produceBy;
-	}
-
-	public void setProduceBy(String produceBy) {
-		this.produceBy = produceBy;
-	}
-
-	/**
-	 * @return the transactionId
-	 */
-	public String getTransactionId() {
-		return transactionId;
-	}
-
-	/**
-	 * @param transactionId
-	 *            the transactionId to set
-	 */
-	public void setTransactionId(String transactionId) {
-		this.transactionId = transactionId;
-	}
 
 	public String getCheckUrl() {
 		return checkUrl;
@@ -210,6 +163,23 @@ public class MQMessage {
 	public void setBody(Object body) {
 		this.body = body;
 	}
+	
+
+	public String getTxId() {
+		return txId;
+	}
+
+	public void setTxId(String txId) {
+		this.txId = txId;
+	}
+
+	public Map<String, String> getHeaders() {
+		return headers;
+	}
+
+	public void setHeaders(Map<String, String> headers) {
+		this.headers = headers;
+	}
 
 	public Long getDeliverTime() {
 		return deliverTime;
@@ -254,6 +224,11 @@ public class MQMessage {
 	public void setOffset(long offset) {
 		this.offset = offset;
 	}
+	
+	public void addHeader(String name,String value) {
+		if(headers == null)headers = new LinkedHashMap<>();
+		headers.put(name, value);
+	}
 
 	public void onProducerFinished(String msgId,int partition,long offset) {
 		this.msgId = msgId;
@@ -277,7 +252,16 @@ public class MQMessage {
 				return JsonUtils.toJson(body);
 			}
 		}
+		mergeContextHeaders();
 		return JsonUtils.toJson(this);
+	}
+
+	public void mergeContextHeaders() {
+		if(headers == null) {
+			headers = CurrentRuntimeContext.getContextHeaders();
+		}else {
+			headers.putAll(CurrentRuntimeContext.getContextHeaders());
+		}
 	}
 
 	public <T> T toObject(Class<T> clazz) {
@@ -298,14 +282,14 @@ public class MQMessage {
 		return JsonUtils.toList(body.toString(), clazz);
 	}
 
-	public String checkTransactionStatus() {
-		if (StringUtils.isAnyBlank(transactionId, checkUrl))
-			return null;
+	public boolean originStatusCompleted() {
+		if (StringUtils.isAnyBlank(txId, checkUrl))
+			return true;
 		
-		String url = String.format("%s?transactionId=%s", checkUrl,transactionId);
+		String url = String.format("%s?txId=%s", checkUrl,txId);
 
 		String status = HttpUtils.get(url).getBody();
-		if (MessageStatus.notExists.name().equals(status)) {
+		if (Boolean.parseBoolean(status)) {
 			try {
 				Thread.sleep(100);
 			} catch (Exception e) {
@@ -313,21 +297,14 @@ public class MQMessage {
 			status = HttpUtils.get(url).getBody();
 		}
 
-		return status;
+		return Boolean.parseBoolean(status);
 
 	}
 
-	@Override
-	public String toString() {
-		return "MQMessage [topic=" + topic + ", tag=" + tag + ", requestId=" + requestId + ", tenantId="
-				+ tenantId + ", produceBy=" + produceBy + ", transactionId=" + transactionId + ", bizKey=" + bizKey
-				+ "]";
-	}
-	
 	public String logString() {
-		return "MQMessage [topic=" + topic + ", tag=" + tag + ", requestId=" + requestId + ", tenantId="
-				+ tenantId + ", produceBy=" + produceBy + ", transactionId=" + transactionId + ", bizKey=" + bizKey
-				+ "]";
+		return "[msgId=" + msgId + ", topic=" + topic + ", tag=" + tag + ", bizKey=" + bizKey + "]";
 	}
+    
+	
 
 }

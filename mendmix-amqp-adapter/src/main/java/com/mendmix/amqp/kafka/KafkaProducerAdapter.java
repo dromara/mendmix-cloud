@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.Callback;
@@ -27,12 +28,14 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mendmix.amqp.AbstractProducer;
 import com.mendmix.amqp.MQMessage;
+import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.util.ResourceUtils;
 
 /**
@@ -49,7 +52,7 @@ public class KafkaProducerAdapter extends AbstractProducer {
 	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.amqp");
 	
 	private KafkaProducer<String, Object> kafkaProducer;
-	
+
 	@Override
 	public void start() throws Exception {
 		Properties configs = buildConfigs();
@@ -63,7 +66,9 @@ public class KafkaProducerAdapter extends AbstractProducer {
 		Integer partition = null; //
 		String key = message.getBizKey();
 		String value = message.toMessageValue(true);
-		List<Header> headers = null;
+		List<Header> headers = CurrentRuntimeContext.getContextHeaders().entrySet().stream().map(e -> {
+			return new RecordHeader(e.getKey(), e.getValue().getBytes());
+		}).collect(Collectors.toList());
 		
 		ProducerRecord<String,Object> producerRecord = new ProducerRecord<String, Object>(topic, partition, key, value, headers);
 
@@ -100,7 +105,7 @@ public class KafkaProducerAdapter extends AbstractProducer {
 		kafkaProducer.close();
 	}
 	
-	private static Properties buildConfigs() {
+	private Properties buildConfigs() {
 		
 		Properties result = new Properties();
 

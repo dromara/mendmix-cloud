@@ -33,8 +33,6 @@ import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQContext.ActionType;
 import com.mendmix.amqp.MQMessage;
 import com.mendmix.amqp.MessageHandler;
-import com.mendmix.amqp.MessageHeaderNames;
-import com.mendmix.amqp.MessageStatus;
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.util.ResourceUtils;
@@ -116,38 +114,16 @@ public class RocketmqConsumerAdapter implements MQConsumer {
 			}
 			MQMessage message = new MQMessage(msg.getTopic(),msg.getTags(),msg.getKeys(), msg.getBody());
 			message.setOriginMessage(msg);
-			message.setRequestId(msg.getUserProperty(MessageHeaderNames.requestId.name()));
-			message.setCheckUrl(msg.getUserProperty(MessageHeaderNames.checkUrl.name()));
-			message.setProduceBy(msg.getUserProperty(MessageHeaderNames.produceBy.name()));
-			message.setTenantId(msg.getUserProperty(MessageHeaderNames.tenantId.name()));
-			message.setTransactionId(msg.getUserProperty(MessageHeaderNames.transactionId.name()));
-			//多租户支持
-			if(message.getTenantId() != null) {							
-				CurrentRuntimeContext.setTenantId(message.getTenantId());
+			message.setHeaders(msg.getProperties());
+			//上下文
+			if(message.getHeaders() != null) {	
+				CurrentRuntimeContext.addContextHeaders(message.getHeaders());
+			}
+			//消息状态检查
+			if(!message.originStatusCompleted() && message.getConsumeTimes() <= 1) {
+				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 			}
 			try {
-				//事务消息检查
-				if(message.getTransactionId() != null){
-	            	String transactionStatus = message.checkTransactionStatus();
-	            	if(transactionStatus != null) {
-	            		if(transactionStatus.equals(MessageStatus.processed.name())) {
-							logger.info("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_TRANSACTION_STATUS_PROCESSED ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
-							return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-						}else if(transactionStatus.equals(MessageStatus.notExists.name())) {
-							//考虑发起方事务提交可能延时等情况，这里开启一次重试
-							if(msg.getReconsumeTimes() <= 1) {
-								//
-								MQContext.processMessageLog(message,ActionType.sub,new IllegalArgumentException("transactionId["+message.getTransactionId()+"] not found"));
-								return ConsumeConcurrentlyStatus.RECONSUME_LATER;
-							}else  {
-								logger.info("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_TRANSACTION_STATUS_INVALID ->topic:{},requestId:{},transactionId:{}",message.getTopic(),message.getRequestId(),message.getTransactionId());
-								return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-							}
-						}
-	            	}
-					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_TRANSACTION_STATUS_VALID -> topic:{},transactionId:{}",message.getTopic(),message.getTransactionId());
-				}
-				
 				messageHandlers.get(message.getTopic()).process(message);
 				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message);
 				//

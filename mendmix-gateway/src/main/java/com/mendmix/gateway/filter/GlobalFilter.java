@@ -146,7 +146,6 @@ public class GlobalFilter implements WebFilter {
 		if(portal != null) {
 			CurrentRuntimeContext.setTenantId(portal.getTenantId());
 			CurrentRuntimeContext.setClientType(portal.getClientType());
-			CurrentRuntimeContext.setPlatformType(portal.getCode());
 		}
 		//
 		String systemId = getHeaderSystemId(request);
