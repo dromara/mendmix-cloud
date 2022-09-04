@@ -49,9 +49,6 @@ public class GlobalHeaderHanlder implements PreFilterHandler {
 			reqBuilder.header(CustomRequestHeaders.HEADER_REQUEST_ID, TokenGenerator.generate());
 		}
 		reqBuilder.header(CustomRequestHeaders.HEADER_INVOKER_IS_GATEWAY, Boolean.TRUE.toString());
-		if (!headers.containsKey(CustomRequestHeaders.HEADER_REQUEST_ID)) {
-			reqBuilder.header(CustomRequestHeaders.HEADER_REQUEST_ID, TokenGenerator.generate());
-		}
 		if (!headers.containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)) {
 			reqBuilder.header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generateWithSign());
 		}

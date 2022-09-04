@@ -69,6 +69,9 @@ public class TokenGenerator {
 	 * 验证带签名信息的token
 	 */
 	public static void validate(String tokenType,String token,boolean validateExpire){
+		if(StringUtils.isBlank(token)) {
+			throw new MendmixBaseException(400, "token不能为空");
+		}
 		long timestamp;
 		Date date = new Date();
 		try {

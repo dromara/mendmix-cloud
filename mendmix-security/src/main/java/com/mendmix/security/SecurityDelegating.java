@@ -104,18 +104,7 @@ public class SecurityDelegating {
 		}
 		return session;
 	}
-	
-	public static String doAuthenticationForOauth2(String name,String password){
-		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
-		String authCode = TokenGenerator.generate();
-		setTemporaryCacheValue(authCode, userInfo, 60);
-		return authCode;
-	}
-	
-	public static String oauth2AuthCode2UserId(String authCode){
-		AuthUser userInfo = getTemporaryCacheValue(authCode);
-		return userInfo == null ? null : userInfo.getId();
-	}
+
 	
 	public static AccessToken createOauth2AccessToken(AuthUser user){
 		UserSession session = getCurrentSession();
@@ -238,14 +227,7 @@ public class SecurityDelegating {
 	public static <T> T getSessionAttribute(String name) {
 		return getInstance().sessionManager.getSessionAttribute(name);
 	}
-    
-    public static void setTemporaryCacheValue(String key, Object value, int expireInSeconds) {
-    	getInstance().storageManager.setTemporaryCacheValue(key, value, expireInSeconds);
-    }
-    
-    public static <T> T getTemporaryCacheValue(String key) {
-    	return getInstance().storageManager.getTemporaryCacheValue(key);
-    }
+
     
     private List<String> getUserPermissions(UserSession session){
     	List<String> permissions = sessionManager.getUserPermissions(session);

@@ -88,7 +88,7 @@ public class HttpRequestEntity {
 	
 	public HttpRequestEntity internalCall() {
 		if (!getHeaders().containsKey(CustomRequestHeaders.HEADER_INVOKE_TOKEN)) {
-			header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generate());
+			header(CustomRequestHeaders.HEADER_INVOKE_TOKEN, TokenGenerator.generateWithSign());
 		}
 		return header(CustomRequestHeaders.HEADER_INTERNAL_REQUEST, Boolean.TRUE.toString());
 	}

@@ -28,9 +28,13 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
 
+import com.mendmix.amqp.kafka.KafkaConsumerAdapter;
+import com.mendmix.amqp.kafka.KafkaProducerAdapter;
 import com.mendmix.amqp.memoryqueue.EventbusProducerAdapter;
 import com.mendmix.amqp.qcloud.cmq.CMQConsumerAdapter;
 import com.mendmix.amqp.qcloud.cmq.CMQProducerAdapter;
+import com.mendmix.amqp.rabbitmq.RabbitmqConsumerAdapter;
+import com.mendmix.amqp.rabbitmq.RabbitmqProducerAdapter;
 import com.mendmix.amqp.redis.RedisConsumerAdapter;
 import com.mendmix.amqp.redis.RedisProducerAdapter;
 import com.mendmix.amqp.rocketmq.RocketProducerAdapter;
@@ -65,9 +69,17 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 	
     private void startProducer(String providerName) throws Exception{
     	
-		if("rocketmq".equals(providerName)){
+    	if("kafka".equals(providerName)){
+    		producer = new KafkaProducerAdapter();
+		}else if("rocketmq".equals(providerName)){
 			producer = new RocketProducerAdapter();
-		}else if("cmq".equals(providerName)){
+		}else if("rabbitmq".equals(providerName)){
+			producer = new RabbitmqProducerAdapter();
+		}else if("aliyun-mns".equals(providerName)){
+			//TODO 
+		}else if("aliyun-ons".equals(providerName)){
+			//TODO 
+		}else if("qcloud-cmq".equals(providerName)){
 			producer = new CMQProducerAdapter();
 		}else if("eventbus".equals(providerName)){
 			producer = new EventbusProducerAdapter();
@@ -93,9 +105,17 @@ public class MQServiceRegistryBean implements InitializingBean,DisposableBean,Ap
 				logger.info("MENDMIX-TRACE-LOGGGING-->> ADD MQ_COMSUMER_HANDLER ->topic:{},handlerClass:{} ",topicName,e.getClass().getName());
 			});
 			
-			if("rocketmq".equals(providerName)){
+			if("kafka".equals(providerName)){
+				consumer = new KafkaConsumerAdapter(messageHandlerMaps);
+			}else if("rocketmq".equals(providerName)){
 				consumer = new RocketmqConsumerAdapter(messageHandlerMaps);
-			}else if("cmq".equals(providerName)){
+			}else if("rabbitmq".equals(providerName)){
+				consumer = new RabbitmqConsumerAdapter(messageHandlerMaps);
+			}else if("aliyun-mns".equals(providerName)){
+				//TODO 
+			}else if("aliyun-ons".equals(providerName)){
+				//TODO 
+			}else if("qcloud-cmq".equals(providerName)){
 				consumer = new CMQConsumerAdapter(messageHandlerMaps);
 			}else if("eventbus".equals(providerName)){
 				EventbusProducerAdapter.setMessageHandlers(messageHandlerMaps);

@@ -139,6 +139,9 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 
 		String path = getPath(conf);
 		final String jobName = conf.getJobName();
+		if (!zkClient.exists(groupPath)) {
+			zkClient.createPersistent(groupPath, true);
+		}
 		if (!zkClient.exists(nodeStateParentPath)) {
 			isFirstNode = true;
 			zkClient.createPersistent(nodeStateParentPath, true);

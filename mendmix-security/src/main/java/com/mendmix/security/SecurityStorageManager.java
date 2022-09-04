@@ -18,36 +18,25 @@ package com.mendmix.security;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.mendmix.cache.command.RedisObject;
-import com.mendmix.cache.redis.JedisProviderFactory;
 import com.mendmix.security.SecurityConstants.CacheType;
 import com.mendmix.security.cache.LocalCache;
 import com.mendmix.security.cache.RedisCache;
-import com.mendmix.security.model.ExpireableObject;
 
 public class SecurityStorageManager {
 	
 	
-	protected static final String CACHE_GROUP_NAME = "security";
-	
     private Map<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
 	
-	private boolean sharingSession;
-	
-	private Cache localTempCache;
+	private CacheType cacheType;
 	
 	protected SecurityStorageManager(CacheType cacheType) {
-		if(sharingSession = cacheType == CacheType.redis){
-			JedisProviderFactory.addGroupProvider(CACHE_GROUP_NAME);
-		}else {
-			localTempCache = new LocalCache(15 * 60);
-		}
+		this.cacheType = cacheType;
 	}
 
 	protected void addCahe(String cacheName,int timeToLiveSeconds){
 		Cache cache = null;
-		if(sharingSession){
-			cache = new RedisCache(CACHE_GROUP_NAME,cacheName,timeToLiveSeconds);
+		if(cacheType == CacheType.redis){
+			cache = new RedisCache(cacheName,timeToLiveSeconds);
 		}else{
 			cache = new LocalCache(timeToLiveSeconds);
 		}
@@ -58,25 +47,4 @@ public class SecurityStorageManager {
 		return caches.get(cacheName);
 	}
 	
-	public void setTemporaryCacheValue(String key, Object value, int expireInSeconds) {
-		if(sharingSession) {
-			new RedisObject(key,CACHE_GROUP_NAME).set(value, expireInSeconds);
-		}else {
-			ExpireableObject expireableObject = new ExpireableObject(value, System.currentTimeMillis() + expireInSeconds * 1000);
-			localTempCache.setObject(key, expireableObject);
-		}
-	}
-    
-    public <T> T getTemporaryCacheValue(String key) {
-		Object obj = null;
-		if(sharingSession) {
-			obj = new RedisObject(key,CACHE_GROUP_NAME).get();
-		}else {
-			ExpireableObject expireableObject = (ExpireableObject) localTempCache.getObject(key);
-			if(expireableObject != null && expireableObject.getExpireAt() >= System.currentTimeMillis()) {
-				obj = expireableObject.getTarget();
-			}
-		}
-		return (T) obj;
-	}
 }

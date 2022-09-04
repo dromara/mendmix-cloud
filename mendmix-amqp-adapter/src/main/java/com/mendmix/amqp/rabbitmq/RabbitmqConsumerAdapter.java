@@ -15,7 +15,10 @@
  */
 package com.mendmix.amqp.rabbitmq;
 
+import java.util.Map;
+
 import com.mendmix.amqp.MQConsumer;
+import com.mendmix.amqp.MessageHandler;
 import com.rabbitmq.client.AMQP.Exchange.DeclareOk;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -33,7 +36,11 @@ import com.rabbitmq.client.DeliverCallback;
  */
 public class RabbitmqConsumerAdapter implements MQConsumer {
 
-	
+	public RabbitmqConsumerAdapter(Map<String, MessageHandler> messageHandlers) {
+		
+	}
+
+
 	@Override
 	public void start() throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();

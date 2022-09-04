@@ -37,7 +37,6 @@ import redis.clients.jedis.JedisPoolConfig;
 public class RedisTemplateGroups {
 
 	private static final String DEFAULT_CACHE_NAME = "default";
-	private static final String SESSION_CACHE_NAME = "session";
 	
 	private static Map<String, TemplatePair> groupTemplateMapping = new HashMap<>();
 	
@@ -52,14 +51,6 @@ public class RedisTemplateGroups {
 	
 	public static RedisTemplate<String, Object> getDefaultRedisTemplate() {
 		return getRedisTemplate(DEFAULT_CACHE_NAME);
-	}
-	
-	public static StringRedisTemplate getSessionStringRedisTemplate() {
-		return getStringRedisTemplate(SESSION_CACHE_NAME);
-	}
-	
-	public static RedisTemplate<String, Object> getSessionRedisTemplate() {
-		return getRedisTemplate(SESSION_CACHE_NAME);
 	}
 	
 	public static StringRedisTemplate getStringRedisTemplate(String groupName) {

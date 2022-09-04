@@ -15,10 +15,12 @@
  */
 package com.mendmix.security.cache;
 
-import com.mendmix.cache.command.RedisBatchCommand;
-import com.mendmix.cache.command.RedisHashMap;
-import com.mendmix.cache.command.RedisObject;
-import com.mendmix.cache.command.RedisString;
+import java.time.Duration;
+
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+import com.mendmix.cache.RedisTemplateGroups;
 import com.mendmix.security.Cache;
 
 /**
@@ -28,15 +30,19 @@ import com.mendmix.security.Cache;
  */
 public class RedisCache implements Cache {
 
-	private String groupName;
+	private static final String CACHE_GROUP_NAME = "mendmix.security";
+	
+	private StringRedisTemplate stringRedisTemplate;
+	private RedisTemplate<String,Object> redisTemplate;
 	private String keyPrefix;
-	private long timeToLiveSeconds;
+	private Duration timeToLiveSeconds;
 	
 	
-	public RedisCache(String groupName,String keyPrefix,int timeToLiveSeconds) {
-		this.groupName = groupName;
+	public RedisCache(String keyPrefix,int timeToLiveSeconds) {
+		this.stringRedisTemplate = RedisTemplateGroups.getStringRedisTemplate(CACHE_GROUP_NAME);
+		this.redisTemplate = RedisTemplateGroups.getRedisTemplate(CACHE_GROUP_NAME);
 		this.keyPrefix = keyPrefix + ":";
-		this.timeToLiveSeconds = timeToLiveSeconds;
+		this.timeToLiveSeconds = Duration.ofSeconds(timeToLiveSeconds);
 	}
 	
 	private String buildKey(String key){
@@ -45,53 +51,57 @@ public class RedisCache implements Cache {
 
 	@Override
 	public void setString(String key, String value) {
-		new RedisString(buildKey(key),groupName).set(value,timeToLiveSeconds);
+		stringRedisTemplate.opsForValue().set(buildKey(key), value, timeToLiveSeconds);
 	}
 
 	@Override
 	public String getString(String key) {
-		return new RedisString(buildKey(key),groupName).get();
+		return stringRedisTemplate.opsForValue().get(buildKey(key));
 	}
 
 	@Override
 	public void setObject(String key, Object value) {
-		new RedisObject(buildKey(key),groupName).set(value,timeToLiveSeconds);
+		redisTemplate.opsForValue().set(buildKey(key), value, timeToLiveSeconds);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> T getObject(String key) {
-		return new RedisObject(buildKey(key),groupName).get();
+		return (T) redisTemplate.opsForValue().get(buildKey(key));
 	}
 
 	@Override
 	public void remove(String key) {
-		new RedisObject(buildKey(key),groupName).remove();
+		redisTemplate.delete(buildKey(key));
 	}
 
 	@Override
 	public void removeAll() {
-		RedisBatchCommand.removeByKeyPrefix(groupName,keyPrefix);
+		
 	}
 
 	@Override
 	public boolean exists(String key) {
-		return new RedisObject(buildKey(key),groupName).exists();
+		return redisTemplate.hasKey(buildKey(key));
 	}
 
 	@Override
 	public void setMapValue(String key,String field,Object value) {
-		new RedisHashMap(buildKey(key),groupName,timeToLiveSeconds).set(field, value);
+		key = buildKey(key);
+		redisTemplate.opsForHash().put(key, field, value);
+		redisTemplate.expire(key, timeToLiveSeconds);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getMapValue(String key, String field) {
-		return new RedisHashMap(buildKey(key),groupName).getOne(field);
+		return (T) redisTemplate.opsForHash().get(buildKey(key), field);
 	}
 
 
 	@Override
 	public void updateExpireTime(String key) {
-		new RedisObject(buildKey(key),groupName).setExpire(timeToLiveSeconds);
+		redisTemplate.expire(buildKey(key), timeToLiveSeconds);
 	}
 
 }
