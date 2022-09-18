@@ -56,7 +56,7 @@ public class TokenGenerator {
 	 */
 	public static String generateWithSign(String tokenType){
 		String timeString = String.valueOf(System.currentTimeMillis());
-		String str = DigestUtils.md5Short(timeString).concat(timeString);	
+		String str = DigestUtils.md5Short(UUID.randomUUID().toString()).concat(timeString);	
 		return SimpleCryptUtils.encrypt(str);
 	}
 	

@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 
-import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.logging.actionlog.ActionLogCollector;
 import com.mendmix.scheduler.model.JobConfig;
 import com.mendmix.spring.InstanceFactory;
 
@@ -62,15 +62,9 @@ public abstract class AbstractJob implements DisposableBean{
     private Scheduler scheduler;
     private CronTriggerImpl cronTrigger;
     private TriggerKey triggerKey;
-    private long jobFireInterval = 0;//任务执行间隔（毫秒）
     
     
     private boolean executeOnStarted;//启动是否立即执行
-    
-    
-    private int retries = 0;//失败重试次数
-    
-    private boolean logging;
     
     private AtomicBoolean runing = new AtomicBoolean(false);
     private AtomicInteger runCount = new AtomicInteger(0);
@@ -107,14 +101,6 @@ public abstract class AbstractJob implements DisposableBean{
 		return triggerName;
 	}
 
-	public void setRetries(int retries) {
-		this.retries = retries;
-	}
-	
-	public void setLogging(boolean logging) {
-		this.logging = logging;
-	}
-
 	protected Scheduler getScheduler() {
         if (scheduler == null)
             scheduler = InstanceFactory.getInstance(Scheduler.class);
@@ -136,13 +122,15 @@ public abstract class AbstractJob implements DisposableBean{
 			JobContext.getContext().getRegistry().setRuning(jobName, beginTime);
 			logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} at node[{}] execute begin...", jobName, JobContext.getContext().getNodeId());
 			
-			if(logging)ActionLogCollector.onSystemBackendTaskStart(jobName, jobName);
+			if(logging()) {
+				ActionLogCollector.onSystemBackendTaskStart(jobName, jobName);
+			}
 			// 执行
 			doJob(JobContext.getContext());
 			logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} at node[{}] execute finish", jobName, JobContext.getContext().getNodeId());
 		} catch (Exception e) {
 			//重试
-			if(retries > 0)JobContext.getContext().getRetryProcessor().submit(this, retries);
+			if(retries() > 0)JobContext.getContext().getRetryProcessor().submit(this, retries());
 			logger.error("Job_" + jobName + " execute error", e);
 			exception = e;
 		}finally {			
@@ -162,7 +150,7 @@ public abstract class AbstractJob implements DisposableBean{
 			// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
 			cronTrigger = null;
 			//
-			if(logging)ActionLogCollector.onSystemBackendTaskEnd(exception);
+			if(logging())ActionLogCollector.onSystemBackendTaskEnd(exception);
 		}
 	}
 
@@ -241,24 +229,6 @@ public abstract class AbstractJob implements DisposableBean{
          
     }  
     
-   
-    
-    /**
-     * 获取任务执行间隔
-     * @return
-     * @throws SchedulerException
-     */
-    private long getJobFireInterval(){
-    	if(jobFireInterval == 0){   
-    		try {				
-    			Date nextFireTime = getTrigger().getNextFireTime();
-    			Date previousFireTime = getTrigger().getPreviousFireTime();
-    			jobFireInterval = nextFireTime.getTime() - previousFireTime.getTime();
-			} catch (Exception e) {}
-    	}
-    	return jobFireInterval;
-    }
-
     
     private CronTriggerImpl getTrigger() {
     	try {
@@ -305,7 +275,7 @@ public abstract class AbstractJob implements DisposableBean{
 	
 	public void afterInitialized()  {
 		//启动重试任务
-		if(retries > 0){
+		if(retries() > 0){
 			JobContext.getContext().startRetryProcessor();
 		}
 		//这里不能提前去拿下一次更新时间，否则真正执行后下次执行时间不更新
@@ -344,13 +314,27 @@ public abstract class AbstractJob implements DisposableBean{
 			return false;
 		return true;
 	}
-
+	
+	/**
+	 * 重试次数
+	 * @return
+	 */
+	public int retries() {
+		return 0;
+	}
+	
+	public boolean logging() {
+		return  true;
+	}
+	
 	/**
 	 * 是否开启并行处理
 	 * @return
 	 */
-	public abstract boolean  parallelEnabled();
-	
+	public boolean parallelEnabled() {
+		return false;
+	}
+
 	public abstract void doJob(JobContext context) throws Exception;
 
 }

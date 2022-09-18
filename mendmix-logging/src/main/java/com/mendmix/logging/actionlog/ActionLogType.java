@@ -13,32 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mendmix.scheduler.annotation;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.mendmix.logging.actionlog;
 
 /**
  * @description <br>
- * @author <a href="mailto:vakinge@gmail.com">vakin</a>
- * @date 2015年12月10日
- * @Copyright (c) 2015, jwww
+ * @author <a href="mailto:vakinge@gmail.com">vakinge</a>
+ * @date Sep 18, 2022
  */
-@Target({ElementType.TYPE })
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-@Documented
-public @interface ScheduleConf {
+public enum ActionLogType {
 
-	String cronExpr();
-	
-	/**
-	 * 是否启动立即执行一次
-	 * @return
-	 */
-	boolean executeOnStarted() default false;
+	httpRequest,schedule,messageQueue
 }

@@ -24,8 +24,8 @@ import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.filter.PostFilterHandler;
 import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
-import com.mendmix.logging.integrate.ActionLog;
-import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.logging.actionlog.ActionLog;
+import com.mendmix.logging.actionlog.ActionLogCollector;
 
 /**
  * 
@@ -50,12 +50,11 @@ public class ResponseLogHandler implements PostFilterHandler {
 		
 		HttpHeaders headers = exchange.getResponse().getHeaders();
 		if(headers.containsKey(CustomRequestHeaders.HEADER_EXCEPTION_CODE)) {
-			actionLog.setResponseCode(Integer.parseInt(headers.getFirst(CustomRequestHeaders.HEADER_EXCEPTION_CODE)));
+			actionLog.setSuccessed(false);
+		}else {
+			actionLog.setSuccessed(true);
 		}
-		
-		if(actionLog.getResponseCode() != 200) {
-			actionLog.setResponseCode(200);
-		}
+	
 		
 		if(bodyIgnore)return respBodyAsString;
 		
@@ -64,7 +63,7 @@ public class ResponseLogHandler implements PostFilterHandler {
         	return respBodyAsString;
         }
 		//
-		actionLog.setResponseData(respBodyAsString);
+		actionLog.setOutputData(respBodyAsString);
 		
 		return respBodyAsString;
 	}

@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.WrapperResponse;
-import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.logging.actionlog.ActionLogCollector;
 
 @ControllerAdvice
 public class ReactiveGlobalExceptionHandler {

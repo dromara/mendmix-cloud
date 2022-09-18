@@ -36,7 +36,7 @@ import com.mendmix.common.exception.ForbiddenAccessException;
 import com.mendmix.common.util.PathMatcher;
 import com.mendmix.common.util.TokenGenerator;
 import com.mendmix.common.util.WebUtils;
-import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.logging.actionlog.ActionLogCollector;
 import com.mendmix.springweb.AppConfigs;
 
 /**

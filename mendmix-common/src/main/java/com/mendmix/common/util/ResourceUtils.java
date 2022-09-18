@@ -408,12 +408,12 @@ public final class ResourceUtils {
 	}
 	
 	public static boolean  containsProperty(String key){
-		return allProperties.containsKey(key);
+		return System.getProperties().containsKey(key) || allProperties.containsKey(key);
 	}
 	
 	public static boolean  containsAnyProperty(String...keys){
 		for (String key : keys) {
-			if(allProperties.containsKey(key))return true;
+			if(containsProperty(key))return true;
 		}
 		return false;
 	}
@@ -466,7 +466,7 @@ public final class ResourceUtils {
 	 * @param value
 	 * @return
 	 */
-    public static String replaceRefValue(Properties properties,String value ) {
+    private static String replaceRefValue(Properties properties,String value ) {
 		
     	if(!value.contains(PLACEHOLDER_PREFIX)){
     		return value;

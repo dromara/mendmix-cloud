@@ -33,7 +33,7 @@ import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.WrapperResponse;
-import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.logging.actionlog.ActionLogCollector;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {

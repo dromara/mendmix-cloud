@@ -49,8 +49,8 @@ import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.gateway.model.BizSystemPortal;
 import com.mendmix.gateway.security.AuthorizationProvider;
 import com.mendmix.gateway.security.SpecUnauthorizedHandler;
-import com.mendmix.logging.integrate.ActionLog;
-import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.logging.actionlog.ActionLog;
+import com.mendmix.logging.actionlog.ActionLogCollector;
 
 import reactor.core.publisher.Mono;
 

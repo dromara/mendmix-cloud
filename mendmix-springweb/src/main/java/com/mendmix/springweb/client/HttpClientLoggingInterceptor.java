@@ -30,7 +30,7 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.util.StreamUtils;
 
-import com.mendmix.logging.integrate.RequestLogBuilder;
+import com.mendmix.logging.applog.RequestLogBuilder;
 
 public class HttpClientLoggingInterceptor implements ClientHttpRequestInterceptor {
 

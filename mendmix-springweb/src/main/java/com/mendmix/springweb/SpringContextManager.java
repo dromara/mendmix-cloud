@@ -24,7 +24,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import com.mendmix.common.async.RetryAsyncTaskExecutor;
-import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.logging.actionlog.ActionLogCollector;
 import com.mendmix.spring.InstanceFactory;
 
 /**

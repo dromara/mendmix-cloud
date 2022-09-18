@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2018 www.mendmix.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mendmix.scheduler.annotation;
+package com.mendmix.amqp.adapter.aliyun.mns;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.List;
 
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
- * @date 2015年12月10日
- * @Copyright (c) 2015, jwww
+ * @date 2019年3月19日
  */
-@Target({ElementType.TYPE })
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-@Documented
-public @interface ScheduleConf {
+public interface MNSQueueProcessHanlder {
 
-	String cronExpr();
+	void process(String topicName,String dataJson);
 	
-	/**
-	 * 是否启动立即执行一次
-	 * @return
-	 */
-	boolean executeOnStarted() default false;
+	List<String> topicNames();
 }

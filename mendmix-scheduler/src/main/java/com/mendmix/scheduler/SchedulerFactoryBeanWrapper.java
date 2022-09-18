@@ -237,13 +237,16 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
                         if(clazz.isAnnotationPresent(ScheduleConf.class)){
                         	ScheduleConf annotation = clazz.getAnnotation(ScheduleConf.class);
                         	jobName = StringUtils.uncapitalize(clazz.getSimpleName());
-                        	AbstractJob job = (AbstractJob) context.getBean(clazz);
+                        	AbstractJob job = null;
+                        	try {
+                        		job = (AbstractJob) context.getBean(clazz);
+							} catch (Exception e) {
+								continue;
+							}
                         	job.setCronExpr(annotation.cronExpr());
                         	job.setExecuteOnStarted(annotation.executeOnStarted());
                         	job.setGroup(groupName);                       	
 							job.setJobName(jobName);
-                        	job.setRetries(annotation.retries());
-                        	job.setLogging(annotation.logging());
                         	if(!schedulers.contains(job)){                        		
                         		schedulers.add(job);
                         		logger.info("MENDMIX-TRACE-LOGGGING-->> register new job:{}",ToStringBuilder.reflectionToString(job, ToStringStyle.JSON_STYLE));

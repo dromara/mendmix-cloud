@@ -21,12 +21,11 @@ import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.mendmix.common.model.ApiInfo;
-import com.mendmix.common.util.JsonUtils;
 import com.mendmix.gateway.filter.PreFilterHandler;
 import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
-import com.mendmix.logging.integrate.ActionLog;
-import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.logging.actionlog.ActionLog;
+import com.mendmix.logging.actionlog.ActionLogCollector;
 
 
 /**
@@ -57,15 +56,11 @@ public class RequestLogHanlder implements PreFilterHandler {
         if(apiInfo != null && !apiInfo.isRequestLog()) {
         	return requestBuilder;
         }
-        actionLog.setQueryParameters(JsonUtils.toJson(request.getQueryParams()));
+        
+        String body = null; 
         if(HttpMethod.POST.equals(request.getMethod()) && !RequestContextHelper.isMultipartContent(request)) {
-        	try {
-        		String data = RequestContextHelper.getCachingBodyString(exchange);
-        		actionLog.setRequestData(data);
-        	} catch (Exception e) {
-        		throw new RuntimeException(e); 
-        	}
-        	
+        	body = RequestContextHelper.getCachingBodyString(exchange);
+        	actionLog.setInputData(body);
         }
 
 		return requestBuilder;

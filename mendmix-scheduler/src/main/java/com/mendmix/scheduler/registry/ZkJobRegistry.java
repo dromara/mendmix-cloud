@@ -29,6 +29,7 @@ import org.I0Itec.zkclient.IZkChildListener;
 import org.I0Itec.zkclient.IZkDataListener;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
+import org.I0Itec.zkclient.exception.ZkNodeExistsException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -218,7 +219,13 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 	 */
 	private synchronized void regAndSubscribeNodeEvent() {
 		// 创建node节点
-		zkClient.createEphemeral(nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
+		final String serverNodePath = nodeStateParentPath + "/" + JobContext.getContext().getNodeId();
+		try {			
+			zkClient.createEphemeral(serverNodePath);
+		} catch (ZkNodeExistsException e) {
+			zkClient.delete(serverNodePath);
+			zkClient.createEphemeral(serverNodePath);
+		}
 
 		// 订阅节点信息变化
 		zkClient.subscribeChildChanges(nodeStateParentPath, new IZkChildListener() {
@@ -226,7 +233,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 			public void handleChildChange(String parentPath, List<String> currentChilds) throws Exception {
 				//
 				if (currentChilds == null || !currentChilds.contains(JobContext.getContext().getNodeId())) {
-					zkClient.createEphemeral(nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
+					zkClient.createEphemeral(serverNodePath);
 					logger.info("MENDMIX-TRACE-LOGGGING-->> Nodelist is empty~ node[{}] re-join task clusters",
 							JobContext.getContext().getNodeId());
 					return;
@@ -243,7 +250,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 		// 注册命令事件
 		registerCommondEvent();
 		logger.info("MENDMIX-TRACE-LOGGGING-->> subscribe command event at path:{}",
-				nodeStateParentPath + "/" + JobContext.getContext().getNodeId());
+				serverNodePath);
 		// 刷新节点列表
 		List<String> activeNodes = zkClient.getChildren(nodeStateParentPath);
 		JobContext.getContext().refreshNodes(activeNodes);

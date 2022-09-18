@@ -24,11 +24,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest.Builder;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.constants.PermissionLevel;
 import com.mendmix.common.model.ApiInfo;
+import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.DigestUtils;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.GatewayConfigs;
@@ -87,6 +89,10 @@ public class WebApiSignatureHandler implements PreFilterHandler {
 			builder.append(body);
 		}
 		builder.append(timeStamp);
+		AuthUser authUser = CurrentRuntimeContext.getCurrentUser();
+		if(authUser != null) {
+			builder.append(authUser.getId());
+		}
 		builder.append(WebConfig.getDegault().getSafeSignSalt());
 		builder.append(requestId);
 		

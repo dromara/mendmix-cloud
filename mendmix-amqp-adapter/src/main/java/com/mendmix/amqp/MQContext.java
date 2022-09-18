@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.mendmix.amqp.logging.DefaultMQLogHandler;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.util.ResourceUtils;
@@ -78,7 +79,7 @@ public class MQContext {
 			synchronized (context) {
 				if(context.logHandler != null)return context.logHandler;
 				MQLogHandler handler = InstanceFactory.getInstance(MQLogHandler.class);
-				if(handler == null)throw new NullPointerException("not [MQLogHandler] define");
+				if(handler == null)handler = new DefaultMQLogHandler();
 				context.logHandler = handler;
 			}
 		}

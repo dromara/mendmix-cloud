@@ -45,8 +45,8 @@ import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.gateway.model.OpenApiConfig;
 import com.mendmix.gateway.security.OpenApiConfigProvider;
-import com.mendmix.logging.integrate.ActionLog;
-import com.mendmix.logging.integrate.ActionLogCollector;
+import com.mendmix.logging.actionlog.ActionLog;
+import com.mendmix.logging.actionlog.ActionLogCollector;
 import com.mendmix.spring.InstanceFactory;
 
 /**

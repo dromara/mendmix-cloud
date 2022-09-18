@@ -25,7 +25,7 @@ import org.springframework.boot.DefaultApplicationArguments;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.async.AsyncInitializer;
 import com.mendmix.common.util.ResourceUtils;
-import com.mendmix.logging.integrate.LogProfileManager;
+import com.mendmix.logging.applog.LogProfileManager;
 import com.mendmix.spring.ApplicationStartedListener;
 import com.mendmix.spring.InstanceFactory;
 

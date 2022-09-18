@@ -21,7 +21,7 @@ import org.apache.logging.log4j.ThreadContext;
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.TokenGenerator;
-import com.mendmix.logging.integrate.LogConstants;
+import com.mendmix.logging.applog.LogConstants;
 
 /**
  * @description <br>
