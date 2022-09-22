@@ -91,13 +91,13 @@ public class RocketmqConsumerAdapter implements MQConsumer {
 		for (String topic : messageHandlers.keySet()) {
 			consumer.subscribe(topic, "*");
 		}
-		consumer.registerMessageListener(new customMessageListener());
+		consumer.registerMessageListener(new CustomMessageListener());
 		consumer.start();
 	}
 
 
 	
-	private class customMessageListener implements MessageListenerConcurrently{
+	private class CustomMessageListener implements MessageListenerConcurrently{
 		@Override
 		public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
 			if(msgs.isEmpty())return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
