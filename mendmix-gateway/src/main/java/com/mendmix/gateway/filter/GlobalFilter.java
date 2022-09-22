@@ -15,13 +15,10 @@
  */
 package com.mendmix.gateway.filter;
 
-import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR;
-
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -85,7 +82,7 @@ public class GlobalFilter implements WebFilter {
 				return chain.filter(exchange);
 			}
 			
-			clearContextAttributes(exchange);
+			RequestContextHelper.clearContextAttributes(exchange);
 			
 			beforeAuthentication(exchange);
 			
@@ -104,7 +101,7 @@ public class GlobalFilter implements WebFilter {
 					CurrentRuntimeContext.setAuthUser(authUser);
 				}
 			}catch (ForbiddenAccessException e) {	
-				clearContextAttributes(exchange);
+				RequestContextHelper.clearContextAttributes(exchange);
 				return writeErrorResponse(request,response, e);
 			}
 			//
@@ -116,7 +113,7 @@ public class GlobalFilter implements WebFilter {
 				    	if(actionLog != null) {
 				    		ActionLogCollector.onResponseEnd(actionLog, response.getRawStatusCode(), null);
 				    	}
-				    	clearContextAttributes(exchange);
+				    	RequestContextHelper.clearContextAttributes(exchange);
 				    });
 		} catch (Exception e) {
 			logger.error("MENDMIX-TRACE-LOGGGING-->> _global_filter_error",e);
@@ -127,17 +124,7 @@ public class GlobalFilter implements WebFilter {
 		} 
 	}
 
-	private void clearContextAttributes(ServerWebExchange exchange) {
-		Object attribute = exchange.getAttributes().remove(CACHED_REQUEST_BODY_ATTR);
-		if (attribute != null && attribute instanceof PooledDataBuffer) {
-			PooledDataBuffer dataBuffer = (PooledDataBuffer) attribute;
-			if (dataBuffer.isAllocated()) {
-				dataBuffer.release();
-			}
-		}
-		exchange.getAttributes().clear();
-		ThreadLocalContext.unset();
-	}
+	
 	
 	private void beforeAuthentication(ServerWebExchange exchange) {
 		ServerHttpRequest request = exchange.getRequest();

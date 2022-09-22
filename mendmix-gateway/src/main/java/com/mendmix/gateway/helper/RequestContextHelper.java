@@ -15,6 +15,8 @@
  */
 package com.mendmix.gateway.helper;
 
+import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR;
+
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -24,6 +26,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -32,6 +35,7 @@ import org.springframework.web.server.ServerWebExchange;
 
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.GlobalRuntimeContext;
+import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.util.DigestUtils;
 import com.mendmix.common.util.IpUtils;
@@ -201,6 +205,18 @@ public class RequestContextHelper {
 		hitKey = builder.length() <= 64 ? builder.toString() : DigestUtils.md5(builder.toString());
 		exchange.getAttributes().put(GatewayConstants.CONTEXT_REQUEST_HIT_KEY, hitKey);
 		return hitKey;
+	}
+	
+	public static void clearContextAttributes(ServerWebExchange exchange) {
+		Object attribute = exchange.getAttributes().remove(CACHED_REQUEST_BODY_ATTR);
+		if (attribute != null && attribute instanceof PooledDataBuffer) {
+			PooledDataBuffer dataBuffer = (PooledDataBuffer) attribute;
+			if (dataBuffer.isAllocated()) {
+				dataBuffer.release();
+			}
+		}
+		exchange.getAttributes().clear();
+		ThreadLocalContext.unset();
 	}
 	
 }

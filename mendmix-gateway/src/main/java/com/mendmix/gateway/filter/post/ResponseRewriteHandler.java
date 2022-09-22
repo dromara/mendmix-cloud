@@ -17,7 +17,6 @@ package com.mendmix.gateway.filter.post;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -43,11 +42,11 @@ public class ResponseRewriteHandler implements PostFilterHandler {
 	private static Logger logger = LoggerFactory.getLogger("com.mendmix.gateway");
 	
 	private static final String DEFAULT_ERROR_MSG = "系统繁忙";
-	private static final String _MESSAGE_NAME = "message";
 	private static final String _MSG_NAME = "msg";
 	private static final String _CODE_NAME = "code";
 	private static final String _DATA_NAME = "data";
 	
+	@SuppressWarnings("rawtypes")
 	@Override
 	public String process(ServerWebExchange exchange, BizSystemModule module,String respBodyAsString) {
 		
@@ -72,39 +71,33 @@ public class ResponseRewriteHandler implements PostFilterHandler {
 		
 		String responseData = respBodyAsString;
 		String responseMsg = null;
-		Map<String, Object> originObject = null;
+		Object originObject = null;
         boolean rebuild = false;
 		try {
 			if (logger.isTraceEnabled()) {
 				logger.trace("ORIGIN_RESPONSE -> {}", responseData);
 			}
 
-			try {
+			boolean isJsonObject = JsonUtils.isJsonObjectString(responseData);
+			if(isJsonObject) {
 				originObject = JsonUtils.toHashMap(responseData);
-			} catch (Exception e) {
+			}else if(JsonUtils.isJsonArrayString(responseData)) {
+				originObject = JsonUtils.toList(responseData, Map.class);
 			}
 			// 已经包含code结构不处理
-			boolean isCodeResp = originObject != null
-								&& originObject.containsKey(_CODE_NAME)
-							    && (originObject.size() == 1 || originObject.containsKey(_DATA_NAME) || originObject.containsKey(_MSG_NAME));
+			boolean isCodeResp = isJsonObject
+								&& ((Map)originObject).containsKey(_CODE_NAME)
+							    && (((Map)originObject).size() == 1 || ((Map)originObject).containsKey(_DATA_NAME) || ((Map)originObject).containsKey(_MSG_NAME));
 			if (!isCodeResp) {
 				rebuild = true;
 				if (statusCode != 200) {
 					try {
-						responseMsg = Objects.toString(originObject.get(_MESSAGE_NAME), null);
+						responseMsg = HttpStatus.valueOf(statusCode).getReasonPhrase();
 					} catch (Exception e) {
-					}
-					if (responseMsg == null) {
-						try {
-							responseMsg = HttpStatus.valueOf(statusCode).getReasonPhrase();
-						} catch (Exception e) {
-						}
-					}
-					if (responseMsg == null)
 						responseMsg = DEFAULT_ERROR_MSG;
+					}
 				}
 			}
-
 		} catch (Exception e) {
 			String error = "Error during filtering[ResponseFilter]";
 			logger.error(error, e);
