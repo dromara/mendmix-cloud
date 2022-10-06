@@ -134,7 +134,7 @@ public class MQContext {
 				context.namespacePrefix = namespace + "_";
 			}
 			context.groupName = rebuildWithNamespace(ResourceUtils.getProperty("mendmix.amqp.groupName",GlobalRuntimeContext.APPID));
-			context.loghandlerEnabled = Boolean.parseBoolean(ResourceUtils.getProperty("mendmix.amqp.loghandler.enabled", "true"));
+			context.loghandlerEnabled = ResourceUtils.getBoolean("mendmix.amqp.loghandler.enabled");
 		}
 		return context.groupName;
 	}

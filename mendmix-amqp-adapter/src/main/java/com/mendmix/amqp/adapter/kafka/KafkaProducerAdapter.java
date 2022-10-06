@@ -95,6 +95,7 @@ public class KafkaProducerAdapter extends AbstractProducer {
                 this.handleSuccess(message);
             } catch (Exception e) {
                 this.handleError(message, e);
+                throw new RuntimeException("kafkaProduce_error", e);
             }
         }
 		return null;

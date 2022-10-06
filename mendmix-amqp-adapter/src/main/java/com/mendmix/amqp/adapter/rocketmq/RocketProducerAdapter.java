@@ -100,7 +100,7 @@ public class RocketProducerAdapter extends AbstractProducer {
 			}
 		} catch (Exception e) {
 			handleError(message, e);
-			logger.warn("MENDMIX-TRACE-LOGGGING-->> MQ_SEND_FAIL:"+message.getTopic(),e);
+			throw new RuntimeException("rocketMQ_Producer_error",e);
 		}
 		
 		return null;

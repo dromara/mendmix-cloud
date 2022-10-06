@@ -57,7 +57,7 @@ public class RedisProducerAdapter extends AbstractProducer {
 			handleSuccess(message);
 		} catch (Exception e) {
 			handleError(message, e);
-			logger.warn("MENDMIX-TRACE-LOGGGING-->> MQ_SEND_FAIL:"+message.getTopic(),e);
+			throw e;
 		}
 		
 		return null;
