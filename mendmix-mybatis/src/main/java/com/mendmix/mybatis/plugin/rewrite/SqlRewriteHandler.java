@@ -445,6 +445,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		Set<String> fieldNames = columnMapping.keySet();
 		boolean withSoftDelete = false;
 		boolean withPermission = false;
+		String currentTenantId = null;
 		for (String fieldName : fieldNames) {
 			if(fieldName.equals(softDeletePropName)) {
 				withSoftDelete = true;
@@ -452,7 +453,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 			if(!strategy.isIgnoreTenant() && fieldName.equals(tenantPropName)) {
 				column = tenantColumnName;
-				String currentTenantId = CurrentRuntimeContext.getTenantId();
+				currentTenantId = CurrentRuntimeContext.getTenantId();
 				if(currentTenantId == null)throw new MendmixBaseException("无法获取当前租户ID");
 				values = new String[] {currentTenantId};
 			}else {
@@ -482,11 +483,19 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		if(withPermission && ownerColumnName != null && strategy.handleOwner(table.getName())) {
 			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 			if(currentUser != null) {
-				EqualsTo equalsTo = new EqualsTo();
-				equalsTo.setLeftExpression(new Column(table, ownerColumnName));
-				equalsTo.setRightExpression(new StringValue(currentUser.getId()));
-				//
-				permExpression = permExpression == null ? equalsTo : new OrExpression(new Parenthesis(permExpression), equalsTo);
+				Expression createdByExpr;
+				EqualsTo userEquals = new EqualsTo();
+				userEquals.setLeftExpression(new Column(table, ownerColumnName));
+				userEquals.setRightExpression(new StringValue(currentUser.getId()));
+				if(currentTenantId != null) {
+					EqualsTo tenantEquals = new EqualsTo();
+					tenantEquals.setLeftExpression(new Column(table, tenantColumnName));
+					tenantEquals.setRightExpression(new StringValue(currentTenantId));
+					createdByExpr = new Parenthesis(new AndExpression(tenantEquals, userEquals));
+				}else {
+					createdByExpr = userEquals;
+				}
+				permExpression = permExpression == null ? createdByExpr : new OrExpression(new Parenthesis(permExpression), createdByExpr);
 			}
 		}
 		//原查询条件

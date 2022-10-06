@@ -35,7 +35,7 @@ import com.mendmix.common.util.ResourceUtils;
 public class HostMappingHolder {
 
 	private static final String PATH_SEPARATOR = "/";
-	private static final String LOCALHOST = "localname";
+	private static final String LOCALHOST = "localhost";
 
 	private static Map<String, String> proxyUriMappings = new HashMap<>();
 	private static Map<String, String> contextPathMappings = new HashMap<>();
