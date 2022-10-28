@@ -48,12 +48,14 @@ import com.mendmix.spring.InstanceFactory;
  */
 public class RedisJobRegistry extends AbstarctJobRegistry implements DisposableBean{
 
-private static final Logger logger = LoggerFactory.getLogger("com.zvosframework");
+private static final Logger logger = LoggerFactory.getLogger("com.mendmix.scheduler");
 	
-	private static final int SYNC_STAT_PERIOD = 5000;
-	private static final Duration NODE_ACTIVE_MILLIS = Duration.ofMillis(SYNC_STAT_PERIOD * 3 + 1000);
+	private static final int SYNC_STAT_PERIOD = 1000;
+	private static final Duration NODE_ACTIVE_MILLIS = Duration.ofMillis(SYNC_STAT_PERIOD * 3 + 5000);
 	private static final String NODE_REGISTER_KEY = "__schedulerNodes:" + GlobalRuntimeContext.APPID;
 	private static final String JOB_REGISTER_KEY = "__schedulerJobs:" + GlobalRuntimeContext.APPID;
+	private static final String NODE_REFRESH_STAT_KEY = "__schedulerNodeRefreshStat:" + GlobalRuntimeContext.APPID;
+
 
 	private StringRedisTemplate redisTemplate;
 	
@@ -94,15 +96,14 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 			conf.setCurrentNodeId(GlobalRuntimeContext.getNodeName());
 		}
 		
-		getRedisTemplate().opsForHash().put(JOB_REGISTER_KEY, conf.getJobName(), JsonUtils.toJson(conf));
-		//
-		updateNodeSTat(GlobalRuntimeContext.getNodeName(), System.currentTimeMillis());
+		updateJobConfig(conf);
 	}
 	
 	@Override
 	public void updateJobConfig(JobConfig conf) {
 		conf.setModifyTime(System.currentTimeMillis());
-		redisTemplate.opsForHash().put(JOB_REGISTER_KEY, conf.getJobName(), JsonUtils.toJson(conf));
+		schedulerConfgs.put(conf.getJobName(), conf);
+		getRedisTemplate().opsForHash().put(JOB_REGISTER_KEY, conf.getJobName(), JsonUtils.toJson(conf));
 	}
 
 	@Override
@@ -153,13 +154,21 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 	
 	@Override
 	public void onRegistered() {
-		coordinate();
+		updateNodeSTat(GlobalRuntimeContext.getNodeName(), System.currentTimeMillis());
+		//移除过期job
+		Set<Object> jobNames = redisTemplate.opsForHash().keys(JOB_REGISTER_KEY);
+		for (Object jobName : jobNames) {
+			if(!schedulerConfgs.containsKey(jobName)) {
+				unregister(jobName.toString());
+				logger.info("MENDMIX-STARTUP-LOGGGING-->> remove expire job:{}",jobName);
+			}
+		}
 		executor.scheduleWithFixedDelay(new Runnable() {
 			@Override
 			public void run() {
 				coordinate();
 			}
-		}, 1000, 1000, TimeUnit.MILLISECONDS);
+		}, SYNC_STAT_PERIOD, SYNC_STAT_PERIOD, TimeUnit.MILLISECONDS);
 	}
 	
 	private void updateNodeSTat(String nodeId,long currentTime) {
@@ -167,7 +176,19 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 		redisTemplate.expire(NODE_REGISTER_KEY, NODE_ACTIVE_MILLIS);
 	}
 	
+	private void reloadSchedulerConfgs() {
+		Set<Object> jobNames = redisTemplate.opsForHash().keys(JOB_REGISTER_KEY);
+		JobConfig config;
+		for (Object jobName : jobNames) {
+			config = getConf(jobName.toString(), true);
+			schedulerConfgs.put(config.getJobName(), config);
+		}
+	}
+	
 	private void coordinate() {
+		if(redisTemplate.hasKey(NODE_REFRESH_STAT_KEY)) {
+			reloadSchedulerConfgs();
+		}
 		//
 		long currentTime = System.currentTimeMillis();
 		//同步所有任务
@@ -207,6 +228,7 @@ private static final Logger logger = LoggerFactory.getLogger("com.zvosframework"
 			logger.info("MENDMIX-TRACE-LOGGGING-->> current activeNodeIds:{}",activeNodeIds);
 			//
 			rebalanceJobNode(activeNodeIds);
+			redisTemplate.opsForValue().set(NODE_REFRESH_STAT_KEY, "1",NODE_ACTIVE_MILLIS);
 		}
 		
 	}

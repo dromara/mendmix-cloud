@@ -17,6 +17,7 @@ package com.mendmix.scheduler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
@@ -217,7 +218,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	
 	private void scanAndRegisterAnnotationJobs(String[] scanBasePackages){
     	String RESOURCE_PATTERN = "/**/*.class";
-    	
+    	Map<String, String> cronExpressions = ResourceUtils.getMappingValues("mendmix.task.cron");
     	ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
     	for (String scanBasePackage : scanBasePackages) {
     		logger.info("MENDMIX-TRACE-LOGGGING-->> begin scan package [{}] with Annotation[ScheduleConf] jobs ",scanBasePackage);
@@ -243,7 +244,11 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 							} catch (Exception e) {
 								continue;
 							}
-                        	job.setCronExpr(annotation.cronExpr());
+                        	if(cronExpressions.containsKey(jobName)) {
+                        		job.setCronExpr(cronExpressions.get(jobName));
+                        	}else {
+                        		job.setCronExpr(annotation.cronExpr());
+                        	}
                         	job.setExecuteOnStarted(annotation.executeOnStarted());
                         	job.setGroup(groupName);                       	
 							job.setJobName(jobName);
