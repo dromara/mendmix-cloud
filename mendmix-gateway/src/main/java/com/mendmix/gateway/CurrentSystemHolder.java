@@ -179,7 +179,7 @@ public class CurrentSystemHolder {
 			//
 			if (!module.isGateway() && !HostMappingHolder.containsProxyUrlMapping(module.getServiceId())) {
 				if (module.getProxyUri().startsWith("http") || module.getStripPrefix() != 2) {
-					HostMappingHolder.addProxyUrlMapping(module.getServiceId(), module.getHttpBaseUri());
+					HostMappingHolder.addProxyUrlMapping(module.getServiceId(), module.getServiceBaseUrl());
 					log.info("MENDMIX-TRACE-LOGGGING-->> add host mapping : {} = {}", module.getServiceId(),
 							HostMappingHolder.getProxyUrlMapping(module.getServiceId()));
 				} 
@@ -326,12 +326,8 @@ public class CurrentSystemHolder {
 					throw new IllegalArgumentException("route path must startWith:" + GatewayConfigs.PATH_PREFIX);
 				}
 				//
-				String[] parts = StringUtils.split(pathPredicateValue, "/");
-				String routeName = "";
-				for (int i = 1; i < parts.length - 1; i++) {
-					routeName = routeName + parts[i] + "/";
-				}
-				routeName = routeName.substring(0, routeName.length() - 1);
+				String routeName = pathPredicateValue.substring(GatewayConfigs.PATH_PREFIX.length() + 1);
+				routeName = routeName.substring(0,routeName.lastIndexOf("/"));
 				module.setRouteName(routeName);
 				//
 				FilterDefinition filterDefinition = new FilterDefinition(

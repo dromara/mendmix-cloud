@@ -68,7 +68,7 @@ public class ScheduleMgtHandler implements MgtHandler {
 	
 	@SuppressWarnings("rawtypes")
 	private List<Map> fetchModuleJobs(BizSystemModule module) {
-		String url = module.getHttpBaseUri() + "/scheduler/list";
+		String url = module.getServiceBaseUrl() + "/scheduler/list";
 		List<Map> jobs;
 		try {
 			jobs = HttpRequestEntity.get(url).backendInternalCall().execute().toList(Map.class,"jobs");

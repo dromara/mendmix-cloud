@@ -34,8 +34,6 @@ import com.mendmix.cache.RedisTemplateGroups;
  */
 public class RedisProducerAdapter extends AbstractProducer {
 
-	private final Logger logger = LoggerFactory.getLogger("com.zvosframework.adapter.amqp");
-
 	private StringRedisTemplate redisTemplate;
 	
 	public RedisProducerAdapter() {

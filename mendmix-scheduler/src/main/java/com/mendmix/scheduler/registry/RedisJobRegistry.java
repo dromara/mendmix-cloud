@@ -69,7 +69,7 @@ private static final Logger logger = LoggerFactory.getLogger("com.mendmix.schedu
 
 	private StringRedisTemplate getRedisTemplate() {
 		if(redisTemplate == null) {
-			return InstanceFactory.getInstance(StringRedisTemplate.class);
+			redisTemplate = InstanceFactory.getInstance(StringRedisTemplate.class);
 		}
 		return redisTemplate;
 	}
@@ -136,7 +136,7 @@ private static final Logger logger = LoggerFactory.getLogger("com.mendmix.schedu
 	public JobConfig getConf(String jobName, boolean forceRemote) {
 		JobConfig config = schedulerConfgs.get(jobName);
 		if(config == null || forceRemote) {
-			String json = Objects.toString(redisTemplate.opsForHash().get(JOB_REGISTER_KEY, jobName), null);
+			String json = Objects.toString(getRedisTemplate().opsForHash().get(JOB_REGISTER_KEY, jobName), null);
 			if(json != null)config = JsonUtils.toObject(json, JobConfig.class);
 		}
 		return config;

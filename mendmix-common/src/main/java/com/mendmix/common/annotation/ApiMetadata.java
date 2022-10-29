@@ -63,13 +63,13 @@ public @interface ApiMetadata {
 	 * 是否记录请求日志
 	 * @return
 	 */
-	boolean requestLog() default true;
+	boolean requestLog() default false;
 	
 	/**
 	 * 是否记录请求日志
 	 * @return
 	 */
-	boolean responseLog() default true;
+	boolean responseLog() default false;
 	
 	/**
 	 * 是否保持response，即网关不作统一包装

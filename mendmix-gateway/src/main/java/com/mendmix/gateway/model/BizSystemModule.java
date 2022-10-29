@@ -15,6 +15,7 @@
  */
 package com.mendmix.gateway.model;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -44,11 +45,11 @@ public class BizSystemModule {
     
     private boolean defaultRoute; //
     
-    private boolean bodyRewriteIgnore;
-    
     private int stripPrefix = -1;
     
-    private String httpBaseUri;
+    private String serviceBaseUrl;
+    
+    private String uriPrefix;
 
     @JsonIgnore
     private Map<Pattern, ApiInfo> wildcardUris = new HashMap<>();
@@ -83,7 +84,8 @@ public class BizSystemModule {
 	
 
 	public void format() {
-		if(this.stripPrefix < 0) {//route:spu,proxyUri:lb://mall-product-svc
+		if (this.stripPrefix < 0) {
+			//route:spu,proxyUri:lb://mall-product-svc
 			//route:spu,proxyUri:lb://mall-product-svc/spu
 			//route:mall/spu,proxyUri:lb://mall-product-svc/spu
 			this.stripPrefix = StringUtils.countMatches(getRouteName(), "/") + 2;
@@ -91,8 +93,29 @@ public class BizSystemModule {
 				String removeSchema = StringUtils.splitByWholeSeparator(proxyUri, "://")[1];
 				String path = removeSchema.substring(removeSchema.indexOf("/"));
 				this.stripPrefix = this.stripPrefix - StringUtils.countMatches(getRouteName().replace(path, ""), "/") - 1;
-				proxyUri = proxyUri.replace(path, "");
-			}}
+			}
+		}
+		uriPrefix = GatewayConfigs.PATH_PREFIX + "/" + getRouteName();
+		//
+		if(!isGateway() && !getProxyUri().contains("ws://")) {
+			if(getProxyUri().startsWith("http")) {
+				serviceBaseUrl = getProxyUri();
+			}else if(getProxyUri().startsWith("lb://")) {
+				serviceBaseUrl = getProxyUri().replace("lb://", "http://");
+			}
+			if(serviceBaseUrl != null && stripPrefix == 0) {
+				if(serviceBaseUrl.endsWith(GatewayConfigs.PATH_PREFIX)) {
+					serviceBaseUrl = serviceBaseUrl + "/" + routeName;
+				}else {
+					serviceBaseUrl = serviceBaseUrl + GatewayConfigs.PATH_PREFIX + "/" + routeName;
+				}
+			}
+		}
+		//
+		if(!isGateway()){
+			URI uri = URI.create(getProxyUri());
+			this.proxyUri = uri.getScheme() + "://" + uri.getAuthority();
+		}
 	}
 
 	public String getSystemId() {
@@ -128,14 +151,6 @@ public class BizSystemModule {
 		this.defaultRoute = defaultRoute;
 	}
 
-	public boolean isBodyRewriteIgnore() {
-		return bodyRewriteIgnore;
-	}
-
-	public void setBodyRewriteIgnore(boolean bodyRewriteIgnore) {
-		this.bodyRewriteIgnore = bodyRewriteIgnore;
-	}
-
 	public int getStripPrefix() {
 		return stripPrefix;
 	}
@@ -162,6 +177,22 @@ public class BizSystemModule {
 		this.proxyUri = proxyUri;
 	}
 
+	public String getServiceBaseUrl() {
+		return serviceBaseUrl;
+	}
+
+	public void setServiceBaseUrl(String serviceBaseUrl) {
+		this.serviceBaseUrl = serviceBaseUrl;
+	}
+
+
+	public String getUriPrefix() {
+		return uriPrefix;
+	}
+
+	public void setUriPrefix(String uriPrefix) {
+		this.uriPrefix = uriPrefix;
+	}
 
 	public void setApiInfos(Map<String, ApiInfo> apiInfos) {
 		this.apiInfos = apiInfos;
@@ -204,42 +235,14 @@ public class BizSystemModule {
 	}
 	
 	
-	public String getHttpBaseUri() {
-		if(httpBaseUri != null)return httpBaseUri;
-		//http://127.0.0.1
-		//lb://paas-sysmgt-svc
-		//ws://127.0.0.1:8081
-		//lb:ws://paas-sysmgt-svc
-		if(getProxyUri().contains("ws://")) {
-			return null;
-		}
-		if(getProxyUri().startsWith("http")) {
-			httpBaseUri = getProxyUri();
-		}else if(getProxyUri().contains("lb://")) {
-			httpBaseUri = getProxyUri().replace("lb://", "http://");
-		}
-		if(stripPrefix == 0) {
-			httpBaseUri = String.format("%s%s/%s", httpBaseUri,GatewayConfigs.PATH_PREFIX,routeName);
-		}else if(stripPrefix == 1) {
-			httpBaseUri = String.format("%s/%s", httpBaseUri,routeName);
-		}
-		return httpBaseUri;
-	}
-	
 	public String getMetadataUri() {
-		String baseUri = getHttpBaseUri();
-		if(baseUri == null) {
-			return null;
-		}
-		return baseUri + "/metadata";
+		if(getServiceBaseUrl() == null)return null;
+		return getServiceBaseUrl() + "/metadata";
 	}
 	
 	public String getHealthUri() {
-		String baseUri = getHttpBaseUri();
-		if(baseUri == null) {
-			return null;
-		}
-		return baseUri + "/actuator/health";
+		if(getServiceBaseUrl() == null)return null;
+		return getServiceBaseUrl() + "/actuator/health";
 	}
 	
 	public static String resolveRealUri(BizSystemModule module,String uri) {

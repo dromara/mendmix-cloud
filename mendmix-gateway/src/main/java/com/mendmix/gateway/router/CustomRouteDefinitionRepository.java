@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,11 +148,8 @@ public class CustomRouteDefinitionRepository implements RouteDefinitionRepositor
 		String routeName = "";
 		if (pathDef != null) {
 			String argValue = pathDef.getArgs().get("_genkey_0");
-			String[] parts = StringUtils.split(argValue, "/");
-			for (int i = 1; i < parts.length - 1; i++) {
-				routeName = routeName + parts[i] + "/";
-			}
-			routeName = routeName.substring(0, routeName.length() - 1);
+			routeName = argValue.substring(GatewayConfigs.PATH_PREFIX.length() + 1);
+			routeName = routeName.substring(0,routeName.lastIndexOf("/"));
 			message.append("routeName:").append(routeName);
 			message.append(",path:").append(argValue);
 		}

@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.exception.UnauthorizedException;
+import com.mendmix.common.guid.GUID;
 import com.mendmix.common.model.AuthUser;
 
 /**
@@ -92,6 +93,10 @@ public class CurrentRuntimeContext {
 			}
 			if(headerVal == null)continue;
 			map.put(headerName, headerVal);
+		}
+		//
+		if(!map.containsKey(CustomRequestHeaders.HEADER_REQUEST_ID)) {
+			map.put(CustomRequestHeaders.HEADER_REQUEST_ID, GUID.uuid());
 		}
 		return map;
 	}

@@ -106,11 +106,11 @@ public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 		}
 
 		MediaType contentType = headers.getContentType();
-		if (contentType == null || !contentType.getType().equals(MediaType.APPLICATION_JSON.getType())) {
+		if (contentType == null || !contentType.getSubtype().equals(MediaType.APPLICATION_JSON.getSubtype())) {
 			return super.writeWith(body);
 		}
 		
-		boolean buildNewResponse = rewriteEnabled && !module.isBodyRewriteIgnore();
+		boolean buildNewResponse = rewriteEnabled;
 		//
 		if(buildNewResponse) {
 			buildNewResponse = !headers.containsKey(CustomRequestHeaders.HEADER_RESP_KEEP);
