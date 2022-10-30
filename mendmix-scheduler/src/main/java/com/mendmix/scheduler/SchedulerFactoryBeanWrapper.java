@@ -97,7 +97,7 @@ public class SchedulerFactoryBeanWrapper implements ApplicationContextAware,Init
 	
 	public void setRegistry(JobRegistry registry) {
 		JobContext.getContext().setRegistry(registry);
-		logger.info("MENDMIX-TRACE-LOGGGING-->> JobRegistry:{}",JobRegistry.class.getSimpleName());
+		logger.info("MENDMIX-TRACE-LOGGGING-->> JobRegistry:{}",registry.getClass().getSimpleName());
 	}
 
 	@Override

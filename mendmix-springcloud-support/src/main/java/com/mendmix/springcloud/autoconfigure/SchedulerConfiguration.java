@@ -44,21 +44,37 @@ public class SchedulerConfiguration {
 
 	@Bean
 	public JobRegistry jobRegistry(){
-		String zkServers = ResourceUtils.getAnyProperty("mendmix.task.zkServers","mendmix.global.zkServers");
-		if(StringUtils.isNotBlank(zkServers)){
-			ZkJobRegistry registry = new ZkJobRegistry();
-			registry.setZkServers(zkServers);
-			return registry;
-		}else{
-			try {
+		String registryType = ResourceUtils.getProperty("mendmix.task.registryType");
+		if("none".equals(registryType)) {
+			return new NullJobRegistry();
+		}
+	
+		boolean checkConfig = false;
+		if(StringUtils.isBlank(registryType) || (checkConfig = "zookeeper".equals(registryType))) {
+			String zkServers = ResourceUtils.getAnyProperty("mendmix.task.zkServers","mendmix.global.zkServers");
+			if(StringUtils.isNotBlank(zkServers)){
+				ZkJobRegistry registry = new ZkJobRegistry();
+				registry.setZkServers(zkServers);
+				return registry;
+			}else if(checkConfig) {
+				throw new RuntimeException("config[mendmix.task.zkServers] is required");
+			}
+		}
+		
+        if(StringUtils.isBlank(registryType) || (checkConfig = "redis".equals(registryType))) {
+        	try {
 				Class.forName("org.springframework.data.redis.core.StringRedisTemplate");
 				if(ResourceUtils.containsAnyProperty("spring.redis.host","spring.redis.sentinel.nodes","spring.redis.cluster.nodes")) {
 					return new RedisJobRegistry();
+				}else if(checkConfig) {
+					throw new RuntimeException("config[spring.redis.host] is required");
 				}
 			} catch (ClassNotFoundException e) {
+				throw new RuntimeException("Bean[RedisTemplate] not found");
 			}
-			return new NullJobRegistry();
 		}
+        
+        return new NullJobRegistry();
 	}
 	
 	@Bean

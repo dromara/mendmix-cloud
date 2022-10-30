@@ -95,9 +95,6 @@ public class JobContext {
 	}
 
 	public void setRegistry(JobRegistry registry) {
-		if(ResourceUtils.getBoolean("mendmix.task.registry.disabled", false)){
-        	return;
-        }
 		this.registry = registry;
 	}
 

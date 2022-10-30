@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 
+import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.logging.actionlog.ActionLogCollector;
 import com.mendmix.scheduler.model.JobConfig;
 import com.mendmix.spring.InstanceFactory;
@@ -50,6 +51,8 @@ import com.mendmix.spring.InstanceFactory;
  */
 public abstract class AbstractJob implements DisposableBean{
     private static final Logger logger = LoggerFactory.getLogger("com.mendmix.scheduler");
+    
+    private static boolean loggingEnabled = ResourceUtils.getBoolean("mendmix.task.logging.enabled", true);
 
   //默认允许多个节点时间误差
     private static final long DEFAULT_ALLOW_DEVIATION = 1000 * 60 * 15;
@@ -122,7 +125,7 @@ public abstract class AbstractJob implements DisposableBean{
 			JobContext.getContext().getRegistry().setRuning(jobName, beginTime);
 			logger.debug("MENDMIX-TRACE-LOGGGING-->> Job_{} at node[{}] execute begin...", jobName, JobContext.getContext().getNodeId());
 			
-			if(logging()) {
+			if(loggingEnabled && logging()) {
 				ActionLogCollector.onSystemBackendTaskStart(jobName, jobName);
 			}
 			// 执行
@@ -150,7 +153,7 @@ public abstract class AbstractJob implements DisposableBean{
 			// 重置cronTrigger，重新获取才会更新previousFireTime，nextFireTime
 			cronTrigger = null;
 			//
-			if(logging())ActionLogCollector.onSystemBackendTaskEnd(exception);
+			if(loggingEnabled && logging())ActionLogCollector.onSystemBackendTaskEnd(exception);
 		}
 	}
 

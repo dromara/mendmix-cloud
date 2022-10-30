@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.google.common.eventbus.Subscribe;
+import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.scheduler.JobContext;
 import com.mendmix.scheduler.model.JobConfig;
 import com.mendmix.scheduler.monitor.MonitorCommond;
@@ -80,7 +81,9 @@ public class NullJobRegistry extends AbstarctJobRegistry {
 	}
 
 	@Override
-	public void onRegistered() {}
+	public void onRegistered() {
+		JobContext.getContext().addNode(GlobalRuntimeContext.getNodeName());
+	}
 	
 	@Subscribe
 	public void processCommand(MonitorCommond cmd){
