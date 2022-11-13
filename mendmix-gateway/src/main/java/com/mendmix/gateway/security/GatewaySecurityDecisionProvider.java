@@ -26,6 +26,7 @@ import com.mendmix.common.http.HttpMethod;
 import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.model.ApiModel;
 import com.mendmix.gateway.CurrentSystemHolder;
+import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.security.SecurityDecisionProvider;
 import com.mendmix.security.SecurityDelegating;
@@ -45,7 +46,8 @@ public abstract class GatewaySecurityDecisionProvider extends SecurityDecisionPr
 	@Override
 	public List<ApiModel> anonymousUris() {
 		List<ApiModel> apis = new ArrayList<>();
-		apis.add(new ApiModel(HttpMethod.GET,"/actuator/health"));
+		apis.add(new ApiModel(HttpMethod.GET,GatewayConfigs.PATH_PREFIX + "/actuator/health"));
+		apis.add(new ApiModel(HttpMethod.GET,GatewayConfigs.PATH_PREFIX + "/oauth2/*"));
 		return apis;
 	}
 

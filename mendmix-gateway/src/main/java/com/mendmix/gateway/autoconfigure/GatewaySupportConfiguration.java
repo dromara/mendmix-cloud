@@ -18,6 +18,7 @@ package com.mendmix.gateway.autoconfigure;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
@@ -34,6 +35,8 @@ import com.mendmix.gateway.exception.ReactiveGlobalExceptionHandler;
 import com.mendmix.gateway.exception.RouteErrorWebExceptionHandler;
 import com.mendmix.gateway.router.CustomRouteDefinitionRepository;
 import com.mendmix.gateway.task.ModuleApiRefreshTask;
+import com.mendmix.security.connect.oauth.OauthEndpointController;
+import com.mendmix.security.connect.oauth.OauthNextHandler;
 
 @Configuration
 public class GatewaySupportConfiguration {
@@ -78,6 +81,12 @@ public class GatewaySupportConfiguration {
 	@Bean
 	public ModuleApiRefreshTask moduleApiRefreshTask() {
 		return new ModuleApiRefreshTask();
+	}
+	
+	@Bean
+	@ConditionalOnBean(OauthNextHandler.class)
+	public OauthEndpointController oauthEndpointController() {
+		return new OauthEndpointController();
 	}
 
 }

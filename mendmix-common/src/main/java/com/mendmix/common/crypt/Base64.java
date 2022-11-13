@@ -19,7 +19,7 @@ import java.util.Arrays;
 
 /** A very fast and memory efficient class to encode and decode to and from BASE64 in full accordance
  * with RFC 2045.<br><br>
- * On Windows XP sp1 with 1.4.2_04 and later ;), this encoder and decoder is about 10 times faster
+ * On Windows XP sp1 with 1.4.3_04 and later ;), this encoder and decoder is about 10 times faster
  * on small arrays (10 - 1000 bytes) and 2-3 times as fast on larger arrays (10000 - 1000000 bytes)
  * compared to <code>sun.misc.Encoder()/Decoder()</code>.<br><br>
  *

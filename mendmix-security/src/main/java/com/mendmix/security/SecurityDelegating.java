@@ -30,8 +30,6 @@ import com.mendmix.common.exception.ForbiddenAccessException;
 import com.mendmix.common.exception.UnauthorizedException;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.LogMessageFormat;
-import com.mendmix.common.util.TokenGenerator;
-import com.mendmix.security.model.AccessToken;
 import com.mendmix.security.model.ApiPermission;
 import com.mendmix.security.model.UserSession;
 import com.mendmix.security.util.ApiPermssionHelper;
@@ -44,9 +42,11 @@ import com.mendmix.spring.InstanceFactory;
  */
 public class SecurityDelegating {
 	
+	
 	private static Logger logger = LoggerFactory.getLogger("com.mendmix.security");
 	
 	private static final int SESSION_INTERVAL_MILLS =  60 * 1000;
+	private static final String TMP_STATUS_CACHE_NAME = "tmpStatus";
 	private SecurityDecisionProvider decisionProvider;
 	private SecuritySessionManager sessionManager;
 	private SecurityStorageManager storageManager;
@@ -57,6 +57,7 @@ public class SecurityDelegating {
 		decisionProvider = InstanceFactory.getInstance(SecurityDecisionProvider.class);
 		storageManager = new SecurityStorageManager(decisionProvider.cacheType());
 		sessionManager = new SecuritySessionManager(decisionProvider,storageManager);
+		storageManager.addCahe(TMP_STATUS_CACHE_NAME, 60);
 		logger.info("MENDMIX-TRACE-LOGGGING-->> SecurityDelegating inited !!,sessisonStorageType:{}",decisionProvider.cacheType());
 	}
 
@@ -85,40 +86,12 @@ public class SecurityDelegating {
 	 */
 	public static UserSession doAuthentication(String name,String password){
 		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
-		UserSession session = updateSession(userInfo);
-		if(!userInfo.isAdmin() && getInstance().decisionProvider.apiAuthzEnabled()) {
-			CurrentRuntimeContext.setAuthUser(userInfo);
-			CurrentRuntimeContext.setSystemId(session.getSystemId());
-			CurrentRuntimeContext.setTenantId(session.getTenanId());
-			RetryAsyncTaskExecutor.execute(new RetryTask() {
-				@Override
-				public String traceId() {
-					return LogMessageFormat.buildLogHeader("fetchUserPermissions", userInfo.getName());
-				}
-				@Override
-				public boolean process() throws Exception {
-					getInstance().fetchUserPermissions(session);
-					return true;
-				}
-			});
-		}
+		UserSession session = updateSession(userInfo,true);
 		return session;
 	}
 
 	
-	public static AccessToken createOauth2AccessToken(AuthUser user){
-		UserSession session = getCurrentSession();
-		session.setUser(user);
-		getInstance().sessionManager.storageLoginSession(session);
-		//
-		AccessToken accessToken = new AccessToken();
-		accessToken.setAccess_token(session.getSessionId());
-		accessToken.setRefresh_token(TokenGenerator.generate());
-		accessToken.setExpires_in(session.getExpiresIn());
-		return accessToken;
-	}
-	
-	public static UserSession updateSession(AuthUser userInfo){
+	public static UserSession updateSession(AuthUser userInfo,boolean loadPermssion){
 		UserSession session = getCurrentSession();
 		if(session == null)session = UserSession.create();
 		//多系统情况，已第一次登录的系统id为准
@@ -136,6 +109,26 @@ public class SecurityDelegating {
 			}
 		}
 		getInstance().sessionManager.storageLoginSession(session);
+		
+		if(loadPermssion) {
+			UserSession _session = session;
+			if(!userInfo.isAdmin() && getInstance().decisionProvider.apiAuthzEnabled()) {
+				CurrentRuntimeContext.setAuthUser(userInfo);
+				CurrentRuntimeContext.setSystemId(session.getSystemId());
+				CurrentRuntimeContext.setTenantId(session.getTenanId());
+				RetryAsyncTaskExecutor.execute(new RetryTask() {
+					@Override
+					public String traceId() {
+						return LogMessageFormat.buildLogHeader("fetchUserPermissions", userInfo.getName());
+					}
+					@Override
+					public boolean process() throws Exception {
+						getInstance().fetchUserPermissions(_session);
+						return true;
+					}
+				});
+			}
+		}
 		
 		return session;
 	}
@@ -228,6 +221,15 @@ public class SecurityDelegating {
 		return getInstance().sessionManager.getSessionAttribute(name);
 	}
 
+	public static void setTemporaryState(String key,String value) {
+		Cache cache = getInstance().storageManager.getCache(TMP_STATUS_CACHE_NAME);
+		cache.setString(key, value);
+	}
+	
+    public static String getTemporaryState(String key) {
+    	Cache cache = getInstance().storageManager.getCache(TMP_STATUS_CACHE_NAME);
+    	return cache.getString(key);
+	}
     
     private List<String> getUserPermissions(UserSession session){
     	List<String> permissions = sessionManager.getUserPermissions(session);
