@@ -36,7 +36,7 @@ import com.mendmix.logging.actionlog.ActionLogCollector;
  */
 public class ResponseLogHandler implements PostFilterHandler {
 	
-	private boolean bodyIgnore = ResourceUtils.getBoolean("actionlog.responseBody.ignore", true);
+	private boolean bodyIgnore = ResourceUtils.getBoolean("mendmix.actionlog.responseBody.ignore", true);
 	
 	@Override
 	public String process(ServerWebExchange exchange, BizSystemModule module,String respBodyAsString) {

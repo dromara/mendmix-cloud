@@ -30,7 +30,7 @@ import com.mendmix.gateway.model.BizSystemModule;
  * @version 1.0.0
  * @date 2020-10-19
  */
-public interface SystemMgtApi {
+public interface SystemInfoApi {
 
 	BizSystem getSystemMetadata(String identifier);
 

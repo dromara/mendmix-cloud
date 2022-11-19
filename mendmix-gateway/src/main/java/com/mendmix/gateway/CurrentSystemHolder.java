@@ -34,7 +34,7 @@ import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.http.HostMappingHolder;
 import com.mendmix.common.util.ResourceUtils;
-import com.mendmix.gateway.api.SystemMgtApi;
+import com.mendmix.gateway.api.SystemInfoApi;
 import com.mendmix.gateway.model.BizSystem;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.gateway.model.BizSystemPortal;
@@ -203,25 +203,27 @@ public class CurrentSystemHolder {
 	}
 
 	private static void loadRemoteSystems() {
-		SystemMgtApi apiInstance = InstanceFactory.getInstance(SystemMgtApi.class);
+		SystemInfoApi apiInstance = InstanceFactory.getInstance(SystemInfoApi.class);
 		if (apiInstance != null) {
 			mainSystem = apiInstance.getSystemMetadata(GlobalRuntimeContext.SYSTEM_ID);
-		} else {
+		}
+		if(mainSystem == null) {
 			mainSystem = new BizSystem();
 			mainSystem.setId(ResourceUtils.getProperty("default.allocation.system.id", "0"));
 			log.warn("MENDMIX-TRACE-LOGGGING-->> system [{}] not found!!!!!!", GlobalRuntimeContext.SYSTEM_ID);
 		}
-
 		// 全局模块
-		if (apiInstance != null && ResourceUtils.getBoolean("application.base-route.enabled", true)) {
+		if (apiInstance != null && ResourceUtils.getBoolean("application.global-route.enabled", true)) {
 			List<BizSystemModule> globalModules = apiInstance.getGlobalModules();
-			log.info("MENDMIX-TRACE-LOGGGING-->> globalModules size:{}", globalModules.size());
-			for (BizSystemModule module : globalModules) {
-				if (mainSystem.getModules().contains(module))
-					continue;
-				module.setGlobal(true);
-				module.setSystemId(mainSystem.getId());
-				mainSystem.getModules().add(module);
+			if(globalModules != null) {
+				log.info("MENDMIX-TRACE-LOGGGING-->> globalModules size:{}", globalModules.size());
+				for (BizSystemModule module : globalModules) {
+					if (mainSystem.getModules().contains(module))
+						continue;
+					module.setGlobal(true);
+					module.setSystemId(mainSystem.getId());
+					mainSystem.getModules().add(module);
+				}
 			}
 		}
 
@@ -236,11 +238,13 @@ public class CurrentSystemHolder {
 				systemCodes = apiInstance.getSubSystemIdentifiers(mainSystem.getId());
 			}
 			//
-			BizSystem system;
-			for (String systemCode : systemCodes) {
-				system = apiInstance.getSystemMetadata(systemCode);
-				//
-				buildMappingCacheData(system, false);
+			if(systemCodes != null) {
+				BizSystem system;
+				for (String systemCode : systemCodes) {
+					system = apiInstance.getSystemMetadata(systemCode);
+					//
+					buildMappingCacheData(system, false);
+				}
 			}
 		}
 	}
