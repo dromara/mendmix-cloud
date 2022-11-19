@@ -30,6 +30,8 @@ import com.mendmix.common.exception.ForbiddenAccessException;
 import com.mendmix.common.exception.UnauthorizedException;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.LogMessageFormat;
+import com.mendmix.security.event.SeesionEventType;
+import com.mendmix.security.event.SeesionLifeCycleEvent;
 import com.mendmix.security.model.ApiPermission;
 import com.mendmix.security.model.UserSession;
 import com.mendmix.security.util.ApiPermssionHelper;
@@ -87,6 +89,8 @@ public class SecurityDelegating {
 	public static UserSession doAuthentication(String name,String password){
 		AuthUser userInfo = getInstance().decisionProvider.validateUser(name, password);
 		UserSession session = updateSession(userInfo,true);
+		//
+		InstanceFactory.getContext().publishEvent(new SeesionLifeCycleEvent(SeesionEventType.create, session));
 		return session;
 	}
 
@@ -146,6 +150,7 @@ public class SecurityDelegating {
 			long interval = System.currentTimeMillis() - getInstance().sessionManager.getUpdateTime(session);
 			if(interval > SESSION_INTERVAL_MILLS) {
 				getInstance().sessionManager.storageLoginSession(session);
+				InstanceFactory.getContext().publishEvent(new SeesionLifeCycleEvent(SeesionEventType.renewal, session));
 			}
 		}
 
@@ -210,7 +215,10 @@ public class SecurityDelegating {
 	}
 
     public static void doLogout(){
-    	getInstance().sessionManager.destroySessionAndCookies();
+    	UserSession session = getCurrentSession();
+    	if(session == null)return;
+    	InstanceFactory.getContext().publishEvent(new SeesionLifeCycleEvent(SeesionEventType.destory, session));
+    	getInstance().sessionManager.destroySessionAndCookies(session);
 	}
     
     public static void setSessionAttribute(String name, Object object) {

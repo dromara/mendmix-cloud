@@ -169,14 +169,10 @@ public class SecuritySessionManager {
 		return sessionId;
 	}
 
-	public String destroySessionAndCookies() {
-		String sessionId = getSessionId();
-		if (StringUtils.isNotBlank(sessionId)) {
-			removeLoginSession(sessionId);
-			//
-			requestContextAdapter.addCookie(cookieDomain, cookieDomain, StringUtils.EMPTY, 0);
-		}
-		return sessionId;
+	public void destroySessionAndCookies(UserSession session) {
+		if(session == null)return;
+		removeLoginSession(session.getSessionId());
+		requestContextAdapter.addCookie(cookieDomain, cookieDomain, StringUtils.EMPTY, 0);
 	}
 	
 	private static String buildUserSessionUniqueKey(AuthUser authUser) {
