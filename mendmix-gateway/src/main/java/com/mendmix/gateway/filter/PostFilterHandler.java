@@ -31,6 +31,8 @@ import com.mendmix.gateway.model.BizSystemModule;
  */
 public interface PostFilterHandler {
 
+	default void onStarted() {}
+	
 	String process(ServerWebExchange exchange,BizSystemModule module,String respBodyAsString);
 	
 	int order();

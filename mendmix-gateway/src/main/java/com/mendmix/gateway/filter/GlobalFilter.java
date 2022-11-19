@@ -40,6 +40,7 @@ import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.GatewayConfigs;
+import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystem;
 import com.mendmix.gateway.model.BizSystemModule;
@@ -74,7 +75,9 @@ public class GlobalFilter implements WebFilter {
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 		ServerHttpRequest request = exchange.getRequest();
 		try {
-			if((matchUriPrefix != null && !request.getPath().value().startsWith(matchUriPrefix))) {
+			if((matchUriPrefix != null && !request.getPath().value().startsWith(matchUriPrefix)) 
+					|| RequestContextHelper.isWebSocketRequest(exchange.getRequest())) {
+				exchange.getAttributes().put(GatewayConstants.CONTEXT_IGNORE_FILTER, Boolean.TRUE);
 				return chain.filter(exchange);
 			}
 			
