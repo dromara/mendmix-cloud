@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.scheduler.api.ScheduleApiServlet;
 import com.mendmix.springweb.exporter.AppMetadataServlet;
+import com.mendmix.springweb.exporter.RuntimeConfigServlet;
 
 /**
  * @description <br>
@@ -56,6 +57,14 @@ public class ServletConfiguration {
 			}
 		}
 	    return servletRegistrationBean;
+	}
+	
+	@Bean
+	public ServletRegistrationBean<RuntimeConfigServlet> runtimeConfigServlet() {
+		ServletRegistrationBean<RuntimeConfigServlet> servletRegistrationBean;
+		servletRegistrationBean = new ServletRegistrationBean<>(new RuntimeConfigServlet());
+		servletRegistrationBean.addUrlMappings("/runtime/configs");
+		return servletRegistrationBean;
 	}
 	
 	@Bean

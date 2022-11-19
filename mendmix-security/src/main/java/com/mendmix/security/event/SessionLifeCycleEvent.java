@@ -15,12 +15,35 @@
  */
 package com.mendmix.security.event;
 
+import org.springframework.context.ApplicationEvent;
+
+import com.mendmix.security.model.UserSession;
+
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakinge</a>
  * @date Nov 19, 2022
  */
-public enum SeesionEventType {
+public class SessionLifeCycleEvent extends ApplicationEvent{
 
-	create,renewal,destory
+	private static final long serialVersionUID = 1L;
+	
+	private SessionEventType eventType;
+	
+	public SessionLifeCycleEvent(SessionEventType eventType,UserSession session) {
+		super(session);
+		this.eventType = eventType;
+	}
+
+	public SessionEventType getEventType() {
+		return eventType;
+	}
+
+	@Override
+	public UserSession getSource() {
+		return (UserSession) super.getSource();
+	}
+	
+	
+
 }

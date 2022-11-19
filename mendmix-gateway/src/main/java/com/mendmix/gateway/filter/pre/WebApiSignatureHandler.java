@@ -53,7 +53,7 @@ public class WebApiSignatureHandler implements PreFilterHandler {
 			return reqBuilder;
 		}
 		
-		if(RequestContextHelper.isWebSocketRequest(exchange.getRequest()) || RequestContextHelper.isMultipartContent(exchange.getRequest())) {
+		if(RequestContextHelper.isMultipartContent(exchange.getRequest())) {
 	    	return reqBuilder;
 	    }
 		

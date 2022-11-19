@@ -42,11 +42,7 @@ public class RequestLogHanlder implements PreFilterHandler {
 
 	@Override
 	public Builder process(ServerWebExchange exchange,BizSystemModule module,Builder requestBuilder) {
-		
-		if(RequestContextHelper.isWebSocketRequest(exchange.getRequest())) {
-    	   return requestBuilder;
-    	}
-		
+	
 		ActionLog actionLog = exchange.getAttribute(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME);
 		if(actionLog == null)return requestBuilder;
 		actionLog.setModuleId(module.getServiceId());

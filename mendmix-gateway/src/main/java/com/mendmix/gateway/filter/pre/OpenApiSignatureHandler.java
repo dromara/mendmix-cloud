@@ -15,12 +15,12 @@
  */
 package com.mendmix.gateway.filter.pre;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -63,48 +63,33 @@ public class OpenApiSignatureHandler implements PreFilterHandler {
 
 	static Logger logger = LoggerFactory.getLogger("com.mendmix.gateway");
 	
-	private static Map<String, OpenApiConfig> openApiConfigs = new HashMap<>();
+	private static Map<String, OpenApiConfig> openApiConfigs = new ConcurrentHashMap<>();
 	
-	private static OpenApiConfigProvider configProvider;
+	private OpenApiConfigProvider configProvider;
 	
-	private static OpenApiConfigProvider getConfigProvider() {
-		if(configProvider != null)return configProvider;
-		synchronized (openApiConfigs) {
-			if(configProvider != null)return configProvider;
-			configProvider = InstanceFactory.getInstance(OpenApiConfigProvider.class);
-            if(configProvider == null) {
-            	configProvider = new OpenApiConfigProvider() {
-					@Override
-					public OpenApiConfig openApiConfig(String clientId) {
-						return null;
-					}
-					@Override
-					public List<OpenApiConfig> allOpenApiConfigs() {
-						
-						List<OpenApiConfig> configs = new ArrayList<OpenApiConfig>();
-						// 本地配置
-						Properties properties = ResourceUtils.getAllProperties(GatewayConfigs.OPENAPI_CLIENT_MAPPING_CONFIG_KEY);
-						properties.forEach((k, v) -> {
-							String clientId = k.toString().split("\\[|\\]")[1];
-							OpenApiConfig config = new OpenApiConfig(clientId, v.toString());
-							if(GatewayConfigs.openApiScopeEnabled) {
-								List<String> apis = ResourceUtils.getList("mendmix.openapi.apiscope.mapping["+clientId+"]");
-								config.setGrantedApis(apis);
-							}
-							configs.add(config);
-						});
-						return configs;
-					}
-				};
-            }
-		}
-		return configProvider;
+	public OpenApiSignatureHandler() {
+		configProvider = InstanceFactory.getInstance(OpenApiConfigProvider.class);
+		// 本地配置
+		Properties properties = ResourceUtils.getAllProperties(GatewayConfigs.OPENAPI_CLIENT_MAPPING_CONFIG_KEY);
+		properties.forEach((k, v) -> {
+			String clientId = k.toString().split("\\[|\\]")[1];
+			OpenApiConfig config = new OpenApiConfig(clientId, v.toString());
+			if(GatewayConfigs.openApiScopeEnabled) {
+				List<String> apis = ResourceUtils.getList("mendmix.openapi.apiscope.mapping["+clientId+"]");
+				config.setGrantedApis(apis);
+			}
+			openApiConfigs.put(clientId,config);
+		});
 	}
+
 	
-	public static OpenApiConfig getOpenApiConfig(String clientId) {
+	public OpenApiConfig getOpenApiConfig(String clientId) {
 		OpenApiConfig openApiConfig = openApiConfigs.get(clientId);
-		if(openApiConfig == null) {
-			openApiConfig = getConfigProvider().openApiConfig(clientId);
+		if(openApiConfig == null && configProvider != null) {
+			openApiConfig = configProvider.openApiConfig(clientId);
+			if(openApiConfig != null) {
+				openApiConfigs.put(clientId, openApiConfig);
+			}
 		}
 		if(openApiConfig == null) {
 			throw new MendmixBaseException("clientId["+clientId+"]配置不存在");
@@ -121,7 +106,8 @@ public class OpenApiSignatureHandler implements PreFilterHandler {
 			return requestBuilder;
 		}
 		
-		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),exchange.getRequest().getPath().value());
+		final String uri = exchange.getRequest().getPath().value();
+		ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),uri);
 		if (apiInfo == null || !apiInfo.isOpenApi()) {
 			throw new MendmixBaseException(500,"该接口未开放访问权限");
 		}
@@ -158,7 +144,8 @@ public class OpenApiSignatureHandler implements PreFilterHandler {
 		}
 		
 		if(GatewayConfigs.openApiScopeEnabled) {
-			if(openApiConfig.getGrantedApis() == null || !openApiConfig.getGrantedApis().contains(apiInfo.getUri())) {
+			String removeContextPathUri = uri.substring(GatewayConfigs.PATH_PREFIX.length());
+			if(openApiConfig.getGrantedApis() == null || !openApiConfig.getGrantedApis().contains(removeContextPathUri)) {
 				logger.info("MENDMIX-TRACE-LOGGGING-->> openapi_error_apiUnauthorized -> clientId:{},uri:{}",openApiConfig.getClientId(),apiInfo.getUri());
 				throw new MendmixBaseException(403,"未开通该接口访问权限");
 			}
@@ -196,10 +183,13 @@ public class OpenApiSignatureHandler implements PreFilterHandler {
 
 	@Override
 	public void onStarted() {
+		if(configProvider == null)return;
 		logger.info("MENDMIX-TRACE-LOGGGING-->> init OpenApiConfigs begin...");
-		List<OpenApiConfig> configs = getConfigProvider().allOpenApiConfigs();
-		for (OpenApiConfig config : configs) {
-			openApiConfigs.put(config.getClientId(), config);
+		List<OpenApiConfig> configs = configProvider.allOpenApiConfigs();
+		if(configs != null) {
+			for (OpenApiConfig config : configs) {
+				openApiConfigs.put(config.getClientId(), config);
+			}
 		}
 		logger.info("MENDMIX-TRACE-LOGGGING-->> init OpenApiConfigs finish -> clientIds:{}",openApiConfigs.keySet());
 	}
