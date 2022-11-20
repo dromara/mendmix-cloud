@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.mendmix</groupId>
 	    <artifactId>mendmix-parent</artifactId>
-	    <version>14.1</version>
+	    <version>1.4.2</version>
 	</parent>
 	<artifactId>mendmix-amqp-adapter</artifactId>
 	<version>1.4.2</version>
