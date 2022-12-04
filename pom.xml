@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.mendmix</groupId>
 	<artifactId>mendmix-parent</artifactId>
-	<version>1.4.2</version>
+	<version>1.4.3</version>
 	<packaging>pom</packaging>
 	<name>mendmix</name>
 	<description>mendmix分布式云原生架构技术底座</description>
@@ -221,6 +221,13 @@
 				<artifactId>spring-cloud-openfeign-core</artifactId>
 				<version>${spring-cloud-component.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>commons-io</groupId>
+				<artifactId>commons-io</artifactId>
+				<version>2.11.0</version>
+			</dependency>
+
 
 		</dependencies>
 	</dependencyManagement>

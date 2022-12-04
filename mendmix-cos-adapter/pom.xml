@@ -5,10 +5,10 @@
 	<parent>
 		<groupId>com.mendmix</groupId>
 		<artifactId>mendmix-parent</artifactId>
-		<version>1.4.2</version>
+		<version>1.4.3</version>
 	</parent>
 	<artifactId>mendmix-cos-adapter</artifactId>
-	<version>1.4.2</version>
+	<version>1.4.3</version>
 	<description>云存储适配器，支持minIO、七牛、腾讯云，阿里云、华为云、AWS云</description>
 
 	<dependencies>

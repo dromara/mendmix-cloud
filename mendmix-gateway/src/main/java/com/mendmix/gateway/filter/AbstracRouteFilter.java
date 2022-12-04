@@ -100,7 +100,6 @@ public abstract class AbstracRouteFilter implements GlobalFilter, Ordered, Comma
 			}));
 		} catch (Exception e) {
 			ThreadLocalContext.unset();
-			exchange.getAttributes().clear();
 			if (e instanceof MendmixBaseException == false) {
 				logger.error("MENDMIX-TRACE-LOGGGING-->> requestFilter_error", e);
 			}

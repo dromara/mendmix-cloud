@@ -59,7 +59,8 @@ public class BaseApplicationStarter {
 		System.out.println("...............................................................");
 		System.out.println("..................Service starts successfully (port:" + ResourceUtils.getProperty("server.port") + ")..................");
 		System.out.println("...............................................................");
-
+        //启动完成
+		GlobalRuntimeContext.startFinished();
 		// 执行异步初始化
 		Map<String, AsyncInitializer> asyncInitializers = InstanceFactory.getBeansOfType(AsyncInitializer.class);
 		if (asyncInitializers != null) {

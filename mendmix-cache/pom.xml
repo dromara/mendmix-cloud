@@ -4,10 +4,10 @@
 	<parent>
 		<groupId>com.mendmix</groupId>
 		<artifactId>mendmix-parent</artifactId>
-		<version>1.4.2</version>
+		<version>1.4.3</version>
 	</parent>
 	<artifactId>mendmix-cache</artifactId>
-	<version>1.4.2</version>
+	<version>1.4.3</version>
 
 
 	<dependencies>

@@ -97,6 +97,7 @@ public class GlobalFilter implements WebFilter {
 				currentUser = authorizationProvider.doAuthorization(request.getMethodValue(),request.getPath().value());
 			} catch (UnauthorizedException e) {
 				if(!specUnauthorizedHandler.customAuthentication(exchange)) {
+					RequestContextHelper.clearContextAttributes(exchange);
 					return writeErrorResponse(request,response, e);
 				}
 				if(request.getHeaders().containsKey(CustomRequestHeaders.HEADER_AUTH_USER)) {

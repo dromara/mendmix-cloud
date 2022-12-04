@@ -15,6 +15,7 @@
  */
 package com.mendmix.common;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +43,10 @@ public class GlobalRuntimeContext {
 	
 	private static String contextPath;
 	private static String nodeName;
+	
+	private static File appDataDir;
+	
+	private static boolean starting = true;
 	
 	static {
 		String env = ResourceUtils.getAnyProperty("spring.profiles.active","mendmix.config.profile");
@@ -109,5 +114,32 @@ public class GlobalRuntimeContext {
 			nodeName = "127.0.0.1:" + ResourceUtils.getProperty("server.port", "8080");
 		}
 		return nodeName;
+	}
+	
+	public static boolean isStarting() {
+		return starting;
+	}
+
+	public static void startFinished() {
+		GlobalRuntimeContext.starting = false;
+	}
+
+	public static File getAppDataDir() {
+		if(appDataDir != null)return appDataDir;
+		String dataDir = ResourceUtils.getProperty("application.data.dir","java.io.tmpdir");
+		try {
+			File dir = new File(dataDir,APPID);
+			boolean exists;
+			if(!(exists = dir.exists())) {
+				exists = dir.mkdirs();
+			}
+			if(exists) {
+				appDataDir = dir;
+				System.out.println(">>>>>> application.data.dir = " + dataDir);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return appDataDir;
 	}
 }
