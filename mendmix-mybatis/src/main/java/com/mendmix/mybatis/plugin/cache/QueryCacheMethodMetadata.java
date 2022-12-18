@@ -37,7 +37,6 @@ public class QueryCacheMethodMetadata {
 	boolean isPk = false;//主键查询
 	boolean uniqueIndex = false;
 	boolean collectionResult = false;//查询结果是集合
-	public boolean groupRalated = false; //是否需要关联group
 	String[] fieldNames;//作为查询条件的字段名称
 	boolean checkExpired = false; //是否需要检查缓存过期时间
 	String contextParam;  
@@ -60,5 +59,9 @@ public class QueryCacheMethodMetadata {
 	 */
 	public boolean isSecondQueryById(){
 		return isPk == false && uniqueIndex;
+	}
+	
+	public boolean isGroupRalated(){
+		return !isPk && !uniqueIndex;
 	}
 }

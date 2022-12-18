@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -63,6 +65,14 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		//
 		MybatisRuntimeContext.addDataPermissionValues("area", "HN","HB");
 		MybatisRuntimeContext.addDataPermissionValues("companyId", "1","2","3");
+	}
+	
+	@Test
+	public void testBase() {
+		staffMapper.selectByPrimaryKey(5);
+		ExampleStaffEntity staffEntity = staffMapper.selectByPrimaryKey(5);
+		staffEntity.setName(RandomStringUtils.random(5, true, false));
+		staffMapper.updateByPrimaryKeySelective(staffEntity);
 	}
 	
 	@Test

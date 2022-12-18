@@ -87,10 +87,10 @@ import com.mendmix.spring.InstanceFactory;
  */
 public class CacheHandler implements InterceptorHandler {
 
-
 	protected static final Logger logger = LoggerFactory.getLogger("com.mendmix.mybatis.plugin.cache");
 
 	public static final String CURRENT_USER_CONTEXT_NAME = "currentUser";
+	private static final String ID_PART_CACHEKEY = ".id:";
 	private static final String BLOCK_ON_CONCURRENT_LOCK_RETURN = "_block_on_concurrentLock";
 	public static final String NAME = "cache";
 	public final static long IN_1MINS = 60;
@@ -102,7 +102,7 @@ public class CacheHandler implements InterceptorHandler {
 	private static final String STR_PARAM = "param";
 	
 	public static final String GROUPKEY_SUFFIX = "~keys";
-	private static final String ID_CACHEKEY_JOIN = ".id:";
+	private static final String ID_CACHEKEY_JOIN = ID_PART_CACHEKEY;
 	private boolean nullValueCache = true;
 	//null缓存占位符（避免频繁查询不存在对象造成缓存穿透导致频繁查询db）
 	public static final String NULL_PLACEHOLDER = "~null";
@@ -114,7 +114,14 @@ public class CacheHandler implements InterceptorHandler {
 	
 	private static Map<String, Map<String, QueryCacheMethodMetadata>> queryCacheMethods = new HashMap<>();
 	
-	private static Map<String, UpdateByPkCacheMethodMetadata> updatePkCacheMethods = new HashMap<>();
+	private static List<String> updateByPkCacheMethods = Arrays.asList(
+			CrudMethods.insert.name(),
+			CrudMethods.insertSelective.name(),
+			CrudMethods.updateByPrimaryKey.name(),
+			CrudMethods.updateByPrimaryKeySelective.name(),
+			CrudMethods.deleteByPrimaryKey.name()
+	);
+	private static List<String> batchUpdateByPkCacheMethods = Arrays.asList("batchUpdateByPrimaryKeys");
 	
 	//<更新方法msId,[关联查询方法列表]>
 	private static Map<String, List<String>> customUpdateCacheMapppings = new HashMap<>();
@@ -161,7 +168,6 @@ public class CacheHandler implements InterceptorHandler {
 			//主键查询方法
 			tmpMap.put(queryByPKMethod.methodName, queryByPKMethod);
 			
-			String keyPatternForPK = queryByPKMethod.keyPattern;
 			//接口定义的自动缓存方法
 			for (MapperMethod method : mm.getMapperMethods().values()) {
 				if(method.getMethod().isAnnotationPresent(Cache.class)){
@@ -176,9 +182,6 @@ public class CacheHandler implements InterceptorHandler {
 			logger.info("MENDMIX-TRACE-LOGGGING-->> 解析查询方法{}自动缓存配置 ok,keyPattern:[{}]",queryByPKMethod.methodName,queryByPKMethod.keyPattern);
 			
 			queryCacheMethods.put(mapperClass.getName(), tmpMap);
-			
-			//更新缓存方法
-			generateUpdateByPkCacheMethod(mapperClass, mm.getEntityClass(), keyPatternForPK);
 		}
 		//
 		logger.info("MENDMIX-TRACE-LOGGGING-->> customUpdateCacheMapppings:{}",customUpdateCacheMapppings);
@@ -283,6 +286,9 @@ public class CacheHandler implements InterceptorHandler {
 						return;
 					}
 					result = metadata.collectionResult ? result : list.get(0);
+				}else if(nullValueCache && NULL_PLACEHOLDER.equals(result)) {
+					CacheUtils.set(cacheKey,NULL_PLACEHOLDER, IN_1MINS);
+					return;
 				}
 				//
 				if(!metadata.isSecondQueryById()){
@@ -292,7 +298,7 @@ public class CacheHandler implements InterceptorHandler {
 					if(metadata.isPk){
 						//唯一索引（业务上）
 						cacheUniqueSelectRef(invocationVal,result, mt, cacheKey);
-					}else if(metadata.groupRalated){//结果为集合的情况，增加key到cacheGroup
+					}else if(metadata.isGroupRalated()){//结果为集合的情况，增加key到cacheGroup
 						CacheUtils.addStrItemToList(metadata.cacheGroupKey, cacheKey);
 					}
 				}else{
@@ -318,13 +324,22 @@ public class CacheHandler implements InterceptorHandler {
 				if(mt.getSqlCommandType().equals(SqlCommandType.INSERT)) {
 					//TODO 写入缓存 ，考虑回滚
 				}else {
-					if(updatePkCacheMethods.containsKey(mt.getId())){
-						UpdateByPkCacheMethodMetadata updateMethodCache = updatePkCacheMethods.get(mt.getId());
-						String idCacheKey = genarateQueryCacheKey(invocationVal,updateMethodCache.keyPattern,invocationVal.getParameter());
-						CacheUtils.remove(idCacheKey);
+					MapperMetadata mapperMeta = MybatisMapperParser.getMapperMetadata(mapperClassName);
+					if(updateByPkCacheMethods.contains(mt.getId().substring(mapperClassName.length() + 1))){
+						StringBuilder keyBuilder = new StringBuilder(mapperMeta.getEntityClass().getSimpleName()).append(ID_PART_CACHEKEY);
+                        if(invocationVal.getParameter() instanceof BaseEntity) {
+                        	keyBuilder.append(((BaseEntity) invocationVal.getParameter()).getId());
+                        }else {
+                        	keyBuilder.append(invocationVal.getParameter());
+                        }
+						CacheUtils.remove(keyBuilder.toString());
+						if(logger.isDebugEnabled())logger.debug(">>auto_cache_process removeCache -> mapperId:{},cacheKey:{}",mt.getId(),keyBuilder);
+					}else if(batchUpdateByPkCacheMethods.contains(mt.getId().substring(mapperClassName.length() + 1))){
+						List<String> idCacheKeys = buildBatchUpdateIdCacheKeys(mapperMeta, invocationVal.getParameter());
+						if(!idCacheKeys.isEmpty())CacheUtils.remove(idCacheKeys.toArray(new String[0]));
+						if(logger.isDebugEnabled())logger.debug(">>auto_cache_process removeCache -> mapperId:{},cacheKeys:{}",mt.getId(),idCacheKeys);
 					}else {
 						//针对按条件更新或者删除的方法，按查询条件查询相关内容，然后清理对应主键缓存内容
-						MapperMetadata mapperMeta = MybatisMapperParser.getMapperMetadata(mapperClassName);
 						final Object parameter = invocationVal.getArgs()[1];
 						BoundSql boundSql = mt.getBoundSql(parameter);
 						String orignSql = boundSql.getSql();
@@ -482,6 +497,28 @@ public class CacheHandler implements InterceptorHandler {
 		}
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private List<String> buildBatchUpdateIdCacheKeys(MapperMetadata mapperMeta,Object parameter){
+		Map map = (Map) parameter;
+		List<Object> ids;
+		if(map.containsKey("arg0")) {
+			ids = (List<Object>) map.get("arg0");
+		}else {
+			ids = (List<Object>) map.get("param1");
+		}
+		
+		List<String> keys = new ArrayList<>(ids.size());
+		StringBuilder keyBuilder = new StringBuilder(mapperMeta.getEntityClass().getSimpleName()).append(ID_PART_CACHEKEY);
+		int prefixLen = keyBuilder.length();
+		for (Object id : ids) {
+			keyBuilder.append(id);
+			keys.add(keyBuilder.toString());
+			keyBuilder.setLength(prefixLen);
+		}
+		
+		return keys;
+	}
+	
 	/**
 	 * 删除缓存组
 	 * @param msId
@@ -628,25 +665,7 @@ public class CacheHandler implements InterceptorHandler {
 		
 		return methodCache;
 	}
-	
-	private void generateUpdateByPkCacheMethod(Class<?> mapperClass,Class<?> entityClass,String keyPatternForPK){
-		String methodName = null;
-	    methodName = mapperClass.getName() + "." + CrudMethods.insert.name();
-	    updatePkCacheMethods.put(methodName, new UpdateByPkCacheMethodMetadata(entityClass,methodName, keyPatternForPK, SqlCommandType.INSERT));
-	    methodName = mapperClass.getName() + "." + CrudMethods.insertSelective.name();
-	    updatePkCacheMethods.put(methodName, new UpdateByPkCacheMethodMetadata(entityClass,methodName, keyPatternForPK, SqlCommandType.INSERT));
-	   //
-        methodName = mapperClass.getName() + "." + CrudMethods.updateByPrimaryKey.name();
-        updatePkCacheMethods.put(methodName, new UpdateByPkCacheMethodMetadata(entityClass,methodName, keyPatternForPK, SqlCommandType.UPDATE));
-        methodName = mapperClass.getName() + "." + CrudMethods.updateByPrimaryKeySelective.name();
-        updatePkCacheMethods.put(methodName, new UpdateByPkCacheMethodMetadata(entityClass,methodName, keyPatternForPK, SqlCommandType.UPDATE));
 
-		//按主键删除
-		methodName = mapperClass.getName() + "." +  CrudMethods.deleteByPrimaryKey.name();
-		updatePkCacheMethods.put(methodName, new UpdateByPkCacheMethodMetadata(entityClass,methodName, keyPatternForPK, SqlCommandType.DELETE));
-
-	}
-	
 	/**
 	 * 按查询方法生成缓存key前缀
 	 * @param entityClassName
@@ -690,13 +709,6 @@ public class CacheHandler implements InterceptorHandler {
 			throw new MybatisHanlerInitException("@Cache with[uniqueIndex = true] but ReturnType not Match ["+entityClass.getName()+"]");
 		}
 		methodCache.collectionResult = method.getReturnType() == List.class || method.getReturnType() == Set.class;
-		if(methodCache.collectionResult){			
-			methodCache.groupRalated = true;
-		}else{
-			// count等统计查询
-			methodCache.groupRalated = method.getReturnType().isAnnotationPresent(Table.class) == false;
-		}
-		
 		methodCache.fieldNames = new String[method.getParameterTypes().length];
 		Annotation[][] annotations = method.getParameterAnnotations();
 		boolean uniqueQuery = method.getReturnType().isAnnotationPresent(Table.class);

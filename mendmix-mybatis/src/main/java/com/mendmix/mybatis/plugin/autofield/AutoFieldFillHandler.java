@@ -38,6 +38,7 @@ import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.guid.GUID;
 import com.mendmix.mybatis.MybatisConfigs;
+import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.core.BaseEntity;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.metadata.MapperMetadata;
@@ -203,7 +204,9 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 		}
 		
 		if(fields.length > 3 && fields[3] != null && (tmpVal = CurrentRuntimeContext.getTenantId()) != null && (updateCommand || isNullValue(parameter, fields[3]))) {
-			fields[3].set(parameter, tmpVal);
+			if(!MybatisRuntimeContext.getSqlRewriteStrategy().isIgnoreTenant() || isNullValue(parameter, fields[3])) {
+				fields[3].set(parameter, tmpVal);
+			}
 		}
 		
 		//

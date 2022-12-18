@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.mendmix.common.GlobalRuntimeContext;
-import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.scheduler.helper.ConsistencyHash;
 import com.mendmix.scheduler.registry.NullJobRegistry;
 
