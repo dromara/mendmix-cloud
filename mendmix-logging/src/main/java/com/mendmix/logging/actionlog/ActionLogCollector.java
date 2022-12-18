@@ -108,7 +108,7 @@ public class ActionLogCollector {
 		onResponseEnd(actionLog, httpStatus, throwable);
 	}
     
-    public static void onResponseEnd(ActionLog actionLog,int httpStatus,Throwable throwable){
+    public static void onResponseEnd(ActionLog actionLog,int responseCode,Throwable throwable){
     	if(actionLog == null) {
     		if(throwable != null) {
     			if (throwable instanceof MendmixBaseException) {
@@ -131,7 +131,7 @@ public class ActionLogCollector {
 		}
     	
     	try {	
-    		if(httpStatus != 404) {
+    		if(responseCode != 404) {
     			asyncPushLog(actionLog);
         	}
 		} catch (Exception e) {

@@ -27,6 +27,7 @@ import org.springframework.web.server.ServerWebExchange;
 import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.common.util.JsonUtils;
+import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.filter.PostFilterHandler;
 import com.mendmix.gateway.model.BizSystemModule;
 
@@ -51,6 +52,10 @@ public class ResponseRewriteHandler implements PostFilterHandler {
 	public String process(ServerWebExchange exchange, BizSystemModule module,String respBodyAsString) {
 		
 		if(!exchange.getResponse().getStatusCode().is2xxSuccessful()) {
+			return respBodyAsString;
+		}
+		
+		if(GatewayConfigs.ignoreRewriteRoutes.contains(module.getRouteName())) {
 			return respBodyAsString;
 		}
 		

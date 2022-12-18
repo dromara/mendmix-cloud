@@ -115,7 +115,14 @@ public class GlobalFilter implements WebFilter {
 				    .doFinally(s -> {
 				    	ActionLog actionLog = exchange.getAttribute(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME);
 				    	if(actionLog != null) {
-				    		ActionLogCollector.onResponseEnd(actionLog, response.getRawStatusCode(), null);
+				    		int respCode = response.getRawStatusCode();
+				    		if(response.getHeaders().containsKey(CustomRequestHeaders.HEADER_EXCEPTION_CODE)) {
+				               respCode = Integer.parseInt(response.getHeaders().getFirst(CustomRequestHeaders.HEADER_EXCEPTION_CODE));
+				               actionLog.setSuccessed(false);
+				    		}else {
+				    			actionLog.setSuccessed(true);
+				    		}
+				    		ActionLogCollector.onResponseEnd(actionLog, respCode, null);
 				    	}
 				    	RequestContextHelper.clearContextAttributes(exchange);
 				    });

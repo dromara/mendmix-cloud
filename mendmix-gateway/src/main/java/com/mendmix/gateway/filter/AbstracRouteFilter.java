@@ -42,7 +42,7 @@ import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.gateway.GatewayConfigs;
 import com.mendmix.gateway.GatewayConstants;
-import com.mendmix.gateway.filter.post.ResponseLogHandler;
+import com.mendmix.gateway.filter.post.ResponseBodyLogHandler;
 import com.mendmix.gateway.filter.post.ResponseRewriteHandler;
 import com.mendmix.gateway.filter.post.RewriteBodyServerHttpResponse;
 import com.mendmix.gateway.filter.pre.GlobalHeaderHanlder;
@@ -89,6 +89,13 @@ public abstract class AbstracRouteFilter implements GlobalFilter, Ordered, Comma
 			for (PreFilterHandler handler : preHandlers) {
 				requestBuilder = handler.process(exchange, module, requestBuilder);
 			}
+			//
+			boolean loggingRespBody = GatewayConfigs.actionLogEnabled && !GatewayConfigs.actionResponseBodyIngore;
+			boolean rewriteRespBody = GatewayConfigs.respRewriteEnabled && !GatewayConfigs.ignoreRewriteRoutes.contains(module.getRouteName());
+			if(!loggingRespBody && !rewriteRespBody) {
+				return chain.filter(exchange);
+			}
+			
 			RewriteBodyServerHttpResponse newResponse = new RewriteBodyServerHttpResponse(exchange,module);
 			final ServerWebExchange newExchange = exchange.mutate().request(requestBuilder.build()).response(newResponse).build();
 			//
@@ -140,8 +147,8 @@ public abstract class AbstracRouteFilter implements GlobalFilter, Ordered, Comma
 					.collect(Collectors.toList());
 		}
 		//
-		if(GatewayConfigs.actionLogEnabled) {
-			postHandlers.add(new ResponseLogHandler());
+		if(GatewayConfigs.actionLogEnabled && !GatewayConfigs.actionResponseBodyIngore) {
+			postHandlers.add(new ResponseBodyLogHandler());
 		}
 		//
 		if(GatewayConfigs.respRewriteEnabled) {

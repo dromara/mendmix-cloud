@@ -15,12 +15,9 @@
  */
 package com.mendmix.gateway.filter.post;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.mendmix.common.CustomRequestHeaders;
 import com.mendmix.common.model.ApiInfo;
-import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.filter.PostFilterHandler;
 import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
@@ -34,9 +31,7 @@ import com.mendmix.logging.actionlog.ActionLogCollector;
  * @author <a href="mailto:vakinge@gmail.com">jiangwei</a>
  * @date 2022年1月20日
  */
-public class ResponseLogHandler implements PostFilterHandler {
-	
-	private boolean bodyIgnore = ResourceUtils.getBoolean("mendmix.actionlog.responseBody.ignore", true);
+public class ResponseBodyLogHandler implements PostFilterHandler {
 	
 	@Override
 	public String process(ServerWebExchange exchange, BizSystemModule module,String respBodyAsString) {
@@ -47,16 +42,6 @@ public class ResponseLogHandler implements PostFilterHandler {
 		
 		ActionLog actionLog = exchange.getAttribute(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME);
 		if(actionLog == null)return respBodyAsString;
-		
-		HttpHeaders headers = exchange.getResponse().getHeaders();
-		if(headers.containsKey(CustomRequestHeaders.HEADER_EXCEPTION_CODE)) {
-			actionLog.setSuccessed(false);
-		}else {
-			actionLog.setSuccessed(true);
-		}
-	
-		
-		if(bodyIgnore)return respBodyAsString;
 		
 		ApiInfo apiInfo = RequestContextHelper.getCurrentApi(exchange);
 		if(apiInfo != null && !apiInfo.isResponseLog()) {
