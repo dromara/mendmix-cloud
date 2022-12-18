@@ -65,7 +65,25 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 	//每个master对应slave数
 	private Map<String, RoundRobinSelecter> slaveNumSelecters = new HashMap<>();
 	
-	
+	private RouteTenantKeyResolver routeTenantKeyResolver;
+
+	private RouteTenantKeyResolver routeTenantKeyResolver() {
+		if(routeTenantKeyResolver != null)return routeTenantKeyResolver;
+		synchronized (this) {
+			if(routeTenantKeyResolver != null)return routeTenantKeyResolver;
+			routeTenantKeyResolver = InstanceFactory.getInstance(RouteTenantKeyResolver.class);
+			if(routeTenantKeyResolver == null) {
+				routeTenantKeyResolver = new RouteTenantKeyResolver() {
+					@Override
+					public String resolve(String tenantId) {
+						return tenantId;
+					}
+				};
+			}
+		}
+		return routeTenantKeyResolver;
+	}
+
 	public MultiRouteDataSource() {
 		this(DataSourceConfig.DEFAULT_GROUP_NAME);
 	}
@@ -113,6 +131,10 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 					index = slaveNumSelecters.get(subGroup).select();
 				}
 			}
+		}
+		
+		if(tenantId != null) {
+			tenantId = routeTenantKeyResolver().resolve(tenantId);
 		}
 		return DataSourceConfig.buildDataSourceKey(group, tenantId, useMaster, index);
 	}

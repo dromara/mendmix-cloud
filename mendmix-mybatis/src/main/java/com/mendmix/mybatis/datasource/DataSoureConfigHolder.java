@@ -42,27 +42,26 @@ import com.mendmix.common.util.ResourceUtils;
  */
 public class DataSoureConfigHolder {
 
-	private static Map<String, List<DataSourceConfig>> allGroupConfigs = new HashMap<>();
+	private static Map<String, List<DataSourceConfig>> allGroupConfigs;
+	
+	private static Map<String, List<DataSourceConfig>> getAllGroupConfigs() {
+		if(allGroupConfigs == null) {
+			Properties properties = ResourceUtils.getAllProperties(".*(\\.db\\.).*", false);
+			allGroupConfigs = resolveConfigs(properties);
+		}
+		return allGroupConfigs;
+	}
 	
 	public static List<String> getGroups(){
-		if(allGroupConfigs.isEmpty()) {
-			parse();
-		}
-		return new ArrayList<>(allGroupConfigs.keySet());
+		return new ArrayList<>(getAllGroupConfigs().keySet());
 	}
 	
 	public static List<DataSourceConfig> getConfigs(String group){
-		if(allGroupConfigs.isEmpty()) {
-			parse();
-		}
-		return allGroupConfigs.get(group);
+		return getAllGroupConfigs().get(group);
 	}
 	
 	public static boolean containsSlaveConfig(){
-		if(allGroupConfigs.isEmpty()) {
-			parse();
-		}
-		for (String group : allGroupConfigs.keySet()) {
+		for (String group : getAllGroupConfigs().keySet()) {
 			if(allGroupConfigs.get(group).stream().anyMatch(o -> !o.getMaster())) {
 				return true;
 			}
@@ -71,16 +70,15 @@ public class DataSoureConfigHolder {
 	}
 	
 	public static boolean containsTenantConfig(String group){
-		if(allGroupConfigs.isEmpty()) {
-			parse();
-		}
-		if(allGroupConfigs.get(group).stream().anyMatch(o -> StringUtils.isNotBlank(o.getTenantId()))) {
+		if(getAllGroupConfigs().get(group).stream().anyMatch(o -> StringUtils.isNotBlank(o.getTenantId()))) {
 			return true;
 		}
 		return false;
 	}
 	
-	private synchronized static void parse(){
+    public synchronized static Map<String, List<DataSourceConfig>> resolveConfigs(Properties properties){
+		
+		Map<String, List<DataSourceConfig>> groupConfigs = new HashMap<>();
 		
 		Map<String,Field> fieldMap = new HashMap<>();
 		Field[] fields = DataSourceConfig.class.getDeclaredFields();
@@ -90,9 +88,7 @@ public class DataSoureConfigHolder {
 		}
 		ClassScanner.whoUseMeReport();
 		Map<String,DataSourceConfig> configs = new HashMap<>();
-		
-		Properties properties = ResourceUtils.getAllProperties(".*(\\.db\\.).*", false);
-		
+
 		Set<Entry<Object, Object>> entrySet = properties.entrySet();
 		
 		DataSourceConfig config;
@@ -122,12 +118,14 @@ public class DataSoureConfigHolder {
 		
 		List<DataSourceConfig> groupList;
 		for (DataSourceConfig dsConfig : configs.values()) {
-			groupList = allGroupConfigs.get(dsConfig.getGroup());
+			groupList = groupConfigs.get(dsConfig.getGroup());
 			if(groupList == null) {
-				allGroupConfigs.put(dsConfig.getGroup(), (groupList = new ArrayList<>()));
+				groupConfigs.put(dsConfig.getGroup(), (groupList = new ArrayList<>()));
 			}
 			groupList.add(dsConfig);
 		}
+		
+		return groupConfigs;
 	}
 	
 	//group[default].tenant[abc].master.db.url=xx
