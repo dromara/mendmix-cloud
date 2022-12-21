@@ -22,11 +22,13 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -147,6 +149,16 @@ public class KafkaProducerAdapter extends AbstractProducer {
         
         if(!result.containsKey(ProducerConfig.COMPRESSION_TYPE_CONFIG)){
         	result.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy"); 
+        }
+        
+        String kafkaSecurityProtocol = ResourceUtils.getProperty("mendmix.amqp.kafka[security.protocol]");
+        String kafkaSASLMechanism = ResourceUtils.getProperty("mendmix.amqp.kafka[sasl.mechanism]");
+        String config = ResourceUtils.getProperty("mendmix.amqp.kafka[sasl.jaas.config]");
+        if (!StringUtils.isEmpty(kafkaSecurityProtocol) && !StringUtils.isEmpty(kafkaSASLMechanism)
+                        && !StringUtils.isEmpty(config)) {
+                result.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, kafkaSecurityProtocol);
+                result.put(SaslConfigs.SASL_MECHANISM, kafkaSASLMechanism);
+                result.put("sasl.jaas.config", config);
         }
 		
 		return result;

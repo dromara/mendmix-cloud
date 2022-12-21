@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -36,6 +37,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -232,6 +234,16 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 			if (!result.containsKey(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG)) {
 				result.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, MQContext.isAsyncConsumeEnabled() ? "false" : "true");
 			}
+			
+			String kafkaSecurityProtocol = ResourceUtils.getProperty("mendmix.amqp.kafka[security.protocol]");
+	        String kafkaSASLMechanism = ResourceUtils.getProperty("mendmix.amqp.kafka[sasl.mechanism]");
+	        String config = ResourceUtils.getProperty("mendmix.amqp.kafka[sasl.jaas.config]");
+	        if (!StringUtils.isEmpty(kafkaSecurityProtocol) && !StringUtils.isEmpty(kafkaSASLMechanism)
+	                        && !StringUtils.isEmpty(config)) {
+	                result.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, kafkaSecurityProtocol);
+	                result.put(SaslConfigs.SASL_MECHANISM, kafkaSASLMechanism);
+	                result.put("sasl.jaas.config", config);
+	        }
 
 			return result;
 		}

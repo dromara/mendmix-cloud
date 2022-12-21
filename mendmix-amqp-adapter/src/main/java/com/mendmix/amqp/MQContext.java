@@ -133,7 +133,11 @@ public class MQContext {
 			if(StringUtils.isNotBlank(namespace) && !"none".equals(namespace)){
 				context.namespacePrefix = namespace + "_";
 			}
-			context.groupName = rebuildWithNamespace(ResourceUtils.getProperty("mendmix.amqp.groupName",GlobalRuntimeContext.APPID));
+			String groupName = ResourceUtils.getProperty("mendmix.amqp.groupName",GlobalRuntimeContext.APPID);
+			if(ResourceUtils.getBoolean("mendmix.amqp.consumer.groupParallel")) {
+				groupName = groupName + "-" + GlobalRuntimeContext.getWorkId();
+			}
+			context.groupName = rebuildWithNamespace(groupName);
 			context.loghandlerEnabled = ResourceUtils.getBoolean("mendmix.amqp.loghandler.enabled");
 		}
 		return context.groupName;
