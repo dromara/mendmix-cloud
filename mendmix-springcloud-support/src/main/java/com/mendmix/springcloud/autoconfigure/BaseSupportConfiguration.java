@@ -72,5 +72,6 @@ public class BaseSupportConfiguration {
 	public LoadBalancerWrapper loadBalancerWrapper(DiscoveryClient discoveryClient) {
 		return new LoadBalancerWrapper(discoveryClient);
 	}
+	
 
 }

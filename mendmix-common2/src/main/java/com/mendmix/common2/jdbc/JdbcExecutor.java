@@ -130,7 +130,7 @@ public class JdbcExecutor {
 	 */
 	public Map<String, Object> queryForMap(String sql, Object[] args) {
 		Map<String, Object> result = new HashMap<String, Object>();
-		List<Map<String, Object>> list = queryForList(sql, args);
+		List<Map<String, Object>> list = queryForList(sql, args ,true);
 		if (list.size() > 0) {
 			result = list.get(0);
 		}
@@ -156,7 +156,7 @@ public class JdbcExecutor {
 	 * @param args
 	 * @return List<Map<String,Object>>
 	 */
-	public List<Map<String, Object>> queryForList(String sql, Object[] args) {
+	public List<Map<String, Object>> queryForList(String sql, Object[] args,boolean toCamelCase) {
 		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		Connection con = null;
 		ResultSet rs = null;
@@ -172,6 +172,7 @@ public class JdbcExecutor {
 			rs = ps.executeQuery();
 			ResultSetMetaData rsmd = rs.getMetaData();
 			int columnCount = rsmd.getColumnCount();
+			String key;
 			Object value;
 			while (rs.next()) {
 				Map<String, Object> map = new HashMap<String, Object>();
@@ -180,7 +181,8 @@ public class JdbcExecutor {
 					if(value instanceof LocalDateTime) {
 						value = Date.from(((LocalDateTime)value).atZone( ZoneId.systemDefault()).toInstant());
 					}
-					map.put(StringConverter.toCamelCase(rsmd.getColumnLabel(i)), value);
+					key = toCamelCase ? StringConverter.toCamelCase(rsmd.getColumnLabel(i)) : rsmd.getColumnLabel(i);
+					map.put(key, value);
 				}
 				result.add(map);
 			}
@@ -225,7 +227,7 @@ public class JdbcExecutor {
 	 * @return List<T>
 	 */
 	public <T> List<T> queryForList(String sql, Object[] args, Class<T> clazz) {
-		List<Map<String, Object>> mapList = queryForList(sql, args);
+		List<Map<String, Object>> mapList = queryForList(sql, args , true);
 		List<T> result = new ArrayList<>(mapList.size());
         for (Map<String, Object> map : mapList) {
         	result.add(BeanUtils.mapToBean(map, clazz));

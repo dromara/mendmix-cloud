@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.mendmix.common.util.JsonUtils;
+import com.mendmix.common.util.ResourceUtils;
 
 @Configuration
 public class JacksonConfiguration {
@@ -43,7 +44,12 @@ public class JacksonConfiguration {
         objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.disable(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS);
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        if(ResourceUtils.getBoolean("mendmix.jackson.ignoreNull",true)) {
+        	objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        }else {
+        	objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        }
+        
         objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
         //
         JsonUtils.setObjectMapper(objectMapper);

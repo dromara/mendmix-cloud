@@ -64,7 +64,11 @@ public class JsonUtils {
 				jsonMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
 				jsonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 				jsonMapper.disable(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS);
-				jsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+				if(ResourceUtils.getBoolean("mendmix.jackson.ignoreNull",true)) {
+					jsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		        }else {
+		        	jsonMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+		        }
 				jsonMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
 			}
 		}

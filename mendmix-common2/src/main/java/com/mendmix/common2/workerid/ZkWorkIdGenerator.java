@@ -36,9 +36,13 @@ public class ZkWorkIdGenerator implements WorkIdGenerator, Watcher {
 
 	private ZooKeeper zookeeper = null;
 	private volatile List<String> nodeIds;
+	
+	public ZkWorkIdGenerator() {
+		GlobalRuntimeContext.setWorkIdGenerator(this);
+	}
 
 	public int generate(String nodeId) {
-		String zkServers = ResourceUtils.getProperty("application.zookeeper.servers");
+		String zkServers = ResourceUtils.getProperty("mendmix.zookeeper.servers");
 		if (StringUtils.isBlank(zkServers)) {
 			return 0;
 		}

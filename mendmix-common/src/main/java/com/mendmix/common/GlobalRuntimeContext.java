@@ -103,6 +103,7 @@ public class GlobalRuntimeContext {
 		}else {
 			workId = RandomUtils.nextInt(10, 99);
 		}
+		System.out.println(">>>>>>>>workId = "+workId+">>>>>>>>");
 		return workId;
 	}
 
@@ -122,6 +123,7 @@ public class GlobalRuntimeContext {
 
 	public static void startFinished() {
 		GlobalRuntimeContext.starting = false;
+		getWorkId();
 	}
 
 	public static File getAppDataDir() {
