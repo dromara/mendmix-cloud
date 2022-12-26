@@ -28,6 +28,8 @@ public class SqlRewriteStrategy {
 	
 	private boolean handleJoin = true; 
 	
+	private Map<String, String> rewritedTableMapping;
+	
 	private Map<String, TablePermissionStrategy> tableStrategies;
 	
 	public void setDataPermission(DataPermission annotation) {
@@ -111,5 +113,12 @@ public class SqlRewriteStrategy {
 		return handleJoin;
 	}
 	
+	public Map<String, String> getRewritedTableMapping() {
+		return rewritedTableMapping;
+	}
+
+	public void setRewritedTableMapping(Map<String, String> rewritedTables) {
+		this.rewritedTableMapping = rewritedTables;
+	}
 	
 }

@@ -7,8 +7,11 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import com.mendmix.example.dao.ExampleBaseEntity;
+import com.mendmix.example.support.TestTableShardStrategy;
+import com.mendmix.mybatis.plugin.shard.annotation.TableSharding;
 
 @Table(name = "staff")
+@TableSharding(strategy = TestTableShardStrategy.class)
 public class ExampleStaffEntity extends ExampleBaseEntity {
     @Id
     @SequenceGenerator(name="",sequenceName="true")

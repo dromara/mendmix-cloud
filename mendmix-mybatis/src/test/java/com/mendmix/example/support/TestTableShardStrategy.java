@@ -13,36 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mendmix.mybatis.plugin.shard;
+package com.mendmix.example.support;
+
+import com.mendmix.mybatis.plugin.shard.TableShardStrategy;
 
 /**
- * 数据库分库策略接口
  * @description <br>
- * @author <a href="mailto:vakinge@gmail.com">vakin</a>
- * @date 2016年2月2日
- * @Copyright (c) 2015, jwww
+ * @author <a href="mailto:vakinge@gmail.com">vakinge</a>
+ * @date Dec 23, 2022
  */
-public interface ShardStrategy<T> {
+public class TestTableShardStrategy implements TableShardStrategy {
 
-	/**
-	 * 分库字段
-	 * @return
-	 */
-	public String shardDbField();
-	
-	/**
-	 * 分库字段对应实体属性名
-	 * @return
-	 */
-	public String shardEntityField();
-	
-	
-	
-	/**
-	 * 分配逻辑
-	 * @param value
-	 * @return 数据库index
-	 */
-	public int sharding(Object value);
+	@Override
+	public String buildShardingTableName(String tableName,Object args) {
+		return tableName + "_01";
+	}
 
 }

@@ -41,6 +41,7 @@ import com.mendmix.mybatis.plugin.cache.CacheHandler;
 import com.mendmix.mybatis.plugin.pagination.PaginationHandler;
 import com.mendmix.mybatis.plugin.rewrite.SqlRewriteHandler;
 import com.mendmix.mybatis.plugin.rwseparate.RwRouteHandler;
+import com.mendmix.mybatis.plugin.shard.TableShardingHandler;
 
 /**
  * mybatis 插件入口
@@ -81,6 +82,8 @@ public class MendmixMybatisInterceptor implements Interceptor,DisposableBean{
 			}else if(RwRouteHandler.NAME.equals(name)){
 				this.interceptorHandlers.add(new RwRouteHandler());
 				rwRouteEnabled = true;
+			}else if(TableShardingHandler.NAME.equals(name)){
+				this.interceptorHandlers.add(new TableShardingHandler());
 			}else{
 				//自定义的拦截器
 				try {

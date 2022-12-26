@@ -332,7 +332,11 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			rewriteStrategy.setHandleOrderBy(pageParam.getOrderBys() != null && !pageParam.getOrderBys().isEmpty());
 		}
 		
-		if(invocation.getDataPermValues() == null && rewriteStrategy.isIgnoreTenant() && rewriteStrategy.isIgnoreSoftDelete() && !rewriteStrategy.isHandleOrderBy()) {
+		if(invocation.getDataPermValues() == null 
+				&& rewriteStrategy.getRewritedTableMapping() == null 
+				&& rewriteStrategy.isIgnoreTenant() 
+				&& rewriteStrategy.isIgnoreSoftDelete() 
+				&& !rewriteStrategy.isHandleOrderBy()) {
 			return;
 		} 
 		
@@ -369,6 +373,11 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				if(logger.isTraceEnabled()) {
 					logger.trace("_mybatis_sqlRewrite_trace processMainTable ->table:{}",table.getName());
 				}
+				Map<String, String> rewritedTableMapping = MybatisRuntimeContext.getSqlRewriteStrategy().getRewritedTableMapping();
+				if(rewritedTableMapping != null && rewritedTableMapping.containsKey(table.getName())) {
+					table.setName(rewritedTableMapping.get(table.getName()));
+					select.setFromItem(table);
+				}
 				//
 				Expression newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues,strategy,false);
 				select.setWhere(newWhereExpression);
@@ -382,6 +391,10 @@ public class SqlRewriteHandler implements InterceptorHandler {
 							table = (Table) join.getRightItem();
 							if(logger.isTraceEnabled()) {
 								logger.trace("_mybatis_sqlRewrite_trace processJoinTable ->table:{}",table.getName());
+							}
+							if(rewritedTableMapping != null && rewritedTableMapping.containsKey(table.getName())) {
+								table.setName(rewritedTableMapping.get(table.getName()));
+								select.setFromItem(table);
 							}
 							if(join.isInner()) {
 								newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues, strategy,true);
@@ -403,7 +416,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			SetOperationList optList = (SetOperationList) selectBody;
 			SetOperation operation = optList.getOperations().get(0);
 			if(operation instanceof UnionOp) {
-				
+				//TODO 
 			}
 			List<SelectBody> selects = optList.getSelects();
 			for (SelectBody body : selects) {

@@ -31,6 +31,7 @@ import com.mendmix.mybatis.datasource.DataSoureConfigHolder;
 import com.mendmix.mybatis.datasource.DatabaseType;
 import com.mendmix.mybatis.plugin.cache.CacheHandler;
 import com.mendmix.mybatis.plugin.rwseparate.RwRouteHandler;
+import com.mendmix.mybatis.plugin.shard.TableShardingHandler;
 
 /**
  * @description <br>
@@ -45,6 +46,7 @@ public class MybatisConfigs {
 	public static final String TENANT_ENABLED = "mendmix.mybatis.tenant.enabled";
 	public static final String TENANT_IGNORE_USER_TYPE = "mendmix.mybatis.tenant.ignoreUserType";
 	public static final String TENANT_COLUMN_NAME = "mendmix.mybatis.tenant.columnName";
+	public static final String TABLE_SHARDING_ENABLED = "mendmix.mybatis.tableShard.enabled";
 	public static final String INTERCEPTOR_HANDLERCLASS = "mendmix.mybatis.interceptorHandlerClass";
 	public static final String SOFT_DELETE_COLUMN_NAME = "mendmix.mybatis.softDelete.columnName";
 	public static final String SOFT_DELETE_FALSE_VALUE = "mendmix.mybatis.softDelete.falseValue";
@@ -94,6 +96,10 @@ public class MybatisConfigs {
 		return getBoolean(group,CACHE_ENABLED, false);
 	}
 	
+	public static boolean isTableShardEnabled(String group) {
+		return getBoolean(group,TABLE_SHARDING_ENABLED, false);
+	}
+	
 	public static String getTenantColumnName(String group) {
 		return getProperty(group,TENANT_COLUMN_NAME,null);
 	}
@@ -140,6 +146,10 @@ public class MybatisConfigs {
 
 		if (isCacheEnabled(group)) {
 			hanlders.add(CacheHandler.NAME);
+		}
+		
+		if(isTableShardEnabled(group)) {
+			hanlders.add(TableShardingHandler.NAME);
 		}
         //
 		if (DataSoureConfigHolder.containsSlaveConfig()) {
