@@ -20,11 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.ibatis.mapping.SqlCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mendmix.common.util.JsonUtils;
 import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.metadata.MapperMetadata;
@@ -45,17 +43,17 @@ public class TableShardingHandler implements InterceptorHandler {
 	
 	public static final String NAME = "tableSharding";
 	
-	private Map<String, TableShardStrategy> mapperStrategyMapping = new HashMap<>();
-	private Map<String, Map<String, TableShardStrategy>> methodStrategyMapping = new HashMap<>();
+	private Map<String, TableShardingStrategy> mapperStrategyMapping = new HashMap<>();
+	private Map<String, Map<String, TableShardingStrategy>> methodStrategyMapping = new HashMap<>();
 	
 	@Override
 	public void start(MendmixMybatisInterceptor context) {
 		List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		
-		Map<String, TableShardStrategy> strategyInstances = new HashMap<>();
-		Map<String, TableShardStrategy> tableStrategies = new HashMap<>();
-		Class<? extends TableShardStrategy> strategyClass;
-		TableShardStrategy strategy;
+		Map<String, TableShardingStrategy> strategyInstances = new HashMap<>();
+		Map<String, TableShardingStrategy> tableStrategies = new HashMap<>();
+		Class<? extends TableShardingStrategy> strategyClass;
+		TableShardingStrategy strategy;
 		for (MapperMetadata mapper : mappers) {
 			if(!mapper.getEntityClass().isAnnotationPresent(TableSharding.class))continue;
 			strategyClass = mapper.getEntityClass().getAnnotation(TableSharding.class).strategy();
@@ -100,26 +98,24 @@ public class TableShardingHandler implements InterceptorHandler {
 	@Override
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		Map<String, String> tableNameMapping = null;
-		
-		TableShardStrategy strategy;
-		if(SqlCommandType.SELECT.equals(invocation.getMappedStatement().getSqlCommandType())) {
-			if(!mapperStrategyMapping.containsKey(invocation.getMapperNameSpace())) {
-				return null;
+		TableShardingStrategy strategy;
+		Map<String, TableShardingStrategy> map = methodStrategyMapping.get(invocation.getMappedStatement().getId());
+	    if(map != null && !map.isEmpty()) {
+	    	tableNameMapping = new HashMap<>(map.size());
+		    for (String tableName : map.keySet()) {
+		    	strategy = map.get(tableName);
+				String rewritedTableName = strategy.buildShardingTableName(tableName, invocation);
+		    	if(rewritedTableName != null)tableNameMapping.put(tableName, rewritedTableName);
 			}
+	    }
+	    
+	    
+		if(tableNameMapping == null && mapperStrategyMapping.containsKey(invocation.getMapperNameSpace())) {
 			tableNameMapping = new HashMap<>(1);
 			MapperMetadata mapperMeta = MybatisMapperParser.getMapperMetadata(invocation.getMapperNameSpace());
 			strategy = mapperStrategyMapping.get(invocation.getMapperNameSpace());
-			String rewritedTableName = strategy.buildShardingTableName(mapperMeta.getTableName(), invocation.getParameter());
+			String rewritedTableName = strategy.buildShardingTableName(mapperMeta.getTableName(), invocation);
 			if(rewritedTableName != null)tableNameMapping.put(mapperMeta.getTableName(), rewritedTableName);
-		}else {
-			Map<String, TableShardStrategy> map = methodStrategyMapping.get(invocation.getMappedStatement().getId());
-		    if(map == null || map.isEmpty())return null;
-		    tableNameMapping = new HashMap<>(map.size());
-		    for (String tableName : map.keySet()) {
-		    	strategy = map.get(tableName);
-				String rewritedTableName = strategy.buildShardingTableName(tableName, invocation.getParameter());
-		    	if(rewritedTableName != null)tableNameMapping.put(tableName, rewritedTableName);
-			}
 		}
 		
 		if(tableNameMapping != null && !tableNameMapping.isEmpty()) {

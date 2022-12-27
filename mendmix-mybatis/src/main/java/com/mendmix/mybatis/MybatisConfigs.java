@@ -46,7 +46,7 @@ public class MybatisConfigs {
 	public static final String TENANT_ENABLED = "mendmix.mybatis.tenant.enabled";
 	public static final String TENANT_IGNORE_USER_TYPE = "mendmix.mybatis.tenant.ignoreUserType";
 	public static final String TENANT_COLUMN_NAME = "mendmix.mybatis.tenant.columnName";
-	public static final String TABLE_SHARDING_ENABLED = "mendmix.mybatis.tableShard.enabled";
+	public static final String TABLE_SHARDING_ENABLED = "mendmix.mybatis.tableshard.enabled";
 	public static final String INTERCEPTOR_HANDLERCLASS = "mendmix.mybatis.interceptorHandlerClass";
 	public static final String SOFT_DELETE_COLUMN_NAME = "mendmix.mybatis.softDelete.columnName";
 	public static final String SOFT_DELETE_FALSE_VALUE = "mendmix.mybatis.softDelete.falseValue";

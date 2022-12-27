@@ -230,11 +230,12 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	@Override
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		if(!invocation.isSelect())return null;
-		if(invocation.getMappedStatement().getId().endsWith(CrudMethods.selectByPrimaryKey.name())) {
+		SqlRewriteStrategy rewriteStrategy = MybatisRuntimeContext.getSqlRewriteStrategy();
+		if(rewriteStrategy.getRewritedTableMapping() == null 
+				&& invocation.getMappedStatement().getId().endsWith(CrudMethods.selectByPrimaryKey.name())) {
 			return null;
 		}
 		
-		SqlRewriteStrategy rewriteStrategy = MybatisRuntimeContext.getSqlRewriteStrategy();
 		if(rewriteStrategy.isIgnoreAny()) {
 			return null;
 		}
@@ -341,7 +342,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		} 
 		
 		if(logger.isDebugEnabled()) {
-			logger.debug("_mybatis_sqlRewrite_trace start -> statementId:{},rewriteStrategy:{}",JsonUtils.toJson(rewriteStrategy));
+			logger.debug("_mybatis_sqlRewrite_trace for:[{}] start -> rewriteStrategy:\n{}",JsonUtils.toJson(rewriteStrategy));
 		}
 			
 		SelectBody selectBody = null;
@@ -361,19 +362,19 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	
 	
 	private void handleSelectRewrite(SelectBody selectBody,InvocationVals invocation,SqlRewriteStrategy strategy) {
+		Map<String, String> rewritedTableMapping = strategy.getRewritedTableMapping();
 		Map<String, String[]> dataPermValues = invocation.getDataPermValues();
 		if(selectBody instanceof PlainSelect) {
 			PlainSelect select = (PlainSelect)selectBody;
 			FromItem fromItem = select.getFromItem();
 			if(fromItem instanceof Table) {
 				Table table = (Table) fromItem;
-				if(!strategy.isAllMatch() && !strategy.hasTableStrategy(table.getName())) {
+				if(rewritedTableMapping == null && !strategy.isAllMatch() && !strategy.hasTableStrategy(table.getName())) {
 					return;
 				}
 				if(logger.isTraceEnabled()) {
 					logger.trace("_mybatis_sqlRewrite_trace processMainTable ->table:{}",table.getName());
 				}
-				Map<String, String> rewritedTableMapping = MybatisRuntimeContext.getSqlRewriteStrategy().getRewritedTableMapping();
 				if(rewritedTableMapping != null && rewritedTableMapping.containsKey(table.getName())) {
 					table.setName(rewritedTableMapping.get(table.getName()));
 					select.setFromItem(table);
@@ -394,7 +395,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 							}
 							if(rewritedTableMapping != null && rewritedTableMapping.containsKey(table.getName())) {
 								table.setName(rewritedTableMapping.get(table.getName()));
-								select.setFromItem(table);
+								join.setRightItem(table);
 							}
 							if(join.isInner()) {
 								newWhereExpression = handleTableDataPermission(select.getWhere(), table, dataPermValues, strategy,true);

@@ -15,17 +15,18 @@
  */
 package com.mendmix.example.support;
 
-import com.mendmix.mybatis.plugin.shard.TableShardStrategy;
+import com.mendmix.mybatis.plugin.InvocationVals;
+import com.mendmix.mybatis.plugin.shard.TableShardingStrategy;
 
 /**
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakinge</a>
  * @date Dec 23, 2022
  */
-public class TestTableShardStrategy implements TableShardStrategy {
+public class TestTableShardStrategy implements TableShardingStrategy {
 
 	@Override
-	public String buildShardingTableName(String tableName,Object args) {
+	public String buildShardingTableName(String tableName,InvocationVals invocation) {
 		return tableName + "_01";
 	}
 

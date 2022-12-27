@@ -15,19 +15,21 @@
  */
 package com.mendmix.mybatis.plugin.shard;
 
+import com.mendmix.mybatis.plugin.InvocationVals;
+
 /**
  * 分表策略接口
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakinge</a>
  * @date Dec 22, 2022
  */
-public interface TableShardStrategy {
+public interface TableShardingStrategy {
 
 	/**
 	 * 生成表后缀
 	 * @param args mybatis请求参数
 	 * @return 数据库index
 	 */
-	public String buildShardingTableName(String tableName,Object args);
+	public String buildShardingTableName(String tableName,InvocationVals invocation);
 
 }

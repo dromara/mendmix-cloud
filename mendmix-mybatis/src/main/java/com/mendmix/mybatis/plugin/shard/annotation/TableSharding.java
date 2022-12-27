@@ -21,7 +21,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.mendmix.mybatis.plugin.shard.TableShardStrategy;
+import com.mendmix.mybatis.plugin.shard.TableShardingStrategy;
 
 /**
  * @description <br>
@@ -32,5 +32,5 @@ import com.mendmix.mybatis.plugin.shard.TableShardStrategy;
 @Target(TYPE)
 public @interface TableSharding {
 
-	Class<? extends TableShardStrategy> strategy();
+	Class<? extends TableShardingStrategy> strategy();
 }
