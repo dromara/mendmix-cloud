@@ -60,6 +60,8 @@ public class JobConfig implements Serializable {
 
 	private long modifyTime;
 	
+	private long execTimes;
+	
 	private String errorMsg;
 
 	public JobConfig() {
@@ -173,6 +175,14 @@ public class JobConfig implements Serializable {
 			}
 		}
 		return errorMsg;
+	}
+	
+	public long getExecTimes() {
+		return execTimes;
+	}
+
+	public void setExecTimes(long execTimes) {
+		this.execTimes = execTimes;
 	}
 
 	public void setErrorMsg(String errorMsg) {

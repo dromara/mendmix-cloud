@@ -3,6 +3,8 @@ package com.mendmix.mybatis.plugin.rewrite;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.mendmix.common.ThreadLocalContext;
+import com.mendmix.common.constants.ContextKeys;
 import com.mendmix.mybatis.plugin.rewrite.annotation.DataPermission;
 import com.mendmix.mybatis.plugin.rewrite.annotation.TablePermissionStrategy;
 
@@ -63,7 +65,7 @@ public class SqlRewriteStrategy {
 	}
 
 	public boolean isIgnoreTenant() {
-		return ignoreTenant;
+		return ignoreTenant || ThreadLocalContext.exists(ContextKeys.IGNORE_TENENT_ID);
 	}
 
 	public void setIgnoreTenant(boolean ignoreTenant) {

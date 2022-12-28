@@ -49,6 +49,7 @@ public class NullJobRegistry extends AbstarctJobRegistry {
 	public void setRuning(String jobName, Date fireTime) {
 		JobConfig config = schedulerConfgs.get(jobName);
 		config.setRunning(true);
+		config.setExecTimes(config.getExecTimes() + 1);
 		config.setCurrentNodeId(JobContext.getContext().getNodeId());
 		config.setLastFireTime(fireTime);
 	}

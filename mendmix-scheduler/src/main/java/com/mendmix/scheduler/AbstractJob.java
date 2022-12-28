@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 
+import com.mendmix.common.ThreadLocalContext;
+import com.mendmix.common.constants.ContextKeys;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.logging.actionlog.ActionLogCollector;
 import com.mendmix.scheduler.model.JobConfig;
@@ -127,6 +129,10 @@ public abstract class AbstractJob implements DisposableBean{
 			
 			if(loggingEnabled && logging()) {
 				ActionLogCollector.onSystemBackendTaskStart(jobName, jobName);
+			}
+			//
+			if(ignoreTenant()) {
+				ThreadLocalContext.set(ContextKeys.IGNORE_TENENT_ID, true);
 			}
 			// 执行
 			doJob(JobContext.getContext());
@@ -327,6 +333,10 @@ public abstract class AbstractJob implements DisposableBean{
 	}
 	
 	public boolean logging() {
+		return  true;
+	}
+	
+	public boolean ignoreTenant() {
 		return  true;
 	}
 	

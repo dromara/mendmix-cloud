@@ -110,6 +110,7 @@ private static final Logger logger = LoggerFactory.getLogger("com.mendmix.schedu
 	public void setRuning(String jobName, Date fireTime) {
 		JobConfig config = getConf(jobName,false);
 		config.setRunning(true);
+		config.setExecTimes(config.getExecTimes() + 1);
 		config.setLastFireTime(fireTime);
 		config.setErrorMsg(null);
 		// 更新本地

@@ -314,6 +314,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 		try {
 			JobConfig config = getConf(jobName, false);
 			config.setRunning(true);
+			config.setExecTimes(config.getExecTimes() + 1);
 			config.setLastFireTime(fireTime);
 			config.setModifyTime(Calendar.getInstance().getTimeInMillis());
 			config.setErrorMsg(null);

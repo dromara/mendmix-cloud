@@ -25,6 +25,7 @@ import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mendmix.common.util.BeanUtils;
 import com.mendmix.scheduler.AbstractJob;
 import com.mendmix.scheduler.JobContext;
 import com.mendmix.scheduler.JobRegistry;
@@ -54,7 +55,14 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 			;
 		Collection<JobConfig> jobs = schedulerConfgs.values();
 		int nodeIndex = 0;
+		JobConfig remoteJobConfig;
 		for (JobConfig job : jobs) {
+			String jobCurrentNodeId = job.getCurrentNodeId();
+			remoteJobConfig = getConf(job.getJobName(), true);
+			if(remoteJobConfig != null) {
+				BeanUtils.copy(remoteJobConfig, job);
+				job.setCurrentNodeId(jobCurrentNodeId);
+			}
 			String nodeId = nodes.get(nodeIndex++);
 			if (!StringUtils.equals(job.getCurrentNodeId(), nodeId)) {
 				job.setCurrentNodeId(nodeId);
