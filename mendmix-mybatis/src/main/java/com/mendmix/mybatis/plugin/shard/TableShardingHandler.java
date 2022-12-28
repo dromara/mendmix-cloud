@@ -15,6 +15,7 @@
  */
 package com.mendmix.mybatis.plugin.shard;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,10 +27,12 @@ import org.slf4j.LoggerFactory;
 import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.metadata.MapperMetadata;
+import com.mendmix.mybatis.metadata.MapperMetadata.MapperMethod;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
 import com.mendmix.mybatis.plugin.InvocationVals;
 import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 import com.mendmix.mybatis.plugin.shard.annotation.TableSharding;
+import com.mendmix.mybatis.plugin.shard.annotation.TableShardingScope;
 
 /**
  * 分表自动路由
@@ -82,12 +85,27 @@ public class TableShardingHandler implements InterceptorHandler {
 			List<String> tables;
 			for (String query : querys) {
 				tables = mapper.getQueryTableMappings().get(query);
-				for (String table : tables) {
-					if(!tableStrategies.containsKey(table))continue;
+				tableLoop:for (String table : tables) {
+					if(!tableStrategies.containsKey(table))continue tableLoop;
 					if(!methodStrategyMapping.containsKey(query)) {
 						methodStrategyMapping.put(query, new HashMap<>());
 					}
 					methodStrategyMapping.get(query).put(table, tableStrategies.get(mapper.getTableName()));
+				}
+			}
+			//
+			Collection<MapperMethod> methods = mapper.getMapperMethods().values();
+			methodLoop:for (MapperMethod method : methods) {
+				if(!method.getMethod().isAnnotationPresent(TableShardingScope.class)) {
+					continue methodLoop;
+				}
+				String[] tables2 = method.getMethod().getAnnotation(TableShardingScope.class).tables();
+				tableLoop:for (String table : tables2) {
+					if(!tableStrategies.containsKey(table))continue tableLoop;
+					if(!methodStrategyMapping.containsKey(method.getFullName())) {
+						methodStrategyMapping.put(method.getFullName(), new HashMap<>());
+					}
+					methodStrategyMapping.get(method.getFullName()).put(table, tableStrategies.get(table));
 				}
 			}
 		}
