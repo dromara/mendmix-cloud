@@ -62,7 +62,7 @@ import com.mendmix.logging.actionlog.ActionLogQueryParam;
  * @author <a href="mailto:vakinge@gmail.com">jiangwei</a>
  * @date 2022年5月3日
  */
-public class ELKStorageProvider extends AbstractStorageProvider {
+public class ElasticsearchStorageProvider extends AbstractStorageProvider {
 
 	private static Logger logger = LoggerFactory.getLogger("com.mendmix.logging");
 
