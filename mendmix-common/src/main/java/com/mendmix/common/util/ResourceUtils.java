@@ -73,7 +73,8 @@ public final class ResourceUtils {
 			
 			if(url != null){
 				if (url.getProtocol().equals("file")) {	
-					File parent = new File(url.getPath());
+					String path = java.net.URLDecoder.decode(url.getPath(),"UTF-8");
+					File parent = new File(path);
 					if(!parent.exists()){
 						System.err.println("MENDMIX-TRACE-LOGGGING-->> loadPropertiesFromFile_error,dir not found");
 					}else{					

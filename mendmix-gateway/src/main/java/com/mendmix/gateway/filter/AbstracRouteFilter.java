@@ -106,7 +106,6 @@ public abstract class AbstracRouteFilter implements GlobalFilter, Ordered, Comma
 				}
 			}));
 		} catch (Exception e) {
-			ThreadLocalContext.unset();
 			if (e instanceof MendmixBaseException == false) {
 				logger.error("MENDMIX-TRACE-LOGGGING-->> requestFilter_error", e);
 			}
@@ -118,6 +117,8 @@ public abstract class AbstracRouteFilter implements GlobalFilter, Ordered, Comma
 			}
 			response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8");
 			return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
+		}finally {
+			ThreadLocalContext.unset();
 		}
 	}
 

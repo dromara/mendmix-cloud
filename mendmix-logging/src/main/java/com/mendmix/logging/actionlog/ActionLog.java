@@ -44,6 +44,7 @@ public class ActionLog implements Serializable{
 	
 	public static final String IGNORE_FLAG = "[ignore]";
 	
+	private String id;
 	private String logType;
 	private String appId;
 	private String env;
@@ -65,6 +66,14 @@ public class ActionLog implements Serializable{
 	private String exceptions;
 	
 	
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
 	public String getLogType() {
 		return logType;
 	}

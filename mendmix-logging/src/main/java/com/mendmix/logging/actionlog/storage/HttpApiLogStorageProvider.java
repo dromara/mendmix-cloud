@@ -24,7 +24,6 @@ import com.mendmix.common.model.PageQueryRequest;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.logging.actionlog.ActionLog;
 import com.mendmix.logging.actionlog.ActionLogQueryParam;
-import com.mendmix.logging.actionlog.LogStorageProvider;
 
 /**
  * 
@@ -32,7 +31,7 @@ import com.mendmix.logging.actionlog.LogStorageProvider;
  * @author <a href="mailto:vakinge@gmail.com">jiangwei</a>
  * @date 2021年5月13日
  */
-public class HttpApiLogStorageProvider implements LogStorageProvider {
+public class HttpApiLogStorageProvider extends AbstractStorageProvider {
 
 	@Value("${mendmix.actionlog.api.baseUrl}/actionlog/add")
 	private String addUrl;
@@ -56,6 +55,7 @@ public class HttpApiLogStorageProvider implements LogStorageProvider {
 
 	@Override
 	public void storage(ActionLog log) {
+		if(tryKafkaSend(log))return;
 		HttpRequestEntity.post(addUrl).body(log).useContext().execute();
 	}
 

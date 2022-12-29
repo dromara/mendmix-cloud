@@ -65,11 +65,14 @@ public class OauthEndpointController implements InitializingBean {
 		try {
 			OauthClient client = oauth2Configs.get(type);
 			CallbackResult callbackResult = client.validateRedirectRequest(request);
+			redirectUrl = callbackResult.getOrginUrl();
 			Map<String, Object> openUserInfo = client.exchange(request,callbackResult);
 			//
 			OauthNextResult<? extends AuthUser> oauthNextResult = oauthNextHandler.handle(type, openUserInfo);
 			//
-			redirectUrl = StringUtils.defaultString(oauthNextResult.getRedirectUrl(), callbackResult.getOrginUrl());
+			if(oauthNextResult.getRedirectUrl() != null) {
+				redirectUrl = oauthNextResult.getRedirectUrl();
+			}
 		    if(oauthNextResult.getUser() != null) {
 		    	UserSession session = SecurityDelegating.updateSession(oauthNextResult.getUser(), true);
 		    	redirectUrl = redirectUrl + (redirectUrl.contains("?") ? "&" : "?") + "sessionId" + session.getSessionId();
