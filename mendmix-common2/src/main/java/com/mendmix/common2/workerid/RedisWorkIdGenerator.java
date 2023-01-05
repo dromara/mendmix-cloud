@@ -80,14 +80,14 @@ public class RedisWorkIdGenerator implements WorkIdGenerator,SubTimerTask {
 					workId = 1;
 					logger.info("ZVOS-FRAMEWORK-TRACE-LOGGGING-->> init first workId:{}",workId);
 				}else {
-					for (String nodeId : nodeIds) {
+					nodeIds.stream().sorted().forEach(nodeId -> {
 						long lastHeartbeatTime = redisTemplate.opsForZSet().score(NODE_REGISTER_KEY, nodeId).longValue();
 						//节点已经下线
-						if(currentTime - lastHeartbeatTime > 60 * 1000) {
+						if(workId == 0 && currentTime - lastHeartbeatTime > INTERVAL * 3) {
 							workId = Integer.parseInt(nodeId);
 							logger.info("ZVOS-FRAMEWORK-TRACE-LOGGGING-->> init workId:{} use expired workId",workId);
 						}
-					}
+					});
 				}
 				if(workId == 0) {
 					workId = nodeIds.size() + 1;
