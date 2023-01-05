@@ -252,8 +252,10 @@ public class CacheHandler implements InterceptorHandler {
 			
 			if(nullPlaceholder){
 				cacheObject = new ArrayList<>(0);
-			}else if(cacheObject != null && !(cacheObject instanceof Collection)){						
-				cacheObject = Arrays.asList(cacheObject);
+			}else if(cacheObject != null && !(cacheObject instanceof Collection)){	
+				List<Object> tmpList = new ArrayList<>(1);
+				tmpList.add(cacheObject);
+				cacheObject = tmpList;
 			}
 			
 			return cacheObject;

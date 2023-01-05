@@ -25,6 +25,7 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
 
 import com.mendmix.common.model.PageParams;
+import com.mendmix.mybatis.crud.CrudMethods;
 import com.mendmix.mybatis.plugin.cache.QueryCacheMethodMetadata;
 import com.mendmix.mybatis.plugin.pagination.PageExecutor;
 import com.mendmix.mybatis.plugin.pagination.PaginationHandler;
@@ -40,6 +41,7 @@ public class InvocationVals {
 	private Object parameter;
 	private BoundSql boundSql;
 	private boolean select;
+	private boolean selectByPrimaryKey;
 	private String sql;
 	private boolean sqlRewrited;
 	
@@ -64,6 +66,7 @@ public class InvocationVals {
 		mapperNameSpace = mappedStatement.getId().substring(0, mappedStatement.getId().lastIndexOf(DOT));
 		//
 		if(select = mappedStatement.getSqlCommandType().equals(SqlCommandType.SELECT)) {
+			selectByPrimaryKey = mappedStatement.getId().endsWith(CrudMethods.selectByPrimaryKey.name());
 			this.pageParam = PageExecutor.getPageParams();
 			if(this.pageParam == null && PaginationHandler.pageMappedStatements.containsKey(mappedStatement.getId())) {
 				if(parameter instanceof Map){
@@ -154,6 +157,11 @@ public class InvocationVals {
 
 	public PageParams getPageParam() {
 		return pageParam;
+	}
+	
+
+	public boolean isSelectByPrimaryKey() {
+		return selectByPrimaryKey;
 	}
 
 	public boolean isSqlRewrited() {

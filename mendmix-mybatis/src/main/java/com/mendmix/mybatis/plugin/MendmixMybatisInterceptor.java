@@ -61,12 +61,14 @@ public class MendmixMybatisInterceptor implements Interceptor,DisposableBean{
 	private String groupName;
 	private List<InterceptorHandler> interceptorHandlers = new ArrayList<>();
 	
+	private SqlRewriteHandler sqlRewriteHandler;
+	
 	private static boolean cacheEnabled,rwRouteEnabled;
 	
 	public MendmixMybatisInterceptor(String groupName, String[] hanlderNames) {
 		this.groupName = groupName;
 		//
-		this.interceptorHandlers.add(new SqlRewriteHandler());
+		this.interceptorHandlers.add(sqlRewriteHandler = new SqlRewriteHandler());
 		this.interceptorHandlers.add(new AutoFieldFillHandler());
 		this.interceptorHandlers.add(new PaginationHandler());
 		
@@ -109,37 +111,52 @@ public class MendmixMybatisInterceptor implements Interceptor,DisposableBean{
 
 	@Override
 	public Object intercept(Invocation invocation) throws Throwable {
-		
+
 		InvocationVals invocationVal = new InvocationVals(invocation);
-		
+
 		Object result = null;
 		boolean cacheHited = false;
-		try {
-			for (InterceptorHandler handler : interceptorHandlers) {
-				result = handler.onInterceptor(invocationVal);
-				if(result != null) {
-					cacheHited = handler.getClass() == CacheHandler.class;
-					break;
-				}
-			}
-			
-			if(result == null){
-				result = invocation.proceed();
-			}
 
-			return result;
-		} finally {
-			for (InterceptorHandler handler : interceptorHandlers) {
-				if(cacheHited && handler.getClass() == CacheHandler.class)continue;
-				try {					
-					handler.onFinished(invocationVal,result);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+		for (InterceptorHandler handler : interceptorHandlers) {
+			result = handler.onInterceptor(invocationVal);
+			if (result != null) {
+				cacheHited = handler.getClass() == CacheHandler.class;
+				break;
 			}
 		}
-		
-	}
+
+		if (result == null) {
+			result = invocation.proceed();
+		}
+
+		//
+		for (InterceptorHandler handler : interceptorHandlers) {
+			if (cacheHited && handler.getClass() == CacheHandler.class)
+				continue;
+			try {
+				handler.onFinished(invocationVal, result);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		// 按主键查询权限过滤
+		if (result != null && invocationVal.isSelectByPrimaryKey() && !invocationVal.isSqlRewrited()
+				&& sqlRewriteHandler != null) {
+			try {
+				@SuppressWarnings("unchecked")
+				List<Object> asList = (List<Object>) result;
+				if (!asList.isEmpty() && !sqlRewriteHandler.matchRewriteStrategy(invocationVal, asList.get(0))) {
+					asList.clear();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		return result;
+	} 
+
 
 	@Override
 	public Object plugin(Object target) {

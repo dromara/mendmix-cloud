@@ -43,13 +43,13 @@ import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.model.OrderBy;
 import com.mendmix.common.model.OrderBy.OrderType;
 import com.mendmix.common.model.PageParams;
+import com.mendmix.common.util.CachingFieldUtils;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.common.util.StringConverter;
 import com.mendmix.mybatis.MybatisConfigs;
 import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.core.InterceptorHandler;
-import com.mendmix.mybatis.crud.CrudMethods;
 import com.mendmix.mybatis.metadata.ColumnMetadata;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
@@ -231,8 +231,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	public Object onInterceptor(InvocationVals invocation) throws Throwable {
 		if(!invocation.isSelect())return null;
 		SqlRewriteStrategy rewriteStrategy = MybatisRuntimeContext.getSqlRewriteStrategy();
-		if(rewriteStrategy.getRewritedTableMapping() == null 
-				&& invocation.getMappedStatement().getId().endsWith(CrudMethods.selectByPrimaryKey.name())) {
+		if(rewriteStrategy.getRewritedTableMapping() == null && invocation.isSelectByPrimaryKey()) {
 			return null;
 		}
 		
@@ -636,6 +635,49 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			alias = globalDataPermColumnMappings.get(column);
 		}
 		return StringUtils.defaultString(alias, StringConverter.toCamelCase(column));
+	}
+	
+	public boolean matchRewriteStrategy(InvocationVals invocationVal,Object result) {
+		MapperMetadata meta = MybatisMapperParser.getMapperMetadata(invocationVal.getMapperNameSpace());
+		if(meta == null)return true;
+		try {
+			//租户判断
+			String tenantId = CurrentRuntimeContext.getTenantId();
+			if(tenantId != null 
+					&& tenantPropName != null 
+					&& !matchFieldValue(meta, result, tenantPropName, tenantId)) {
+				return false;
+			}
+			//软删除
+			if(softDeletePropName != null 
+					&& !MybatisRuntimeContext.getSqlRewriteStrategy().isIgnoreSoftDelete()
+					&& !matchFieldValue(meta, result, softDeletePropName, softDeleteFalseValue,Boolean.FALSE.toString())) {
+				return false;
+			}
+			//TODO 数据权限
+			
+		} catch (Exception e) {
+			logger.error("matchRewriteStrategy_error",e);
+			return true;
+		}
+		
+		return true;
+	}
+	
+	private boolean matchFieldValue(MapperMetadata mapperMeta,Object object,String fieldName,String...expectValues) {
+		Object actualValue;
+		if(mapperMeta.getPropToColumnMappings().containsKey(fieldName)) {
+			actualValue = CachingFieldUtils.readField(object, fieldName);
+			if(actualValue == null) {
+				return true;
+			}
+			for (String val : expectValues) {
+				if(StringUtils.equals(val, actualValue.toString())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 
