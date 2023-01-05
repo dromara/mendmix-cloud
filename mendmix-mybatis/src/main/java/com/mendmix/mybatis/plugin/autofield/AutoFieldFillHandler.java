@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.guid.GUID;
+import com.mendmix.common.util.CachingFieldUtils;
 import com.mendmix.mybatis.MybatisConfigs;
 import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.core.BaseEntity;
@@ -238,32 +239,12 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 		}
 	}
 	
-	private Object readFieldValue(final Object target, final String fieldName) {
-		Field field;
-		try {
-			Class<?> clazz = target.getClass();
-			field = FieldUtils.getDeclaredField(clazz, fieldName, true);
-			while(field == null && clazz.getSuperclass() != null) {
-				clazz = clazz.getSuperclass();
-				field = FieldUtils.getDeclaredField(clazz, fieldName, true);
-			}
-			if(field == null)return null;
-			return field.get(target);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 	
 	private void setDynaFieldValues(Object entity) {
 		Map<String, String> dynaValueMap = tryGetDynaAttrValues(entity);
 		if(dynaValueMap != null) {
 			dynaValueMap.forEach( (k,v) -> {
-				try {
-					FieldUtils.writeDeclaredField(entity, k, v, true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				CachingFieldUtils.writeField(entity, k, v);
 			} );
 		}
 	}
@@ -278,7 +259,7 @@ public class AutoFieldFillHandler implements InterceptorHandler {
 		String key;
 		Map<String, String> dynaValueMap;
 		//
-		Object id = readFieldValue(parameter, "id");
+		Object id = CachingFieldUtils.readField(parameter, "id");
 		if(id != null) {
 			key = String.format(ATTR_VALUE_CONTEXT_NAME, entityClass.getSimpleName(),id);
 			dynaValueMap = ThreadLocalContext.get(key);

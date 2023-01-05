@@ -39,7 +39,6 @@ import javax.persistence.Table;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
@@ -54,6 +53,7 @@ import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.model.AuthUser;
+import com.mendmix.common.util.CachingFieldUtils;
 import com.mendmix.common.util.DigestUtils;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.ReflectUtils;
@@ -493,7 +493,7 @@ public class CacheHandler implements InterceptorHandler {
 			String[] subs = StringUtils.split(property, GlobalConstants.DOT,2);
 			return getParameterItemValue(map.get(subs[0]), subs[1]);
 		}else {
-			return FieldUtils.readDeclaredField(parameter, property,true);
+			return CachingFieldUtils.readField(parameter, property);
 		}
 	}
 	

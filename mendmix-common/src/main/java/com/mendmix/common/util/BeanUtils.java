@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 
 /**
  * Bean复制<br>
@@ -467,7 +466,7 @@ public class BeanUtils {
     */
 	private static Class<?> getGenericType(Class<?> objectClass, String fieldName) {
 		try {
-			Field field = FieldUtils.getDeclaredField(objectClass, fieldName, true);
+			Field field = CachingFieldUtils.getField(objectClass, fieldName);
 			Type genericType = field.getGenericType();
 			if (null == genericType) {
 				return null;
