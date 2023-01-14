@@ -121,7 +121,7 @@ public class JobContext {
 	
 	public boolean matchCurrentNode(Object shardFactor){
 		if(activeNodes.size() == 1)return true;
-		String expectNodeId = hash.getAssignedRealNode(shardFactor);
+		String expectNodeId = hash.matchOneNode(shardFactor);
 		return expectNodeId.equals(getNodeId());
 	}
 	

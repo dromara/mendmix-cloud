@@ -38,7 +38,7 @@ public abstract class AbstractMultTenantJob extends AbstractJob{
 	private static final Logger logger = LoggerFactory.getLogger("com.mendmix.scheduler");
 	@Override
 	public boolean parallelEnabled() {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -48,7 +48,11 @@ public abstract class AbstractMultTenantJob extends AbstractJob{
 			doStandaloneDadaSourceJob(context);
 		}else{
 			for (String tenantId : tenantIds) {
-				logger.debug("MENDMIX-TRACE-LOGGGING-->> doStandaloneDadaSourceJob route to TenantId:{}",tenantId);
+				if(parallelEnabled() && !context.matchCurrentNode(tenantId)) {
+					logger.debug("MENDMIX-TRACE-LOGGGING-->> doStandaloneDadaSourceJob_{} notMatchCurrentNode for:{}",getJobName(),tenantId);
+					continue;
+				}
+				logger.debug("MENDMIX-TRACE-LOGGGING-->> doStandaloneDadaSourceJob_{} route to TenantId:{}",getJobName(),tenantId);
 				CurrentRuntimeContext.setTenantId(tenantId);
 				try {
 					doStandaloneDadaSourceJob(context);

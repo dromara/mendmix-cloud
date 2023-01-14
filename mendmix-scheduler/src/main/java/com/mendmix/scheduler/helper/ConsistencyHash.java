@@ -22,7 +22,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
+import com.mendmix.common.util.DigestUtils;
 import com.mendmix.scheduler.JobContext;
 
 /**
@@ -38,6 +40,9 @@ public class ConsistencyHash {
 
 	public void refresh(List<String> shards){
 		nodes.clear();
+		if(shards.size() > 1) {
+			shards = shards.stream().sorted().collect(Collectors.toList());
+		}
 		for (int i = 0; i < shards.size(); i++) {
 			String shardInfo = shards.get(i);
 			for (int j = 0; j < VIRTUAL_NUM; j++) {
@@ -53,9 +58,9 @@ public class ConsistencyHash {
 	 * @param factor
 	 * @return
 	 */
-	public String getAssignedRealNode(Object factor) {
+	public String matchOneNode(Object factor) {
 		if(nodes.size() <= 1)return JobContext.getContext().getNodeId();
-		Long key = hash(factor.toString());
+		Long key = hash(DigestUtils.md5(factor.toString()));
 		SortedMap<Long, String> tailMap = nodes.tailMap(key);
 		if (tailMap.isEmpty()) {
 			key = nodes.firstKey();
@@ -111,7 +116,7 @@ public class ConsistencyHash {
 		hash.refresh(new ArrayList<>(Arrays.asList("aa","bbbbbbbbbbb")));
 		
 		for (int i = 1; i < 11; i++) {
-			System.out.println(hash.getAssignedRealNode(i));
+			System.out.println(hash.matchOneNode(i));
 		}
 	}
 
