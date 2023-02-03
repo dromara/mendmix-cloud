@@ -70,7 +70,7 @@ public class DataSoureConfigHolder {
 	}
 	
 	public static boolean containsTenantConfig(String group){
-		if(getAllGroupConfigs().get(group).stream().anyMatch(o -> StringUtils.isNotBlank(o.getTenantId()))) {
+		if(getAllGroupConfigs().get(group).stream().anyMatch(o -> StringUtils.isNotBlank(o.getTenantKey()))) {
 			return true;
 		}
 		return false;
@@ -136,7 +136,7 @@ public class DataSoureConfigHolder {
 			if(item.startsWith("group")) {
 				config.setGroup(parseFieldValue(item));
 			}else if(item.startsWith("tenant")) {
-				config.setTenantId(parseFieldValue(item));
+				config.setTenantKey(parseFieldValue(item));
 			}else if(item.startsWith("slave")) {
 				String value = parseFieldValue(item);
 				if(value != null) {

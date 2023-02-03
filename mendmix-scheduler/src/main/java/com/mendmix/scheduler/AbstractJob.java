@@ -114,7 +114,7 @@ public abstract class AbstractJob implements DisposableBean{
 
 	public void execute() {
 		if(runing.get())return;
-		JobConfig schConf = JobContext.getContext().getRegistry().getConf(jobName,false);
+		JobConfig schConf = JobContext.getContext().getRegistry().getConf(jobName,true);
 		if (currentNodeIgnore(schConf))
 			return;
 

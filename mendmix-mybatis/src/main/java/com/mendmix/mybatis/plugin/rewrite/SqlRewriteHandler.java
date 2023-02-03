@@ -676,8 +676,9 @@ public class SqlRewriteHandler implements InterceptorHandler {
 					return true;
 				}
 			}
+			return false;
 		}
-		return false;
+		return true;
 	}
 
 

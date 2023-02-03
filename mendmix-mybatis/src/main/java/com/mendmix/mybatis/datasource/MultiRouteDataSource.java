@@ -61,7 +61,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 	private Map<String, DataSource> targetDataSources = new HashMap<>();
 
 	private String group;
-	private boolean dsKeyWithTenant = false;
+	private boolean schemaTenantMode = false;
 	//每个master对应slave数
 	private Map<String, RoundRobinSelecter> slaveNumSelecters = new HashMap<>();
 	
@@ -90,7 +90,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 
 	public MultiRouteDataSource(String group) {
 		this.group = group;
-		dsKeyWithTenant = MybatisConfigs.isSchameSharddingTenant(group);
+		schemaTenantMode = MybatisConfigs.isSchameSharddingTenant(group);
 	}
 
 	@Override
@@ -100,8 +100,8 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 		for (DataSourceConfig dataSourceConfig : dsConfigs) {			
 			registerRealDataSource(dataSourceConfig);
 			//
-			if(dataSourceConfig.getTenantId() != null) {				
-				GlobalRuntimeContext.addTenantId(dataSourceConfig.getTenantId());
+			if(dataSourceConfig.getTenantKey() != null) {				
+				GlobalRuntimeContext.addTenantId(dataSourceConfig.getTenantKey());
 			}
 		}
 
@@ -109,22 +109,26 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 			throw new IllegalArgumentException("Property 'targetDataSources' is required");
 		}
 		
-		logger.info("MENDMIX-TRACE-LOGGGING-->> init multiRouteDataSource[{}] finished -> dsKeyWithTenant:{}",group,dsKeyWithTenant);
+		logger.info("MENDMIX-TRACE-LOGGGING-->> init multiRouteDataSource[{}] finished -> dsKeyWithTenant:{}",group,schemaTenantMode);
 	}
 
 	private String currentDataSourceKey() {
 		DataSourceContextVals context = MybatisRuntimeContext.getDataSourceContextVals();
 		boolean useMaster = context.master == null ? true : context.master;
 		int index = 0;
-		String tenantId = dsKeyWithTenant ? context.tenantId : null;
-		if(dsKeyWithTenant && StringUtils.isBlank(tenantId)) {
+		String tenantId = schemaTenantMode ? context.tenantId : null;
+		if(schemaTenantMode && StringUtils.isBlank(tenantId)) {
 			throw new MendmixBaseException("Can't get [tentantId] from currentContext");
+		}
+		String tenantDatasourceKey = null;
+		if(tenantId != null) {
+			tenantDatasourceKey = routeTenantKeyResolver().resolve(tenantId);
 		}
 		if(!useMaster) {
 			if(slaveNumSelecters.isEmpty()) {
 				useMaster = true;
 			}else {
-				String subGroup = dsKeyWithTenant ? group + GlobalConstants.UNDER_LINE + tenantId : group;
+				String subGroup = schemaTenantMode ? group + GlobalConstants.UNDER_LINE + tenantDatasourceKey : group;
 				if(!slaveNumSelecters.containsKey(subGroup)) {
 					useMaster = true;
 				}else {
@@ -132,11 +136,7 @@ public class MultiRouteDataSource extends AbstractDataSource implements Applicat
 				}
 			}
 		}
-		
-		if(tenantId != null) {
-			tenantId = routeTenantKeyResolver().resolve(tenantId);
-		}
-		return DataSourceConfig.buildDataSourceKey(group, tenantId, useMaster, index);
+		return DataSourceConfig.buildDataSourceKey(group, tenantDatasourceKey, useMaster, index);
 	}
 
 	@Override

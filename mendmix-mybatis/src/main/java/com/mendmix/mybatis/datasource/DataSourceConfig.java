@@ -39,7 +39,7 @@ public class DataSourceConfig {
 	public static String DEFAULT_GROUP_NAME = "default";
 	
 	private String group = DEFAULT_GROUP_NAME;
-	private String tenantId;
+	private String tenantKey;
 	private String url;
 	private String username;
 	private String password;
@@ -69,12 +69,12 @@ public class DataSourceConfig {
 		this.group = group;
 	}
 
-	public String getTenantId() {
-		return tenantId;
+	public String getTenantKey() {
+		return tenantKey;
 	}
 
-	public void setTenantId(String tenantId) {
-		this.tenantId = tenantId;
+	public void setTenantKey(String tenantKey) {
+		this.tenantKey = tenantKey;
 	}
 
 	public String getUrl() {
@@ -206,7 +206,7 @@ public class DataSourceConfig {
 	}
 
 	public String dataSourceKey() {
-		return buildDataSourceKey(group, tenantId, master, index);
+		return buildDataSourceKey(group, tenantKey, master, index);
 	}
 	
 	public void validate() {
@@ -214,16 +214,16 @@ public class DataSourceConfig {
 			throw new MendmixBaseException("DataSourceConfig[url,username,password] is required");
 		}
 		//租户分库
-		if(StringUtils.isBlank(tenantId) && MybatisConfigs.isSchameSharddingTenant(group)) {
-			throw new MendmixBaseException("DataSourceConfig[tenantId] is required For SchameSharddingTenant");
+		if(StringUtils.isBlank(tenantKey) && MybatisConfigs.isSchameSharddingTenant(group)) {
+			throw new MendmixBaseException("DataSourceConfig[tenantKey] is required For SchameSharddingTenant");
 		}
 	}
 	
 	
-	public static String buildDataSourceKey(String group,String tenantId,boolean master,int index) {
+	public static String buildDataSourceKey(String group,String tenantKey,boolean master,int index) {
 		StringBuilder builder = new StringBuilder(group).append(GlobalConstants.UNDER_LINE);
-		if(tenantId != null) {
-			builder.append(tenantId).append(GlobalConstants.UNDER_LINE);
+		if(tenantKey != null) {
+			builder.append(tenantKey).append(GlobalConstants.UNDER_LINE);
 		}
 		builder.append(master ? MASTER_KEY : SLAVE_KEY).append(GlobalConstants.UNDER_LINE);
 		builder.append(index);
@@ -232,7 +232,7 @@ public class DataSourceConfig {
 	
 	@Override
 	public String toString() {
-		return "DataSourceConfig [group=" + group + ", tenantId=" + tenantId + ", url=" + url + ", username=" + username
+		return "DataSourceConfig [group=" + group + ", tenantKey=" + tenantKey + ", url=" + url + ", username=" + username
 				+ ", master=" + master + ", index=" + index + ", maxActive=" + maxActive + "]";
 	}
 	
