@@ -645,6 +645,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			String tenantId = CurrentRuntimeContext.getTenantId();
 			if(tenantId != null 
 					&& tenantPropName != null 
+					&& !MybatisRuntimeContext.getSqlRewriteStrategy().isIgnoreTenant()
 					&& !matchFieldValue(meta, result, tenantPropName, tenantId)) {
 				return false;
 			}

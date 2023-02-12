@@ -16,10 +16,11 @@
 package com.mendmix.mybatis.plugin.pagination;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +30,8 @@ import com.mendmix.mybatis.datasource.DatabaseType;
 
 public class PageSqlUtils {
 
+	private static final char PAIR_CLOSE_CHAR = ')';
+	private static final char PAIR_OPEN_CHAR = '(';
 	private static final String[] SQL_LINE_CHARS = new String[] { "\r", "\n", "\t" };
 	private static final String[] SQL_LINE_REPLACE_CHARS = new String[] { " ", " ", " " };
 
@@ -36,7 +39,7 @@ public class PageSqlUtils {
 
 	private static final String OFFSET_PLACEHOLDER = "#{offset}";
 
-	private static final String SQL_SELECT_PATTERN = "(select|SELECT).*?(?=from|FROM)";
+	private static final Pattern SQL_SELECT_PATTERN = Pattern.compile("(select|SELECT).*?(?=from|FROM)");
 
 	private static final String SQL_ORDER_PATTERN = "(order|ORDER)\\s+(by|BY)";
 
@@ -44,7 +47,11 @@ public class PageSqlUtils {
 
 	private static String[] unionKeys = new String[] { " UNION ", " union " };
 	//
-	private static List<Pattern> aggregationKeyPatterns = new ArrayList<>();
+	private static Pattern groupByPattern = Pattern.compile("\\s+GROUP\\s+BY\\s+",Pattern.CASE_INSENSITIVE);
+	private static List<Pattern> aggregationKeyPatterns = Arrays.asList(
+			Pattern.compile("(\\s+|,)(COUNT|MIN|MAX|SUM|AVG)\\(",Pattern.CASE_INSENSITIVE),	
+			Pattern.compile("(\\s+|,)DISTINCT",Pattern.CASE_INSENSITIVE)
+	);
 
 	private static Pattern nestSelectPattern = Pattern.compile("\\(\\s{0,}(select|SELECT)\\s+");
 
@@ -57,10 +64,6 @@ public class PageSqlUtils {
 				"select * from (select a1.*,rownum rn from (%s) a1 where rownum <=#{offset} + #{pageSize}) where rn>=#{offset}");
 		pageTemplates.put(DatabaseType.postgresql.name(), "%s limit #{pageSize} offset #{offset}");
 		pageTemplates.put(DatabaseType.h2.name(), "%s limit #{pageSize} offset #{offset}");
-		//
-		aggregationKeyPatterns.add(Pattern.compile("\\s+GROUP\\s+BY\\s+", Pattern.CASE_INSENSITIVE));
-		aggregationKeyPatterns.add(Pattern.compile("(\\s+|,)(COUNT|MIN|MAX|SUM|AVG)\\(", Pattern.CASE_INSENSITIVE));
-		aggregationKeyPatterns.add(Pattern.compile("(\\s+|,)DISTINCT", Pattern.CASE_INSENSITIVE));
 	}
 
 	public static String getLimitSQL(DatabaseType dbType, String sql) {
@@ -75,14 +78,52 @@ public class PageSqlUtils {
 
 	public static String getCountSql(String sql){
 		final String formatSql = StringUtils.replaceEach(sql, SQL_LINE_CHARS, SQL_LINE_REPLACE_CHARS);
-		if(StringUtils.containsAny(formatSql, unionKeys) 
-				|| aggregationKeyPatterns.stream().anyMatch(p -> p.matcher(formatSql).find())
-				|| nestSelectPattern.matcher(formatSql).find()) {
+		Matcher matcher = SQL_SELECT_PATTERN.matcher(formatSql);
+		matcher.find();
+		String selectHead = matcher.group();
+		//最外层包含聚合查询
+		boolean useWrapperMode = aggregationKeyPatterns.stream().anyMatch(p -> p.matcher(selectHead).find());
+		if(!useWrapperMode) {
+			//嵌套查询
+			if(nestSelectPattern.matcher(formatSql).find()) {
+				String innerSql = matchOutterParenthesesPair(formatSql.substring(selectHead.length()));
+				String outterSql = formatSql.replace(innerSql, StringUtils.EMPTY);
+				//最外层sql包含union或者group by
+				useWrapperMode = StringUtils.containsAny(outterSql, unionKeys) 
+						|| groupByPattern.matcher(outterSql).find();
+			}else {
+				useWrapperMode = groupByPattern.matcher(formatSql).find();
+			}
+			
+		}
+		if(useWrapperMode) {
 			return String.format(commonCountSqlTemplate, formatSql);
 		}else {
 			sql = formatSql.split(SQL_ORDER_PATTERN)[0];
-			return sql.replaceFirst(SQL_SELECT_PATTERN, SQL_COUNT_PREFIX);
+			return StringUtils.replaceOnce(sql, selectHead, SQL_COUNT_PREFIX);
 		}
+	}
+	
+	private static String matchOutterParenthesesPair(String content) {
+		char[] chars = content.toCharArray();
+        int start = -1;
+        int end  = -1;
+        int matchIndex = 0;
+        for (int i = 0; i < chars.length; i++) {
+        	if(chars[i] == PAIR_OPEN_CHAR) {
+        		if(start < 0) {
+        			start = i;
+        		}
+        		matchIndex++;
+        	}else if(chars[i] == PAIR_CLOSE_CHAR) {
+        		matchIndex--;
+        		if(matchIndex == 0) {
+        			end = i;
+        			break;
+        		}
+        	}
+		}
+        return content.substring(start,end + 1);
 	}
 
 	public static void main(String[] args) throws IOException {
