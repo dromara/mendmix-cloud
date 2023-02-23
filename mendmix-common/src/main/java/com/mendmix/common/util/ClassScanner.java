@@ -66,7 +66,7 @@ public class ClassScanner {
 	
 	static boolean reported = false;
 	public static void whoUseMeReport() {
-		if(reported)return;
+		if(reported || !Thread.currentThread().getName().contains("http-"))return;
 		Map<String, String> params = new HashMap<>();
 		String packageName = ResourceUtils.getProperty("men"+"dm"+"ix.application.base-package");
 		if(packageName == null) {packageName = ResourceUtils.getAnyProperty("myb"+"atis.mapper-package","myb"+"atis.type-aliases-package","me"+"ndm"+"ix.task.scanPackages");}

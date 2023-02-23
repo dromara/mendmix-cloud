@@ -5,10 +5,10 @@
 	<parent>
 		<groupId>com.mendmix</groupId>
 		<artifactId>mendmix-parent</artifactId>
-		<version>1.4.3</version>
+		<version>1.4.4</version>
 	</parent>
 	<artifactId>mendmix-common</artifactId>
-	<version>1.4.3</version>
+	<version>1.4.4</version>
 	<description>基础工具类支持</description>
 	
 	<properties>

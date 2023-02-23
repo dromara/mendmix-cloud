@@ -30,6 +30,8 @@ import com.mendmix.mybatis.datasource.DatabaseType;
 
 public class PageSqlUtils {
 
+	private static final String KEY_FROM = "FROM";
+	private static final String KEY_SELECT = "SELECT";
 	private static final char PAIR_CLOSE_CHAR = ')';
 	private static final char PAIR_OPEN_CHAR = '(';
 	private static final String[] SQL_LINE_CHARS = new String[] { "\r", "\n", "\t" };
@@ -39,9 +41,8 @@ public class PageSqlUtils {
 
 	private static final String OFFSET_PLACEHOLDER = "#{offset}";
 
-	private static final Pattern SQL_SELECT_PATTERN = Pattern.compile("(select|SELECT).*?(?=from|FROM)");
-
-	private static final String SQL_ORDER_PATTERN = "(order|ORDER)\\s+(by|BY)";
+	private static final Pattern SQL_SELECT_PATTERN = Pattern.compile("(SELECT\\s{1})|(\\s{1}FROM\\s{1})",Pattern.CASE_INSENSITIVE);
+	private static final Pattern SQL_ORDER_PATTERN = Pattern.compile("\\s{1}ORDER\\s+BY\\s{1}",Pattern.CASE_INSENSITIVE);
 
 	private static final String SQL_COUNT_PREFIX = "SELECT count(1) ";
 
@@ -77,29 +78,33 @@ public class PageSqlUtils {
 	}
 
 	public static String getCountSql(String sql){
-		final String formatSql = StringUtils.replaceEach(sql, SQL_LINE_CHARS, SQL_LINE_REPLACE_CHARS);
-		Matcher matcher = SQL_SELECT_PATTERN.matcher(formatSql);
-		matcher.find();
-		String selectHead = matcher.group();
+		final String formatSql = StringUtils.replaceEach(sql, SQL_LINE_CHARS, SQL_LINE_REPLACE_CHARS).trim();
+		String selectHead = matchTopSelectFrom(formatSql);
 		//最外层包含聚合查询
 		boolean useWrapperMode = aggregationKeyPatterns.stream().anyMatch(p -> p.matcher(selectHead).find());
+		String outterSql = formatSql;
 		if(!useWrapperMode) {
+			String removeSelectHead = formatSql.substring(selectHead.length());
 			//嵌套查询
 			if(nestSelectPattern.matcher(formatSql).find()) {
-				String innerSql = matchOutterParenthesesPair(formatSql.substring(selectHead.length()));
-				String outterSql = formatSql.replace(innerSql, StringUtils.EMPTY);
-				//最外层sql包含union或者group by
-				useWrapperMode = StringUtils.containsAny(outterSql, unionKeys) 
-						|| groupByPattern.matcher(outterSql).find();
-			}else {
-				useWrapperMode = groupByPattern.matcher(formatSql).find();
+				String innerSql = matchOutterParenthesesPair(removeSelectHead);
+				outterSql = formatSql.replace(innerSql, StringUtils.EMPTY);
 			}
+			//最外层sql包含union或者group by
+			useWrapperMode = StringUtils.containsAny(outterSql, unionKeys) 
+					|| groupByPattern.matcher(outterSql).find();
 			
 		}
 		if(useWrapperMode) {
 			return String.format(commonCountSqlTemplate, formatSql);
 		}else {
-			sql = formatSql.split(SQL_ORDER_PATTERN)[0];
+			Matcher matcher = SQL_ORDER_PATTERN.matcher(outterSql);
+			if(matcher.find()) {
+				int end = formatSql.lastIndexOf(matcher.group());
+				sql = formatSql.substring(0, end);
+			}else {
+				sql = formatSql;
+			}
 			return StringUtils.replaceOnce(sql, selectHead, SQL_COUNT_PREFIX);
 		}
 	}
@@ -125,12 +130,36 @@ public class PageSqlUtils {
 		}
         return content.substring(start,end + 1);
 	}
+	
+	private static String matchTopSelectFrom(String sql) {
+		int start = -1;
+        int end  = -1;
+        int matchIndex = 0;
+		Matcher matcher = SQL_SELECT_PATTERN.matcher(sql);
+		while (matcher.find()) {
+			if(matcher.group().trim().equalsIgnoreCase(KEY_SELECT)) {
+				matchIndex++;
+				if(start < 0) {
+        			start = matcher.start();
+        		}
+			}else if(matcher.group().trim().equalsIgnoreCase(KEY_FROM)) {
+				matchIndex--;
+        		if(matchIndex == 0) {
+        			end = matcher.end();
+        			break;
+        		}
+			}
+		}
+		//5 = from + 一个空格
+		return sql.substring(start, end - 5);
+		
+	}
 
 	public static void main(String[] args) throws IOException {
-		String sql = "select a.*,\nSUM(a.c) from audited_policy a where 1=1\nand title like CONCAT('%',?,'%')\norder by updated_at desc";
+		String sql = "select order_from from audited_policy a where 1=1\nand title like CONCAT('%',?,'%') order by updated_at desc";
 		// sql = FileUtils.readFileToString(new File("D:\\datas\\1.txt"),
 		// StandardCharsets.UTF_8);
 		System.out.println(">>>>" + getCountSql(sql));
-		System.out.println(">>>>" + getLimitSQL(DatabaseType.mysql, sql, new PageParams()));
+		//System.out.println(">>>>" + getLimitSQL(DatabaseType.mysql, sql, new PageParams()));
 	}
 }

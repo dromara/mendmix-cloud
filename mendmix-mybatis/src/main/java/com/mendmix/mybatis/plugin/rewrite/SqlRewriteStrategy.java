@@ -1,8 +1,13 @@
 package com.mendmix.mybatis.plugin.rewrite;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.constants.ContextKeys;
 import com.mendmix.mybatis.plugin.rewrite.annotation.DataPermission;
@@ -30,6 +35,8 @@ public class SqlRewriteStrategy {
 	
 	private boolean handleJoin = true; 
 	
+	private boolean handleOwner = true;
+	
 	private Map<String, String> rewritedTableMapping;
 	
 	private Map<String, TablePermissionStrategy> tableStrategies;
@@ -37,6 +44,7 @@ public class SqlRewriteStrategy {
 	public void setDataPermission(DataPermission annotation) {
 		ignoreColumnPerm = annotation.ignore();
 		handleJoin = annotation.handleJoin();
+		handleOwner = annotation.handleOwner();
 		if(annotation.strategy().length > 0) {
 			allMatch = false;
 			tableStrategies = new HashMap<>(annotation.strategy().length);
@@ -107,8 +115,8 @@ public class SqlRewriteStrategy {
 	}
 	
 	public boolean handleOwner(String table) {
-		if(allMatch)return allMatch;
-		return tableStrategies.containsKey(table) ? getTableStrategy(table).handleOwner() : true;
+		if(allMatch)return handleOwner;
+		return hasTableStrategy(table) ? getTableStrategy(table).handleOwner() : true;
 	}
 
 	public boolean isHandleJoin() {
@@ -121,6 +129,23 @@ public class SqlRewriteStrategy {
 
 	public void setRewritedTableMapping(Map<String, String> rewritedTables) {
 		this.rewritedTableMapping = rewritedTables;
+	}
+	
+	public List<List<ConditionPair>> getOrRelationColumns(String table){
+		if(tableStrategies == null || !tableStrategies.containsKey(table))return null;
+		String[] relations = tableStrategies.get(table).orRelations();
+		List<List<ConditionPair>> result = new ArrayList<>(relations.length);
+		String[] columns;
+		List<ConditionPair> conditions;
+        for (String rel : relations) {
+        	columns = StringUtils.split(rel, GlobalConstants.COMMA);
+        	conditions = new ArrayList<>(columns.length);
+            for (String column : columns) {
+            	conditions.add(new ConditionPair(column, null));
+			}
+        	result.add(conditions);
+		}
+        return result;
 	}
 	
 }

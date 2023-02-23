@@ -265,7 +265,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			List<ParameterMapping> parameterMappings = invocation.getBoundSql().getParameterMappings();
 			BoundSql newBoundSql = new BoundSql(mappedStatement.getConfiguration(), invocation.getSql(),parameterMappings, invocation.getParameter());
 			//
-			copyForeachAdditionlParams(invocation.getBoundSql(), newBoundSql);
+			copyAdditionlParameters(invocation.getBoundSql(), newBoundSql);
 			
 			CacheKey cacheKey = executor.createCacheKey(mappedStatement, invocation.getParameter(), RowBounds.DEFAULT, newBoundSql);
 
@@ -274,23 +274,23 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 	}
 	
-   public static void copyForeachAdditionlParams(BoundSql originBoundSql, BoundSql newBoundSql) {
-		
+   public static void copyAdditionlParameters(BoundSql originBoundSql, BoundSql newBoundSql) {
 		List<ParameterMapping> parameterMappings = originBoundSql.getParameterMappings();
-		
 		Object additionalParamVal;
 		int itemIndex = 0;
+		String indexParamName;
 		for (ParameterMapping parameterMapping : parameterMappings) {
-			if(!parameterMapping.getProperty().startsWith(FRCH_PREFIX)) {
+			additionalParamVal = originBoundSql.getAdditionalParameter(parameterMapping.getProperty());
+			if(additionalParamVal == null) {
 				continue;
 			}
-			if(originBoundSql.hasAdditionalParameter(parameterMapping.getProperty())) {
-				additionalParamVal = originBoundSql.getAdditionalParameter(parameterMapping.getProperty());
-				newBoundSql.setAdditionalParameter(parameterMapping.getProperty(), additionalParamVal);
-				if(parameterMapping.getProperty().startsWith(FRCH_ITEM_PREFIX)) {
-					newBoundSql.setAdditionalParameter(FRCH_INDEX_PREFIX + itemIndex, itemIndex);
-					itemIndex++;
+			newBoundSql.setAdditionalParameter(parameterMapping.getProperty(), additionalParamVal);
+			if(parameterMapping.getProperty().startsWith(FRCH_ITEM_PREFIX)) {
+				indexParamName = FRCH_INDEX_PREFIX + itemIndex;
+				if(!newBoundSql.hasAdditionalParameter(indexParamName)) {					
+					newBoundSql.setAdditionalParameter(indexParamName, itemIndex);
 				}
+				itemIndex++;
 			}
 		}
 	}
@@ -452,6 +452,9 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			return whereExpression;
 		}
 		
+		//定义的or条件列
+		List<List<ConditionPair>> orConditionGroups = strategy == null ? null : strategy.getOrRelationColumns(table.getName());
+		
 		Expression permExpression = null;
 		String column;
 		String[] values;
@@ -459,6 +462,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		boolean withSoftDelete = false;
 		boolean withPermission = false;
 		String currentTenantId = null;
+		ConditionPair condition;
 		for (String fieldName : fieldNames) {
 			if(fieldName.equals(softDeletePropName)) {
 				withSoftDelete = true;
@@ -469,22 +473,30 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				currentTenantId = CurrentRuntimeContext.getTenantId();
 				if(currentTenantId == null)throw new MendmixBaseException("无法获取当前租户ID");
 				values = new String[] {currentTenantId};
+				condition = new ConditionPair(column, values);
 			}else {
 				if(dataMapping == null || !dataMapping.containsKey(fieldName))continue;
 				column = columnMapping.get(fieldName);
 				values = dataMapping.get(fieldName);
+				if(orConditionGroups == null) {
+					condition = new ConditionPair(column, values);
+				}else {
+					boolean matched = false;
+					conditionLoop:for (List<ConditionPair> conditions : orConditionGroups) {
+						for (ConditionPair pair : conditions) {
+							if(matched = column.equals(pair.getColumn())) {
+								pair.setValues(values);
+								break conditionLoop;
+							}
+						}
+					}
+					condition = matched ? null : new ConditionPair(column, values);
+				}
 				//
 				if(!withPermission)withPermission = true;
 			}
-			//如果某个匹配字段为空构造一个特殊的不等于条件
-			if(values == null || values.length == 0) {
-				EqualsTo equalsTo = new EqualsTo();
-				equalsTo.setLeftExpression(new Column(table, column));
-				equalsTo.setRightExpression(new StringValue("__DATA_PERMISSION_NULL__"));
-				permExpression = equalsTo;
-				//break; 后面条件不处理 ，mybatis占位符可以出错
-			}else {
-				permExpression = handleColumnDataPermCondition(table, permExpression, column,values);
+			if(condition != null) {
+				permExpression = handleColumnDataPermCondition(table, permExpression, condition);
 			}
 			
 			if(logger.isTraceEnabled()) {
@@ -492,8 +504,15 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 		}
 		
+		//
+		if(orConditionGroups != null) {
+			for (List<ConditionPair> conditions : orConditionGroups) {
+				permExpression = handleColumnDataPermCondition(table, permExpression, conditions);
+			}
+		}
+		
 		//当前创建人
-		if(withPermission && ownerColumnName != null && strategy.handleOwner(table.getName())) {
+		if(withPermission && ownerColumnName != null && strategy != null && strategy.handleOwner(table.getName())) {
 			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
 			if(currentUser != null) {
 				Expression createdByExpr;
@@ -508,7 +527,12 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				}else {
 					createdByExpr = userEquals;
 				}
-				permExpression = permExpression == null ? createdByExpr : new OrExpression(new Parenthesis(permExpression), createdByExpr);
+				//无其他字段数据权限：租户 AND 创建人
+				if(permExpression == null || !withPermission) {
+					permExpression = createdByExpr;
+				}else {//有其他字段数据权限：(租户 AND 数据权限) OR (租户 AND 创建人)
+					permExpression = new OrExpression(new Parenthesis(permExpression), createdByExpr);
+				}
 			}
 		}
 		//原查询条件
@@ -528,10 +552,19 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		return whereExpression;
 	}
 
-	
-	private  Expression handleColumnDataPermCondition(Table table,Expression orginExpression,String columnName,String[] values){
+	private  Expression handleColumnDataPermCondition(Table table
+			,Expression orginExpression
+			,ConditionPair condition){
+		Column column = new Column(table, condition.getColumn());
+		String[] values = condition.getValues();
+		//为空直接返回一个不成立的查询条件
+		if(values == null || values.length == 0) {
+			EqualsTo equalsTo = new EqualsTo();
+			equalsTo.setLeftExpression(column);
+			equalsTo.setRightExpression(new StringValue("__DATA_PERMISSION_NULL__"));
+			return equalsTo;
+		}
 		Expression newExpression = orginExpression;
-		Column column = new Column(table, columnName);
 		if (values.length == 1) {
 			BinaryExpression expression;
 			if(values[0].endsWith(QUERY_FUZZY_CHAR)) {
@@ -543,17 +576,16 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				expression.setLeftExpression(column);
 				expression.setRightExpression(new StringValue(values[0]));
 			}
-
 			if(orginExpression == null) {
 				newExpression = expression;
 			}else {
-				if(columnName.equalsIgnoreCase(softDeleteColumnName)) {
+				if(condition.getColumn().equalsIgnoreCase(softDeleteColumnName)) {
 					newExpression = new AndExpression(orginExpression,expression);
 				}else {
 					newExpression = new AndExpression(expression,orginExpression);
 				}
 			}
-		} else {
+		} else if (values.length > 1){
 			ExpressionList expressionList = new ExpressionList(new ArrayList<>(values.length));
 			for (String value : values) {
 				expressionList.getExpressions().add(new StringValue(value));
@@ -562,6 +594,58 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			newExpression = orginExpression == null ? inExpression : new AndExpression(orginExpression,inExpression);
 		}
 		
+		return newExpression;
+	}
+	
+	private  Expression handleColumnDataPermCondition(Table table
+			,Expression orginExpression
+			,List<ConditionPair> orConditions){
+		
+		Expression groupExpression = null;
+		Column column = null;
+		String[] values;
+		Expression expression;
+		int orCount = 0;
+		for (ConditionPair condition : orConditions) {
+			values = condition.getValues();
+			if(values == null || values.length == 0) {
+				continue;
+			}
+			column = new Column(table, condition.getColumn());
+			if (condition.getValues().length == 1) {
+				EqualsTo equalsExpr = new EqualsTo();
+				equalsExpr.setLeftExpression(column);
+				equalsExpr.setRightExpression(new StringValue(values[0]));
+				expression = equalsExpr;
+			}else {
+				ExpressionList expressionList = new ExpressionList(new ArrayList<>(values.length));
+				for (String value : values) {
+					expressionList.getExpressions().add(new StringValue(value));
+				}
+				expression = new InExpression(column, expressionList);
+			}
+			groupExpression = groupExpression == null ? expression : new OrExpression(groupExpression, expression);
+			orCount++;
+		}
+		//未满足任何条件，直接返回一个不成立的查询条件
+		if(orCount == 0) {
+			EqualsTo equalsTo = new EqualsTo();
+			equalsTo.setLeftExpression(column);
+			equalsTo.setRightExpression(new StringValue("__DATA_PERMISSION_NULL__"));
+			return equalsTo;
+		}
+		//
+		if(orCount > 1) {
+			groupExpression = new Parenthesis(groupExpression);
+		}
+		
+		Expression newExpression = orginExpression;
+		if(newExpression == null) {
+			newExpression = groupExpression;
+		}else if(orCount > 1) {
+			newExpression = new AndExpression(newExpression,groupExpression);
+		}
+	
 		return newExpression;
 	}
 	

@@ -12,4 +12,5 @@ public @interface TablePermissionStrategy {
 	String table();
 	String[] columns() default {};
 	boolean handleOwner() default true;
+	String[] orRelations() default {}; //["a,b","c,d,e"]
 }

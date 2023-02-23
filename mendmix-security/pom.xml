@@ -5,10 +5,10 @@
 	<parent>
 		<groupId>com.mendmix</groupId>
 		<artifactId>mendmix-parent</artifactId>
-		<version>1.4.3</version>
+		<version>1.4.4</version>
 	</parent>
 	<artifactId>mendmix-security</artifactId>
-	<version>1.4.3</version>
+	<version>1.4.4</version>
 
 
 	<dependencies>

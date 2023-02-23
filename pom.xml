@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.mendmix</groupId>
 	<artifactId>mendmix-parent</artifactId>
-	<version>1.4.3</version>
+	<version>1.4.4</version>
 	<packaging>pom</packaging>
 	<name>mendmix</name>
 	<description>mendmix分布式云原生架构技术底座</description>
@@ -49,7 +49,7 @@
          scm:git:https://github.com/dromara/mendmix.git
       </developerConnection>
 		<url>https://github.com/dromara/mendmix</url>
-		<tag>1.4.2</tag>
+		<tag>1.4.4</tag>
 	</scm>
 
 	<properties>

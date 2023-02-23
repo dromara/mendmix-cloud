@@ -5,10 +5,10 @@
 	<parent>
 		<groupId>com.mendmix</groupId>
 	    <artifactId>mendmix-parent</artifactId>
-	    <version>1.4.3</version>
+	    <version>1.4.4</version>
 	</parent>
 	<artifactId>mendmix-amqp-adapter</artifactId>
-	<version>1.4.3</version>
+	<version>1.4.4</version>
 	<description>MQ适配器，支持各种云厂商云MQ，已经原生kafka,RocketMQ,RabbitMQ等</description>
 
 	<dependencies>
