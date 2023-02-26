@@ -50,9 +50,8 @@ public class MybatisConfigs {
 	public static final String INTERCEPTOR_HANDLERCLASS = "mendmix.mybatis.interceptorHandlerClass";
 	public static final String SOFT_DELETE_COLUMN_NAME = "mendmix.mybatis.softDelete.columnName";
 	public static final String SOFT_DELETE_FALSE_VALUE = "mendmix.mybatis.softDelete.falseValue";
-	public static final String OWNER_COLUMN_NAME = "mendmix.mybatis.createBy.columnName";
+	public static final String CREATED_BY_COLUMN_NAME = "mendmix.mybatis.createBy.columnName";
 	public static final String DEPT_COLUMN_NAME = "mendmix.mybatis.department.columnName";
-	public static final String ORG_BASE_PERM_KEY = "mendmix.mybatis.currentOrgPermKey";
 	
 	public static final boolean DATA_PERM_ALL_MATCH_MODE_ENABLED = ResourceUtils.getBoolean("application.mybatis.dataPermssion.allMatchMode.enabled",true);
 	
@@ -67,7 +66,12 @@ public class MybatisConfigs {
 				MybatisConfigs.addProperties(group, ResourceUtils.getAllProperties(prefix));
 			}
 		}
-		return groupProperties.get(group).getProperty(key, defaultValue);
+		String value = groupProperties.get(group).getProperty(key);
+		if(value == null) {
+			value = ResourceUtils.getProperty(key);
+		}
+		
+		return org.apache.commons.lang3.StringUtils.defaultString(value, defaultValue);
 	}
 	
 	private static void addProperties(String group,Properties properties){
@@ -112,12 +116,8 @@ public class MybatisConfigs {
 		return getProperty(group,SOFT_DELETE_FALSE_VALUE,"0");
 	}
 	
-	public static String getCurrentOrgPermKey(String group){
-		return getProperty(group,ORG_BASE_PERM_KEY, "organization");
-	}
-	
-	public static String getOwnerColumnName(String group) {
-		return getProperty(group,OWNER_COLUMN_NAME,null);
+	public static String getCreatedByColumnName(String group) {
+		return getProperty(group,CREATED_BY_COLUMN_NAME,null);
 	}
 	
 	public static String getDeptColumnName(String group) {

@@ -104,12 +104,17 @@ public class SqlRewriteStrategy {
 		this.handleOrderBy = handleOrderBy;
 	}
 
+	public void setHandleOwner(boolean handleOwner) {
+		this.handleOwner = handleOwner;
+	}
+
 	public TablePermissionStrategy getTableStrategy(String table) {
 		if(tableStrategies == null)return null;
 		return tableStrategies.get(table);
 	}
 	
 	public boolean hasTableStrategy(String table) {
+		if(allMatch)return true;
 		if(tableStrategies == null)return false;
 		return tableStrategies.containsKey(table);
 	}

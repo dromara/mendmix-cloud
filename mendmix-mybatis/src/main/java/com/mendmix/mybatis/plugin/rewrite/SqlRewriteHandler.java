@@ -18,6 +18,7 @@ package com.mendmix.mybatis.plugin.rewrite;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,9 +53,11 @@ import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.core.InterceptorHandler;
 import com.mendmix.mybatis.metadata.ColumnMetadata;
 import com.mendmix.mybatis.metadata.MapperMetadata;
+import com.mendmix.mybatis.metadata.MetadataHelper;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
 import com.mendmix.mybatis.plugin.InvocationVals;
 import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
+import com.mendmix.spring.InstanceFactory;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.BinaryExpression;
@@ -113,11 +116,15 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private String tenantColumnName;
 	private String tenantPropName;
 	
-	private String orgBasePermKey;
+	private String specialPermKey; //  组织架构、数据owner
 	private String deptColumnName;
 	private String deptPropName;
-	private String ownerColumnName;
+	private String createdByColumnName;
+	private boolean defaultHandleOwner;
+	private boolean orgPermFullCodeMode;
 	private List<String> deptMappedStatements = new ArrayList<>();
+	
+	private OrganizationProvider organizationProvider;
 
 	@Override
 	public void start(MendmixMybatisInterceptor context) {
@@ -127,9 +134,12 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		softDeleteColumnName = MybatisConfigs.getSoftDeleteColumn(context.getGroupName());
 		softDeleteFalseValue = MybatisConfigs.getSoftDeletedFalseValue(context.getGroupName());
 		deptColumnName = MybatisConfigs.getDeptColumnName(context.getGroupName());
-		ownerColumnName = MybatisConfigs.getOwnerColumnName(context.getGroupName());
-		orgBasePermKey = MybatisConfigs.getCurrentOrgPermKey(context.getGroupName());
+		createdByColumnName = MybatisConfigs.getCreatedByColumnName(context.getGroupName());
+		specialPermKey = MybatisConfigs.getProperty(context.getGroupName(), "mendmix.mybatis.dataPermission.specialPermKey", "internalSpecPermKey");
 		
+		defaultHandleOwner = MybatisConfigs.getBoolean(context.getGroupName(),"mendmix.mybatis.dataPermission.defaultHandleOwner", createdByColumnName != null);
+		orgPermFullCodeMode = MybatisConfigs.getBoolean(context.getGroupName(),"mendmix.mybatis.dataPermission.orgPermFullCodeMode",false);
+				
 		final List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
 		if(dynaDataPermEnaled) {
 			Properties properties = ResourceUtils.getAllProperties("mendmix.mybatis.dataPermission.columns");
@@ -181,7 +191,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		StringBuilder logBuilder = new StringBuilder("MENDMIX-TRACE-LOGGGING-->> \nsqlRewrite rules:");
 		if(columnSharddingTenant)logBuilder.append("\n - tenantSharddingColumn:").append(tenantColumnName);
 		if(deptColumnName != null)logBuilder.append("\n - deptColumnName:").append(deptColumnName);
-		if(ownerColumnName != null)logBuilder.append("\n - createdByColumnName:").append(ownerColumnName);
+		if(createdByColumnName != null)logBuilder.append("\n - createdByColumnName:").append(createdByColumnName);
 		if(softDeleteColumnName != null)logBuilder.append("\n - softDeleteColumn:").append(softDeleteColumnName);
 		if(softDeleteFalseValue != null)logBuilder.append("\n - softDeleteFalseValue:").append(softDeleteFalseValue);
 		logBuilder.append("\n - globalDataPermColumnMappings:").append(globalDataPermColumnMappings);
@@ -281,7 +291,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		String indexParamName;
 		for (ParameterMapping parameterMapping : parameterMappings) {
 			additionalParamVal = originBoundSql.getAdditionalParameter(parameterMapping.getProperty());
-			if(additionalParamVal == null) {
+			if(additionalParamVal == null || newBoundSql.hasAdditionalParameter(parameterMapping.getProperty())) {
 				continue;
 			}
 			newBoundSql.setAdditionalParameter(parameterMapping.getProperty(), additionalParamVal);
@@ -307,24 +317,36 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		rewriteStrategy.setIgnoreTenant(!columnSharddingTenant || rewriteStrategy.isIgnoreTenant());
 
 		Map<String, String[]> dataPermValues = invocation.getDataPermValues();
-		if(dataPermValues != null && dataPermValues.containsKey(orgBasePermKey)) {
-			if(deptMappedStatements.contains(invocation.getMapperNameSpace()) 
+		//特殊的数据权限：组织机构、数据owner等
+		if(dataPermValues != null && dataPermValues.containsKey(specialPermKey)) {
+			String[] values = dataPermValues.remove(specialPermKey);
+			if(SpecialPermType.owner.name().equals(values[0])) {
+				MybatisRuntimeContext.getSqlRewriteStrategy().setHandleOwner(true);
+			}else if(deptMappedStatements.contains(invocation.getMapperNameSpace()) 
 					|| deptMappedStatements.contains(invocation.getMappedStatement().getId())) {
-				String departmentId = CurrentRuntimeContext.getAndValidateCurrentUser().getDeptId();
-				if(StringUtils.isBlank(departmentId)) {
-					throw new MendmixBaseException("当前登录用户部门ID为空");
-				}
-				//TODO 指定了其他部门？
-				String[] values = dataPermValues.get(orgBasePermKey);
-				if(values != null && values.length > 0) {
-					if("leaderView".equals(values[0])) {
-						dataPermValues.put(deptPropName, new String[] {departmentId + QUERY_FUZZY_CHAR});
-					}else {
-						dataPermValues.put(deptPropName, new String[] {departmentId});
+				String curtrentDepartment = getCurtrentDepartment();
+				if(curtrentDepartment != null) {
+					Set<String> valueList = new HashSet<>(values.length);
+					if(SpecialPermType.currentDept.name().equals(values[0])) {
+						valueList.add(curtrentDepartment);
+					}else if(SpecialPermType.currentAndSubDept.name().equals(values[0])) {
+						if(orgPermFullCodeMode) {
+							valueList.add(curtrentDepartment + "%");
+						}else {
+							List<String> subDepartmentIds = organizationProvider.subDepartments(curtrentDepartment);
+						    if(subDepartmentIds != null && !subDepartmentIds.isEmpty()) {
+						    	valueList.addAll(subDepartmentIds);
+						    }
+						}
+					}else if(SpecialPermType.allDept.name().equals(values[0])) {
+						//do nothing
 					}
-				}else {
-					dataPermValues.put(deptPropName, new String[] {departmentId});
+					//
+					if(!valueList.isEmpty()) {				
+						dataPermValues.put(deptPropName, valueList.toArray(new String[0]));
+					}
 				}
+				
 			}
 		}
 		
@@ -368,12 +390,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			FromItem fromItem = select.getFromItem();
 			if(fromItem instanceof Table) {
 				Table table = (Table) fromItem;
-				if(rewritedTableMapping == null && !strategy.isAllMatch() && !strategy.hasTableStrategy(table.getName())) {
-					return;
-				}
-				if(logger.isTraceEnabled()) {
-					logger.trace("_mybatis_sqlRewrite_trace processMainTable ->table:{}",table.getName());
-				}
+                //分表
 				if(rewritedTableMapping != null && rewritedTableMapping.containsKey(table.getName())) {
 					table.setName(rewritedTableMapping.get(table.getName()));
 					select.setFromItem(table);
@@ -428,7 +445,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private Expression handleTableDataPermission(Expression whereExpression,Table table,Map<String, String[]> dataMapping,SqlRewriteStrategy strategy,boolean isJoin) {
 		
 		Map<String, String> columnMapping = null;
-		boolean handleDataPerm = !isJoin || strategy.isHandleJoin() || strategy.hasTableStrategy(table.getName());
+		String[] userOwnerColumns = null; //当前用户关联的列
+		boolean handleDataPerm =  (!isJoin || strategy.isHandleJoin()) && strategy.hasTableStrategy(table.getName());	
 		if(handleDataPerm) {
 			if(!strategy.isAllMatch()) {
 				String[] columns = strategy.getTableStrategy(table.getName()).columns();
@@ -511,30 +529,32 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 		}
 		
-		//当前创建人
-		if(withPermission && ownerColumnName != null && strategy != null && strategy.handleOwner(table.getName())) {
-			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
-			if(currentUser != null) {
-				Expression createdByExpr;
-				EqualsTo userEquals = new EqualsTo();
-				userEquals.setLeftExpression(new Column(table, ownerColumnName));
-				userEquals.setRightExpression(new StringValue(currentUser.getId()));
-				if(currentTenantId != null) {
-					EqualsTo tenantEquals = new EqualsTo();
-					tenantEquals.setLeftExpression(new Column(table, tenantColumnName));
-					tenantEquals.setRightExpression(new StringValue(currentTenantId));
-					createdByExpr = new Parenthesis(new AndExpression(tenantEquals, userEquals));
-				}else {
-					createdByExpr = userEquals;
+		//数据owner
+				AuthUser currentUser = null;
+				if(dynaDataPermEnaled 
+						&& (currentUser = CurrentRuntimeContext.getCurrentUser()) != null 
+						&& ( (defaultHandleOwner && strategy == null) || (strategy != null && strategy.handleOwner(table.getName()) )
+				)) {
+					if(userOwnerColumns == null || userOwnerColumns.length == 0) {
+						userOwnerColumns = new String[] {createdByColumnName};
+					}
+					Expression userScopeExpression;
+					boolean ignoreExistExpression = !withPermission; //无其他权限时 permExpression 只有租户条件
+					for (String scopeColumn : userOwnerColumns) {
+						//不存在该列
+						if(!MetadataHelper.getTableColumnMappers(table.getName()).stream().anyMatch(o -> o.getColumn().equals(scopeColumn))) {
+							continue;
+						}
+						userScopeExpression = buildCurrentUserDataPermCondition(table, scopeColumn, currentUser, currentTenantId);
+						//无其他字段数据权限：租户 AND 数据owner
+						if(permExpression == null || ignoreExistExpression) {
+							permExpression = userScopeExpression;
+							ignoreExistExpression = false;
+						}else {//有其他字段数据权限：(租户 AND 数据权限) OR (租户 AND 数据owner)
+							permExpression = new OrExpression(new Parenthesis(permExpression), userScopeExpression);
+						}
+					}
 				}
-				//无其他字段数据权限：租户 AND 创建人
-				if(permExpression == null || !withPermission) {
-					permExpression = createdByExpr;
-				}else {//有其他字段数据权限：(租户 AND 数据权限) OR (租户 AND 创建人)
-					permExpression = new OrExpression(new Parenthesis(permExpression), createdByExpr);
-				}
-			}
-		}
 		//原查询条件
 		if(whereExpression == null) {
 			whereExpression = permExpression;
@@ -649,6 +669,22 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		return newExpression;
 	}
 	
+	private Expression buildCurrentUserDataPermCondition(Table table,String colomnName,AuthUser currentUser,String currentTenantId) {
+		Expression expression;
+		EqualsTo userEquals = new EqualsTo();
+		userEquals.setLeftExpression(new Column(table, colomnName));
+		userEquals.setRightExpression(new StringValue(currentUser.getId()));
+		if(currentTenantId != null) {
+			EqualsTo tenantEquals = new EqualsTo();
+			tenantEquals.setLeftExpression(new Column(table, tenantColumnName));
+			tenantEquals.setRightExpression(new StringValue(currentTenantId));
+			expression = new Parenthesis(new AndExpression(tenantEquals, userEquals));
+		}else {
+			expression = userEquals;
+		}
+		return expression;
+	}
+	
 	private void handleTableOrderBy(PlainSelect selectBody, Table table, InvocationVals invocation) {
 		PageParams pageParam = invocation.getPageParam();
 		if(pageParam == null || pageParam.getOrderBys() == null || pageParam.getOrderBys().isEmpty()) {
@@ -719,6 +755,12 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			alias = globalDataPermColumnMappings.get(column);
 		}
 		return StringUtils.defaultString(alias, StringConverter.toCamelCase(column));
+	}
+	
+	private String getCurtrentDepartment() {
+		if(organizationProvider != null)return organizationProvider.currentDepartment();
+		organizationProvider = InstanceFactory.getInstance(OrganizationProvider.class);
+		return organizationProvider == null ? null : organizationProvider.currentDepartment();
 	}
 	
 	public boolean matchRewriteStrategy(InvocationVals invocationVal,Object result) {
