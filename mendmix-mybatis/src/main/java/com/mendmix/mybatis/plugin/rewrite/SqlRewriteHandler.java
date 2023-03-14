@@ -95,8 +95,10 @@ import net.sf.jsqlparser.statement.select.UnionOp;
  */
 public class SqlRewriteHandler implements InterceptorHandler {
 
+
 	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.mybatis");
 
+	private static final String ARRAY_PARAM_START = "[";
 	public static final String FRCH_PREFIX = "__frch_";
 	private static final String FRCH_INDEX_PREFIX = "__frch_index_";
 	private static final String FRCH_ITEM_PREFIX = "__frch_item_";
@@ -145,8 +147,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			Properties properties = ResourceUtils.getAllProperties("mendmix.mybatis.dataPermission.columns");
 			properties.forEach( (k,v) -> {
 				String tableName = null;
-				if(k.toString().contains("[")) {
-					tableName = k.toString().substring(k.toString().indexOf("[") + 1).replace("]", "").trim();
+				if(k.toString().contains(ARRAY_PARAM_START)) {
+					tableName = k.toString().substring(k.toString().indexOf(ARRAY_PARAM_START) + 1).replace("]", "").trim();
 				}
 				buildTableDataPermColumnMapping(tableName, v.toString());
 				
@@ -290,8 +292,11 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		int itemIndex = 0;
 		String indexParamName;
 		for (ParameterMapping parameterMapping : parameterMappings) {
+			if(parameterMapping.getProperty().contains(ARRAY_PARAM_START)) {
+				continue;
+			}
 			additionalParamVal = originBoundSql.getAdditionalParameter(parameterMapping.getProperty());
-			if(additionalParamVal == null || newBoundSql.hasAdditionalParameter(parameterMapping.getProperty())) {
+			if(additionalParamVal == null) {
 				continue;
 			}
 			newBoundSql.setAdditionalParameter(parameterMapping.getProperty(), additionalParamVal);
@@ -530,31 +535,33 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 		
 		//数据owner
-				AuthUser currentUser = null;
-				if(dynaDataPermEnaled 
+		AuthUser currentUser = null;
+				if(withPermission 
 						&& (currentUser = CurrentRuntimeContext.getCurrentUser()) != null 
 						&& ( (defaultHandleOwner && strategy == null) || (strategy != null && strategy.handleOwner(table.getName()) )
 				)) {
-					if(userOwnerColumns == null || userOwnerColumns.length == 0) {
-						userOwnerColumns = new String[] {createdByColumnName};
-					}
-					Expression userScopeExpression;
-					boolean ignoreExistExpression = !withPermission; //无其他权限时 permExpression 只有租户条件
-					for (String scopeColumn : userOwnerColumns) {
-						//不存在该列
-						if(!MetadataHelper.getTableColumnMappers(table.getName()).stream().anyMatch(o -> o.getColumn().equals(scopeColumn))) {
-							continue;
-						}
-						userScopeExpression = buildCurrentUserDataPermCondition(table, scopeColumn, currentUser, currentTenantId);
-						//无其他字段数据权限：租户 AND 数据owner
-						if(permExpression == null || ignoreExistExpression) {
-							permExpression = userScopeExpression;
-							ignoreExistExpression = false;
-						}else {//有其他字段数据权限：(租户 AND 数据权限) OR (租户 AND 数据owner)
-							permExpression = new OrExpression(new Parenthesis(permExpression), userScopeExpression);
-						}
-					}
+			if (userOwnerColumns == null || userOwnerColumns.length == 0) {
+				userOwnerColumns = new String[] { createdByColumnName };
+			}
+			Expression userScopeExpression;
+			boolean ignoreExistExpression = !withPermission; // 无其他权限时 permExpression 只有租户条件
+			for (String scopeColumn : userOwnerColumns) {
+				// 不存在该列
+				if (!MetadataHelper.getTableColumnMappers(table.getName()).stream()
+						.anyMatch(o -> o.getColumn().equals(scopeColumn))) {
+					continue;
 				}
+				userScopeExpression = buildCurrentUserDataPermCondition(table, scopeColumn, currentUser,
+						currentTenantId);
+				// 无其他字段数据权限：租户 AND 数据owner
+				if (permExpression == null || ignoreExistExpression) {
+					permExpression = userScopeExpression;
+					ignoreExistExpression = false;
+				} else {// 有其他字段数据权限：(租户 AND 数据权限) OR (租户 AND 数据owner)
+					permExpression = new OrExpression(new Parenthesis(permExpression), userScopeExpression);
+				}
+			}
+		}
 		//原查询条件
 		if(whereExpression == null) {
 			whereExpression = permExpression;
