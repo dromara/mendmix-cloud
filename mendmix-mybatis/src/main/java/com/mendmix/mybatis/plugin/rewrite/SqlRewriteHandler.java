@@ -296,16 +296,15 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				continue;
 			}
 			additionalParamVal = originBoundSql.getAdditionalParameter(parameterMapping.getProperty());
-			if(additionalParamVal == null) {
-				continue;
-			}
-			newBoundSql.setAdditionalParameter(parameterMapping.getProperty(), additionalParamVal);
 			if(parameterMapping.getProperty().startsWith(FRCH_ITEM_PREFIX)) {
+				newBoundSql.setAdditionalParameter(parameterMapping.getProperty(), additionalParamVal);
 				indexParamName = FRCH_INDEX_PREFIX + itemIndex;
 				if(!newBoundSql.hasAdditionalParameter(indexParamName)) {					
 					newBoundSql.setAdditionalParameter(indexParamName, itemIndex);
 				}
 				itemIndex++;
+			}else if(additionalParamVal != null){
+                newBoundSql.setAdditionalParameter(parameterMapping.getProperty(), additionalParamVal);
 			}
 		}
 	}
