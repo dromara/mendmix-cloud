@@ -78,6 +78,6 @@ public class CustomResponseErrorHandler extends DefaultResponseErrorHandler {
 
 	@Override
 	public boolean hasError(ClientHttpResponse response) throws IOException {
-		return response.getRawStatusCode() != 200;
+		return response.getStatusCode().isError();
 	}
 }

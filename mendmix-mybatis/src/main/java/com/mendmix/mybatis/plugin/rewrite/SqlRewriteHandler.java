@@ -303,7 +303,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 					newBoundSql.setAdditionalParameter(indexParamName, itemIndex);
 				}
 				itemIndex++;
-			}else if(additionalParamVal != null){
+			}else if(additionalParamVal != null || parameterMapping.getProperty().startsWith(FRCH_PREFIX)){
                 newBoundSql.setAdditionalParameter(parameterMapping.getProperty(), additionalParamVal);
 			}
 		}
