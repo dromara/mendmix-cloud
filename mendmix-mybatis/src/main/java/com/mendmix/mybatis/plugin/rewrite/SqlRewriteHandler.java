@@ -343,7 +343,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 						    }
 						}
 					}else if(SpecialPermType.allDept.name().equals(values[0])) {
-						//do nothing
+						valueList.add(SpecialPermType.allDept.name());
+						return;
 					}
 					//
 					if(!valueList.isEmpty()) {				
@@ -592,6 +593,10 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 		Expression newExpression = orginExpression;
 		if (values.length == 1) {
+			if(values[0].endsWith(SpecialPermType.allDept.name()) 
+					&& condition.getColumn().equals(deptColumnName)) {
+				return orginExpression;
+			}
 			BinaryExpression expression;
 			if(values[0].endsWith(QUERY_FUZZY_CHAR)) {
 				expression = new LikeExpression();
@@ -612,12 +617,29 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				}
 			}
 		} else if (values.length > 1){
-			ExpressionList expressionList = new ExpressionList(new ArrayList<>(values.length));
-			for (String value : values) {
-				expressionList.getExpressions().add(new StringValue(value));
+			if(orgPermFullCodeMode && condition.getColumn().equals(deptColumnName)) {
+				BinaryExpression itemExpression;
+				BinaryExpression groupExpression = null;
+				for (String value : values) {
+					itemExpression = new LikeExpression();
+					itemExpression.setLeftExpression(column);
+					itemExpression.setRightExpression(new StringValue(value));
+					if(groupExpression == null) {
+						groupExpression = itemExpression;
+					}else {
+						groupExpression = new OrExpression(groupExpression, itemExpression);
+					}
+				}
+				Parenthesis parenthesis = new Parenthesis(groupExpression);
+				newExpression = orginExpression == null ? parenthesis : new AndExpression(orginExpression,parenthesis);
+			}else {
+				ExpressionList expressionList = new ExpressionList(new ArrayList<>(values.length));
+				for (String value : values) {
+					expressionList.getExpressions().add(new StringValue(value));
+				}
+				InExpression inExpression = new InExpression(column, expressionList);
+				newExpression = orginExpression == null ? inExpression : new AndExpression(orginExpression,inExpression);
 			}
-			InExpression inExpression = new InExpression(column, expressionList);
-			newExpression = orginExpression == null ? inExpression : new AndExpression(orginExpression,inExpression);
 		}
 		
 		return newExpression;
