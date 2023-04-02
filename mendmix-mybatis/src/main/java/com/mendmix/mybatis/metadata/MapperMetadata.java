@@ -195,7 +195,9 @@ public class MapperMetadata {
 		}
 		//
 		if(SqlCommandType.SELECT.name().equals(method.toUpperCase())) {
-			queryTableMappings.put(fullName, MybatisSqlUtils.parseSqlUseTables(sql));
+			final List<String> useTables = MybatisSqlUtils.parseSqlUseTables(sql);
+			queryTableMappings.put(fullName, useTables);
+			log.info(">>>>>>>>>>>>>mapper[{}] useTables:{}",fullName,useTables);
 		}
 	}
 

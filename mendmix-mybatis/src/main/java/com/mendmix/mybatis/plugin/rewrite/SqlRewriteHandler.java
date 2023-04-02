@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mendmix.common.CurrentRuntimeContext;
+import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.model.OrderBy;
@@ -457,8 +458,16 @@ public class SqlRewriteHandler implements InterceptorHandler {
 				String[] columns = strategy.getTableStrategy(table.getName()).columns();
 				if(columns.length > 0) {
 					columnMapping = new HashMap<>(columns.length);
+					String alias;
 					for (String column : columns) {
-						columnMapping.put(getDataPermColumnAlias(table.getName(), column),column);
+						if(column.contains(GlobalConstants.COLON)) {
+							String[] parts = StringUtils.split(column, GlobalConstants.COLON);
+							column = parts[0];
+							alias = parts[1];
+						}else {
+							alias = getDataPermColumnAlias(table.getName(), column);
+						}
+						columnMapping.put(alias,column);
 					}
 					mergeTableColumnMapping(columnMapping, table.getName(), tenantPropName,softDeletePropName,deptPropName);
 				}

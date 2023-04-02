@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mendmix.example.dao.mapper.ExampleStaffEntityMapper">
+  <resultMap id="BaseResultMap" type="com.mendmix.example.dao.entity.ExampleStaffEntity">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="mobile" jdbcType="CHAR" property="mobile" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="type" jdbcType="SMALLINT" property="type" />
+    <result column="status" jdbcType="SMALLINT" property="status" />
+    <result column="dept_id" jdbcType="VARCHAR" property="deptId" />
+    <result column="created_at" jdbcType="TIMESTAMP" property="createdAt" />
+    <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
+    <result column="created_by" jdbcType="VARCHAR" property="createdBy" />
+    <result column="updated_by" jdbcType="VARCHAR" property="updatedBy" />
+    <result column="version" jdbcType="INTEGER" property="version" />
+    <result column="deleted" jdbcType="BIT" property="deleted" />
+    <result column="department_name" jdbcType="VARCHAR" property="departmentName" />
+    <result column="company_name" jdbcType="VARCHAR" property="companyName" />
+  </resultMap>
+  
+  <sql id="staff_detail_base_sql">
+     SELECT
+       s.*,
+       d.full_code as department_code,
+       d.full_name as department_name,
+       p.name as position_name
+      FROM staff s
+      LEFT JOIN staff_departments sd ON sd.staff_id = s.id AND sd.is_primary = 1 and sd.enabled = 1
+      LEFT JOIN department d ON sd.department_id = d.id
+      LEFT JOIN position p ON sd.position_id = p.id
+   </sql>
+  
+  <select id="findListByParam" resultMap="DetailsResultMap">
+        <include refid="staff_detail_base_sql"></include>
+        <where>
+          <if test="name != null and name != ''">AND s.name=#{name}</if>
+          <if test="email != null and email != ''">AND s.email=#{email}</if>
+          <if test="ids != null">
+                AND d.id IN
+                <foreach collection="ids" item="item" open="(" close=")" separator=",">#{item}</foreach>
+          </if>
+        </where>
+        ORDER BY id
+    </select>
+    
+    <select id="findListByParam2" resultMap="DetailsResultMap">
+        <include refid="staff_detail_base_sql"></include>
+          where 1=1
+          <if test="name != null and name != ''">AND s.name=#{name}</if>
+          <if test="email != null and email != ''">AND s.email=#{email}</if>
+          AND s.id IN
+         <foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+          #{id}
+         </foreach>
+         AND r.enabled = 1
+    </select>
+    
+</mapper>

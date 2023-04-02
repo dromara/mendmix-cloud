@@ -15,6 +15,8 @@
  */
 package com.mendmix.mybatis.parser;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -39,6 +41,7 @@ import org.w3c.dom.NodeList;
 
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.mybatis.datasource.DataSourceConfig;
+import com.mendmix.mybatis.kit.MybatisSqlUtils;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 
 /**
@@ -144,8 +147,9 @@ public class MybatisMapperParser {
 		}
 		for (XNode xNode : children) {
 			if ("select|insert|update|delete".contains(xNode.getName().toLowerCase())) {
-				String sql = parseSql(fileName,xNode,includes);
-				entityInfo.addSql(xNode.getName().toLowerCase(),xNode.getStringAttribute("id"), sql);
+				StringBuilder sql = new StringBuilder();
+				parseSql(sql,xNode,includes);
+				entityInfo.addSql(xNode.getName().toLowerCase(),xNode.getStringAttribute("id"), sql.toString());
 			}
 		}
 		
@@ -153,38 +157,32 @@ public class MybatisMapperParser {
 	}
 
 
-	private static String parseSql(String fileName, XNode node, Map<String, String> includeContents) {
-		StringBuilder sql = new StringBuilder();
+	private static void parseSql(StringBuilder result,XNode node, Map<String, String> includeContents) {
 		NodeList children = node.getNode().getChildNodes();
 		for (int i = 0; i < children.getLength(); i++) {
 			XNode child = node.newXNode(children.item(i));
 			String data = null;
-			if ("#text".equals(child.getName())) {
-				data = child.getStringBody("");
-			} else if ("include".equals(child.getName())) {
-				String refId = child.getStringAttribute("refid");
-				data = child.toString();
-				if (includeContents.containsKey(refId)) {
-					data = data.replaceAll("<\\s?include.*(" + refId + ").*>", includeContents.get(refId));
+			NodeList subChildren = child.getNode().getChildNodes();
+			if (subChildren.getLength() > 1) {
+				result.append("<").append(child.getName()).append(">");
+				parseSql(result, child, includeContents);
+				result.append("</").append(child.getName()).append(">");
+			}else {
+				if ("#text".equals(child.getName())) {
+					data = child.getStringBody("");
+				} else if ("include".equals(child.getName())) {
+					String refId = child.getStringAttribute("refid");
+					data = child.toString();
+					if (includeContents.containsKey(refId)) {
+						data = data.replaceAll("<\\s?include.*(" + refId + ").*?(?=>)>", includeContents.get(refId));
+					}
 				} else {
-					log.error(String.format("MENDMIX-TRACE-LOGGGING-->> Parse SQL from mapper[%s-%s] error,not found include key:%s",
-							fileName, node.getStringAttribute("id"), refId));
+					data = child.toString();
 				}
-			} else {
-				data = child.toString();
-				// if(child.getStringBody().contains(">") ||
-				// child.getStringBody().contains("<")){
-				// data = data.replace(child.getStringBody(),
-				// "<![CDATA["+child.getStringBody()+"]]");
-				// }
-			}
-			data = StringUtils.replaceEach(data, new String[] {"\r","\n","\t"}, new String[] {StringUtils.SPACE,StringUtils.SPACE,StringUtils.SPACE});
-			if (StringUtils.isNotBlank(data)) {
-				sql.append(data).append("\t").append("\n");
+				data = data.replaceAll("\n{2,}", "\n");
+				result.append(data);
 			}
 		}
-		// return sql.toString().replaceAll("\\s{2,}", " ");
-		return sql.toString();
 	}
 
 	public static List<String> listFiles(JarFile jarFile, String extensions) {
@@ -206,8 +204,27 @@ public class MybatisMapperParser {
 		return files;
 	}
 
-	public static void main(String[] args) {
-		String sql = "SELECT <include refid=\"base_fields\" /> dd > FROM users where type = #{type} ";
-		System.out.println(sql.replaceAll("<\\s?include.*(base_fields).*>", "xxxx"));
+	public static void main(String[] args) throws Exception {
+		String path = "/Users/jiangwei/project/jeesuite-libs/mendmix-mybatis/src/test/resources/mapper/template.xml";
+		InputStream inputStream = new FileInputStream(new File(path));
+		XPathParser parser = new XPathParser(inputStream,true, null, new XMLMapperEntityResolver());
+		XNode evalNode = parser.evalNode("/mapper");
+		List<XNode> children = evalNode.getChildren();
+		Map<String, String> includes = new HashMap<>();
+		for (XNode xNode : children) {
+			if("sql".equalsIgnoreCase(xNode.getName())){
+				includes.put(xNode.getStringAttribute("id"), xNode.getStringBody());
+			}
+		}
+		for (XNode xNode : children) {
+			if ("select|insert|update|delete".contains(xNode.getName().toLowerCase())) {
+				StringBuilder sql = new StringBuilder();
+				parseSql(sql,xNode,includes);
+				System.out.println(sql);
+				System.out.println(">>>>>parseSqlUseTables:" + MybatisSqlUtils.parseSqlUseTables(sql.toString()));
+			}
+		}
+		
+		inputStream.close();
 	}
 }

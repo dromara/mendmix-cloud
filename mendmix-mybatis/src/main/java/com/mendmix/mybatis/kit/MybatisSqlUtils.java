@@ -50,10 +50,15 @@ import net.sf.jsqlparser.statement.update.Update;
  */
 public class MybatisSqlUtils {
 	
+	private static final String[] SQL_LINE_CHARS = new String[] { "\r", "\n", "\t" };
+	private static final String[] SQL_LINE_REPLACE_CHARS = new String[] { " ", " ", " " };
+	
 	private static String mybatisWhereExprEnd = "</where>";
 	public static String sqlWherePatternString = "(<|\\s+)WHERE|where(>|\\s+)";
 	public static Pattern sqlWherePattern = Pattern.compile(sqlWherePatternString);
-	
+	private static Pattern whereTagPattern = Pattern.compile("(<where).*?(?=(</where>))(</where>)",Pattern.CASE_INSENSITIVE);
+	private static Pattern ifTagPattern = Pattern.compile("(<if).*?(?=(</if>))(</if>)",Pattern.CASE_INSENSITIVE);
+	private static Pattern foreachTagPattern = Pattern.compile("(<foreach).*?(?=(</foreach>))(</foreach>)",Pattern.CASE_INSENSITIVE);
 	public static final String SQL_PARAMETER_PLACEHOLDER = "?";
 	
 	
@@ -130,8 +135,11 @@ public class MybatisSqlUtils {
 	public static List<String> parseSqlUseTables(String sql){
 		List<String> tables = new ArrayList<>(3);
 		try {
-			String cleanSql = sql.replace("<where>", " where ").replace("<WHERE>", " WHERE ");
-			cleanSql = StringUtils.replacePattern(cleanSql, "<.*>"," ");
+			String cleanSql = StringUtils.replaceEach(sql, SQL_LINE_CHARS, SQL_LINE_REPLACE_CHARS).trim();
+			cleanSql = cleanSql.replaceAll("\\s{2,}", " ");
+			cleanSql = whereTagPattern.matcher(cleanSql).replaceFirst("");
+			cleanSql = ifTagPattern.matcher(cleanSql).replaceAll("");
+			cleanSql = foreachTagPattern.matcher(cleanSql).replaceAll("(1)");
 			cleanSql = StringUtils.replacePattern(cleanSql, "(\\$|\\#){1}.*\\}", "1").trim();
 			if(cleanSql.toLowerCase().endsWith(" where")) {
 				cleanSql = cleanSql.substring(0,cleanSql.length() - 5).trim();
@@ -147,7 +155,9 @@ public class MybatisSqlUtils {
 					tables.add(table.getName().toLowerCase());
 				}
 			}
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			System.err.println("parseSqlUseTableError:"+sql);
+		}
 		
 		return tables;
 	}
@@ -169,7 +179,9 @@ public class MybatisSqlUtils {
 	
 	public static void main(String[] args) throws SQLException {
 		String sql = "select * from users 	 <where>    <if test=\"name != null\">          AND name = #{name}      </if>    <if test=\"mobile != null\">          AND mobile = #{mobile}      </if></where>";
-		
+		sql = "select * from users 	\nWHERE 1=1 \n<if test=\"name != null\">          AND name = #{name}      </if>    \n<if test=\"mobile != null\">          AND mobile = #{mobile}      </if>"
+		+ "\nAND role_id IN \n<foreach collection=\"roleIds\" item=\"id\" index=\"index\" open=\"(\" close=\")\" separator=\",\">#{id}</foreach> ORDER BY id ";
 		System.out.println(parseSqlUseTables(sql));
+		
 	}
 }
