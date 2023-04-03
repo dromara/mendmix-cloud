@@ -19,6 +19,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +33,6 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.delete.Delete;
-import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
@@ -56,9 +56,8 @@ public class MybatisSqlUtils {
 	private static String mybatisWhereExprEnd = "</where>";
 	public static String sqlWherePatternString = "(<|\\s+)WHERE|where(>|\\s+)";
 	public static Pattern sqlWherePattern = Pattern.compile(sqlWherePatternString);
-	private static Pattern whereTagPattern = Pattern.compile("(<where).*?(?=(</where>))(</where>)",Pattern.CASE_INSENSITIVE);
-	private static Pattern ifTagPattern = Pattern.compile("(<if).*?(?=(</if>))(</if>)",Pattern.CASE_INSENSITIVE);
-	private static Pattern foreachTagPattern = Pattern.compile("(<foreach).*?(?=(</foreach>))(</foreach>)",Pattern.CASE_INSENSITIVE);
+	private static Pattern tagPattern = Pattern.compile("<.*?(?=>)>",Pattern.CASE_INSENSITIVE);
+	private static Pattern withTablePattern = Pattern.compile("\\s+(FROM|JOIN)\\s+.+?(?=\\s+)",Pattern.CASE_INSENSITIVE);
 	public static final String SQL_PARAMETER_PLACEHOLDER = "?";
 	
 	
@@ -137,22 +136,12 @@ public class MybatisSqlUtils {
 		try {
 			String cleanSql = StringUtils.replaceEach(sql, SQL_LINE_CHARS, SQL_LINE_REPLACE_CHARS).trim();
 			cleanSql = cleanSql.replaceAll("\\s{2,}", " ");
-			cleanSql = whereTagPattern.matcher(cleanSql).replaceFirst("");
-			cleanSql = ifTagPattern.matcher(cleanSql).replaceAll("");
-			cleanSql = foreachTagPattern.matcher(cleanSql).replaceAll("(1)");
-			cleanSql = StringUtils.replacePattern(cleanSql, "(\\$|\\#){1}.*\\}", "1").trim();
-			if(cleanSql.toLowerCase().endsWith(" where")) {
-				cleanSql = cleanSql.substring(0,cleanSql.length() - 5).trim();
-			}
-			Select select = (Select) CCJSqlParserUtil.parse(cleanSql);
-			PlainSelect selectBody = (PlainSelect) select.getSelectBody();
-			Table table = (Table) selectBody.getFromItem();
-			tables.add(table.getName().toLowerCase());
-			List<Join> joins = selectBody.getJoins();
-			if (joins != null) {
-				for (Join join : joins) {
-					table = (Table) join.getRightItem();
-					tables.add(table.getName().toLowerCase());
+			cleanSql = tagPattern.matcher(cleanSql).replaceAll("");
+			Matcher matcher = withTablePattern.matcher(cleanSql);
+			while(matcher.find()) {
+				String table = matcher.group().trim().split("\\s+")[1].trim();
+				if(!tables.contains(table)) {
+					tables.add(table);
 				}
 			}
 		} catch (Exception e) {

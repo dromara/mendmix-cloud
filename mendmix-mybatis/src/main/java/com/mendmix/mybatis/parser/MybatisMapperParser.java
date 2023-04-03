@@ -220,7 +220,6 @@ public class MybatisMapperParser {
 			if ("select|insert|update|delete".contains(xNode.getName().toLowerCase())) {
 				StringBuilder sql = new StringBuilder();
 				parseSql(sql,xNode,includes);
-				System.out.println(sql);
 				System.out.println(">>>>>parseSqlUseTables:" + MybatisSqlUtils.parseSqlUseTables(sql.toString()));
 			}
 		}
