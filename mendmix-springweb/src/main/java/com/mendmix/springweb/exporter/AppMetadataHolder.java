@@ -18,6 +18,7 @@ package com.mendmix.springweb.exporter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,25 +61,13 @@ public class AppMetadataHolder {
 
 	private static AppMetadata metadata;
 
-	private synchronized static void scanApiInfos(AppMetadata metadata,List<String> classNameList) {
+	private synchronized static void scanApiInfos(AppMetadata metadata,String packagePrefix,List<String> classNameList) {
 
-		if (!metadata.getApis().isEmpty())
-			return;
-		
-		String contextPath = GlobalRuntimeContext.getContextPath();
-		String pathPrefix;
-		if(ResourceUtils.containsAnyProperty("mendmix.request.pathPrefix")) {
-			pathPrefix = ResourceUtils.getProperty("mendmix.request.pathPrefix");
-			if(!pathPrefix.startsWith("/")) {
-				pathPrefix = "/" + pathPrefix;
-			}
-			pathPrefix = contextPath + pathPrefix;
-		}else {
-			pathPrefix = contextPath;
+		String pathPrefix = GlobalRuntimeContext.getContextPath();
+		if(packagePrefix != null) {
+			pathPrefix = pathPrefix + addFirstPathSeparator(packagePrefix);
 		}
-		
-		Map<String, String> packagePathPrefixs = ResourceUtils.getMappingValues("mendmix.request.pathPrefix.mapping");
-		
+
 		Method[] methods;
 		String baseUri;
 		ApiInfo apiInfo;
@@ -88,12 +77,8 @@ public class AppMetadataHolder {
 			try {
 				Class<?> clazz = Class.forName(className);
 				if (!clazz.isAnnotationPresent(Controller.class) && !clazz.isAnnotationPresent(RestController.class))continue;
-                //
-				if(packagePathPrefixs.containsKey(clazz.getPackage().getName())) {
-					baseUri = addFirstPathSeparator(packagePathPrefixs.get(clazz.getPackage().getName()));
-				}else {
-					baseUri = "";
-				}
+
+				baseUri = pathPrefix;
 				RequestMapping requestMapping = AnnotationUtils.findAnnotation(clazz, RequestMapping.class);
 				if (requestMapping != null) {
 					baseUri = baseUri + addFirstPathSeparator(requestMapping.value().length > 0 ? requestMapping.value()[0] : requestMapping.path()[0]);
@@ -146,7 +131,7 @@ public class AppMetadataHolder {
 					} else {
 						apiUri = baseUri + addFirstPathSeparator(apiUri);
 					}
-					apiInfo.setUri(pathPrefix + apiUri);
+					apiInfo.setUri(apiUri);
 					apiInfo.setMethod(apiHttpMethod);
 					if(methodMetadata == null){
 						apiInfo.setPermissionLevel(PermissionLevel.LoginRequired);
@@ -245,21 +230,28 @@ public class AppMetadataHolder {
 	public static AppMetadata getMetadata() {
 		if(metadata != null)return metadata;
 		synchronized (AppMetadataHolder.class) {
-			//
-			metadata = new AppMetadata();
-			metadata.setModule(GlobalRuntimeContext.MODULE_NAME);
-			metadata.setServiceId(GlobalRuntimeContext.APPID);
+			if(metadata != null)return metadata;
+			AppMetadata _metadata = new AppMetadata();
+			_metadata = new AppMetadata();
+			_metadata.setModule(GlobalRuntimeContext.MODULE_NAME);
+			_metadata.setServiceId(GlobalRuntimeContext.APPID);
 			
-			String basePackage = AppConfigs.basePackage;
-			if(basePackage == null)return metadata;
-			List<String> classNameList = scanControllerClassNames(basePackage);
-			//
-			scanApiInfos(metadata,classNameList);
+			List<String> basePackages = Arrays.asList(ResourceUtils.getProperty("mendmix.metadata.packages", AppConfigs.basePackage).split(",|;"));
 			
-			if(ResourceUtils.containsProperty("dependency.services")){				
-				metadata.setDependencyServices(ResourceUtils.getList("dependency.services"));
+			String globalPathPrefix = ResourceUtils.getProperty("mendmix.request.pathPrefix");
+			Map<String, String> packagePathPrefixs = ResourceUtils.getMappingValues("mendmix.request.pathPrefix.mapping");
+			
+			List<String> classNameList;
+			String packagePrefix;
+			for (String basePackage : basePackages) {
+				packagePrefix = packagePathPrefixs.getOrDefault(basePackage, globalPathPrefix);
+				classNameList = scanControllerClassNames(basePackage);
+				scanApiInfos(_metadata,packagePrefix,classNameList);
 			}
-			
+			if(ResourceUtils.containsProperty("dependency.services")){				
+				_metadata.setDependencyServices(ResourceUtils.getList("dependency.services"));
+			}
+			metadata = _metadata;
 		}
 		return metadata;
 	}

@@ -54,7 +54,7 @@ public class MybatisConfigs {
 	public static final String DEPT_COLUMN_NAME = "mendmix.mybatis.department.columnName";
 	
 	public static final boolean DATA_PERM_ALL_MATCH_MODE_ENABLED = ResourceUtils.getBoolean("application.mybatis.dataPermssion.allMatchMode.enabled",true);
-	
+	public static final boolean DATA_PERM_DEFAULT_HANDLE_OWNER = ResourceUtils.getBoolean("mendmix.mybatis.dataPermission.defaultHandleOwner");
 	
 	private static Map<String, Properties> groupProperties = new HashMap<>();
 	

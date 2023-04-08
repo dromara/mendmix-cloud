@@ -104,6 +104,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private static final String FRCH_INDEX_PREFIX = "__frch_index_";
 	private static final String FRCH_ITEM_PREFIX = "__frch_item_";
 	private static final String QUERY_FUZZY_CHAR = "%";
+	private static String columnDelimiter = "`";
 	
 	private static boolean dynaDataPermEnaled = false;
 	//<alias,column>
@@ -123,7 +124,6 @@ public class SqlRewriteHandler implements InterceptorHandler {
 	private String deptColumnName;
 	private String deptPropName;
 	private String createdByColumnName;
-	private boolean defaultHandleOwner;
 	private boolean orgPermFullCodeMode;
 	private List<String> deptMappedStatements = new ArrayList<>();
 	
@@ -138,9 +138,8 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		softDeleteFalseValue = MybatisConfigs.getSoftDeletedFalseValue(context.getGroupName());
 		deptColumnName = MybatisConfigs.getDeptColumnName(context.getGroupName());
 		createdByColumnName = MybatisConfigs.getCreatedByColumnName(context.getGroupName());
-		specialPermKey = MybatisConfigs.getProperty(context.getGroupName(), "mendmix.mybatis.dataPermission.specialPermKey", "internalSpecPermKey");
+		specialPermKey = MybatisConfigs.getProperty(context.getGroupName(), "mendmix.mybatis.dataPermission.specialPermKey", "specialPermKey");
 		
-		defaultHandleOwner = MybatisConfigs.getBoolean(context.getGroupName(),"mendmix.mybatis.dataPermission.defaultHandleOwner", createdByColumnName != null);
 		orgPermFullCodeMode = MybatisConfigs.getBoolean(context.getGroupName(),"mendmix.mybatis.dataPermission.orgPermFullCodeMode",false);
 				
 		final List<MapperMetadata> mappers = MybatisMapperParser.getMapperMetadatas(context.getGroupName());
@@ -327,6 +326,9 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			String[] values = dataPermValues.remove(specialPermKey);
 			if(SpecialPermType.owner.name().equals(values[0])) {
 				MybatisRuntimeContext.getSqlRewriteStrategy().setHandleOwner(true);
+				//兼容后面数据owner判断逻辑
+				String virtualKey = StringUtils.join(specialPermKey,GlobalConstants.COLON,SpecialPermType.owner.name());
+				dataPermValues.put(virtualKey, values);
 			}else if(deptMappedStatements.contains(invocation.getMapperNameSpace()) 
 					|| deptMappedStatements.contains(invocation.getMappedStatement().getId())) {
 				String curtrentDepartment = getCurtrentDepartment();
@@ -452,10 +454,11 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		
 		Map<String, String> columnMapping = null;
 		String[] userOwnerColumns = null; //当前用户关联的列
-		boolean handleDataPerm =  (!isJoin || strategy.isHandleJoin()) && strategy.hasTableStrategy(table.getName());	
+		final String tableName = StringUtils.remove(table.getName(), columnDelimiter);
+		boolean handleDataPerm =  (!isJoin || strategy.isHandleJoin()) && strategy.hasTableStrategy(tableName);	
 		if(handleDataPerm) {
 			if(!strategy.isAllMatch()) {
-				String[] columns = strategy.getTableStrategy(table.getName()).columns();
+				String[] columns = strategy.getTableStrategy(tableName).columns();
 				if(columns.length > 0) {
 					columnMapping = new HashMap<>(columns.length);
 					String alias;
@@ -465,19 +468,19 @@ public class SqlRewriteHandler implements InterceptorHandler {
 							column = parts[0];
 							alias = parts[1];
 						}else {
-							alias = getDataPermColumnAlias(table.getName(), column);
+							alias = getDataPermColumnAlias(tableName, column);
 						}
 						columnMapping.put(alias,column);
 					}
-					mergeTableColumnMapping(columnMapping, table.getName(), tenantPropName,softDeletePropName,deptPropName);
+					mergeTableColumnMapping(columnMapping, tableName, tenantPropName,softDeletePropName,deptPropName);
 				}
 			}
 			if(columnMapping == null) {
-				columnMapping = tableDataPermColumnMappings.get(table.getName());
+				columnMapping = tableDataPermColumnMappings.get(tableName);
 			}
 		}else {
 			columnMapping = new HashMap<>(2);
-			mergeTableColumnMapping(columnMapping, table.getName(), tenantPropName,softDeletePropName);
+			mergeTableColumnMapping(columnMapping, tableName, tenantPropName,softDeletePropName);
 		}
 		
 		if(columnMapping == null || columnMapping.isEmpty()) {
@@ -485,7 +488,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 		
 		//定义的or条件列
-		List<List<ConditionPair>> orConditionGroups = strategy == null ? null : strategy.getOrRelationColumns(table.getName());
+		List<List<ConditionPair>> orConditionGroups = strategy == null ? null : strategy.getOrRelationColumns(tableName);
 		
 		Expression permExpression = null;
 		String column;
@@ -532,7 +535,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			}
 			
 			if(logger.isTraceEnabled()) {
-				logger.trace("_mybatis_sqlRewrite_trace processColumn ->table:{},column:{},addtionalValues:{}",table.getName(),column,values);
+				logger.trace("_mybatis_sqlRewrite_trace processColumn ->table:{},column:{},addtionalValues:{}",tableName,column,values);
 			}
 		}
 		
@@ -544,11 +547,13 @@ public class SqlRewriteHandler implements InterceptorHandler {
 		}
 		
 		//数据owner
+		boolean handlerOwner = false;
 		AuthUser currentUser = null;
-				if(withPermission 
-						&& (currentUser = CurrentRuntimeContext.getCurrentUser()) != null 
-						&& ( (defaultHandleOwner && strategy == null) || (strategy != null && strategy.handleOwner(table.getName()) )
-				)) {
+		handlerOwner = createdByColumnName != null 
+				       && strategy != null && strategy.handleOwner(tableName) 
+				       && dataMapping != null && !dataMapping.isEmpty()
+				       && (currentUser = CurrentRuntimeContext.getCurrentUser()) != null;
+		if(handlerOwner) {
 			if (userOwnerColumns == null || userOwnerColumns.length == 0) {
 				userOwnerColumns = new String[] { createdByColumnName };
 			}
@@ -556,7 +561,7 @@ public class SqlRewriteHandler implements InterceptorHandler {
 			boolean ignoreExistExpression = !withPermission; // 无其他权限时 permExpression 只有租户条件
 			for (String scopeColumn : userOwnerColumns) {
 				// 不存在该列
-				if (!MetadataHelper.getTableColumnMappers(table.getName()).stream()
+				if (!MetadataHelper.getTableColumnMappers(tableName).stream()
 						.anyMatch(o -> o.getColumn().equals(scopeColumn))) {
 					continue;
 				}

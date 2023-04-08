@@ -146,10 +146,10 @@ public class MybatisMapperParser {
 			}
 		}
 		for (XNode xNode : children) {
-			if ("select|insert|update|delete".contains(xNode.getName().toLowerCase())) {
+			if ("select".contains(xNode.getName().toLowerCase())) {
 				StringBuilder sql = new StringBuilder();
 				parseSql(sql,xNode,includes);
-				entityInfo.addSql(xNode.getName().toLowerCase(),xNode.getStringAttribute("id"), sql.toString());
+				entityInfo.parseSqlUseTables(xNode.getStringAttribute("id"), sql.toString());
 			}
 		}
 		

@@ -62,8 +62,6 @@ public class MapperMetadata {
 	
 	private EntityMetadata entityMetadata;
 	
-	private Map<String, String> mapperSqls = new HashMap<>();
-	
 	private Map<String, List<String>> queryTableMappings = new HashMap<>();
 
 	private Map<String, String> propToColumnMappings = new HashMap<>();
@@ -117,7 +115,8 @@ public class MapperMetadata {
 				}
 				
 				if(sql != null){	
-					mapperSqls.put(fullName, sql);
+					List<String> useTables = MybatisSqlUtils.parseSqlUseTables(sql);
+					queryTableMappings.put(fullName, useTables);
 				}
 				//
 				mapperMethods.put(method.getName(),new MapperMethod(method, fullName, sqlType));
@@ -184,27 +183,12 @@ public class MapperMetadata {
 		this.mapperClass = mapperClass;
 	}
 	
-	public void addSql(String method,String id,String sql){
+	public void parseSqlUseTables(String id,String sql){
 		String fullName = mapperClass.getName() + "." + id;
-		mapperSqls.put(fullName, sql);
-		for (MapperMethod mapperMethod : mapperMethods.values()) {
-			if(mapperMethod.getFullName().equals(fullName)){
-				mapperMethod.sqlType = SqlCommandType.valueOf(method.toUpperCase());
-				break;
-			}
-		}
-		//
-		if(SqlCommandType.SELECT.name().equals(method.toUpperCase())) {
-			final List<String> useTables = MybatisSqlUtils.parseSqlUseTables(sql);
-			queryTableMappings.put(fullName, useTables);
-			log.info(">>>>>>>>>>>>>mapper[{}] useTables:{}",fullName,useTables);
-		}
+		final List<String> useTables = MybatisSqlUtils.parseSqlUseTables(sql);
+		queryTableMappings.put(fullName, useTables);
 	}
 
-	public Map<String, String> getMapperSqls() {
-		return mapperSqls;
-	}
-	
 	public Map<String, MapperMethod> getMapperMethods() {
 		return mapperMethods;
 	}

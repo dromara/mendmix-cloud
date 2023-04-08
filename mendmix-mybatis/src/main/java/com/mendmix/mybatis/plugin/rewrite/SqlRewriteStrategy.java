@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.constants.ContextKeys;
+import com.mendmix.mybatis.MybatisConfigs;
 import com.mendmix.mybatis.plugin.rewrite.annotation.DataPermission;
 import com.mendmix.mybatis.plugin.rewrite.annotation.TablePermissionStrategy;
 
@@ -35,7 +36,7 @@ public class SqlRewriteStrategy {
 	
 	private boolean handleJoin = true; 
 	
-	private boolean handleOwner = true;
+	private boolean handleOwner = false;
 	
 	private Map<String, String> rewritedTableMapping;
 	
@@ -56,6 +57,7 @@ public class SqlRewriteStrategy {
 	
 	public SqlRewriteStrategy(boolean allMatch, Map<String, TablePermissionStrategy> strategies) {
 		this.allMatch = allMatch;
+		this.handleOwner = MybatisConfigs.DATA_PERM_DEFAULT_HANDLE_OWNER;
 		this.tableStrategies = strategies;
 	}
 	
