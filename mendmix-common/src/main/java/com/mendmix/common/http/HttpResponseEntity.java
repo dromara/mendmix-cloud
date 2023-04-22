@@ -125,6 +125,12 @@ public class HttpResponseEntity implements Serializable{
 		return JsonUtils.toList(json, clazz);
 	}
 	
+	public Map<String,Object> toMap() {
+		String json = getUnwrapBody();
+		if(!isJson)return null;
+		return JsonUtils.toHashMap(json);
+	}
+	
 	public String toValue(String selectNode) {
 		String value = JsonUtils.getJsonNodeValue(getUnwrapBody(), selectNode);
 		return value;

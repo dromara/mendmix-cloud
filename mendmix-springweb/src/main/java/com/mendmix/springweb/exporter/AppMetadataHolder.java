@@ -94,7 +94,7 @@ public class AppMetadataHolder {
 					methodMetadata = method.isAnnotationPresent(ApiMetadata.class)
 							? method.getAnnotation(ApiMetadata.class) : classMetadata;
 					//		
-					if(methodMetadata != null && methodMetadata.IntranetAccessOnly()){
+					if(methodMetadata != null && methodMetadata.intranetAccess()){
 						continue methodLoop;		
 					}
 					
@@ -233,7 +233,6 @@ public class AppMetadataHolder {
 			if(metadata != null)return metadata;
 			AppMetadata _metadata = new AppMetadata();
 			_metadata = new AppMetadata();
-			_metadata.setModule(GlobalRuntimeContext.MODULE_NAME);
 			_metadata.setServiceId(GlobalRuntimeContext.APPID);
 			
 			List<String> basePackages = Arrays.asList(ResourceUtils.getProperty("mendmix.metadata.packages", AppConfigs.basePackage).split(",|;"));

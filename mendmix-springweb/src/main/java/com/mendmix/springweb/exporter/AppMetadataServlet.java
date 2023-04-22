@@ -42,7 +42,7 @@ public class AppMetadataServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
 	
-	public static final String DEFAULT_URI = "/metadata";
+	public static final String DEFAULT_URI = "/exporter/metadata";
 	
 	private Map<String, String> uriSubPackageMappings = new HashMap<>();
 

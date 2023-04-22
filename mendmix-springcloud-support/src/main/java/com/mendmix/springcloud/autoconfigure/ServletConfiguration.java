@@ -63,7 +63,7 @@ public class ServletConfiguration {
 	public ServletRegistrationBean<RuntimeConfigServlet> runtimeConfigServlet() {
 		ServletRegistrationBean<RuntimeConfigServlet> servletRegistrationBean;
 		servletRegistrationBean = new ServletRegistrationBean<>(new RuntimeConfigServlet());
-		servletRegistrationBean.addUrlMappings("/runtime/configs");
+		servletRegistrationBean.addUrlMappings("/exporter/runtime_configs");
 		return servletRegistrationBean;
 	}
 	
@@ -72,7 +72,7 @@ public class ServletConfiguration {
 		ServletRegistrationBean<ScheduleApiServlet> servletRegistrationBean;
 	    final ScheduleApiServlet servlet = new ScheduleApiServlet();
 		servletRegistrationBean = new ServletRegistrationBean<>(servlet);
-		servletRegistrationBean.addUrlMappings("/scheduler/*");
+		servletRegistrationBean.addUrlMappings("/exporter/scheduler/*");
 		Map<String, String> mappings = ResourceUtils.getMappingValues("mendmix.request.pathPrefix.mapping");
 		String prefix;
 		for (String packageName : mappings.keySet()) {
@@ -80,7 +80,7 @@ public class ServletConfiguration {
 			if(!prefix.startsWith("/")) {
 				prefix = "/" + prefix;
 			}
-			String uriPattern = prefix + "/scheduler/*";
+			String uriPattern = prefix + "/exporter/scheduler/*";
 			servletRegistrationBean.addUrlMappings(uriPattern);
 		}
 	    return servletRegistrationBean;

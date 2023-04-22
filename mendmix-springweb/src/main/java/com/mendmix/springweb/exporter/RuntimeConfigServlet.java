@@ -48,9 +48,6 @@ import com.mendmix.common.util.WebUtils;
 public class RuntimeConfigServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
-	
-	public static final String DEFAULT_URI = "/metadata";
-	
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -69,7 +66,6 @@ public class RuntimeConfigServlet extends HttpServlet {
 		}
 		
 		Map<String, String> result = new LinkedHashMap<String, String>();
-		
 		Properties properties = ResourceUtils.getAllProperties();
 		List<String> sortKeys = new ArrayList<>();
 		Set<Entry<Object, Object>> entrySet = properties.entrySet();

@@ -45,8 +45,6 @@ public class RequestLogHanlder implements PreFilterHandler {
 	
 		ActionLog actionLog = exchange.getAttribute(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME);
 		if(actionLog == null)return requestBuilder;
-		actionLog.setModuleId(module.getServiceId());
-		
 		ServerHttpRequest request = exchange.getRequest();
 		ApiInfo apiInfo = RequestContextHelper.getCurrentApi(exchange);
         if(apiInfo != null && !apiInfo.isRequestLog()) {

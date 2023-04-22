@@ -46,6 +46,7 @@ public class RwRouteHandler implements InterceptorHandler {
 		MappedStatement ms = invocation.getMappedStatement();
 		//已指定强制使用
 		if(MybatisRuntimeContext.isForceUseMaster()){
+			MybatisRuntimeContext.useMaster();
 			logger.debug("MENDMIX-TRACE-LOGGGING-->> isForceUseMaster for:{},useMaster:{}",ms.getId());
 			return null;
 		}

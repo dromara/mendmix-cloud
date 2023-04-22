@@ -46,7 +46,9 @@ public class ActionLog implements Serializable{
 	
 	private String id;
 	private String logType;
-	private String appId;
+    private Integer systemId;
+    private String systemKey;
+    private String moduleKey;
 	private String env;
 	private String tenantId;
 	private String clientType;
@@ -54,7 +56,6 @@ public class ActionLog implements Serializable{
 	private String actionKey;
 	private String userId;
 	private String userName;
-	private String moduleId;
 	private String clientIp;
 	private Date actionAt;
 	private String inputData;
@@ -82,12 +83,29 @@ public class ActionLog implements Serializable{
 		this.logType = logType;
 	}
 
-	public String getAppId() {
-		return appId;
+
+	public Integer getSystemId() {
+		return systemId;
 	}
 
-	public void setAppId(String appId) {
-		this.appId = appId;
+	public void setSystemId(Integer systemId) {
+		this.systemId = systemId;
+	}
+
+	public String getSystemKey() {
+		return systemKey;
+	}
+
+	public void setSystemKey(String systemKey) {
+		this.systemKey = systemKey;
+	}
+
+	public String getModuleKey() {
+		return moduleKey;
+	}
+
+	public void setModuleKey(String moduleKey) {
+		this.moduleKey = moduleKey;
 	}
 
 	public String getEnv() {
@@ -144,14 +162,6 @@ public class ActionLog implements Serializable{
 
 	public void setUserName(String userName) {
 		this.userName = userName;
-	}
-
-	public String getModuleId() {
-		return moduleId;
-	}
-
-	public void setModuleId(String moduleId) {
-		this.moduleId = moduleId;
 	}
 
 	public String getClientIp() {

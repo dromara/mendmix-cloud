@@ -237,7 +237,7 @@ public class BizSystemModule {
 	
 	public String getMetadataUri() {
 		if(getServiceBaseUrl() == null)return null;
-		return getServiceBaseUrl() + "/metadata";
+		return getServiceBaseUrl() + "/exporter/metadata";
 	}
 	
 	public String getHealthUri() {

@@ -15,17 +15,27 @@
  */
 package com.mendmix.gateway.endpoint.management;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 
+import com.mendmix.common.MendmixBaseException;
+import com.mendmix.common.http.HttpRequestEntity;
 import com.mendmix.common.util.BeanUtils;
+import com.mendmix.common.util.ResourceUtils;
+import com.mendmix.common.util.SafeStringUtils;
 import com.mendmix.gateway.CurrentSystemHolder;
 import com.mendmix.gateway.model.BizSystemModule;
 import com.mendmix.spring.InstanceFactory;
@@ -78,6 +88,32 @@ public class ModuleMgtHandler implements MgtHandler {
     		}
     		
     		return map;
+    	}else if("configs".equals(actName)) {
+    		if(StringUtils.isBlank(serviceId)) {
+    			Map<String, String> result = new LinkedHashMap<String, String>();
+    			Properties properties = ResourceUtils.getAllProperties();
+    			List<String> sortKeys = new ArrayList<>();
+    			Set<Entry<Object, Object>> entrySet = properties.entrySet();
+    			for (Entry<Object, Object> entry : entrySet) {
+    				String key = entry.getKey().toString();
+    				sortKeys.add(key);
+    			}
+    			Collections.sort(sortKeys);
+    			String value;
+    			for (String key : sortKeys) {
+    				value = SafeStringUtils.hideSensitiveKeyValue(key, properties.getProperty(key));
+    				result.put(key, value);
+    			}
+    			return result;
+    		}
+    		BizSystemModule module = modules.stream().filter(
+					o -> serviceId.equalsIgnoreCase(o.getServiceId()) || serviceId.equals(o.getRouteName())
+			).findFirst().orElse(null);
+    		if(module == null || module.getServiceBaseUrl() == null) {
+    			throw new MendmixBaseException("模块不存在或baseUrl未配置");
+    		}
+    		String url = module.getServiceBaseUrl() + "/exporter/runtime_configs";
+    		return HttpRequestEntity.get(url).backendInternalCall().execute().toMap();
     	}
 		return null;
 	}

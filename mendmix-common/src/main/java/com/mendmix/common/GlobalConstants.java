@@ -22,9 +22,11 @@ public class GlobalConstants {
 	public static final String COLON = ":";
 	public static final String MID_LINE = "-";
 	public static final String UNDER_LINE = "_";
+	public static final String SEMICOLON = ";";
 	public static final String COMMA = ",";
 	public static final String AT = "@";
 	public static String PATH_SEPARATOR = "/";
+	public static String BACK_SLASH = "\\";
 
 	public static final String PARAM_RETURN_URL = "returnUrl";
 	public static final String PARAM_AUTH_CODE = "auth_code";

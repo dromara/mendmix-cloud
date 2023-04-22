@@ -78,7 +78,8 @@ public class DefaultMQLogHandler implements MQLogHandler {
 	private ActionLog buildActionLogObject(String groupName, ActionType actionType, MQMessage message) {
 		ActionLog actionLog = new ActionLog();
 		actionLog.setLogType(ActionLogType.messageQueue.name());
-		actionLog.setAppId(GlobalRuntimeContext.APPID);
+		actionLog.setSystemKey(GlobalRuntimeContext.SYSTEM_KEY);
+		actionLog.setModuleKey(GlobalRuntimeContext.APPID);
 		actionLog.setEnv(GlobalRuntimeContext.ENV);
 		actionLog.setActionAt(new Date());
 		actionLog.setTraceId(CurrentRuntimeContext.getRequestId());

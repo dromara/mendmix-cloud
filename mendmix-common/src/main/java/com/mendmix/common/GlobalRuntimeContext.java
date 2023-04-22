@@ -36,8 +36,7 @@ public class GlobalRuntimeContext {
 	
 	private static final List<String> tenantIds = new ArrayList<>();
 
-	public static final String SYSTEM_ID;
-	public static final String MODULE_NAME;
+	public static final String SYSTEM_KEY;
 	public static final String APPID;
 	public static final String ENV;
 	
@@ -54,14 +53,9 @@ public class GlobalRuntimeContext {
 		APPID = ResourceUtils.getProperty("spring.application.name","unknow-service");
 		String[] strings = StringUtils.split(APPID, "-");
 		if(ResourceUtils.containsProperty("mendmix.system.identifier")) {
-			SYSTEM_ID = ResourceUtils.getProperty("mendmix.system.identifier");
+			SYSTEM_KEY = ResourceUtils.getProperty("mendmix.system.identifier");
 		}else {
-			SYSTEM_ID = strings[0];
-		}
-		if(ResourceUtils.containsProperty("mendmix.system.module.identifier")) {
-			MODULE_NAME = ResourceUtils.getProperty("mendmix.system.module.identifier");
-		}else {
-			MODULE_NAME = strings.length > 1 ? strings[1] : strings[0];
+			SYSTEM_KEY = strings[0];
 		}
 		//
 		contextPath = ResourceUtils.getProperty("server.servlet.context-path","");
@@ -69,10 +63,9 @@ public class GlobalRuntimeContext {
 			contextPath = contextPath.substring(0, contextPath.length() - 1);
 		}
 		//
-		System.setProperty("systemId", GlobalRuntimeContext.SYSTEM_ID);
-		System.setProperty("moduleId", GlobalRuntimeContext.MODULE_NAME);
-		System.setProperty("appId", GlobalRuntimeContext.APPID);
-		System.setProperty("env", GlobalRuntimeContext.ENV);
+		System.setProperty("context.systemKey", GlobalRuntimeContext.SYSTEM_KEY);
+		System.setProperty("context.appId", GlobalRuntimeContext.APPID);
+		System.setProperty("context.env", GlobalRuntimeContext.ENV);
 	}
 	
 	public static void setWorkIdGenerator(WorkIdGenerator workIdGenerator) {

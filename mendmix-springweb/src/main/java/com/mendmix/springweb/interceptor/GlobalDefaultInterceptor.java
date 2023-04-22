@@ -99,7 +99,7 @@ public class GlobalDefaultInterceptor implements HandlerInterceptor {
 			HandlerMethod method = (HandlerMethod)handler;
 			ApiMetadata  config = method.getMethod().getAnnotation(ApiMetadata.class);
 			if(config != null){
-				if(config.IntranetAccessOnly() && !WebUtils.isInternalRequest(request)){
+				if(config.intranetAccess() && !WebUtils.isInternalRequest(request)){
 					response.setStatus(403);
 					if(log.isDebugEnabled()) {
 						WebUtils.printRequest(request);

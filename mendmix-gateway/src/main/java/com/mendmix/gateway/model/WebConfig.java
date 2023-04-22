@@ -35,20 +35,27 @@ public class WebConfig {
 	
 	public static WebConfig getDegault() {
 		if(config == null) {
-			config = new WebConfig();
-			config.setApiSign(GatewayConfigs.WEB_REQUEST_SIGN_ENABLED);
-			config.setPublicKey(RSAKeyPairHolder.getPublicKeyString());
-			config.signSalt = DigestUtils.md5(GlobalRuntimeContext.ENV + GlobalRuntimeContext.SYSTEM_ID);
-			config.safeSignSalt = "mendmix@" + StringUtils.reverse(config.signSalt);
+			WebConfig _config = new WebConfig();
+			_config.systemKey = GlobalRuntimeContext.SYSTEM_KEY;
+			_config.setApiSign(GatewayConfigs.WEB_REQUEST_SIGN_ENABLED);
+			_config.setPublicKey(RSAKeyPairHolder.getPublicKeyString());
+			_config.signSalt = DigestUtils.md5(GlobalRuntimeContext.ENV + GlobalRuntimeContext.SYSTEM_KEY);
+			_config.safeSignSalt = "mendmix@" + StringUtils.reverse(config.signSalt);
+			config = _config;
 		}
 		return config;
 	}
+	
+	private String systemKey;
 	private boolean apiSign;
 	private String signSalt;
 	private String publicKey;
 	@JsonIgnore
 	private String safeSignSalt;
 	
+	public String getSystemKey() {
+		return systemKey;
+	}
 	public boolean isApiSign() {
 		return apiSign;
 	}

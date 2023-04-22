@@ -88,8 +88,8 @@ public class ActionLogCollector {
 		actionLog.setActionKey(String.format(ACTION_KEY_FORMAT,httpMethod, uri));
 		actionLog.setClientIp(requestIp);
 		actionLog.setEnv(GlobalRuntimeContext.ENV);
-		actionLog.setAppId(StringUtils.defaultIfBlank(GlobalRuntimeContext.SYSTEM_ID, GlobalRuntimeContext.APPID));
-		actionLog.setModuleId(GlobalRuntimeContext.APPID);
+		actionLog.setSystemKey(GlobalRuntimeContext.SYSTEM_KEY);
+		actionLog.setModuleKey(GlobalRuntimeContext.APPID);
 		actionLog.setActionAt(new Date());
 		actionLog.setTraceId(CurrentRuntimeContext.getRequestId());
 		AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
@@ -142,7 +142,8 @@ public class ActionLogCollector {
     public static void onSystemBackendTaskStart(String taskKey,String taskName){
     	ActionLog actionLog = new ActionLog();
     	actionLog.setLogType(ActionLogType.schedule.name());
-		actionLog.setAppId(GlobalRuntimeContext.APPID);
+    	actionLog.setSystemKey(GlobalRuntimeContext.SYSTEM_KEY);
+		actionLog.setModuleKey(GlobalRuntimeContext.APPID);
 		actionLog.setEnv(GlobalRuntimeContext.ENV);
 		actionLog.setActionAt(new Date());
 		actionLog.setTraceId(TokenGenerator.generate());

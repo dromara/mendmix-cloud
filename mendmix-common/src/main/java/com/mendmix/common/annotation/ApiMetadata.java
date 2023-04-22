@@ -45,7 +45,7 @@ public @interface ApiMetadata {
 	 * 是否仅内网访问
 	 * @return
 	 */
-	boolean IntranetAccessOnly() default false;
+	boolean intranetAccess() default false;
 	
 	/**
 	 * 接口权限级别

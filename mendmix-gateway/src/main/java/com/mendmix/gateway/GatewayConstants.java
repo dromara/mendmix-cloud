@@ -22,6 +22,7 @@ public class GatewayConstants {
 	public static final String CONTEXT_IGNORE_FILTER = "ctx-ignore-filter";
 	public static final String CONTEXT_TRUSTED_REQUEST = "ctx-trusted-req";
 	public static final String CONTEXT_REQUEST_HIT_KEY = "ctx-req-hitKey";
+	public static final String CONTEXT_CURRENT_URI = "ctx-current-uri";
 	public static final String CONTEXT_CURRENT_API = "ctx-current-api";
 	public static final String CACHED_REQUEST_BODY_STR_ATTR = "cachedRequestBodyStr";
 	

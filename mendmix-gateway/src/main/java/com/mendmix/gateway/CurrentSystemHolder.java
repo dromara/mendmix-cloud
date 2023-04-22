@@ -205,12 +205,12 @@ public class CurrentSystemHolder {
 	private static void loadRemoteSystems() {
 		SystemInfoApi apiInstance = InstanceFactory.getInstance(SystemInfoApi.class);
 		if (apiInstance != null) {
-			mainSystem = apiInstance.getSystemMetadata(GlobalRuntimeContext.SYSTEM_ID);
+			mainSystem = apiInstance.getSystemMetadata(GlobalRuntimeContext.SYSTEM_KEY);
 		}
 		if(mainSystem == null) {
 			mainSystem = new BizSystem();
 			mainSystem.setId(ResourceUtils.getProperty("default.allocation.system.id", "0"));
-			log.warn("MENDMIX-TRACE-LOGGGING-->> system [{}] not found!!!!!!", GlobalRuntimeContext.SYSTEM_ID);
+			log.warn("MENDMIX-TRACE-LOGGGING-->> system [{}] not found!!!!!!", GlobalRuntimeContext.SYSTEM_KEY);
 		}
 		// 全局模块
 		if (apiInstance != null && ResourceUtils.getBoolean("application.global-route.enabled", true)) {

@@ -52,6 +52,7 @@ public class SqlRewriteStrategy {
 			for (TablePermissionStrategy policy : annotation.strategy()) {
 				tableStrategies.put(policy.table(), policy);
 			}
+			handleOwner = tableStrategies.values().stream().anyMatch(o -> o.handleOwner());
 		}
 	}
 	
@@ -59,6 +60,9 @@ public class SqlRewriteStrategy {
 		this.allMatch = allMatch;
 		this.handleOwner = MybatisConfigs.DATA_PERM_DEFAULT_HANDLE_OWNER;
 		this.tableStrategies = strategies;
+		if(strategies != null && !strategies.isEmpty()) {
+			handleOwner = tableStrategies.values().stream().anyMatch(o -> o.handleOwner());
+		}
 	}
 	
 

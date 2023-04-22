@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mendmix.common.MendmixBaseException;
+import com.mendmix.common.annotation.ApiMetadata;
+import com.mendmix.common.constants.PermissionLevel;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.gateway.endpoint.management.HandleParam;
 import com.mendmix.gateway.endpoint.management.MgtHandler;
@@ -55,6 +57,7 @@ public class ServiceExporterController {
 	}
 	
 	@RequestMapping(value = "/{handleName}/{act}",method = {RequestMethod.GET,RequestMethod.POST})
+	@ApiMetadata(permissionLevel = PermissionLevel.LoginRequired)
 	public WrapperResponse<?> process(ServerHttpRequest request,@PathVariable("handleName") String handleName,@PathVariable("act") String act) {
 		WrapperResponse<?> respData = null;
 		try {
