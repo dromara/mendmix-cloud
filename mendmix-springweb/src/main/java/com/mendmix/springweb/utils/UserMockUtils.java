@@ -34,15 +34,8 @@ public class UserMockUtils {
     		CurrentRuntimeContext.setClientType(ResourceUtils.getProperty("mendmix.mock.context.clientType"));
 			CurrentRuntimeContext.setTenantId(ResourceUtils.getProperty("mendmix.mock.context.tenantId"));
     		CurrentRuntimeContext.setSystemId(ResourceUtils.getProperty("mendmix.mock.context.systemId"));
-    		
-    		authUser = new AuthUser();
-    		authUser.setId(ResourceUtils.getProperty("mendmix.mock.context.user.id","1"));
-    		authUser.setPrincipalId(ResourceUtils.getProperty("mendmix.mock.context.user.principalId","1"));
-    		authUser.setName(ResourceUtils.getProperty("mendmix.mock.context.user.name","mockuser"));
-    		authUser.setType(ResourceUtils.getProperty("mendmix.mock.context.user.type"));
-    		authUser.setDeptId(ResourceUtils.getProperty("mendmix.mock.context.user.deptId"));
-    		authUser.setPostId(ResourceUtils.getProperty("mendmix.mock.context.user.postId"));
-    		authUser.setAdmin(ResourceUtils.getBoolean("mendmix.mock.context.user.isAdmin"));
+    		//
+    		authUser = ResourceUtils.getBean("mendmix.mock.context.user.", AuthUser.class);
     		CurrentRuntimeContext.setAuthUser(authUser);
     	}
 		return authUser;

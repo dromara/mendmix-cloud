@@ -41,8 +41,10 @@ public class AuthUser {
 	private String id;
 	private String name;
 	private String type;//用户类型类型
+	private String bunitId;//业务单元
 	private String deptId;
 	private String postId;
+	private String principalType;
 	private String principalId;
 	private boolean admin;
 
@@ -65,6 +67,13 @@ public class AuthUser {
 	public void setType(String type) {
 		this.type = type;
 	}
+	
+	public String getBunitId() {
+		return bunitId;
+	}
+	public void setBunitId(String bunitId) {
+		this.bunitId = bunitId;
+	}
 	public String getDeptId() {
 		return deptId;
 	}
@@ -78,8 +87,12 @@ public class AuthUser {
 	public void setPostId(String postId) {
 		this.postId = postId;
 	}
-	
-	
+	public String getPrincipalType() {
+		return principalType;
+	}
+	public void setPrincipalType(String principalType) {
+		this.principalType = principalType;
+	}
 	public String getPrincipalId() {
 		return principalId;
 	}
@@ -98,8 +111,10 @@ public class AuthUser {
 		builder.append(trimToPlaceHolder(id)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(name)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(type)).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(bunitId)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(deptId)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(postId)).append(CONTACT_CHAR);
+		builder.append(trimToPlaceHolder(principalType)).append(CONTACT_CHAR);
 		builder.append(trimToPlaceHolder(principalId)).append(CONTACT_CHAR);
 		builder.append(admin).append(CONTACT_CHAR);
 		builder.append(System.currentTimeMillis()).append(CONTACT_CHAR);
@@ -119,10 +134,12 @@ public class AuthUser {
 		user.setId(placeHolderToNull(splits[0]));
 		user.setName(placeHolderToNull(splits[1]));
 		user.setType(placeHolderToNull(splits[2]));
-		user.setDeptId(placeHolderToNull(splits[3]));
-		user.setPostId(placeHolderToNull(splits[4]));
-		user.setPrincipalId(placeHolderToNull(splits[5]));
-		user.setAdmin(Boolean.parseBoolean(splits[6]));
+		user.setBunitId(placeHolderToNull(splits[3]));
+		user.setDeptId(placeHolderToNull(splits[4]));
+		user.setPostId(placeHolderToNull(splits[5]));
+		user.setPrincipalType(placeHolderToNull(splits[6]));
+		user.setPrincipalId(placeHolderToNull(splits[7]));
+		user.setAdmin(Boolean.parseBoolean(splits[8]));
 		
 		return user;
 	}

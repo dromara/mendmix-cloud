@@ -15,6 +15,9 @@
  */
 package com.mendmix.common.util;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+
 import com.mendmix.common.crypt.AesWrapper;
 
 public class SimpleCryptUtils {
@@ -22,6 +25,7 @@ public class SimpleCryptUtils {
 	public static final AesWrapper aesWrapper;
 	static {
 		String cryptKey = ResourceUtils.getProperty("mendmix.crypto.cryptKey");
+		Validate.notBlank(cryptKey, "config[mendmix.crypto.cryptKey] is missing");
 		aesWrapper = new AesWrapper(cryptKey);
 	}
 

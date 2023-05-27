@@ -15,6 +15,7 @@
  */
 package com.mendmix.springcloud.autoconfigure;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -42,6 +43,16 @@ public class IdWorkIdConfiguration {
 				return new RedisWorkIdGenerator();
 			} catch (ClassNotFoundException e) {}
     	}
-    	return new LocalWorkIdGenerator();
+    	try {
+			Class.forName("org.apache.commons.io.FileUtils");
+			return new LocalWorkIdGenerator();
+		} catch (ClassNotFoundException e) {
+			return new WorkIdGenerator() {
+				@Override
+				public int generate(String nodeId) {
+					return RandomUtils.nextInt(10, 99);
+				}
+			};
+		}
     }
 }
