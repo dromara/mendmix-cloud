@@ -31,6 +31,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -65,7 +66,19 @@ public class ApacheHttpClient implements HttpClientProvider {
 	public HttpResponseEntity execute(HttpRequestEntity requestEntity)  throws IOException{
 		
 		CredentialsProvider  credsProvider = null;
-		CloseableHttpClient httpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
+		SSLConnectionSocketFactory sslConnectionSocketFactory;
+		try {
+			sslConnectionSocketFactory = new SSLConnectionSocketFactory(
+					SSLHelper.getSslContext(), 
+					SSLHelper.getHostnameVerifier()
+			 );
+		} catch (Exception e) {
+			sslConnectionSocketFactory = SSLConnectionSocketFactory.getSocketFactory();
+		}
+		CloseableHttpClient httpClient = HttpClients.custom()
+				.setDefaultCredentialsProvider(credsProvider)
+				.setSSLSocketFactory(sslConnectionSocketFactory)
+				.build();
 		CloseableHttpResponse response = null;
 		try {
 			HttpUriRequest request = buildHttpUriRequest(requestEntity.getUri(), requestEntity);

@@ -23,18 +23,11 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -61,6 +54,10 @@ public class JdkHttpClient implements HttpClientProvider {
 	public static final String CONTENT_TYPE_JSON_UTF8 = CONTENT_TYPE_JSON_PREFIX + CHARSET_UTF8;
 	public static final String CONTENT_TYPE_FROM_URLENCODED_UTF8 = CONTENT_TYPE_FROM_URLENCODED_PREFIX + CHARSET_UTF8;
 
+	static {
+		SSLHelper.ignoreSSLVerify();
+	}
+	
 	@Override
 	public HttpResponseEntity execute(HttpRequestEntity requestEntity) throws IOException {
 
@@ -264,9 +261,6 @@ public class JdkHttpClient implements HttpClientProvider {
 
 	private static HttpURLConnection buildConnection(URL url, HttpRequestEntity requestEntity) throws IOException {
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-		if("https".equals(url.getProtocol())) {
-			((HttpsURLConnection)conn).setSSLSocketFactory(createSSL());
-		}
 		conn.setRequestMethod(requestEntity.getMethod().name());
 		conn.setDoInput(true);
 		conn.setDoOutput(true);
@@ -289,34 +283,5 @@ public class JdkHttpClient implements HttpClientProvider {
 		}
 		return conn;
 	}
-
-	private static javax.net.ssl.SSLSocketFactory createSSL() {
-		TrustManager[] tm = new TrustManager[] { myX509TrustManager };
-		// TLSv1.1以及以上的需要JDK1.7以上
-		try {
-			SSLContext sslContext = SSLContext.getInstance("TLSv1.1");
-			sslContext.init(null, tm, null);
-			javax.net.ssl.SSLSocketFactory ssf = sslContext.getSocketFactory();
-			return ssf;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private static TrustManager myX509TrustManager = new X509TrustManager() {
-
-		@Override
-		public X509Certificate[] getAcceptedIssuers() {
-			return null;
-		}
-
-		@Override
-		public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-		}
-
-		@Override
-		public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-		}
-	};
 
 }

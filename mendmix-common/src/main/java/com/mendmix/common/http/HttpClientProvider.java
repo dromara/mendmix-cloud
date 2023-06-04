@@ -42,8 +42,9 @@ public interface HttpClientProvider {
 	String CONTENT_TYPE_FROM_URLENCODED_UTF8 = CONTENT_TYPE_FROM_URLENCODED_PREFIX + CHARSET_UTF8;
 	String CONTENT_TYPE_FROM_MULTIPART_UTF8 = CONTENT_TYPE_FROM_MULTIPART_PREFIX + CHARSET_UTF8;
 	
-	int connectTimeout = ResourceUtils.getInt("application.httputil.connectTimeout", 2000);
-	int readTimeout = ResourceUtils.getInt("application.httputil.readTimeout", 10000);
+	int connectTimeout = ResourceUtils.getInt("mendmix.httpclient.connectTimeout", 2000);
+	int readTimeout = ResourceUtils.getInt("mendmix.httpclient.readTimeout", 10000);
+	String sslCipherSuites = ResourceUtils.getProperty("mendmix.httpclient.ssl.cipherSuites", "TLS");
 
 	HttpResponseEntity execute(HttpRequestEntity requestEntity) throws IOException;
 }
