@@ -19,11 +19,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import com.mendmix.cache.CacheUtils;
 import com.mendmix.cache.RedisTemplateGroups;
+import com.mendmix.common.GlobalConstants;
+import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.MendmixBaseException;
 
 /**
@@ -35,6 +39,8 @@ import com.mendmix.common.MendmixBaseException;
  */
 public class RedisDistributeLock  {
 
+	private static Logger logger = LoggerFactory.getLogger("com.mendmix.common2");
+	
 	private static final String KEY_PREFIX = "_dlock:";
 
 	private static StringRedisTemplate stringRedisTemplate;
@@ -58,9 +64,14 @@ public class RedisDistributeLock  {
 		return stringRedisTemplate;
 	}
 
-	private static String getLockLua = "local res = redis.call('setnx', KEYS[1],'1')\n" + "if tonumber(res) > 0 then\n"
-			+ "	redis.call('PEXPIRE', KEYS[1], ARGV[1])\n" + "	return 1\n" + "else \n" + "	return 0\n" + "end";
-
+	private static String getLockLua = "local res = redis.call('setnx', KEYS[1],ARGV[1])\n" + 
+            "if tonumber(res) > 0 then\n" + 
+            "	redis.call('PEXPIRE', KEYS[1], ARGV[2])\n" + 
+            "	return 1\n" + 
+            "else \n" + 
+            "	return 0\n" + 
+            "end";
+	
 	DefaultRedisScript<Long> lockScript = new DefaultRedisScript<>(getLockLua, Long.class);
 	private static final long _DEFAULT_MAX_WAIT = 60 * 1000;
 	private String lockName;
@@ -99,7 +110,8 @@ public class RedisDistributeLock  {
 	public boolean tryLock() {
 		if (getRedisTemplate() == null)
 			return true;
-		Long result = stringRedisTemplate.execute(lockScript, Arrays.asList(lockName), String.valueOf(maxLiveMillis));
+		String threadKey = buildThreadKey();
+		Long result = stringRedisTemplate.execute(lockScript, Arrays.asList(lockName), threadKey, String.valueOf(maxLiveMillis));
 		return result != null && result == 1;
 	}
 
@@ -163,7 +175,20 @@ public class RedisDistributeLock  {
 	public void unlock() {
 		if (getRedisTemplate() == null)
 			return;
-		stringRedisTemplate.delete(lockName);
+		String val = stringRedisTemplate.opsForValue().get(lockName);
+		String threadKey = buildThreadKey();
+		if(threadKey.equals(val)) {			
+			stringRedisTemplate.delete(lockName);
+		}else if(val != null){
+			logger.info(">>线程[{}] 解锁不匹配!! -> lockName:{},期望线程:{}",threadKey,lockName,val);
+		}
+	}
+	
+	private String buildThreadKey() {
+		return new StringBuilder(GlobalRuntimeContext.getWorkId())
+				.append(GlobalConstants.AT)
+				.append(Thread.currentThread().getName())
+				.toString();
 	}
 
 }
