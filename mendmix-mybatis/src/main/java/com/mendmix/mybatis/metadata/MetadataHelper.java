@@ -276,4 +276,9 @@ public class MetadataHelper {
     public static Field getEntityField(String tableName,String fieldName){
     	return entityFieldMappings.get(tableName.toLowerCase()).get(fieldName);
     }
+    
+    public static boolean hasTableColumn(String tableName,String column){
+    	if(!tableColumnMappings.containsKey(tableName))return false;
+    	return tableColumnMappings.get(tableName).stream().anyMatch(o -> o.getColumn().equals(column));
+    }
 }

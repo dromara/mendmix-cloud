@@ -54,7 +54,10 @@ public class MybatisConfigs {
 	public static final String DEPT_COLUMN_NAME = "mendmix.mybatis.department.columnName";
 	
 	public static final boolean DATA_PERM_ALL_MATCH_MODE_ENABLED = ResourceUtils.getBoolean("application.mybatis.dataPermssion.allMatchMode.enabled",true);
+	public static final String DATA_PERM_SPEC_KEY = ResourceUtils.getProperty("mendmix.mybatis.dataPermission.specialPermKey", "specialPermKey");
 	public static final boolean DATA_PERM_DEFAULT_HANDLE_OWNER = ResourceUtils.getBoolean("mendmix.mybatis.dataPermission.defaultHandleOwner");
+	public static final boolean DATA_PERM_STRICT_MODE = ResourceUtils.getBoolean("mendmix.mybatis.dataPermission.strict.mode",true);
+	public static final boolean DATA_PERM_ORG_USING_FULL_CODE_MODE = ResourceUtils.getBoolean("mendmix.mybatis.dataPermission.orgUsingFullCodeMode", false);
 	
 	private static Map<String, Properties> groupProperties = new HashMap<>();
 	

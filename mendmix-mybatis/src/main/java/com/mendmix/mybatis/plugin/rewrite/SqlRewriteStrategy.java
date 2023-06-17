@@ -24,6 +24,8 @@ public class SqlRewriteStrategy {
 
 	private boolean ignoreAny;
 	
+	private boolean ignoreDataPerm;
+	
 	private boolean ignoreTenant;
 	
 	private boolean ignoreSoftDelete;
@@ -76,6 +78,14 @@ public class SqlRewriteStrategy {
 
 	public boolean isAllMatch() {
 		return allMatch;
+	}
+	
+	public boolean isIgnoreDataPerm() {
+		return ignoreDataPerm;
+	}
+
+	public void setIgnoreDataPerm(boolean ignoreDataPerm) {
+		this.ignoreDataPerm = ignoreDataPerm;
 	}
 
 	public boolean isIgnoreTenant() {
@@ -140,6 +150,14 @@ public class SqlRewriteStrategy {
 
 	public void setRewritedTableMapping(Map<String, String> rewritedTables) {
 		this.rewritedTableMapping = rewritedTables;
+	}
+	
+	public boolean isHandleJoin(String table) {
+		if(!this.handleJoin)return false;
+		if(!this.allMatch && !hasTableStrategy(table)) {
+			return false;
+		}
+		return true;
 	}
 	
 	public List<List<ConditionPair>> getOrRelationColumns(String table){

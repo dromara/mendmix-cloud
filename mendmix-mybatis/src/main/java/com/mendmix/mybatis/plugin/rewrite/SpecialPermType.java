@@ -21,5 +21,5 @@ package com.mendmix.mybatis.plugin.rewrite;
  * @date Feb 26, 2023
  */
 public enum SpecialPermType {
-	owner,allDept,currentDept,currentAndSubDept
+	owner,allDept,currentDept,currentAndSubDept,_allValues
 }

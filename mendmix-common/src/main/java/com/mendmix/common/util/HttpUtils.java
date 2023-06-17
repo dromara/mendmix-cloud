@@ -49,22 +49,21 @@ public class HttpUtils {
 	private static HttpClientProvider provider;
 	
 	static {
-		String providerType = ResourceUtils.getProperty("application.httputil.provider");
+		String providerType = ResourceUtils.getProperty("mendmix.httpclient.provider");
 		try {
-			if(providerType == null || providerType.equals("okHttp3")) {
+			if(providerType == null || providerType.equalsIgnoreCase("httpClient")) {
+				Class.forName("org.apache.http.impl.client.CloseableHttpClient");
+				Class.forName("org.apache.http.entity.mime.MultipartEntityBuilder");
+				provider = new ApacheHttpClient();
+			}
+		} catch (Exception e) {}
+		
+		try {
+			if(provider == null && (providerType == null || providerType.equalsIgnoreCase("okHttp3"))) {
 				Class.forName("okhttp3.OkHttpClient");
 				provider = new OkHttp3Client();
 			}
 		} catch (Exception e) {}
-		if(provider == null) {
-			try {
-				if(providerType == null || providerType.equals("httpClient")) {
-					Class.forName("org.apache.http.impl.client.CloseableHttpClient");
-					Class.forName("org.apache.http.entity.mime.MultipartEntityBuilder");
-					provider = new ApacheHttpClient();
-				}
-			} catch (Exception e) {}
-		}
 		
 		if(provider == null) {
 			provider = new JdkHttpClient();

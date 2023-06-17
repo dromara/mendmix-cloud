@@ -16,9 +16,12 @@
 package com.mendmix.gateway.model;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -53,6 +56,8 @@ public class BizSystemModule {
 
     @JsonIgnore
     private Map<Pattern, ApiInfo> wildcardUris = new HashMap<>();
+    @JsonIgnore
+    private List<Pattern> sortedWildcardPatterns = new ArrayList<>();
 
 
     private Map<String, ApiInfo> apiInfos;
@@ -226,12 +231,18 @@ public class BizSystemModule {
 		if(apiInfo != null) {
 			return apiInfo;
 		}
-		for (Pattern pattern : wildcardUris.keySet()) {
+		for (Pattern pattern : sortedWildcardPatterns) {
 			if(pattern.matcher(identifier).matches()) {
 				return wildcardUris.get(pattern);
 			}
 		}
 		return null;
+	}
+	
+	public void updateOnApiListRefresh() {
+		if(wildcardUris.isEmpty())return;
+		//长的在前，避免最短匹配
+		sortedWildcardPatterns = wildcardUris.keySet().stream().sorted((o1,o2) -> o2.pattern().length() - o1.pattern().length()).collect(Collectors.toList());
 	}
 	
 	

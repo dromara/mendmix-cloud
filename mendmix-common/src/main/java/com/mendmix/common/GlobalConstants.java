@@ -50,4 +50,6 @@ public class GlobalConstants {
 	public static final String DEFAULT_EXT_VALUES_NAME = "extValues";
 	
 	public static final String FEIGN_CLIENT = "feign-client";
+	
+	public static final String DEBUG_TRACE_PARAM_NAME = "_debug_trace_context";
 }

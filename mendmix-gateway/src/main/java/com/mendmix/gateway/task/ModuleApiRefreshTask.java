@@ -123,6 +123,7 @@ public class ModuleApiRefreshTask implements SubTimerTask {
 			if(module.getApiInfos() == null) {
 				module.setApiInfos(new HashMap<>(0));
 			}
+			module.updateOnApiListRefresh();
 			logger.info("MENDMIX-TRACE-LOGGGING-->> initModuleApiInfos end -> serviceId:{},apiNums:{}",module.getServiceId(),module.getApiInfos().size());
 		}
 	}

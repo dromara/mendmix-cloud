@@ -46,4 +46,7 @@ public class CustomRequestHeaders {
 		public static final String HEADER_IGNORE_AUTH = "x-ignore-auth";
 		public static final String HEADER_CLUSTER_ID = "x-cluster-id";
 		public static final String HEADER_EXCEPTION_CODE = "x-exception-code";
+		public static final String HEADER_BUSINESS_UNIT_ID = "x-bunit-id";
+		
+		public static final String HEADER_TIMESTAMP = "timestamp";
 }

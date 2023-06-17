@@ -183,6 +183,15 @@ public class MybatisRuntimeContext {
 		map.put(fieldName, fieldValues);
 	}
 	
+	public static void setDataPermissionValues(Map<String, String[]> valueMap,boolean append){
+		if(append && ThreadLocalContext.exists(CONTEXT_DATA_PROFILE_KEY)) {
+			Map<String, String[]> map = ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
+			map.putAll(valueMap);
+		}else {
+			ThreadLocalContext.set(CONTEXT_DATA_PROFILE_KEY,valueMap);
+		}
+	}
+	
 	public static Map<String, String[]> getDataPermissionValues(){
 		final Map<String, String[]> valueMaps = ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
 		if(valueMaps == null) {
@@ -191,7 +200,6 @@ public class MybatisRuntimeContext {
 			List<DataPermissionItem> permissions = getUserPermissionProvider().findUserPermissions(currentUser.getId());
 			if(permissions == null)return null;
 			for (DataPermissionItem item : permissions) {
-				if(item.isAllMatch())continue;
 				if(item.getValues() == null || item.getValues().isEmpty()) {
 					addDataPermissionValues(item.getFieldName(), new String[0]);
 				}else {

@@ -150,6 +150,24 @@ public class CurrentRuntimeContext {
 	public static String getTenantId(boolean validate) {
 		return getContextVal(CustomRequestHeaders.HEADER_TENANT_ID, validate);
 	}
+	
+	public static void setBusinessUnitId(String businessUnitId){
+		setContextVal(CustomRequestHeaders.HEADER_BUSINESS_UNIT_ID, businessUnitId);
+	}
+	
+	public static String getBusinessUnitId(){	
+		String buId = getContextVal(CustomRequestHeaders.HEADER_BUSINESS_UNIT_ID, false);
+		return buId;
+	}
+	
+	public static String timestamp() {
+		String timestamp = getContextVal(CustomRequestHeaders.HEADER_TIMESTAMP, false);
+		if(timestamp == null) {
+			timestamp = String.valueOf(System.currentTimeMillis());
+			setContextVal(CustomRequestHeaders.HEADER_TIMESTAMP, timestamp);
+		}
+		return timestamp;
+	}
 
 	public static void setClientType(String clientType) {
 		setContextVal(CustomRequestHeaders.HEADER_CLIENT_TYPE, clientType);
@@ -177,6 +195,10 @@ public class CurrentRuntimeContext {
 
 	public static boolean getIgnoreTenant() {
 		return Boolean.parseBoolean(getContextVal(CustomRequestHeaders.HEADER_IGNORE_TENANT, false));
+	}
+	
+	public static boolean isDebugMode() {
+		return ThreadLocalContext.exists(GlobalConstants.DEBUG_TRACE_PARAM_NAME);
 	}
 
 	private static void setContextVal(String headerName, String value) {
