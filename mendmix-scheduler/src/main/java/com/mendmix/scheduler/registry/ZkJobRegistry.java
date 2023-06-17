@@ -44,7 +44,7 @@ import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.scheduler.JobContext;
 import com.mendmix.scheduler.model.JobConfig;
-import com.mendmix.scheduler.monitor.MonitorCommond;
+import com.mendmix.scheduler.monitor.SchManageCommond;
 
 /**
  * 
@@ -408,7 +408,7 @@ public class ZkJobRegistry extends AbstarctJobRegistry implements InitializingBe
 
 			@Override
 			public void handleDataChange(String dataPath, Object data) throws Exception {
-				MonitorCommond cmd = (MonitorCommond) data;
+				SchManageCommond cmd = (SchManageCommond) data;
 				if (cmd != null) {
 					logger.info("MENDMIX-TRACE-LOGGGING-->> 收到commond:" + cmd.toString());
 					execCommond(cmd);

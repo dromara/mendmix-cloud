@@ -24,7 +24,7 @@ import com.google.common.eventbus.Subscribe;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.scheduler.JobContext;
 import com.mendmix.scheduler.model.JobConfig;
-import com.mendmix.scheduler.monitor.MonitorCommond;
+import com.mendmix.scheduler.monitor.SchManageCommond;
 
 /**
  * @description <br>
@@ -87,7 +87,7 @@ public class NullJobRegistry extends AbstarctJobRegistry {
 	}
 	
 	@Subscribe
-	public void processCommand(MonitorCommond cmd){
+	public void processCommand(SchManageCommond cmd){
 		execCommond(cmd);
 	}
 

@@ -22,32 +22,31 @@ import java.io.Serializable;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2016年10月31日
  */
-public class MonitorCommond implements Serializable {
+public class SchManageCommond implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	public static enum CommondType {
+		exec,toggle,updateCron
+	}
 
-	public final static byte TYPE_EXEC = 0x01; 	//执行定时任务
-	public final static byte TYPE_STATUS_MOD = 0x02;//开停状态修改 
-	public final static byte TYPE_CRON_MOD = 0x03;//执行时间策略修改 
 	
-	
-	private byte cmdType;
+	private CommondType cmdType;
 	private String jobName; 
 	private Object body;
 	
-	public MonitorCommond() {}
+	public SchManageCommond() {}
 
-	public MonitorCommond(byte cmdType, String jobName, Object body) {
+	public SchManageCommond(CommondType cmdType, String jobName, Object body) {
 		super();
 		this.cmdType = cmdType;
 		this.jobName = jobName;
 		this.body = body;
 	}
-	public byte getCmdType() {
+	public CommondType getCmdType() {
 		return cmdType;
 	}
-	public void setCmdType(byte cmdType) {
+	public void setCmdType(CommondType cmdType) {
 		this.cmdType = cmdType;
 	}
 	public String getJobName() {

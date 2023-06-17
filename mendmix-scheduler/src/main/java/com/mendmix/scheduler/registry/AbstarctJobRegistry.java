@@ -30,7 +30,8 @@ import com.mendmix.scheduler.AbstractJob;
 import com.mendmix.scheduler.JobContext;
 import com.mendmix.scheduler.JobRegistry;
 import com.mendmix.scheduler.model.JobConfig;
-import com.mendmix.scheduler.monitor.MonitorCommond;
+import com.mendmix.scheduler.monitor.SchManageCommond;
+import com.mendmix.scheduler.monitor.SchManageCommond.CommondType;
 
 /**
  * @description <br>
@@ -77,11 +78,11 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 
 	}
 	
-	public void execCommond(MonitorCommond cmd){
+	public void execCommond(SchManageCommond cmd){
 		if(cmd == null)return;
 		JobConfig config = schedulerConfgs.get(cmd.getJobName());
 		final AbstractJob abstractJob = JobContext.getContext().getAllJobs().get(cmd.getJobName());
-		if(MonitorCommond.TYPE_EXEC == cmd.getCmdType()){
+		if(CommondType.exec == cmd.getCmdType()){
 			if(config.isRunning()){
 				logger.info("MENDMIX-TRACE-LOGGGING-->> tasl[{}] is running,return",abstractJob.getJobName());
 				return;
@@ -101,11 +102,11 @@ public abstract class AbstarctJobRegistry implements JobRegistry{
 			}else{
 				logger.warn("MENDMIX-TRACE-LOGGGING-->> Not found job :{} !!!!",cmd.getJobName());
 			}
-		}else if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType() 
-				|| MonitorCommond.TYPE_CRON_MOD == cmd.getCmdType()){
+		}else if(CommondType.toggle == cmd.getCmdType() 
+				|| CommondType.updateCron == cmd.getCmdType()){
 			
 			if(config != null){
-				if(MonitorCommond.TYPE_STATUS_MOD == cmd.getCmdType()){					
+				if(CommondType.toggle == cmd.getCmdType()){					
 					config.setActive("1".equals(cmd.getBody()));
 				}else{
 					try {

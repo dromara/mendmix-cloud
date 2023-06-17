@@ -33,7 +33,7 @@ import com.mendmix.common.util.WebUtils;
 import com.mendmix.scheduler.JobContext;
 import com.mendmix.scheduler.model.JobConfig;
 import com.mendmix.scheduler.model.JobGroupInfo;
-import com.mendmix.scheduler.monitor.MonitorCommond;
+import com.mendmix.scheduler.monitor.SchManageCommond;
 import com.mendmix.scheduler.registry.AbstarctJobRegistry;
 
 /**
@@ -74,7 +74,7 @@ public class ScheduleApiServlet extends HttpServlet {
 			respJson = JsonUtils.toJson(info);
 		} else if("POST".equals(req.getMethod()) && "command".equals(act)){
 			String postJson = CharStreams.toString(new InputStreamReader(req.getInputStream(), "UTF-8"));
-			MonitorCommond cmd = JsonUtils.toObject(postJson, MonitorCommond.class);
+			SchManageCommond cmd = JsonUtils.toObject(postJson, SchManageCommond.class);
 			AbstarctJobRegistry registry = (AbstarctJobRegistry)JobContext.getContext().getRegistry();
 			registry.execCommond(cmd);
 			
