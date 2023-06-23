@@ -33,6 +33,7 @@ public class ColumnMetadata {
 	private boolean createdAtField = false;
 	private boolean updatedByField = false;
 	private boolean updatedAtField = false;
+	private boolean fuzzyMatch = false;
 
 	public String getProperty() {
 		return property;
@@ -138,6 +139,14 @@ public class ColumnMetadata {
 
 	public void setUpdatedAtField(boolean updatedAtField) {
 		this.updatedAtField = updatedAtField;
+	}
+	
+	public boolean isFuzzyMatch() {
+		return fuzzyMatch;
+	}
+
+	public void setFuzzyMatch(boolean fuzzyMatch) {
+		this.fuzzyMatch = fuzzyMatch;
 	}
 
 	@Override

@@ -18,6 +18,7 @@ package com.mendmix.common;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -41,14 +42,14 @@ public class CurrentRuntimeContext {
 	private final static Logger logger = LoggerFactory.getLogger("com.mendmix");
 	
 	private static List<String> contextHeaders = Arrays.asList( 
-			CustomRequestHeaders.HEADER_FROWARDED_FOR,
 			CustomRequestHeaders.HEADER_INVOKE_TOKEN,
 			CustomRequestHeaders.HEADER_AUTH_USER,
 			CustomRequestHeaders.HEADER_TENANT_ID,
 			CustomRequestHeaders.HEADER_SYSTEM_ID,
 			CustomRequestHeaders.HEADER_CLIENT_TYPE, 
 			CustomRequestHeaders.HEADER_INVOKER_APP_ID, 
-			CustomRequestHeaders.HEADER_REQUEST_ID 
+			CustomRequestHeaders.HEADER_REQUEST_ID ,
+			CustomRequestHeaders.ACCEPT_LANGUAGE
 	);
 
 	public static void addContextHeaders(Map<String, String> headers) {
@@ -199,6 +200,25 @@ public class CurrentRuntimeContext {
 	
 	public static boolean isDebugMode() {
 		return ThreadLocalContext.exists(GlobalConstants.DEBUG_TRACE_PARAM_NAME);
+	}
+	
+	public static String getLanguage(boolean withCountry) {
+		try {
+			String language = getContextVal(CustomRequestHeaders.ACCEPT_LANGUAGE,false);
+			if(language == null)return Locale.CHINA.getLanguage();
+			language = StringUtils.split(language, ",;")[0];
+			if(withCountry)return language;
+			return StringUtils.split(language, GlobalConstants.MID_LINE)[0];
+		} catch (Exception e) {
+			return Locale.CHINA.getLanguage();
+		}
+	}
+	
+	public static Locale getLocale() {
+		String language = getLanguage(true);
+		if(language == null)return null;
+		String[] parts = StringUtils.split(language, GlobalConstants.MID_LINE);
+		return parts.length < 2 ? new Locale(parts[0]) : new Locale(parts[0], parts[1]);
 	}
 
 	private static void setContextVal(String headerName, String value) {

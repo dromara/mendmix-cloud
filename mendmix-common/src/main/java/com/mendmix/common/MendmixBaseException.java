@@ -15,6 +15,8 @@
  */
 package com.mendmix.common;
 
+import com.mendmix.common.exception.MainErrorType;
+
 public class MendmixBaseException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
@@ -40,6 +42,10 @@ public class MendmixBaseException extends RuntimeException {
 		super(message);
 		this.code = code;
 		this.bizCode = bizCode;
+	}
+	
+	public MendmixBaseException(MainErrorType mainErrorType) {
+		this(mainErrorType.getCode(), mainErrorType.getBizCode(),mainErrorType.getMessage());
 	}
 
 	public MendmixBaseException(int code,String message, Throwable cause) {

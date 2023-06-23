@@ -38,7 +38,7 @@ import com.mendmix.common.ThreadLocalContext;
 @Configuration
 public class AsyncTaskExecutorConfigurer implements AsyncConfigurer {
 
-	private final static Logger logger = LoggerFactory.getLogger("com.zvosframework");
+	private final static Logger logger = LoggerFactory.getLogger("com.mendmix");
 
 	@Value("${spring.customize.asyncExecutor.corePoolSize:1}")
 	private int corePoolSize;

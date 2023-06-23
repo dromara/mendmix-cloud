@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.mendmix.common.json.serializer.DateConvertSerializer;
 
 /**
  * Bean复制<br>
@@ -48,16 +53,18 @@ public class BeanUtils {
 
     private static Map<String, List<String>> fieldCache = new HashMap<>();
     
+    private static List<String> dynaProxyClassKeys = Arrays.asList("JavassistProxyFactory$");
+    
     /**
      * 值复制
      *
      * @param src
      * @param dest
-     * @param setDefaultValForNull 是否为null值属性设置默认值（null=>0,null=>""）
+     * @param ignoreNullValue 
      * @return
      * @throws RuntimeException
      */
-    public static <T> T copy(Object src, T dest, boolean setDefaultValForNull) throws RuntimeException {
+    public static <T> T copy(Object src, T dest, boolean ignoreNullValue) throws RuntimeException {
         if (src == null)
             return null;
 
@@ -90,42 +97,47 @@ public class BeanUtils {
                     }
                 }
                 if (writeMethod != null) {
-                	boolean matched = propertyType == srcDescriptor.getPropertyType(); //类型匹配
-                	//集合 比较泛型类是否匹配
-                	if(List.class.isAssignableFrom(propertyType)) {
-                		if(value == null || ((List<?>)value).isEmpty())continue;
-                		Class<?> distGenericType = getGenericType(destClass, name);
-                		if(distGenericType != null) {
-                			Class<?> srcGenericType = ((List<?>)value).get(0).getClass();
-                			if(srcGenericType != distGenericType) {
-                				//递归复制
-                				value = copy((List<?>)value, distGenericType);
-                			}
-                		}
-                	}
-                	
-                    if (!matched) {
-                        if (value != null || setDefaultValForNull) {
-                        	if(isSimpleDataType(srcDescriptor.getPropertyType())){                        		
-                        		value = toAdaptTypeValue(srcDescriptor.getPropertyType(), value, propertyType);
-                        	}else{
-                        		//非同类型 对象递归复制
-                        		value = copy(value, propertyType);
-                        	}
-                        }
+                	if (value != null) {
+                    	if(srcDescriptor.getPropertyType().isEnum() || isSimpleDataType(srcDescriptor.getPropertyType())){ 
+                    		//类型不匹配
+                    		if( propertyType != srcDescriptor.getPropertyType()) {                    			
+                    			value = toAdaptTypeValue(srcDescriptor.getPropertyType(), value, propertyType);
+                    		}
+                    	}else{
+                    		//非简单类型 对象递归复制，深拷贝
+                    		try {
+                    			if(List.class.isAssignableFrom(propertyType)) {
+                        			List<?> toList = (List<?>)value;
+                        			if(!toList.isEmpty() && !isSimpleDataType(toList.get(0))) {
+                        				Class<?> distGenericType = getGenericType(destClass, name);
+                            			value = copy(toList, distGenericType);
+                        			}
+                        		}else if(!Map.class.isAssignableFrom(propertyType) 
+                        				&& !Collection.class.isAssignableFrom(propertyType)
+                        				&& java.net.URI.class != propertyType){
+                        			//TODO Map等深拷贝
+                        			value = copy(value, propertyType);
+                        		}
+							} catch (Exception e) {
+								System.err.println(String.format("copy object[%s.%s]error:%s", src.getClass().getName(),name,e.getMessage()));
+							}
+                    	}
                     }
-                    //设置默认值
-                    if (value == null && setDefaultValForNull) {
-                        if (destDescriptor.getPropertyType() == Long.class || destDescriptor.getPropertyType() == Integer.class || destDescriptor.getPropertyType() == Short.class || destDescriptor.getPropertyType() == Double.class || destDescriptor.getPropertyType() == Float.class) {
+                    
+                    //设置默认值,避免包装类型转换错误
+                    if (value == null && !ignoreNullValue) {
+                        if (destDescriptor.getPropertyType() == long.class 
+                        		|| destDescriptor.getPropertyType() == int.class 
+                        		|| destDescriptor.getPropertyType() == short.class 
+                        		|| destDescriptor.getPropertyType() == double.class 
+                        		|| destDescriptor.getPropertyType() == float.class) {
                             value = 0;
-                        } else if (destDescriptor.getPropertyType() == String.class) {
-                            value = StringUtils.EMPTY;
-                        } else if (destDescriptor.getPropertyType() == BigDecimal.class) {
-                            value = BigDecimal.ZERO;
+                        } else if (destDescriptor.getPropertyType() == boolean.class) {
+                            value = false;
                         }
                     }
 
-                    if (value != null) {
+                    if (value != null || !ignoreNullValue) {
                         writeMethod.invoke(dest, value);
                     }
                 }
@@ -138,7 +150,7 @@ public class BeanUtils {
     }
 
     public static <T> T copy(Object src, T dest) throws RuntimeException {
-        return copy(src, dest, false);
+        return copy(src, dest, true);
     }
 
     public static <T> List<T> copy(List<?> srcs, Class<T> destClass, boolean setDefaultValForNull) {
@@ -314,9 +326,14 @@ public class BeanUtils {
     }
 
     public static Map<String, Object> beanToMap(Object bean) {
-    	return beanToMap(bean, false);
+    	return beanToMap(bean, false,false);
     }
+    
     public static Map<String, Object> beanToMap(Object bean,boolean recursive) {
+    	return beanToMap(bean, recursive,false);
+    }
+    
+    public static Map<String, Object> beanToMap(Object bean,boolean recursive,boolean dateFormat) {
         Map<String, Object> returnMap = new HashMap<String, Object>();
         try {
             Map<String, PropertyDescriptor> descriptors = getCachePropertyDescriptors(bean.getClass());
@@ -326,11 +343,27 @@ public class BeanUtils {
                 Method readMethod = descriptor.getReadMethod();
                 Object result = readMethod.invoke(bean, new Object[0]);
                 if (result != null) {
-                	if(isSimpleDataType(result) || result instanceof Iterable){                		
+                	String className = result.getClass().getName();
+                	if(dynaProxyClassKeys.stream().anyMatch(o -> className.contains(o))) {
+                		continue;
+                	}
+                	if(dateFormat && descriptor.getPropertyType() == Date.class) {
+                		Field field = CachingFieldUtils.getField(bean.getClass(), propertyName);
+                		if(field.isAnnotationPresent(JsonFormat.class)) {
+                			JsonFormat jsonFormat = field.getAnnotation(JsonFormat.class);
+                			result = DateUtils.format((Date)result, jsonFormat.pattern());
+                		}else if(field.isAnnotationPresent(JsonSerialize.class)) {
+                			Class<?> jsonSerializer = field.getAnnotation(JsonSerialize.class).using();
+                			if(jsonSerializer == DateConvertSerializer.class) {
+                				result = DateUtils.format2DateStr((Date)result);
+                			}
+                		}
+                		returnMap.put(propertyName, result);
+                	}else if(isSimpleDataType(result) || result instanceof Iterable){                		
                 		returnMap.put(propertyName, result);
                 	}else {
                 		if(recursive){
-                    		returnMap.put(propertyName, beanToMap(result,recursive));
+                    		returnMap.put(propertyName, beanToMap(result,recursive,dateFormat));
                     	}else{
                     		returnMap.put(propertyName,result);
                     	}
@@ -340,10 +373,7 @@ public class BeanUtils {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-
         return returnMap;
-
     }
     
     public static void copy(Map<String, Object> src,Object dist){

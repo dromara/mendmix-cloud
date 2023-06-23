@@ -15,13 +15,13 @@
  */
 package com.mendmix.springweb.exception;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -34,31 +34,19 @@ import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.MendmixBaseException;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.logging.actionlog.ActionLogCollector;
+import com.mendmix.springweb.i18n.I18nMessageUtils;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-
-	private static Method rollbackCacheMethod;
-
-	static {
-		try {
-			Class<?> cacheHandlerClass = Class.forName("com.mendmix.mybatis.plugin.cache.CacheHandler");
-			rollbackCacheMethod = cacheHandlerClass.getMethod("rollbackCache");
-		} catch (Exception e) {
-		}
-	}
+	
+	@Autowired(required = false)
+	private SpecExceptionHandler specExceptionHandler;
+	@Autowired(required = false)
+	private ExceptionResponseConverter exceptionResponseConverter;
 
 	@ExceptionHandler(Exception.class)
 	@ResponseBody
-	public WrapperResponse<?> exceptionHandler(HttpServletRequest request, HttpServletResponse response,Exception e) {
-
-		// 缓存回滚
-		if (rollbackCacheMethod != null) {
-			try {
-				rollbackCacheMethod.invoke(null);
-			} catch (Exception e2) {
-			}
-		}
+	public Object exceptionHandler(HttpServletRequest request, HttpServletResponse response,Exception e) {
 
 		WrapperResponse<?> resp = new WrapperResponse<>();
 		Throwable throwable = getActualThrowable(e);
@@ -71,7 +59,11 @@ public class GlobalExceptionHandler {
 		if (e instanceof MendmixBaseException) {
 			MendmixBaseException e1 = (MendmixBaseException) e;
 			resp.setCode(e1.getCode());
-			resp.setMsg(e1.getMessage());
+			if(e1.getBizCode() != null) {
+				resp.setMsg(getLocaleMesage(e1.getBizCode(), e1.getMessage()));
+			}else {
+				resp.setMsg(e1.getMessage());
+			}
 		} else if (e instanceof org.springframework.web.HttpRequestMethodNotSupportedException) {
 			resp.setCode(HttpStatus.METHOD_NOT_ALLOWED.value());
 			resp.setMsg(e.getMessage());
@@ -88,20 +80,21 @@ public class GlobalExceptionHandler {
 			String fieldName;
 			StringBuilder fieldNames = new StringBuilder();
 			for (ObjectError error : errors) {
-				String errMsg =  error.getDefaultMessage();
 				fieldName = parseFieldName(error);
 				fieldNames.append(fieldName).append(",");
 			}
 			resp.setBizCode("error.parameter.notValid");
-			resp.setMsg("参数错误["+fieldNames.toString()+"]");
+			resp.setMsg(getLocaleMesage("error.parameter.notValid", "参数错误"));
 		} else {
-			Throwable parent = e.getCause();
-			if (parent instanceof IllegalStateException) {
-				resp.setCode(501);
-				resp.setMsg(e.getMessage());
-			} else {
-				resp.setCode(500);
-				resp.setMsg("系统繁忙");
+			if(specExceptionHandler == null || !specExceptionHandler.handle(resp, throwable)) {
+				Throwable parent = e.getCause();
+				if (parent instanceof IllegalStateException) {
+					resp.setCode(501);
+					resp.setMsg(e.getMessage());
+				} else {
+					resp.setCode(500);
+					resp.setMsg(getLocaleMesage("error.global.system.error", "系统繁忙,请稍后再试"));
+				}
 			}
 		}
 
@@ -119,6 +112,9 @@ public class GlobalExceptionHandler {
 		//
 		ActionLogCollector.onResponseEnd(response.getStatus(), e);
 		
+		if(exceptionResponseConverter != null) {
+			return exceptionResponseConverter.convert(resp);
+		}
 		return resp;
 	}
 	
@@ -139,5 +135,10 @@ public class GlobalExceptionHandler {
 			return StringUtils.split(codes[0], GlobalConstants.DOT)[2];
 		}
 		return error.getCode();
+	}
+	
+	private String getLocaleMesage(String code,String defaultMessage) {
+		String localeMessage = I18nMessageUtils.getMessage(code);
+		return StringUtils.defaultString(localeMessage, defaultMessage);
 	}
 }
