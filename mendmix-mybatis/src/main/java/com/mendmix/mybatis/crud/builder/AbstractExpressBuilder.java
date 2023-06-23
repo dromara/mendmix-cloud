@@ -20,7 +20,11 @@ import java.util.Date;
 import org.apache.commons.lang3.StringUtils;
 
 import com.mendmix.common.util.DateUtils;
+import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.metadata.ColumnMetadata;
+import com.mendmix.mybatis.metadata.EntityMetadata;
+import com.mendmix.mybatis.metadata.MapperMetadata;
+import com.mendmix.mybatis.metadata.MetadataHelper;
 
 /**
  * 
@@ -33,6 +37,15 @@ import com.mendmix.mybatis.metadata.ColumnMetadata;
  */
 public abstract class AbstractExpressBuilder {
 
+	
+	protected EntityMetadata currentEntityMetadata(Object example) {
+		MapperMetadata metadata = MybatisRuntimeContext.getMapperMetadata();
+		if(metadata != null) {
+			return metadata.getEntityMetadata();
+		}else {
+			return MetadataHelper.getEntityMapper(example.getClass());
+		}
+	}
 	/**
 	 * @param whereBuilder
 	 * @param column
@@ -41,7 +54,7 @@ public abstract class AbstractExpressBuilder {
 		if(whereBuilder.length() > 0)whereBuilder.append(" AND ");
 		whereBuilder.append(column.getColumn());
 		if(column.isFuzzyMatch()) {
-			whereBuilder.append("LIKE CONCAT('%',#{").append(column.getProperty()).append("},'%')");
+			whereBuilder.append(" LIKE CONCAT('%',#{").append(column.getProperty()).append("},'%')");
 		}else {
 			whereBuilder.append("=#{").append(column.getProperty()).append("}");
 		}

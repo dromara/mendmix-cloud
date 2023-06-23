@@ -25,7 +25,10 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.Invocation;
 
 import com.mendmix.common.model.PageParams;
+import com.mendmix.mybatis.MybatisRuntimeContext;
 import com.mendmix.mybatis.crud.CrudMethods;
+import com.mendmix.mybatis.metadata.MapperMetadata;
+import com.mendmix.mybatis.parser.MybatisMapperParser;
 import com.mendmix.mybatis.plugin.cache.QueryCacheMethodMetadata;
 import com.mendmix.mybatis.plugin.pagination.PageExecutor;
 import com.mendmix.mybatis.plugin.pagination.PaginationHandler;
@@ -59,9 +62,6 @@ public class InvocationVals {
 		executor =  (Executor) invocation.getTarget();
 		mappedStatement = (MappedStatement)args[0];
 		parameter = args[1];
-		boundSql = mappedStatement.getBoundSql(parameter);
-		//sql = StringUtils.replace(boundSql.getSql(), ";$", StringUtils.EMPTY);
-		sql = boundSql.getSql();
 		//
 		mapperNameSpace = mappedStatement.getId().substring(0, mappedStatement.getId().lastIndexOf(DOT));
 		//
@@ -81,7 +81,15 @@ public class InvocationVals {
 	        		this.pageParam = (PageParams) parameter;
 	        	}
 			}
+			//
+			if(mappedStatement.getId().endsWith(CrudMethods.countByExample.name()) 
+					|| mappedStatement.getId().endsWith(CrudMethods.selectByExample.name())) {
+				MapperMetadata mapperMetadata = MybatisMapperParser.getMapperMetadata(mapperNameSpace);
+				MybatisRuntimeContext.setMapperMetadata(mapperMetadata);
+			}
 		}
+		boundSql = mappedStatement.getBoundSql(parameter);
+		sql = boundSql.getSql();
 	}
 	
 	public Executor getExecutor() {

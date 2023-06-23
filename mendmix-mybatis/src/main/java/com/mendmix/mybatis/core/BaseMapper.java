@@ -87,11 +87,11 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
 	
 	@SelectProvider(type = CountByExampleProvider.class, method = "countByExample")
 	@ResultType(Long.class)
-	long countByExample(T example);
+	long countByExample(Object example);
 	
 	@SelectProvider(type = SelectByExampleProvider.class, method = "selectByExample")
 	@ResultMap("BaseResultMap")
-	List<T> selectByExample(T example);
+	List<T> selectByExample(Object example);
 	
 	int batchUpdateByPrimaryKeys(@Param("ids")List<ID> ids,@Param("example") T example);
 	

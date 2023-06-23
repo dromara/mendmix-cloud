@@ -82,4 +82,12 @@ public class BaseMybatisTest implements ApplicationContextAware{
 		System.out.println(list.size());
 	}
 	
+	@Test
+	public void testFindByExample() {
+		ExampleStaffEntity example = new ExampleStaffEntity();
+		example.setName("jim");
+		List<ExampleStaffEntity> list = staffMapper.selectByExample(example);
+		System.out.println(list.size());
+	}
+	
 }

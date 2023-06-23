@@ -8,6 +8,7 @@ import javax.persistence.Transient;
 
 import com.mendmix.example.dao.ExampleBaseEntity;
 import com.mendmix.example.support.TestTableShardStrategy;
+import com.mendmix.mybatis.core.FuzzyMatch;
 import com.mendmix.mybatis.plugin.shard.annotation.TableSharding;
 
 @Table(name = "staff")
@@ -17,6 +18,7 @@ public class ExampleStaffEntity extends ExampleBaseEntity {
     @SequenceGenerator(name="",sequenceName="true")
     private Integer id;
 
+    @FuzzyMatch
     private String name;
 
     private String mobile;

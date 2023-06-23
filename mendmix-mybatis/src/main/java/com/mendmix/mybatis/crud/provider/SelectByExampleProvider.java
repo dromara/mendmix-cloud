@@ -36,13 +36,13 @@ import com.mendmix.mybatis.metadata.MetadataHelper;
 public class SelectByExampleProvider extends AbstractExpressBuilder{
 
 	public String selectByExample(Object example) throws Exception {
-		EntityMetadata entityMapper = MetadataHelper.getEntityMapper(example.getClass());
-		Set<ColumnMetadata> columns = entityMapper.getColumns();
-		SQL sql = new SQL().SELECT("*").FROM(entityMapper.getTable().getName());
+		EntityMetadata entityMeta = currentEntityMetadata(example);
+		Set<ColumnMetadata> columns = entityMeta.getColumns();
+		SQL sql = new SQL().SELECT("*").FROM(entityMeta.getTable().getName());
 		Object value;
 		StringBuilder whereBuilder = new StringBuilder();
 		for (ColumnMetadata column : columns) {
-			value = MetadataHelper.getEntityField(entityMapper.getTable().getName(),column.getProperty()).get(example);
+			value = MetadataHelper.getEntityField(entityMeta.getTable().getName(),column.getProperty()).get(example);
 			if(value == null)continue;
 			appendWhere(whereBuilder,column);
 		}

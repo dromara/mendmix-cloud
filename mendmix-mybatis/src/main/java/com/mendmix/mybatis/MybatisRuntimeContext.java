@@ -25,6 +25,7 @@ import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.model.AuthUser;
 import com.mendmix.mybatis.datasource.DataSourceContextVals;
+import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.plugin.cache.CacheHandler;
 import com.mendmix.mybatis.plugin.rewrite.DataPermissionItem;
 import com.mendmix.mybatis.plugin.rewrite.SqlRewriteStrategy;
@@ -49,6 +50,7 @@ public class MybatisRuntimeContext {
 	private static final String CONTEXT_DATASOURCE_KEY = "_ctx_ds_";
 	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
 	private static final String CONTEXT_REWRITE_STRATEGY = "_ctx_rewrite_strategy_";
+	private static final String CONTEXT_MAPPER_METADATA = "_ctx_mapper_metadata_";
 	
 	private static UserPermissionProvider  userPermissionProvider;
 	
@@ -118,6 +120,14 @@ public class MybatisRuntimeContext {
 
 	public static void setDataPermissionStrategy(DataPermission annotation) {
 		getSqlRewriteStrategy().setDataPermission(annotation);
+	}
+	
+	public static void setMapperMetadata(MapperMetadata mapperMetadata){
+		ThreadLocalContext.set(CONTEXT_MAPPER_METADATA, mapperMetadata);
+	}
+	
+	public static MapperMetadata getMapperMetadata(){
+		return ThreadLocalContext.get(CONTEXT_MAPPER_METADATA);
 	}
 	
 	public static SqlRewriteStrategy getSqlRewriteStrategy() {
