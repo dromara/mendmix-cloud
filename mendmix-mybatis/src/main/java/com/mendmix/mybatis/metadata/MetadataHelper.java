@@ -38,6 +38,7 @@ import javax.persistence.Version;
 import org.apache.commons.lang3.StringUtils;
 
 import com.mendmix.mybatis.core.BaseEntity;
+import com.mendmix.mybatis.core.FuzzyMatch;
 import com.mendmix.mybatis.plugin.autofield.annotation.CreatedAt;
 import com.mendmix.mybatis.plugin.autofield.annotation.CreatedBy;
 import com.mendmix.mybatis.plugin.autofield.annotation.UpdatedAt;
@@ -105,6 +106,7 @@ public class MetadataHelper {
                 if(columnMeta.isUpdatable() && (columnMeta.isCreatedAtField() || columnMeta.isCreatedByField())) {
                 	columnMeta.setUpdatable(false);
                 }
+                columnMeta.setFuzzyMatch(field.isAnnotationPresent(FuzzyMatch.class));
                 // 如果为空，使用属性名并替换为下划线风格
                 if (columnName == null || columnName.equals("")) {
                     columnName = camelhumpToUnderline(field.getName());

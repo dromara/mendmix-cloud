@@ -39,8 +39,12 @@ public abstract class AbstractExpressBuilder {
 	 */
 	protected StringBuilder appendWhere(StringBuilder whereBuilder, ColumnMetadata column) {
 		if(whereBuilder.length() > 0)whereBuilder.append(" AND ");
-		whereBuilder.append(column.getColumn()).append("=");
-		whereBuilder.append("#{").append(column.getProperty()).append("}");
+		whereBuilder.append(column.getColumn());
+		if(column.isFuzzyMatch()) {
+			whereBuilder.append("LIKE CONCAT('%',#{").append(column.getProperty()).append("},'%')");
+		}else {
+			whereBuilder.append("=#{").append(column.getProperty()).append("}");
+		}
 		return whereBuilder;
 	}
 	
