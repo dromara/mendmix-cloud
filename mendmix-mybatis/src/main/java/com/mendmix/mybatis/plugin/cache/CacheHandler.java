@@ -42,7 +42,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.ParameterMapping;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +52,6 @@ import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.model.AuthUser;
-import com.mendmix.common.util.CachingFieldUtils;
 import com.mendmix.common.util.DigestUtils;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.ReflectUtils;
@@ -74,7 +72,6 @@ import com.mendmix.mybatis.plugin.InvocationVals;
 import com.mendmix.mybatis.plugin.MendmixMybatisInterceptor;
 import com.mendmix.mybatis.plugin.cache.annotation.Cache;
 import com.mendmix.mybatis.plugin.cache.annotation.CacheIgnore;
-import com.mendmix.mybatis.plugin.rewrite.SqlRewriteHandler;
 import com.mendmix.spring.InstanceFactory;
 
 
@@ -428,7 +425,7 @@ public class CacheHandler implements InterceptorHandler {
 		PreparedStatement statement = null;
 		ResultSet rs = null;
 		try {
-			parseDyncQueryParameters(boundSql, sqlMetadata);
+			MybatisSqlUtils.parseDyncQueryParameters(boundSql, sqlMetadata);
 			connection = dataSource.getConnection();
 			statement = connection.prepareStatement(sqlMetadata.getSql());
 			
@@ -461,44 +458,7 @@ public class CacheHandler implements InterceptorHandler {
 			try {connection.close();} catch (Exception e2) {}
 		}
 	}
-	
-	private void parseDyncQueryParameters(BoundSql boundSql,SqlMetadata sqlMetadata) throws Exception {
-		List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
-		Object parameterObject = boundSql.getParameterObject();
-		
-		ParameterMapping parameterMapping;
-        if(parameterMappings.size() == 1) {
-        	sqlMetadata.getParameters().add(parameterObject);
-        }else {
-        	Object indexValue = null;
-        	String property;
-        	for (int i = sqlMetadata.getWhereParameterStartIndex(); i <= sqlMetadata.getWhereParameterEndIndex(); i++) {
-    			parameterMapping = parameterMappings.get(i);
-    			property = parameterMapping.getProperty();
-				if(property.startsWith(SqlRewriteHandler.FRCH_PREFIX)) {
-    				indexValue = boundSql.getAdditionalParameter(property);
-    			}else {
-    				indexValue = getParameterItemValue(parameterObject, property);
-    			}
-    			sqlMetadata.getParameters().add(indexValue);
-    		}
-        }
-	}
 
-	@SuppressWarnings("rawtypes")
-	private Object getParameterItemValue(Object parameter,String property) throws Exception {
-		if(parameter instanceof Map) {
-			Map map = (Map)parameter;
-			if(!property.contains(GlobalConstants.DOT)) {
-				return map.get(property);
-			}
-			String[] subs = StringUtils.split(property, GlobalConstants.DOT,2);
-			return getParameterItemValue(map.get(subs[0]), subs[1]);
-		}else {
-			return CachingFieldUtils.readField(parameter, property);
-		}
-	}
-	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private List<String> buildBatchUpdateIdCacheKeys(MapperMetadata mapperMeta,Object parameter){
 		Map map = (Map) parameter;

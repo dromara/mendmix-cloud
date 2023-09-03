@@ -1,6 +1,9 @@
 package com.mendmix.mybatis.plugin.rewrite;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +21,7 @@ import net.sf.jsqlparser.statement.select.PlainSelect;
  * <br>
  * @author jiangwei
  * @version 1.0.0
- * @date 2023年4月22日
+ * @date 2023年4月25日
  */
 public class RewriteTable {
 
@@ -27,7 +30,7 @@ public class RewriteTable {
 	private Table table;
 	private String tableName;
 	private String rewritedTableName;
-	Map<String, String> rewriteColumnMapping;
+	Map<String, List<String>> rewriteColumnMapping;
 	private boolean join;
 	private boolean appendConditonUsingOn;
 	private Object appendConditonTo;
@@ -35,11 +38,12 @@ public class RewriteTable {
 	private boolean handleOwner;
 	
 	private boolean withDeptColumn;
-	private boolean usingGroupOrgPerm;
 	
 	private String[] ownerColumns;
 	
 	private TablePermissionStrategy tableStrategy;
+	
+	private Map<String,Expression> groupExpressions;
 	
 	public RewriteTable(Table table,boolean joinTable) {
 		this.table = table;
@@ -60,10 +64,10 @@ public class RewriteTable {
 		this.rewritedTableName = rewritedTableName;
 	}
 
-	public Map<String, String> getRewriteColumnMapping() {
+	public Map<String, List<String>> getRewriteColumnMapping() {
 		return rewriteColumnMapping;
 	}
-	public void setRewriteColumnMapping(Map<String, String> rewriteColumnMapping) {
+	public void setRewriteColumnMapping(Map<String, List<String>> rewriteColumnMapping) {
 		this.rewriteColumnMapping = rewriteColumnMapping;
 	}
 	
@@ -99,14 +103,6 @@ public class RewriteTable {
 	public void setWithDeptColumn(boolean withDeptColumn) {
 		this.withDeptColumn = withDeptColumn;
 	}
-
-	public boolean isUsingGroupOrgPerm() {
-		return usingGroupOrgPerm;
-	}
-
-	public void setUsingGroupOrgPerm(boolean usingGroupOrgPerm) {
-		this.usingGroupOrgPerm = usingGroupOrgPerm;
-	}
 	
 	public String[] getOwnerColumns() {
 		return ownerColumns;
@@ -122,6 +118,10 @@ public class RewriteTable {
 
 	public void setTableStrategy(TablePermissionStrategy tableStrategy) {
 		this.tableStrategy = tableStrategy;
+	}
+	
+	public Collection<Expression> getGroupExpressions() {
+		return groupExpressions == null ? null : groupExpressions.values();
 	}
 
 	public void updateConditionExpression(Expression expression) {
@@ -150,6 +150,18 @@ public class RewriteTable {
 		return (rewriteColumnMapping != null && !rewriteColumnMapping.isEmpty()) 
 				|| ((ownerColumns != null && ownerColumns.length > 0));
 	}
+	
+	public void addGroupExpressions(Expression expression) {
+		if(expression == null)return;
+		if(groupExpressions == null) {
+			groupExpressions = new HashMap<>(3);
+		}
+		//忽略相同的条件
+		String key = expression.toString();
+		if(!groupExpressions.containsKey(key)) {
+			groupExpressions.put(key, expression);
+		}
+	}
 
 	@Override
 	public String toString() {
@@ -161,7 +173,6 @@ public class RewriteTable {
 		builder.append("\n   - handleOwner:").append(handleOwner);
 		builder.append("\n   - appendConditonUsingOn:").append(appendConditonUsingOn);
 		builder.append("\n   - withDeptColumn:").append(withDeptColumn);
-		builder.append("\n   - usingGroupOrgPerm:").append(usingGroupOrgPerm);
 		builder.append("\n   - rewriteColumnMapping:").append(rewriteColumnMapping);
 		builder.append("\n   - ownerColumns:").append(ownerColumns == null ? null :JsonUtils.toJson(ownerColumns));
 		return builder.toString();

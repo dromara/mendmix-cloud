@@ -15,17 +15,23 @@
  */
 package com.mendmix.mybatis.kit;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.mapping.BoundSql;
+import org.apache.ibatis.mapping.ParameterMapping;
 import org.apache.ibatis.mapping.SqlCommandType;
 
+import com.mendmix.common.GlobalConstants;
+import com.mendmix.common.util.BeanUtils;
+import com.mendmix.common.util.CachingFieldUtils;
 import com.mendmix.mybatis.metadata.SqlMetadata;
+import com.mendmix.mybatis.plugin.rewrite.SqlRewriteHandler;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -52,14 +58,18 @@ public class MybatisSqlUtils {
 	
 	private static final String[] SQL_LINE_CHARS = new String[] { "\r", "\n", "\t" };
 	private static final String[] SQL_LINE_REPLACE_CHARS = new String[] { " ", " ", " " };
-	
 	private static String mybatisWhereExprEnd = "</where>";
 	public static String sqlWherePatternString = "(<|\\s+)WHERE|where(>|\\s+)";
 	public static Pattern sqlWherePattern = Pattern.compile(sqlWherePatternString);
-	private static Pattern tagPattern = Pattern.compile("<.*?(?=>)>",Pattern.CASE_INSENSITIVE);
-	private static Pattern withTablePattern = Pattern.compile("\\s+(FROM|JOIN)\\s+.+?(?=\\s+)",Pattern.CASE_INSENSITIVE);
+	private static Pattern sqlCleanPattern = Pattern.compile("[ \\t\\r\\n]{2,}");
+	private static Pattern tablePattern = Pattern.compile("\\s+(FROM|JOIN)\\s+.+?(?=\\s{1})",Pattern.CASE_INSENSITIVE);
+	private static Pattern anyTagPattern = Pattern.compile("<.*?(?=>)>",Pattern.CASE_INSENSITIVE);
 	public static final String SQL_PARAMETER_PLACEHOLDER = "?";
 	
+	public static String cleanSql(String sql) {
+		sql = sqlCleanPattern.matcher(sql).replaceAll(StringUtils.SPACE);
+		return sql;
+	}
 	
 	public static String toSelectPkFieldSql(SqlCommandType sqlType,String sql,String idColumnName) {
 		sql = sql.trim().replaceAll("\n", " ");
@@ -88,6 +98,7 @@ public class MybatisSqlUtils {
 	
 	public static SqlMetadata rewriteAsSelectPkField(String sql,String idColumnName) {
 		try {
+			sql = cleanSql(sql);
 			Statement statement = CCJSqlParserUtil.parse(sql);
 			
 			Table table = null;
@@ -130,47 +141,69 @@ public class MybatisSqlUtils {
 		}
 	} 
 	
-
+	
 	public static List<String> parseSqlUseTables(String sql){
 		List<String> tables = new ArrayList<>(3);
 		try {
 			String cleanSql = StringUtils.replaceEach(sql, SQL_LINE_CHARS, SQL_LINE_REPLACE_CHARS).trim();
-			cleanSql = cleanSql.replaceAll("\\s{2,}", " ");
-			cleanSql = tagPattern.matcher(cleanSql).replaceAll("");
-			Matcher matcher = withTablePattern.matcher(cleanSql);
+			cleanSql = anyTagPattern.matcher(cleanSql).replaceAll("").trim();
+			Matcher matcher = tablePattern.matcher(cleanSql);
+			String table;
 			while(matcher.find()) {
-				String table = matcher.group().trim().split("\\s+")[1].trim();
+				if(matcher.group().contains("("))continue;
+				table = matcher.group().trim().split("\\s+")[1].trim();
 				if(!tables.contains(table)) {
 					tables.add(table);
 				}
 			}
 		} catch (Exception e) {
-			System.err.println("parseSqlUseTableError:"+sql);
+			System.err.println("--------------------------------------\n"+sql);
 		}
 		
 		return tables;
 	}
 	
-	public static String underscoreToCamelCase(String para){
-		if(!para.contains("_"))return para.toLowerCase();
-        StringBuilder result=new StringBuilder();
-        String a[]=para.toLowerCase().split("_");
-        for(String s:a){
-            if(result.length()==0){
-                result.append(s.toLowerCase());
-            }else{
-                result.append(s.substring(0, 1).toUpperCase());
-                result.append(s.substring(1).toLowerCase());
-            }
-        }
-        return result.toString();
-    }
-	
-	public static void main(String[] args) throws SQLException {
-		String sql = "select * from users 	 <where>    <if test=\"name != null\">          AND name = #{name}      </if>    <if test=\"mobile != null\">          AND mobile = #{mobile}      </if></where>";
-		sql = "select * from users 	\nWHERE 1=1 \n<if test=\"name != null\">          AND name = #{name}      </if>    \n<if test=\"mobile != null\">          AND mobile = #{mobile}      </if>"
-		+ "\nAND role_id IN \n<foreach collection=\"roleIds\" item=\"id\" index=\"index\" open=\"(\" close=\")\" separator=\",\">#{id}</foreach> ORDER BY id ";
-		System.out.println(parseSqlUseTables(sql));
+	public static void parseDyncQueryParameters(BoundSql boundSql,SqlMetadata sqlMetadata) throws Exception {
+		List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
+		Object parameterObject = boundSql.getParameterObject();
+		ParameterMapping parameterMapping;
 		
+        if(parameterMappings.size() == 1) {
+        	setSqlMetadataParamer(sqlMetadata, parameterMappings.get(0), parameterObject);
+        }else {
+        	Object indexValue = null;
+        	for (int i = sqlMetadata.getWhereParameterStartIndex(); i <= sqlMetadata.getWhereParameterEndIndex(); i++) {
+    			parameterMapping = parameterMappings.get(i);
+    			if(parameterMapping.getProperty().startsWith(SqlRewriteHandler.FRCH_PREFIX)) {
+    				indexValue = boundSql.getAdditionalParameter(parameterMapping.getProperty());
+    				sqlMetadata.getParameters().add(indexValue);
+    			}else {
+    				setSqlMetadataParamer(sqlMetadata, parameterMapping, parameterObject);
+    			}
+    		}
+        }
+	}
+	
+	private static void setSqlMetadataParamer(SqlMetadata sqlMetadata,ParameterMapping parameterMapping,Object parameterObject) {
+		final String propertyName = parameterMapping.getProperty();
+		String[] parts = StringUtils.split(propertyName, GlobalConstants.DOT);
+		Object value = parameterObject;
+		for (String part : parts) {
+			if(value instanceof Map) {
+				value = ((Map)value).get(part);
+			}else if(!BeanUtils.isSimpleDataType(value)){
+				value = CachingFieldUtils.readField(value, part);
+			}
+		}
+		if(value != null && value.getClass().isEnum()) {
+			value = value.toString();
+		}
+		sqlMetadata.getParameters().add(value);
+	}
+	
+	public static void main(String[] args) throws Exception {
+		String fileSql;//org.apache.commons.io.FileUtils.readFileToString(new File("D:\\datas\\1.sql"), StandardCharsets.UTF_8);
+		fileSql = "SELECT d.* FROM (SELECT  a.* FROM device a ) d";
+		System.out.println(parseSqlUseTables(fileSql));
 	}
 }

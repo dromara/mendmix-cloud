@@ -15,7 +15,17 @@
  */
 package com.mendmix.mybatis.plugin.rewrite;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.mendmix.cache.CacheExpires;
+import com.mendmix.cache.CacheUtils;
+import com.mendmix.common.CurrentRuntimeContext;
+import com.mendmix.common.ThreadLocalContext;
+import com.mendmix.common.model.DataPermItem;
 
 /**
  * @description <br>
@@ -24,5 +34,22 @@ import java.util.List;
  */
 public interface UserPermissionProvider {
 
-	List<DataPermissionItem> findUserPermissions(String userId);
+	default List<DataPermItem> findCurrentAllPermissions(){
+        String currentUserId = CurrentRuntimeContext.getCurrentUserId();
+        if(StringUtils.isBlank(currentUserId))return new ArrayList<>(0);
+        String cacheKey = "userDataPerm:" + currentUserId;
+        return CacheUtils.queryTryCache(cacheKey, () -> findUserPermissions(currentUserId), CacheExpires.IN_5MINS);
+	}
+	
+	default List<DataPermItem> findCurrentGroupPermissions(){
+		String permGroup = ThreadLocalContext.getStringValue(SpecialPermissionHelper.CONTEXT_CURRENT_PERM_GROUP);
+		final List<DataPermItem> allPermissions = findCurrentAllPermissions();
+		if(allPermissions == null)return new ArrayList<>(0); 
+		if(StringUtils.isBlank(permGroup)) {
+			return allPermissions;
+		}
+		return allPermissions.stream().filter(o -> permGroup.equals(o.getGroupName())).collect(Collectors.toList());
+	}
+
+	List<DataPermItem> findUserPermissions(String userId);
 }

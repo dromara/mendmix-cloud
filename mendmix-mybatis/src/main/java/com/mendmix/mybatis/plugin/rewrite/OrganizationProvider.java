@@ -24,7 +24,9 @@ import java.util.List;
  */
 public interface OrganizationProvider {
 
-    String currentDepartment();
+	String deptIdToFullCode(String deptId);
+	
+    String positionOwnDepartmentId(String positionId);
 	
 	List<String> subDepartments(String deptId);
 }

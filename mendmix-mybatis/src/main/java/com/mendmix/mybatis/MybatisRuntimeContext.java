@@ -19,15 +19,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.model.AuthUser;
+import com.mendmix.common.model.DataPermItem;
 import com.mendmix.mybatis.datasource.DataSourceContextVals;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.plugin.cache.CacheHandler;
-import com.mendmix.mybatis.plugin.rewrite.DataPermissionItem;
+import com.mendmix.mybatis.plugin.rewrite.SpecialPermType;
 import com.mendmix.mybatis.plugin.rewrite.SqlRewriteStrategy;
 import com.mendmix.mybatis.plugin.rewrite.UserPermissionProvider;
 import com.mendmix.mybatis.plugin.rewrite.annotation.DataPermission;
@@ -58,7 +60,7 @@ public class MybatisRuntimeContext {
 		userPermissionProvider = InstanceFactory.getInstance(UserPermissionProvider.class);
 	}
 
-	private static UserPermissionProvider getUserPermissionProvider() {
+	public static UserPermissionProvider getUserPermissionProvider() {
 		if(userPermissionProvider != null)return userPermissionProvider;
 		synchronized (MybatisRuntimeContext.class) {
 			if(userPermissionProvider != null)return userPermissionProvider;
@@ -66,7 +68,7 @@ public class MybatisRuntimeContext {
 			if(userPermissionProvider == null) {
 				userPermissionProvider = new UserPermissionProvider() {	
 					@Override
-					public List<DataPermissionItem> findUserPermissions(String userId) {
+					public List<DataPermItem> findUserPermissions(String userId) {
 						return null;
 					}
 				};
@@ -198,26 +200,53 @@ public class MybatisRuntimeContext {
 			Map<String, String[]> map = ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
 			map.putAll(valueMap);
 		}else {
-			ThreadLocalContext.set(CONTEXT_DATA_PROFILE_KEY,valueMap);
+			if(valueMap == null) {
+				ThreadLocalContext.remove(CONTEXT_DATA_PROFILE_KEY);
+			}else {				
+				ThreadLocalContext.set(CONTEXT_DATA_PROFILE_KEY,valueMap);
+			}
 		}
 	}
 	
 	public static Map<String, String[]> getDataPermissionValues(){
-		final Map<String, String[]> valueMaps = ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
-		if(valueMaps == null) {
-			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
-			if(currentUser == null)return null;
-			List<DataPermissionItem> permissions = getUserPermissionProvider().findUserPermissions(currentUser.getId());
-			if(permissions == null)return null;
-			for (DataPermissionItem item : permissions) {
-				if(item.getValues() == null || item.getValues().isEmpty()) {
-					addDataPermissionValues(item.getFieldName(), new String[0]);
-				}else {
-					addDataPermissionValues(item.getFieldName(), item.getValues().toArray(new String[0]));
+		Map<String, String[]> map = ThreadLocalContext.get(CONTEXT_DATA_PROFILE_KEY);
+		if(map != null)return map;
+		List<DataPermItem> items = getUserPermissionProvider().findCurrentAllPermissions();
+		if(items != null) {
+			map = new HashMap<>(items.size());
+			String[] values;
+			for (DataPermItem item : items) {
+				values = map.get(item.getKey());
+				if (item.getValues() != null) {
+					if(values == null) {
+						values = item.getValues().toArray(new String[0]);
+					}else {
+						if(item.getValues().size() == 1) {
+							String val = item.getValues().get(0);
+							if(!ArrayUtils.contains(values, val)) {
+								values = ArrayUtils.add(values, val);
+							}
+						}else {
+							values = ArrayUtils.addAll(values, item.getValues().toArray(new String[0]));
+						}
+					}
+				}else if(item.isAllMatch()) {
+					values = new String[] {SpecialPermType._allValues.name()};
 				}
+				if(values == null) {
+					values = new String[0];
+				}else if(values.length > 1 && ArrayUtils.contains(values, SpecialPermType._allValues.name())) {
+					values = new String[] {SpecialPermType._allValues.name()};
+				}
+				map.put(item.getKey(), values);
 			}
+			//
+			if(!map.isEmpty() && map.values().stream().allMatch(arr -> arr.length > 0 && SpecialPermType._allValues.name().equals(arr[0]))) {
+				getSqlRewriteStrategy().setHandleOwner(false);
+			}
+			ThreadLocalContext.set(CONTEXT_DATA_PROFILE_KEY, map);
 		}
-		return valueMaps;
+		return  map;
 	}
 	
 }

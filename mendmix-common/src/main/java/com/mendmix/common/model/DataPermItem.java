@@ -17,4 +17,22 @@ package com.mendmix.common.model;
 
 public class DataPermItem extends KeyValues {
 	private static final long serialVersionUID = 1L;
+	
+	private String groupName;
+	private boolean allMatch;
+	
+	public String getGroupName() {
+		return groupName;
+	}
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
+	}
+	public boolean isAllMatch() {
+		return allMatch;
+	}
+	public void setAllMatch(boolean allMatch) {
+		this.allMatch = allMatch;
+	}
+	
+	
 }
