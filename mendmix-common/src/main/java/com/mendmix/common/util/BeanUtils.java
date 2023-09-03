@@ -27,7 +27,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +35,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -55,12 +55,14 @@ public class BeanUtils {
     
     private static List<String> dynaProxyClassKeys = Arrays.asList("JavassistProxyFactory$");
     
+    private static List<String> jdkPackagePrefixs = Arrays.asList("java.");
+    
     /**
      * 值复制
      *
      * @param src
      * @param dest
-     * @param ignoreNullValue 
+     * @param ignoreNullValue
      * @return
      * @throws RuntimeException
      */
@@ -112,10 +114,7 @@ public class BeanUtils {
                         				Class<?> distGenericType = getGenericType(destClass, name);
                             			value = copy(toList, distGenericType);
                         			}
-                        		}else if(!Map.class.isAssignableFrom(propertyType) 
-                        				&& !Collection.class.isAssignableFrom(propertyType)
-                        				&& java.net.URI.class != propertyType){
-                        			//TODO Map等深拷贝
+                        		}else if(!jdkPackagePrefixs.stream().anyMatch(prefix -> propertyType.getName().startsWith(prefix))){
                         			value = copy(value, propertyType);
                         		}
 							} catch (Exception e) {
@@ -153,29 +152,29 @@ public class BeanUtils {
         return copy(src, dest, true);
     }
 
-    public static <T> List<T> copy(List<?> srcs, Class<T> destClass, boolean setDefaultValForNull) {
+    public static <T> List<T> copy(List<?> srcs, Class<T> destClass, boolean ignoreNullValue) {
         if (srcs == null)
             return new ArrayList<T>();
 
         List<T> dests = new ArrayList<T>(srcs.size());
         for (Object src : srcs) {
-            dests.add(copy(src, destClass, setDefaultValForNull));
+            dests.add(copy(src, destClass, ignoreNullValue));
         }
 
         return dests;
     }
 
     public static <T> List<T> copy(List<?> srcs, Class<T> destClass) {
-        return copy(srcs, destClass, false);
+        return copy(srcs, destClass, true);
     }
 
-    public static <T> T copy(Object src, Class<T> destClass, boolean setDefaultValForNull) throws RuntimeException {
+    public static <T> T copy(Object src, Class<T> destClass, boolean ignoreNullValue) throws RuntimeException {
         if (src == null)
             return null;
 
         try {
             T dest = destClass.newInstance();
-            copy(src, dest, setDefaultValForNull);
+            copy(src, dest, ignoreNullValue);
             return dest;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -183,7 +182,7 @@ public class BeanUtils {
     }
 
     public static <T> T copy(Object src, Class<T> destClass) throws RuntimeException {
-        return copy(src, destClass, false);
+        return copy(src, destClass, true);
     }
 
     /**
@@ -226,25 +225,25 @@ public class BeanUtils {
     private static Object toAdaptTypeValue(Class<?> srcPropertyType, Object value, Class<?> distPropertyType) {
 
     	if (distPropertyType == BigDecimal.class) {
-            value = (value == null) ? BigDecimal.ZERO : new BigDecimal(value.toString());
+            value = (value == null) ? BigDecimal.ZERO : new BigDecimal(value.toString().trim());
         } else if (distPropertyType == byte.class || distPropertyType == Byte.class) {
-            value = (value == null) ? Byte.valueOf("0") : Byte.valueOf(value.toString());
+            value = (value == null) ? Byte.valueOf("0") : Byte.valueOf(value.toString().trim());
         } else if (distPropertyType == short.class || distPropertyType == Short.class) {
-            value = (value == null) ? Short.valueOf("0") : Short.valueOf(value.toString());
+            value = (value == null) ? Short.valueOf("0") : Short.valueOf(value.toString().trim());
         } else if (distPropertyType == int.class || distPropertyType == Integer.class) {
             if (srcPropertyType == boolean.class || srcPropertyType == Boolean.class) {
-                value = Boolean.parseBoolean(value.toString()) ? 1 : 0;
+                value = Boolean.parseBoolean(value.toString().trim()) ? 1 : 0;
             } else {
-                value = (value == null) ? Integer.valueOf("0") : Integer.valueOf(value.toString());
+                value = (value == null) ? Integer.valueOf("0") : Integer.valueOf(value.toString().trim());
             }
         } else if (distPropertyType == double.class || distPropertyType == Double.class) {
-            value = (value == null) ? Double.valueOf("0") : Double.valueOf(value.toString());
+            value = (value == null) ? Double.valueOf("0") : Double.valueOf(value.toString().trim());
         } else if (distPropertyType == Date.class) {
         	if(value != null){
         		if(srcPropertyType == String.class){
-        			value = DateUtils.parseDate(value.toString());
+        			value = DateUtils.parseDate(value.toString().trim());
         		}else if (srcPropertyType == Long.class || srcPropertyType == Integer.class || srcPropertyType == long.class || srcPropertyType == int.class) {
-                    Long val = Long.valueOf(value.toString());
+                    Long val = Long.valueOf(value.toString().trim());
                     if (val.longValue() != 0)
                         value = new Date(val);
                     else
@@ -269,7 +268,7 @@ public class BeanUtils {
         return value;
     }
 
-    private static Object stringConvertTo(String value,Class<?> propertyType){
+    public static Object toPrimitiveValue(String value,Class<?> propertyType){
     	Object result = value;
     	if (propertyType == BigDecimal.class) {
     		result = new BigDecimal(value);
@@ -313,7 +312,7 @@ public class BeanUtils {
 					if(object == null)continue;
 					if(descriptor.getPropertyType() != object.getClass() 
 							&& !descriptor.getPropertyType().isAssignableFrom(object.getClass())){						
-						object = stringConvertTo(object.toString(),descriptor.getPropertyType());
+						object = toPrimitiveValue(object.toString(),descriptor.getPropertyType());
 					}
         			descriptor.getWriteMethod().invoke(bean, object);
         		}
@@ -321,6 +320,7 @@ public class BeanUtils {
         	return bean;
 		} catch (Exception e) {
 			System.err.println("error property:" + propertyName);
+			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
     }
@@ -357,6 +357,8 @@ public class BeanUtils {
                 			if(jsonSerializer == DateConvertSerializer.class) {
                 				result = DateUtils.format2DateStr((Date)result);
                 			}
+                		}else {
+                			result = DateUtils.format((Date)result);
                 		}
                 		returnMap.put(propertyName, result);
                 	}else if(isSimpleDataType(result) || result instanceof Iterable){                		
@@ -371,9 +373,13 @@ public class BeanUtils {
                 }
             }
         } catch (Exception e) {
+        	e.printStackTrace();
             throw new RuntimeException(e);
         }
+
+
         return returnMap;
+
     }
     
     public static void copy(Map<String, Object> src,Object dist){
@@ -458,7 +464,59 @@ public class BeanUtils {
 		fieldCache.put(canonicalName, fieldNames);
 		return map;
 	}
+	
+	
+	public static Class<?> getFieldGenericType(Field field){
+		try {
+			ParameterizedType parameterizedType = (ParameterizedType)field.getGenericType();
+			Type type = parameterizedType.getActualTypeArguments()[0];
+			return (Class<?>) type;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
     
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static <T> T buildMockData(Class<T> clazz) {
+		try {
+			T instance = clazz.newInstance();
+			
+			List<Field> fields = FieldUtils.getAllFieldsList(clazz);
+			for (Field field : fields) {
+				field.setAccessible(true);
+				if (field.getType() == String.class) {
+					field.set(instance, "xxxx");
+				}else if (field.getType() == BigDecimal.class) {
+					field.set(instance, new BigDecimal(100));
+				} else if (field.getType() == byte.class || field.getType() == Byte.class) {
+					field.set(instance, (byte)1);
+				} else if (field.getType() == short.class || field.getType() == Short.class) {
+					field.set(instance, (short)1);
+				} else if (field.getType() == int.class || field.getType() == Integer.class) {
+					field.set(instance, 1);
+				} else if (field.getType() == double.class || field.getType() == Double.class) {
+					field.set(instance, (double)1);
+		        } else if (field.getType() == boolean.class || field.getType() == Boolean.class) {
+		        	field.set(instance, true);
+		        } else if (field.getType() == Date.class) {
+		        	field.set(instance, new Date());
+		        }else if(field.getType() == List.class){
+		        	Class<?> fieldGenericType = getFieldGenericType(field);
+		        	List list = new ArrayList<>();
+		        	for (int i = 0; i < 2; i++) {
+		        		list.add(buildMockData(fieldGenericType));
+					}
+		        	field.set(instance, list);
+		        }
+			}
+			
+			return instance;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
     
     /**
      * 判断是否基本类型
@@ -466,7 +524,8 @@ public class BeanUtils {
      * @return
      * @throws Exception
      */
-   public static boolean isSimpleDataType(Object o) {   
+   public static boolean isSimpleDataType(Object o) {  
+	   if(o == null)return true;
        return isSimpleDataType(o.getClass()); 
    }
    
@@ -496,7 +555,7 @@ public class BeanUtils {
     */
 	private static Class<?> getGenericType(Class<?> objectClass, String fieldName) {
 		try {
-			Field field = CachingFieldUtils.getField(objectClass, fieldName);
+			Field field = FieldUtils.getField(objectClass, fieldName, true);
 			Type genericType = field.getGenericType();
 			if (null == genericType) {
 				return null;
