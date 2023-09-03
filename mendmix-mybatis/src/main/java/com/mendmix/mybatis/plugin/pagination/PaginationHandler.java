@@ -146,7 +146,7 @@ public class PaginationHandler implements InterceptorHandler {
 		BoundSql countBoundSql = new BoundSql(countMappedStatement.getConfiguration(), countSql, boundSql.getParameterMappings(),
 				parameter);
 		//
-		SqlRewriteHandler.copyAdditionlParameters(boundSql, countBoundSql);
+		SqlRewriteHandler.copyAdditionalParameters(boundSql, countBoundSql);
 		// 执行 count 查询
 		Object countResultList = executor.query(countMappedStatement, parameter, RowBounds.DEFAULT, resultHandler, countKey,
 				countBoundSql);
@@ -171,7 +171,7 @@ public class PaginationHandler implements InterceptorHandler {
 		BoundSql pageBoundSql = new BoundSql(mappedStatement.getConfiguration(), pageSql, boundSql.getParameterMappings(),
 				parameter);
 		//
-		SqlRewriteHandler.copyAdditionlParameters(boundSql, pageBoundSql);
+		SqlRewriteHandler.copyAdditionalParameters(boundSql, pageBoundSql);
 		
 		List<?> resultList = executor.query(mappedStatement, parameter, RowBounds.DEFAULT, resultHandler, null,pageBoundSql);
 		return resultList;

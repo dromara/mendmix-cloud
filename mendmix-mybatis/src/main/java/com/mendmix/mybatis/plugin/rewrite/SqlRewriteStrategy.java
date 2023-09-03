@@ -139,6 +139,10 @@ public class SqlRewriteStrategy {
 		if(allMatch)return handleOwner;
 		return hasTableStrategy(table) ? getTableStrategy(table).handleOwner() : true;
 	}
+	
+	public boolean handleDataPerm() {
+		return !ignoreDataPerm && (allMatch || tableStrategies != null);
+	}
 
 	public boolean isHandleJoin() {
 		return handleJoin;

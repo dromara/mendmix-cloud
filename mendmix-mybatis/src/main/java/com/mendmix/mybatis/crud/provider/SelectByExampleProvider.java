@@ -19,10 +19,10 @@ import java.util.Set;
 
 import org.apache.ibatis.jdbc.SQL;
 
+import com.mendmix.common.util.CachingFieldUtils;
 import com.mendmix.mybatis.crud.builder.AbstractExpressBuilder;
 import com.mendmix.mybatis.metadata.ColumnMetadata;
 import com.mendmix.mybatis.metadata.EntityMetadata;
-import com.mendmix.mybatis.metadata.MetadataHelper;
 
 /**
  * 
@@ -42,7 +42,7 @@ public class SelectByExampleProvider extends AbstractExpressBuilder{
 		Object value;
 		StringBuilder whereBuilder = new StringBuilder();
 		for (ColumnMetadata column : columns) {
-			value = MetadataHelper.getEntityField(entityMeta.getTable().getName(),column.getProperty()).get(example);
+			value = CachingFieldUtils.readField(example, column.getProperty());
 			if(value == null)continue;
 			appendWhere(whereBuilder,column);
 		}
