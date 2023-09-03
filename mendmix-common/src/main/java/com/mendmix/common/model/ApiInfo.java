@@ -16,6 +16,8 @@
  */
 package com.mendmix.common.model;
 
+import java.lang.reflect.Method;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.constants.PermissionLevel;
@@ -35,7 +37,9 @@ public class ApiInfo extends ApiModel{
 	private boolean responseLog;
 	private boolean openApi;
 	@JsonIgnore
-	private String className;
+	private Method controllerMethod;
+	@JsonIgnore
+	private String controllerMethodName;
 	
 	public String getName() {
 		return name;
@@ -83,11 +87,17 @@ public class ApiInfo extends ApiModel{
 	public void setOpenApi(boolean openApi) {
 		this.openApi = openApi;
 	}
-	public String getClassName() {
-		return className;
+	public Method getControllerMethod() {
+		return controllerMethod;
 	}
-	public void setClassName(String className) {
-		this.className = className;
+	public void setControllerMethod(Method controllerMethod) {
+		this.controllerMethod = controllerMethod;
+	}
+	public String getControllerMethodName() {
+		return controllerMethodName;
+	}
+	public void setControllerMethodName(String controllerMethodName) {
+		this.controllerMethodName = controllerMethodName;
 	}
 	
 

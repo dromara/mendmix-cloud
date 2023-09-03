@@ -57,7 +57,7 @@ public @interface ApiMetadata {
 	 * 是否记录操作日志
 	 * @return
 	 */
-	boolean actionLog() default true;
+	boolean actionLog() default false;
 	
 	/**
 	 * 是否记录请求日志

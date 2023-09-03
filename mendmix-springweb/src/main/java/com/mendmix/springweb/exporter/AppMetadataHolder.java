@@ -125,7 +125,8 @@ public class AppMetadataHolder {
 					}
 
 					apiInfo = new ApiInfo();
-					apiInfo.setClassName(className);
+					apiInfo.setControllerMethod(method);
+					apiInfo.setControllerMethodName(className + "." + method.getName());
 					if (apiUri == null) {
 						apiUri = baseUri;
 					} else {
@@ -246,9 +247,6 @@ public class AppMetadataHolder {
 				packagePrefix = packagePathPrefixs.getOrDefault(basePackage, globalPathPrefix);
 				classNameList = scanControllerClassNames(basePackage);
 				scanApiInfos(_metadata,packagePrefix,classNameList);
-			}
-			if(ResourceUtils.containsProperty("dependency.services")){				
-				_metadata.setDependencyServices(ResourceUtils.getList("dependency.services"));
 			}
 			metadata = _metadata;
 		}

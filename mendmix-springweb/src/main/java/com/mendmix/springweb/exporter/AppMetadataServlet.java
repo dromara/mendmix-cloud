@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -30,6 +31,7 @@ import com.mendmix.common.model.ApiInfo;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.WebUtils;
+import com.mendmix.springweb.exporter.apidoc.ApiDocInfo;
 import com.mendmix.springweb.model.AppMetadata;
 
 /**
@@ -76,7 +78,7 @@ public class AppMetadataServlet extends HttpServlet {
 			_metadata = new AppMetadata();
 			List<ApiInfo> apis = new ArrayList<>();
 			for (ApiInfo apiInfo : metadata.getApis()) {
-				if(apiInfo.getClassName().contains(packageName)) {
+				if(apiInfo.getControllerMethodName().contains(packageName)) {
 					apis.add(apiInfo);
 				}
 			}
@@ -84,7 +86,15 @@ public class AppMetadataServlet extends HttpServlet {
 		}else {
 			_metadata = metadata;
 		}
-		WebUtils.responseOutJson(resp, JsonUtils.toJson(_metadata));
+		
+		if("apidoc".equals(req.getParameter("type"))) {
+			List<ApiDocInfo> apiDocs = _metadata.getApis().stream().map(
+			   api -> ApiDocInfo.buildFrom(api,null)
+			).collect(Collectors.toList());
+			WebUtils.responseOutJson(resp, JsonUtils.toJson(apiDocs));
+		}else {			
+			WebUtils.responseOutJson(resp, JsonUtils.toJson(_metadata));
+		}
 	}
 
 	@Override
