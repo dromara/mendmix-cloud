@@ -1,20 +1,11 @@
-/*
- * Copyright 2016-2022 www.mendmix.com.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.mendmix.amqp.adapter.memoryqueue;
+package com.mendmix.amqp.adapter.eventbus;
 
+/**
+ * 
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">jiangwei</a>
+ * @date 2022年8月10日
+ */
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,17 +13,18 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.EventFactory;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.EventTranslatorOneArg;
 import com.lmax.disruptor.RingBuffer;
-import com.lmax.disruptor.YieldingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
+import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQMessage;
-import com.mendmix.amqp.MQProducer;
 import com.mendmix.amqp.MessageHandler;
-import com.mendmix.common.CurrentRuntimeContext;
+import com.mendmix.amqp.adapter.AbstractProducer;
+
 
 /**
  * 
@@ -43,9 +35,9 @@ import com.mendmix.common.CurrentRuntimeContext;
  * @version 1.0.0
  * @date 2020年3月24日
  */
-public class EventbusProducerAdapter implements MQProducer {
+public class EventbusProducerAdapter extends AbstractProducer {
 
-	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.amqp.adapter");
+	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.amqp");
 
 	private final static Translator TRANSLATOR = new Translator();
 	private static EventHandler<MQMessageEvent> eventHandler = new MQMessageEventHandler();
@@ -53,18 +45,22 @@ public class EventbusProducerAdapter implements MQProducer {
 	
 	private Disruptor<MQMessageEvent> disruptor;
 	
+	public EventbusProducerAdapter(MQContext context) {
+		super(context);
+	}
+
 	@Override
 	public void start() throws Exception {
 		EventFactory<MQMessageEvent> eventFactory = new MQMessageEventFactory();
 		int ringBufferSize = 1024 * 1024;
 		BasicThreadFactory factory = new BasicThreadFactory.Builder()
-				      .namingPattern("workerthread-%d")
+				      .namingPattern("mq-eventbus-%d")
 				      .daemon(true)
-				      .priority(Thread.MAX_PRIORITY)
+				      .priority(Thread.NORM_PRIORITY)
 				      .build();
 		disruptor = new Disruptor<MQMessageEvent>(eventFactory,
 		                ringBufferSize, factory, ProducerType.SINGLE,
-		                new YieldingWaitStrategy());
+		                new BlockingWaitStrategy());
 		
 		disruptor.handleEventsWith(eventHandler);
 		
@@ -73,14 +69,16 @@ public class EventbusProducerAdapter implements MQProducer {
 
 	@Override
 	public String sendMessage(MQMessage message, boolean async) {
-		message.mergeContextHeaders();
+		message.setUserContextOnProduce();
 		RingBuffer<MQMessageEvent> ringBuffer = disruptor.getRingBuffer();
 	    ringBuffer.publishEvent(TRANSLATOR, message);
-		return null;
+	    handleSuccess(message);
+		return message.getMsgId();
 	}
 
 	@Override
 	public void shutdown() {
+		super.shutdown();
 		disruptor.shutdown();
 	}
 	
@@ -107,10 +105,7 @@ public class EventbusProducerAdapter implements MQProducer {
 	static class MQMessageEventHandler implements EventHandler<MQMessageEvent> {
 		public void onEvent(MQMessageEvent event, long sequence, boolean endOfBatch) {
 			MQMessage message = event.get();
-			//上下文
-			if(message.getHeaders() != null) {	
-				CurrentRuntimeContext.addContextHeaders(message.getHeaders());
-			}
+			message.setUserContextOnConsume();
 			MessageHandler handler = messageHandlers.get(message.getTopic());
 			if(handler != null){
 				try {

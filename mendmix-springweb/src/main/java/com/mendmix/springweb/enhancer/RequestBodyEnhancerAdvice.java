@@ -20,11 +20,10 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -34,8 +33,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdvice;
-
-import com.mendmix.spring.InstanceFactory;
 
 /**
  * 
@@ -48,23 +45,20 @@ import com.mendmix.spring.InstanceFactory;
  */
 @ControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)
-public class RequestBodyEnhancerAdvice implements RequestBodyAdvice,InitializingBean {
+public class RequestBodyEnhancerAdvice implements RequestBodyAdvice {
 
+	public static final String CTX_CACHING_BODY_KEY = "_ctx_caching_body_";
 	private static List<RequestBodyEnhancer> enhancers = new ArrayList<>();
 	
 	public static void register(RequestBodyEnhancer enhancer) {
 		enhancers.add(enhancer);
 		if(enhancers.size() > 1) {			
-			enhancers.stream().sorted(Comparator.comparing(RequestBodyEnhancer::order));
+			enhancers = enhancers.stream().sorted(Comparator.comparing(RequestBodyEnhancer::order)).collect(Collectors.toList());
 		}
 	}
 	
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		Map<String, RequestBodyEnhancer> beans = InstanceFactory.getBeansOfType(RequestBodyEnhancer.class);
-		for (RequestBodyEnhancer enhancer : beans.values()) {
-			register(enhancer);
-		}
+	public static boolean cachinBody() {
+		return !enhancers.isEmpty();
 	}
 	
 	@Override

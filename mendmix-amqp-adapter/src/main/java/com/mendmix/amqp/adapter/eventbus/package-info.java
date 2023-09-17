@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 www.jeesuite.com.
+ * Copyright 2016-2022 www.mendmix.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mendmix.amqp;
-
 /**
- * 
- * <br>
- * Class Name : MQProducer
- *
- * @author jiangwei
- * @version 1.0.0
- * @date 2017年7月11日
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">vakinge</a>
+ * @date Sep 17, 2023
  */
-public interface MQProducer {
-
-	public void start() throws Exception;
-
-	/**
-	 * 
-	 * @param message
-	 * @param async  是否异步
-	 * @return
-	 */
-	public String sendMessage(MQMessage message,boolean async);
-	
-	public String sendTxMessage(MQMessage message);
-	
-	public void shutdown();
-}
+package com.mendmix.amqp.adapter.eventbus;

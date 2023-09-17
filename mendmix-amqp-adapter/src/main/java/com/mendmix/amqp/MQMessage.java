@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 package com.mendmix.amqp;
 
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -26,8 +24,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.mendmix.common.CurrentRuntimeContext;
+import com.mendmix.common.guid.GUID;
+import com.mendmix.common.http.HttpRequestEntity;
+import com.mendmix.common.http.HttpResponseEntity;
+import com.mendmix.common.model.AuthUser;
 import com.mendmix.common.util.BeanUtils;
-import com.mendmix.common.util.HttpUtils;
 import com.mendmix.common.util.JsonUtils;
 
 /**
@@ -39,31 +40,36 @@ import com.mendmix.common.util.JsonUtils;
  * @version 1.0.0
  * @date 2017年7月11日
  */
-@SuppressWarnings("unchecked")
 @JsonInclude(Include.NON_NULL)
 public class MQMessage {
 
-	private String msgId;
+	private String requestId;
+	private String tenantId;
+	private String businessUnitId;
+	private String produceAppId;
+	private String produceBy;
+	private String statusCheckUrl;
+	private String txId;
 	private String topic;
 	private String tag;
 	private String bizKey;
 	private Object body;
-	private String checkUrl;
-	private String txId;
-	private Map<String, String> headers;
 	@JsonIgnore
 	private Long processTime; //处理时间
 	private Long deliverTime; //定时消息
 	//=======================
-	
+	private String msgId;
 	private Integer partition;
 	@JsonIgnore
 	private long offset;
 	private int consumeTimes;
 	@JsonIgnore
 	private Object originMessage;
+	@JsonIgnore
+	private String partitionKey;
 
-	public MQMessage() {}
+	public MQMessage() {
+	}
 
 	public static MQMessage build(String json) {
 		MQMessage message = JsonUtils.toObject(json, MQMessage.class);
@@ -82,8 +88,7 @@ public class MQMessage {
 	}
 
 	public MQMessage(String topic, String tag, String bizKey, Object body) {
-		this();
-		this.topic = MQContext.rebuildWithNamespace(topic);
+		this.topic = topic;
 		this.tag = tag;
 		this.bizKey = bizKey;
 		if (body instanceof byte[]) {
@@ -93,13 +98,66 @@ public class MQMessage {
 		}
 	}
 
-
-	public String getCheckUrl() {
-		return checkUrl;
+	public String getTenantId() {
+		if (tenantId == null) {
+			tenantId = CurrentRuntimeContext.getTenantId(false);
+		}
+		return tenantId;
 	}
 
-	public void setCheckUrl(String checkUrl) {
-		this.checkUrl = checkUrl;
+	public void setTenantId(String tenantId) {
+		this.tenantId = tenantId;
+	}
+	
+	public String getBusinessUnitId() {
+		if(businessUnitId == null) {
+			businessUnitId = CurrentRuntimeContext.getBusinessUnitId();
+		}
+		return businessUnitId;
+	}
+
+	public void setBusinessUnitId(String workUnitId) {
+		this.businessUnitId = workUnitId;
+	}
+
+	public String getRequestId() {
+		if (requestId == null) {
+			requestId = CurrentRuntimeContext.getRequestId();
+		}
+		return requestId;
+	}
+
+	public void setRequestId(String requestId) {
+		this.requestId = requestId;
+	}
+
+	public String getProduceAppId() {
+		return produceAppId;
+	}
+
+	public void setProduceAppId(String produceAppId) {
+		this.produceAppId = produceAppId;
+	}
+
+	public String getProduceBy() {
+		if (produceBy == null) {
+			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+			produceBy = currentUser == null ? null : currentUser.getId();
+		}
+		return produceBy;
+	}
+
+	public void setProduceBy(String produceBy) {
+		this.produceBy = produceBy;
+	}
+	
+
+	public String getStatusCheckUrl() {
+		return statusCheckUrl;
+	}
+
+	public void setStatusCheckUrl(String statusCheckUrl) {
+		this.statusCheckUrl = statusCheckUrl;
 	}
 
 	/**
@@ -114,7 +172,7 @@ public class MQMessage {
 	 *            the topic to set
 	 */
 	public void setTopic(String topic) {
-		this.topic = MQContext.rebuildWithNamespace(topic);
+		this.topic = topic;
 	}
 
 
@@ -163,23 +221,6 @@ public class MQMessage {
 	public void setBody(Object body) {
 		this.body = body;
 	}
-	
-
-	public String getTxId() {
-		return txId;
-	}
-
-	public void setTxId(String txId) {
-		this.txId = txId;
-	}
-
-	public Map<String, String> getHeaders() {
-		return headers;
-	}
-
-	public void setHeaders(Map<String, String> headers) {
-		this.headers = headers;
-	}
 
 	public Long getDeliverTime() {
 		return deliverTime;
@@ -197,14 +238,14 @@ public class MQMessage {
 		this.msgId = msgId;
 	}
 	
-	public long getOffset() {
-		return offset;
+	public String getTxId() {
+		return txId;
 	}
 
-	public int getConsumeTimes() {
-		return consumeTimes;
+	public void setTxId(String txId) {
+		this.txId = txId;
 	}
-	
+
 	public Integer getPartition() {
 		return partition;
 	}
@@ -213,27 +254,67 @@ public class MQMessage {
 		this.partition = partition;
 	}
 
-	public <T> T getOriginMessage(Class<?> clazz) {
-		return (T) this.originMessage;
-	}
-
-	public void setOriginMessage(Object originMessage) {
-		this.originMessage = originMessage;
+	public long getOffset() {
+		return offset;
 	}
 
 	public void setOffset(long offset) {
 		this.offset = offset;
 	}
+
+	public int getConsumeTimes() {
+		return consumeTimes;
+	}
+
+	public void setConsumeTimes(int consumeTimes) {
+		this.consumeTimes = consumeTimes;
+	}
 	
-	public void addHeader(String name,String value) {
-		if(headers == null)headers = new LinkedHashMap<>();
-		headers.put(name, value);
+	public String getPartitionKey() {
+		return partitionKey;
+	}
+
+	public void setPartitionKey(String partitionKey) {
+		this.partitionKey = partitionKey;
+	}
+	
+	public String initMsgId() {
+		if(msgId != null)return msgId;
+		msgId = GUID.uuid();
+		return msgId;
 	}
 
 	public void onProducerFinished(String msgId,int partition,long offset) {
 		this.msgId = msgId;
 		this.partition = partition;
 		this.offset = offset;
+	}
+	
+	public MQMessage setUserContextOnProduce() {
+		if(requestId == null) {
+			requestId = CurrentRuntimeContext.getRequestId(); 
+		}
+		if (tenantId == null) {
+			tenantId = CurrentRuntimeContext.getTenantId(false);
+		}
+		if (produceBy == null) {
+			AuthUser currentUser = CurrentRuntimeContext.getCurrentUser();
+			produceBy = currentUser == null ? null : currentUser.getId();
+		}
+		return this;
+	}
+	
+	public MQMessage setUserContextOnConsume() {
+		if(StringUtils.isNotBlank(requestId)) {	
+			CurrentRuntimeContext.setRequestId(requestId);
+		}
+		if(StringUtils.isNotBlank(tenantId)) {	
+			CurrentRuntimeContext.setTenantId(tenantId);
+		}
+		if(StringUtils.isNotBlank(produceBy)) {	
+			CurrentRuntimeContext.setAuthUser(new AuthUser(produceBy, null));
+		}
+		return this;
 	}
 
 	public byte[] bodyAsBytes() {
@@ -252,59 +333,48 @@ public class MQMessage {
 				return JsonUtils.toJson(body);
 			}
 		}
-		mergeContextHeaders();
 		return JsonUtils.toJson(this);
 	}
 
-	public void mergeContextHeaders() {
-		if(headers == null) {
-			headers = CurrentRuntimeContext.getContextHeaders();
-		}else {
-			headers.putAll(CurrentRuntimeContext.getContextHeaders());
-		}
-	}
-
 	public <T> T toObject(Class<T> clazz) {
-		if(body instanceof String == false) {
-			if(body.getClass() == clazz) {
-				return (T) body;
-			}else {
-				return BeanUtils.copy(body, clazz);
-			}
-		}
-		return JsonUtils.toObject(body.toString(), clazz);
+		return JsonUtils.toObject(toMessageValue(true), clazz);
 	}
 
 	public <T> List<T> toList(Class<T> clazz) {
-		if(body instanceof List) {
-			return BeanUtils.copy((List)body, clazz);
+		return JsonUtils.toList(toMessageValue(true), clazz);
+	}
+	
+	public void setOriginMessage(Object originMessage) {
+		this.originMessage = originMessage;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getOriginMessage(Class<?> clazz) {
+		return (T) this.originMessage;
+	}
+	
+	
+	public boolean originStatusCompleted() {
+		if(StringUtils.isBlank(getStatusCheckUrl()))return true;
+		HttpResponseEntity resp = HttpRequestEntity.get(getStatusCheckUrl()).queryParam("txId", txId).execute();
+		boolean completed = false;
+		try {
+			completed = Boolean.parseBoolean(resp.getUnwrapBody());
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		return JsonUtils.toList(body.toString(), clazz);
+		return completed;
+		
 	}
 
-	public boolean originStatusCompleted() {
-		if (StringUtils.isAnyBlank(txId, checkUrl))
-			return true;
-		
-		String url = String.format("%s?txId=%s", checkUrl,txId);
-
-		String status = HttpUtils.get(url).getBody();
-		if (Boolean.parseBoolean(status)) {
-			try {
-				Thread.sleep(100);
-			} catch (Exception e) {
-			}
-			status = HttpUtils.get(url).getBody();
-		}
-
-		return Boolean.parseBoolean(status);
-
+	@Override
+	public String toString() {
+		return "MQMessage [requestId=" + requestId + ", tenantId=" + tenantId + ", topic=" + topic + ", bizKey="
+				+ bizKey + ", partition=" + partition + ", offset=" + offset + ", consumeTimes=" + consumeTimes + "]";
 	}
 
 	public String logString() {
-		return "[msgId=" + msgId + ", topic=" + topic + ", tag=" + tag + ", bizKey=" + bizKey + "]";
+		return toString();
 	}
-    
-	
 
 }

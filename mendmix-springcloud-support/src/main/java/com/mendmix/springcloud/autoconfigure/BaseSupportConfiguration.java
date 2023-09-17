@@ -31,7 +31,6 @@ import com.mendmix.common2.task.GlobalInternalScheduleService;
 import com.mendmix.springcloud.autoconfigure.loadbalancer.CustomBlockingLoadBalancerClient;
 import com.mendmix.springweb.client.LoadBalancerWrapper;
 import com.mendmix.springweb.client.SimpleRestTemplateBuilder;
-import com.mendmix.springweb.enhancer.ResonseBodyEnhancerAdvice;
 import com.mendmix.springweb.exception.GlobalExceptionHandler;
 
 @Configuration
@@ -54,13 +53,6 @@ public class BaseSupportConfiguration {
 	@ConditionalOnWebApplication(type = Type.SERVLET)
 	public GlobalExceptionHandler globalExceptionHandler() {
 		return new GlobalExceptionHandler();
-	}
-	
-	@Bean
-	@ConditionalOnProperty(value = "mendmix.response.rewrite.enabled",havingValue = "true",matchIfMissing = true)
-	@ConditionalOnWebApplication(type = Type.SERVLET)
-	public ResonseBodyEnhancerAdvice resonseRewriteAdvice() {
-		return new ResonseBodyEnhancerAdvice();
 	}
 	
 	@Bean

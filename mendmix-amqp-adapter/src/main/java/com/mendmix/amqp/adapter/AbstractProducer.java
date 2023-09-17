@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,64 @@ import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQContext.ActionType;
 import com.mendmix.amqp.MQMessage;
 import com.mendmix.amqp.MQProducer;
+import com.mendmix.amqp.MessageStateCheckService;
+import com.mendmix.amqp.adapter.eventbus.EventbusProducerAdapter;
+import com.mendmix.common.guid.GUID;
+import com.mendmix.spring.InstanceFactory;
 
 public abstract class AbstractProducer implements MQProducer {
 	
+	protected MQContext context;
+	
+	private MessageStateCheckService messageStateCheckService;
+	private static MQProducer internalMQProducer;
+	
+	public AbstractProducer(MQContext context) {
+		this.context = context;
+	}
+
 	@Override
-	public void start() throws Exception {}
+	public void start() throws Exception {
+		messageStateCheckService = InstanceFactory.getInstance(MessageStateCheckService.class);
+		if(context.hasInternalTopics()) {
+			internalMQProducer = new EventbusProducerAdapter(context);
+			internalMQProducer.start();
+		}
+	}
+
+
+	public MessageStateCheckService messageStateCheckService() {
+		if(messageStateCheckService != null)return messageStateCheckService;
+		messageStateCheckService = InstanceFactory.getInstance(MessageStateCheckService.class);
+		return messageStateCheckService;
+	}
+
+
+	public static MQProducer getInternalMQProducer() {
+		return internalMQProducer;
+	}
 
 
 	@Override
-	public void shutdown() {}
+	public void shutdown() {
+		if(internalMQProducer != null)internalMQProducer.shutdown();
+	}
 	
 	
 	public void handleSuccess(MQMessage message) {
-		MQContext.processMessageLog(message,ActionType.pub, null);
+		MQContext.processMessageLog(context,message,ActionType.pub, null);
 	}
 
 	public void handleError(MQMessage message, Throwable e) {
-		MQContext.processMessageLog(message,ActionType.pub, e);
+		MQContext.processMessageLog(context,message,ActionType.pub, e);
+	}
+	
+	
+	public String sendTxMessage(MQMessage message) {
+		message.setTxId(String.valueOf(GUID.guid()));
+		String msgId = sendMessage(message, false);
+		messageStateCheckService().saveMessageTx(message);
+		return msgId;
 	}
 
 }

@@ -77,8 +77,12 @@ public class CustomHttpServletRequestWrapper extends HttpServletRequestWrapper {
 			public void setReadListener(ReadListener readListener) {}
 		};
 	}
+	
+	public byte[] getBody() {
+		return body;
+	}
 
-	public String getBody() {
+	public String getBodyString() {
 		if (body == null || body.length == 0)
 			return null;
 		return new String(body, StandardCharsets.UTF_8);

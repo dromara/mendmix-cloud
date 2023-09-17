@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.MethodParameter;
@@ -41,7 +42,6 @@ import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.model.WrapperResponse;
 import com.mendmix.common.util.JsonUtils;
 import com.mendmix.common.util.PathMatcher;
-import com.mendmix.spring.InstanceFactory;
 import com.mendmix.springweb.AppConfigs;
 
 /**
@@ -62,7 +62,7 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
 	public static void register(ResponseBodyEnhancer enhancer) {
 		enhancers.add(enhancer);
 		if(enhancers.size() > 1) {			
-			enhancers.stream().sorted(Comparator.comparing(ResponseBodyEnhancer::order));
+			enhancers = enhancers.stream().sorted(Comparator.comparing(ResponseBodyEnhancer::order)).collect(Collectors.toList());
 		}
 	}
 	
@@ -70,10 +70,6 @@ public class ResonseBodyEnhancerAdvice implements ResponseBodyAdvice<Object>,Ini
 	public void afterPropertiesSet() throws Exception {
 		if(AppConfigs.respRewriteEnabled) {
 			register(new ResponseRewrite());
-		}
-		Map<String, ResponseBodyEnhancer> beans = InstanceFactory.getBeansOfType(ResponseBodyEnhancer.class);
-		for (ResponseBodyEnhancer enhancer : beans.values()) {
-			register(enhancer);
 		}
 	}
 	

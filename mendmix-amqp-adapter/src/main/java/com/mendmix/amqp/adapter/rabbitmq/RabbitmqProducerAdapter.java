@@ -1,68 +1,85 @@
-/*
- * Copyright 2016-2022 www.mendmix.com.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.mendmix.amqp.adapter.rabbitmq;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQMessage;
-import com.mendmix.amqp.MQProducer;
-import com.rabbitmq.client.AMQP.Queue.DeclareOk;
+import com.mendmix.amqp.MessageHeaderNames;
+import com.mendmix.amqp.adapter.AbstractProducer;
+import com.mendmix.common.guid.GUID;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.MessageProperties;
 
 /**
  * 
  * <br>
- * Class Name   : RabbitMQProducer
- *
  * @author jiangwei
  * @version 1.0.0
- * @date 2020年9月3日
+ * @date 2023年5月4日
  */
-public class RabbitmqProducerAdapter implements MQProducer{
+public class RabbitmqProducerAdapter extends AbstractProducer {
 
-
-	@Override
-	public void start() throws Exception {
-		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("");
-		factory.setPort(101);
-		factory.setUsername("");
-		factory.setPassword("");
-		Connection connection = factory.newConnection();
-		Channel channel = connection.createChannel();
-		//声明 exchange 的type 为 fanout 广播模式
-		channel.exchangeDeclare("my.fanout3","fanout",true);
-		DeclareOk declareOk = channel.queueDeclare("test", false, false, false, null);
-		channel.basicPublish("my.fanout3", "", null, "hellow my fanout".getBytes());
-		channel.close();
-		connection.close();
+	private final Logger logger = LoggerFactory.getLogger("com.mendmix.amqp");
+	
+	public RabbitmqProducerAdapter(MQContext context) {
+		super(context);
 	}
-
 
 	@Override
 	public String sendMessage(MQMessage message, boolean async) {
-
+		String exchangeName = CachingChannelFactory.getExchangeName();
+		Channel channel = CachingChannelFactory.getProduceChannel(context);
+		AMQP.BasicProperties props = buildMessageBasicProperties(message);
+		byte[] data = message.bodyAsBytes();
+		try {
+			channel.basicPublish(exchangeName, message.getTopic(), props, data);
+			if(logger.isDebugEnabled())logger.debug("MQ_SEND_SUCCESS:{} -> msgId:{},status:{}",message.getTopic(),message.getMsgId());
+			message.onProducerFinished(message.getMsgId(),0,0);
+			handleSuccess(message);
+		} catch (Exception e) {
+			handleError(message, e);
+			logger.warn("MQ_SEND_FAIL:"+message.getTopic(),e);
+		}
+		
 		return null;
 	}
 
+	private AMQP.BasicProperties buildMessageBasicProperties(MQMessage message) {
+		message.setMsgId(GUID.uuid());
+		AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
+		builder.deliveryMode(MessageProperties.PERSISTENT_TEXT_PLAIN.getDeliveryMode());
+		builder.priority(MessageProperties.PERSISTENT_TEXT_PLAIN.getPriority());
+		builder.messageId(message.getMsgId());
+		//
+		Map<String, Object> headers = new HashMap<String, Object>();
+		if (StringUtils.isNotBlank(message.getProduceBy())) {
+			headers.put(MessageHeaderNames.produceBy.name(), message.getProduceBy());
+		}
+		if (StringUtils.isNotBlank(message.getRequestId())) {
+			headers.put(MessageHeaderNames.requestId.name(), message.getRequestId());
+		}
+		if (StringUtils.isNotBlank(message.getTenantId())) {
+			headers.put(MessageHeaderNames.tenantId.name(), message.getTenantId());
+		}
+		if (StringUtils.isNotBlank(message.getStatusCheckUrl())) {
+			headers.put(MessageHeaderNames.statusCheckUrl.name(), message.getStatusCheckUrl());
+		}
+		builder.headers(headers);
+		return builder.build();
+	}
 
 	@Override
 	public void shutdown() {
-		// TODO Auto-generated method stub
-		
+		super.shutdown();
+		CachingChannelFactory.closeAll();
 	}
 
+	
+	
 }

@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQMessage;
 import com.mendmix.amqp.adapter.AbstractProducer;
 import com.qcloud.cmq.Topic;
@@ -33,6 +34,12 @@ import com.qcloud.cmq.Topic;
  * @date 2019年10月28日
  */
 public class CMQProducerAdapter extends AbstractProducer {
+
+	
+	public CMQProducerAdapter(MQContext context) {
+		super(context);
+		CMQManager.doInit(context);
+	}
 
 	@Override
 	public String sendMessage(MQMessage message, boolean async) {

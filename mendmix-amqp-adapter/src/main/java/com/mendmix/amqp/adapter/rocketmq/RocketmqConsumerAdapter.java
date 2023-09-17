@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQContext.ActionType;
 import com.mendmix.amqp.MQMessage;
 import com.mendmix.amqp.MessageHandler;
-import com.mendmix.common.CurrentRuntimeContext;
+import com.mendmix.amqp.MessageHeaderNames;
 import com.mendmix.common.ThreadLocalContext;
 import com.mendmix.common.util.ResourceUtils;
 
@@ -48,7 +48,7 @@ import com.mendmix.common.util.ResourceUtils;
  */
 public class RocketmqConsumerAdapter implements MQConsumer {
 	
-	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.amqp.adapter");
+	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.amqp");
 	
 	private String namesrvAddr;
 	
@@ -56,15 +56,17 @@ public class RocketmqConsumerAdapter implements MQConsumer {
 	
 	private DefaultMQPushConsumer consumer;
 
+	private MQContext context;
 	
 	/**
 	 * @param groupName
 	 * @param namesrvAddr
 	 * @param messageHandlers
 	 */
-	public RocketmqConsumerAdapter(Map<String, MessageHandler> messageHandlers) {
-		this.namesrvAddr = ResourceUtils.getAndValidateProperty("mendmix.amqp.rocketmq.namesrvAddr");
-		this.messageHandlers = messageHandlers;
+	public RocketmqConsumerAdapter(MQContext context,Map<String, MessageHandler> messageHandlers) {
+        this.context = context;
+        this.messageHandlers = messageHandlers;
+		this.namesrvAddr = ResourceUtils.getAndValidateProperty(context.getInstanceGroup() + ".amqp.rocketmq[namesrvAddr]");
 	}
 
 
@@ -78,8 +80,8 @@ public class RocketmqConsumerAdapter implements MQConsumer {
 	@Override
 	public void start() throws Exception {
 
-		int consumeThreads = MQContext.getMaxProcessThreads();
-		String groupName = MQContext.getGroupName();
+		int consumeThreads = context.getMaxProcessThreads();
+		String groupName = context.getGroupName();
 		consumer = new DefaultMQPushConsumer(groupName);
 		consumer.setNamesrvAddr(namesrvAddr);
 		consumer.setConsumeMessageBatchMaxSize(1); //每次拉取一条
@@ -98,41 +100,38 @@ public class RocketmqConsumerAdapter implements MQConsumer {
 
 	
 	private class CustomMessageListener implements MessageListenerConcurrently{
+
 		@Override
-		public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
+		public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext consumeContext) {
 			if(msgs.isEmpty())return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			MessageExt msg = msgs.get(0); //每次只拉取一条
 			if(!messageHandlers.containsKey(msg.getTopic())) {
-				logger.warn("MENDMIX-TRACE-LOGGGING-->> not messageHandler found for:{}",msg.getTopic());
+				logger.warn("not messageHandler found for:{}",msg.getTopic());
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			}
-			if(MQContext.getConsumeMaxRetryTimes() > 0 && msg.getReconsumeTimes() > MQContext.getConsumeMaxRetryTimes()) {
+			if(context.getConsumeMaxRetryTimes() > 0 && msg.getReconsumeTimes() > context.getConsumeMaxRetryTimes()) {
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			}
-			if(MQContext.getConsumeMaxInterval() > 0 && msg.getReconsumeTimes() > 1 && System.currentTimeMillis() - msg.getBornTimestamp() > MQContext.getConsumeMaxInterval()) {
+			if(context.getConsumeMaxInterval() > 0 && msg.getReconsumeTimes() > 1 && System.currentTimeMillis() - msg.getBornTimestamp() > context.getConsumeMaxInterval()) {
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			}
 			MQMessage message = new MQMessage(msg.getTopic(),msg.getTags(),msg.getKeys(), msg.getBody());
-			message.setOriginMessage(msg);
-			message.setHeaders(msg.getProperties());
-			//上下文
-			if(message.getHeaders() != null) {	
-				CurrentRuntimeContext.addContextHeaders(message.getHeaders());
-			}
-			//消息状态检查
-			if(!message.originStatusCompleted() && message.getConsumeTimes() <= 1) {
-				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
-			}
+			message.setRequestId(msg.getUserProperty(MessageHeaderNames.requestId.name()));
+			message.setProduceBy(msg.getUserProperty(MessageHeaderNames.produceBy.name()));
+			message.setTenantId(msg.getUserProperty(MessageHeaderNames.tenantId.name()));
+			message.setStatusCheckUrl(msg.getUserProperty(MessageHeaderNames.statusCheckUrl.name()));
+			//用户上下文
+			message.setUserContextOnConsume();
 			try {
 				messageHandlers.get(message.getTopic()).process(message);
-				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message);
+				if(logger.isDebugEnabled())logger.debug("MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message);
 				//
-				MQContext.processMessageLog(message, ActionType.sub,null);
+				MQContext.processMessageLog(context,message, ActionType.sub,null);
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			} catch (Exception e) {
-				logger.error(String.format("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_ERROR ->message:%s",message.toString()),e);
+				logger.error(String.format("MQ_MESSAGE_CONSUME_ERROR ->message:%s",message.toString()),e);
 				//
-				MQContext.processMessageLog(message,ActionType.sub, e);
+				MQContext.processMessageLog(context,message,ActionType.sub, e);
 				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 			}finally{
 				ThreadLocalContext.unset();

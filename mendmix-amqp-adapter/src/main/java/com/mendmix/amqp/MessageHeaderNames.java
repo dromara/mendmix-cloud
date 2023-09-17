@@ -17,26 +17,15 @@ package com.mendmix.amqp;
 
 /**
  * 
+ * 
  * <br>
- * Class Name : MQProducer
+ * Class Name   : MessageHeaderNames
  *
  * @author jiangwei
  * @version 1.0.0
- * @date 2017年7月11日
+ * @date 2019年5月19日
  */
-public interface MQProducer {
+public enum MessageHeaderNames {
 
-	public void start() throws Exception;
-
-	/**
-	 * 
-	 * @param message
-	 * @param async  是否异步
-	 * @return
-	 */
-	public String sendMessage(MQMessage message,boolean async);
-	
-	public String sendTxMessage(MQMessage message);
-	
-	public void shutdown();
+	msgId,requestId,produceAppId,produceBy,tenantId,statusCheckUrl
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQMessage;
 import com.mendmix.amqp.MessageHandler;
+import com.mendmix.amqp.MessageHeaderNames;
 import com.mendmix.amqp.adapter.AbstractConsumer;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.util.ResourceUtils;
@@ -59,24 +60,29 @@ import com.mendmix.common.util.ResourceUtils;
  * @date 2018年9月18日
  */
 public class KafkaConsumerAdapter extends AbstractConsumer {
-	private final Logger logger = LoggerFactory.getLogger("com.mendmix.amqp.adapter");
+	
+
+	private final Logger logger = LoggerFactory.getLogger("com.mendmix.amqp");
 
 	private KafkaConsumer<String, String> kafkaConsumer;
 	
-	private Duration timeoutDuration = Duration.ofMillis(ResourceUtils.getLong("mendmix.amqp.fetch.timeout.ms",100));
+	private Duration timeoutDuration;
 	
 	private boolean offsetAutoCommit;
 	
 	private Map<TopicPartition, OffsetAndMetadataStat> uncommitOffsetStats = new ConcurrentHashMap<>();
 	
 
-	public KafkaConsumerAdapter(Map<String, MessageHandler> messageHandlers) {
-		super(messageHandlers);
+	public KafkaConsumerAdapter(MQContext context,Map<String, MessageHandler> messageHandlers) {
+		super(context,messageHandlers);
+		timeoutDuration = Duration.ofMillis(ResourceUtils.getLong(context.getInstanceGroup() + ".amqp.fetch.timeout.ms",100));
 	}
+
 	
+
 	@Override
 	public void start() throws Exception {
-		logger.info("MENDMIX-TRACE-LOGGGING-->> KafkaConsumer start Begin..");
+		logger.info("ZVOS-FRAMEWORK-STARTUP-LOGGGING-->> KafkaConsumer start Begin..");
 		Properties configs = buildConfigs();
 		offsetAutoCommit = Boolean.parseBoolean(configs.getProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG));
 		kafkaConsumer = new KafkaConsumer<>(configs);
@@ -106,12 +112,14 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 			//
 			kafkaConsumer.subscribe(topicNames,listener);
 		}
-
+		
 		super.startWorker();
 		
-		logger.info("MENDMIX-TRACE-LOGGGING-->> KafkaConsumer start End -> subscribeTopics:{}",configs,topicNames);
+		logger.info("ZVOS-FRAMEWORK-STARTUP-LOGGGING-->> KafkaConsumer start End -> subscribeTopics:{}",configs,topicNames);
+		
 	}
-	
+
+
 	@Override
 	public List<MQMessage> fetchMessages() {
 		 //手动提交offset
@@ -121,25 +129,40 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 		 Iterator<ConsumerRecord<String, String>> iterator = records.iterator();
 		 
 		 List<MQMessage> result = new ArrayList<>(records.count());
-		 MQMessage message;
 		 ConsumerRecord<String, String> item;
 		 while(iterator.hasNext()) {
 			 item = iterator.next();
-			 message = new MQMessage(item.topic(), item.value());
+			 MQMessage message = new MQMessage(item.topic(), item.value());
+			 if(item.headers() != null) {
+				 item.headers().forEach(h -> {
+					 if(MessageHeaderNames.msgId.name().equals(h.key())) {
+						 message.setMsgId(new String(h.value()));
+					 }else if(MessageHeaderNames.produceBy.name().equals(h.key())) {
+						 message.setProduceBy(new String(h.value()));
+					 }else if(MessageHeaderNames.tenantId.name().equals(h.key())) {
+						 message.setTenantId(new String(h.value()));
+					 }else if(MessageHeaderNames.requestId.name().equals(h.key())) {
+						 message.setRequestId(new String(h.value()));
+					 }else if(MessageHeaderNames.statusCheckUrl.name().equals(h.key())) {
+						 message.setStatusCheckUrl(new String(h.value()));
+					 }
+				 });
+			 }
 			 message.setOriginMessage(item);
 			 result.add(message);
 		 }
 		 return result;
 	}
-	
+
+
 	@Override
-	public String handleMessageConsumed(MQMessage message) {
-		if(offsetAutoCommit)return null;
+	public String handleMessageConsumed(MQMessage message,boolean successed) {
+		if(offsetAutoCommit || !successed)return null;
 		ConsumerRecord<String, String> originMessage = message.getOriginMessage(ConsumerRecord.class);
 		
 		TopicPartition partition = new TopicPartition(originMessage.topic(), originMessage.partition());
 		//
-		if(MQContext.isAsyncConsumeEnabled()){
+		if(context.isAsyncConsumeEnabled()){
 			uncommitOffsetStats.get(partition).updateOnConsumed(originMessage.offset());
 		}else {
 			Map<TopicPartition, OffsetAndMetadata> uncommitOffsets = new HashMap<>(1);
@@ -151,7 +174,7 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 	}
 	
 	private void trySubmitOffsets() {
-		if(offsetAutoCommit || !MQContext.isAsyncConsumeEnabled()){
+		if(offsetAutoCommit || !context.isAsyncConsumeEnabled()){
 			return;
 		}
 		
@@ -176,7 +199,7 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 				if(exception != null) {
 					kafkaConsumer.commitSync(uncommitOffsets);
 				}else {
-					if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQmessage_COMMIT_SUCCESS -> offsets:{}",offsets);
+					if(logger.isDebugEnabled())logger.debug("MQmessage_COMMIT_SUCCESS -> offsets:{}",offsets);
 				}
 				//
 				offsets.forEach( (k,v) -> {
@@ -186,10 +209,34 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 		});
 	}
 	
-	private static Properties buildConfigs() {
+	
+	/**
+	 * 重置offset
+	 */
+	private void resetOffsets(TopicPartition topicPartition,long resetOffset) {	
+		try {						
+			//
+			OffsetAndMetadata metadata = kafkaConsumer.committed(topicPartition, timeoutDuration);
+			
+			Set<TopicPartition> assignment = kafkaConsumer.assignment();
+			if(assignment.contains(topicPartition)){
+				if(resetOffset > 0 && resetOffset < metadata.offset()){								
+					kafkaConsumer.seek(topicPartition, resetOffset);
+			        logger.info("ZVOS-FRAMEWORK-TRACE-LOGGGING-->> seek topicPartition[{}] from {} to {}",topicPartition,metadata.offset(),resetOffset);
+				}
+			}
+		} catch (Exception e) {
+			logger.warn("ZVOS-FRAMEWORK-TRACE-LOGGGING-->> try seek topicPartition["+topicPartition+"] offsets error");
+		}
+		
+		kafkaConsumer.resume(kafkaConsumer.assignment());
+	}
+	
+	
+	private Properties buildConfigs() {
 
 		Properties result = new Properties();
-		result.setProperty("group.id", MQContext.getGroupName());
+		result.setProperty("group.id", context.getGroupName());
 		
 		Class<ConsumerConfig> clazz = ConsumerConfig.class;
 		Field[] fields = clazz.getDeclaredFields();
@@ -203,7 +250,7 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
 			} catch (Exception e) {
 				continue;
 			}
-			propValue = ResourceUtils.getProperty("mendmix.amqp.kafka[" + propName + "]");
+			propValue = context.getProfileProperties(propName);
 			if (StringUtils.isNotBlank(propValue)) {
 				result.setProperty(propName, propValue);
 			}
@@ -213,46 +260,52 @@ public class KafkaConsumerAdapter extends AbstractConsumer {
         	throw new NullPointerException("Kafka config[bootstrap.servers] is required");
         }
 
-		 if (!result.containsKey(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG)) {
-	            result.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName()); // key serializer
-	        }
+        if (!result.containsKey(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG)) {
+            result.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName()); // key serializer
+        }
 
-	        if (!result.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
-	            result.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-	        }
-	        
-	        if (!result.containsKey(ConsumerConfig.CLIENT_ID_CONFIG)) {
-	            result.put(ConsumerConfig.CLIENT_ID_CONFIG, MQContext.getGroupName() + GlobalRuntimeContext.getWorkId());
-	        }
-	        
-	        //每批次最大拉取记录
-	        if (!result.containsKey(ConsumerConfig.MAX_POLL_RECORDS_CONFIG)) {
-	            result.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MQContext.getMaxProcessThreads());
-	        }
-	        
-	      //设置默认提交
-			if (!result.containsKey(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG)) {
-				result.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, MQContext.isAsyncConsumeEnabled() ? "false" : "true");
-			}
-			
-			String kafkaSecurityProtocol = ResourceUtils.getProperty("mendmix.amqp.kafka[security.protocol]");
-	        String kafkaSASLMechanism = ResourceUtils.getProperty("mendmix.amqp.kafka[sasl.mechanism]");
-	        String config = ResourceUtils.getProperty("mendmix.amqp.kafka[sasl.jaas.config]");
-	        if (!StringUtils.isEmpty(kafkaSecurityProtocol) && !StringUtils.isEmpty(kafkaSASLMechanism)
-	                        && !StringUtils.isEmpty(config)) {
-	                result.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, kafkaSecurityProtocol);
-	                result.put(SaslConfigs.SASL_MECHANISM, kafkaSASLMechanism);
-	                result.put("sasl.jaas.config", config);
-	        }
-
-			return result;
+        if (!result.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
+            result.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        }
+        
+        if (!result.containsKey(ConsumerConfig.CLIENT_ID_CONFIG)) {
+            result.put(ConsumerConfig.CLIENT_ID_CONFIG, context.getGroupName() + GlobalRuntimeContext.getWorkId());
+        }
+        
+        //每批次最大拉取记录
+        if (!result.containsKey(ConsumerConfig.MAX_POLL_RECORDS_CONFIG)) {
+            result.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, context.getMaxProcessThreads());
+        }
+        
+		//设置默认提交
+		if (!result.containsKey(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG)) {
+			result.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
 		}
-
-
-		@Override
-		public void shutdown() {
-			super.shutdown();
-			kafkaConsumer.close();
+		//
+		if (!result.containsKey(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG)) {
+			result.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 		}
 		
+		String kafkaSecurityProtocol = context.getProfileProperties("security.protocol");
+        String kafkaSASLMechanism = context.getProfileProperties("sasl.mechanism");
+        String config = context.getProfileProperties("sasl.jaas.config");
+        if (!StringUtils.isEmpty(kafkaSecurityProtocol) && !StringUtils.isEmpty(kafkaSASLMechanism)
+                        && !StringUtils.isEmpty(config)) {
+                result.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, kafkaSecurityProtocol);
+                result.put(SaslConfigs.SASL_MECHANISM, kafkaSASLMechanism);
+                result.put("sasl.jaas.config", config);
+        }
+
+		return result;
+	}
+
+
+	@Override
+	public void shutdown() {
+		super.shutdown();
+		kafkaConsumer.close();
+	}
+	
+	
+	
 }

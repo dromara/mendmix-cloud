@@ -140,6 +140,10 @@ public class CurrentRuntimeContext {
 		return getContextVal(CustomRequestHeaders.HEADER_INVOKER_APP_ID, false);
 	}
 
+	public static void setRequestId(String requestId) {
+		setContextVal(CustomRequestHeaders.HEADER_REQUEST_ID, requestId);
+	}
+	
 	public static String getRequestId() {
 		return getContextVal(CustomRequestHeaders.HEADER_REQUEST_ID, false);
 	}

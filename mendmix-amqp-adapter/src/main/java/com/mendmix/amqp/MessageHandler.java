@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,15 @@ package com.mendmix.amqp;
  */
 public interface MessageHandler {
 
-	default boolean retrieable() {return true;}
-	/**
-	 * 预处理消息（同步）
-	 * @param message
-	 */
-	default void prepare(MQMessage message) {}
+	default boolean retrieable() {
+		return false;
+	}
 	
+	default String topicName() {
+		return null;
+	}
 	/**
-	 * 处理消息（异步）
+	 * 处理消息
 	 * @param message
 	 * @throws Exception
 	 */

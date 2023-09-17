@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,15 @@ package com.mendmix.amqp;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.mendmix.amqp.logging.DefaultMQLogHandler;
 import com.mendmix.common.GlobalRuntimeContext;
-import com.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
 import com.mendmix.common.util.ResourceUtils;
-import com.mendmix.spring.InstanceFactory;
 
 /**
  * 
@@ -41,164 +39,192 @@ import com.mendmix.spring.InstanceFactory;
  */
 public class MQContext {
 	
+	public static final String DEFAULT_INSTANCE_GROUP_NAME = "mendmix";
+	
 	public static enum ActionType {
 		pub,sub
 	}
 	
-	private static long consumeMaxInterval = -1;
-	private static int consumeMaxRetryTimes = -1;
-
+	private String instanceGroup;
+	private String providerName;
 	private String groupName;
-	private boolean loghandlerEnabled;
+	private boolean producerEnabled;
+	private boolean consumerEnabled;
 	private String namespacePrefix;
 	
-	private Boolean asyncConsumeEnabled;
+	private List<String> internalTopics;
 	
-	private static List<String>  ignoreLogTopics = new ArrayList<>();
+	private boolean asyncConsumeEnabled;
 	
-	private static MQContext context = new MQContext();
+	private List<String>  ignoreLogTopics = new ArrayList<>();
 	
-	private MQLogHandler logHandler;
-	
+	private int processThreads = 0;
+	private int batchSize;
+	private long consumeMaxInterval = -1;
+	private int consumeMaxRetryTimes = -1;
 	//
-	private volatile ThreadPoolExecutor logHandleExecutor;
-
-	private MQContext() {}
-
-
-	public static void close() {
-		if(context.logHandleExecutor != null) {
-			context.logHandleExecutor.shutdown();
-			context.logHandleExecutor = null;
-		}
-	}
+	private boolean loghandlerEnabled;
+	private static MQLogHandler logHandler;
+	private static ThreadPoolExecutor logHandleExecutor;
 	
-	
-	private static MQLogHandler getLogHandler() {
-		if(context.loghandlerEnabled && context.logHandler == null) {
-			synchronized (context) {
-				if(context.logHandler != null)return context.logHandler;
-				MQLogHandler handler = InstanceFactory.getInstance(MQLogHandler.class);
-				if(handler == null)handler = new DefaultMQLogHandler();
-				context.logHandler = handler;
-			}
+	private Properties properties;
+
+	public MQContext(String instanceGroup) {
+		this.instanceGroup = instanceGroup;
+		providerName = ResourceUtils.getAndValidateProperty(instanceGroup + ".amqp.provider");
+		if("none".equals(providerName))return;
+		producerEnabled = Boolean.parseBoolean(ResourceUtils.getProperty(instanceGroup + ".amqp.producer.enabled"));
+		consumerEnabled = Boolean.parseBoolean(ResourceUtils.getProperty(instanceGroup + ".amqp.consumer.enabled"));
+		//
+		String namespace = ResourceUtils.getProperty(instanceGroup + ".amqp.namespace");
+		if(StringUtils.isNotBlank(namespace) && !"none".equals(namespace)){
+			this.namespacePrefix = namespace + "_";
 		}
-		return context.logHandler;
-	}
-
-
-	public static void setLogHandler(MQLogHandler logHandler) {
-		context.logHandler = logHandler;
-	}
-
-
-
-	private static ThreadPoolExecutor getLogHandleExecutor() {
-		if(context.logHandleExecutor != null)return context.logHandleExecutor;
-		if(!context.loghandlerEnabled)return null;
-		synchronized (context) {
-			StandardThreadFactory threadFactory = new StandardThreadFactory("mqLogHandleExecutor");
-			int nThread = ResourceUtils.getInt("mendmix.amqp.loghandler.threads", 2);
-			int capacity = ResourceUtils.getInt("mendmix.amqp.loghandler.queueSize", 1000);
-			context.logHandleExecutor = new ThreadPoolExecutor(nThread, nThread,
-                    0L, TimeUnit.MILLISECONDS,
-                    new LinkedBlockingQueue<Runnable>(capacity),
-                    threadFactory);
-			
-			//忽略topic列表
-			if(ResourceUtils.containsProperty("mendmix.amqp.loghandler.ignoreTopics")) {
-				String[] topics = ResourceUtils.getProperty("mendmix.amqp.loghandler.ignoreTopics").split(",|;");
-				for (String topic : topics) {
-					ignoreLogTopics.add(rebuildWithNamespace(topic));
-				}
-			}
+		//
+		String groupName = ResourceUtils.getProperty(instanceGroup + ".amqp.groupName",GlobalRuntimeContext.APPID);
+		if(ResourceUtils.getBoolean(instanceGroup + ".amqp.consumer.parallel")) {
+			int workId = GlobalRuntimeContext.getWorkId();
+			groupName = groupName + "_" + workId;
 		}
-		return context.logHandleExecutor;
+		this.groupName = rebuildWithNamespace(groupName);
+		//
+		asyncConsumeEnabled = Boolean.parseBoolean(ResourceUtils.getProperty(instanceGroup + ".amqp.consumer.async.enabled", "true"));
+		processThreads = ResourceUtils.getInt(instanceGroup + ".amqp.consumer.processThreads", 20);
+		batchSize = ResourceUtils.getInt(instanceGroup + ".amqp.consumer.fetch.batchSize", 1);
+		consumeMaxInterval = ResourceUtils.getLong(instanceGroup + ".amqp.consume.maxInterval.ms",24 * 3600 * 1000);
+		consumeMaxRetryTimes = ResourceUtils.getInt(instanceGroup + ".amqp.consume.maxRetryTimes",10);
+		//this.loghandlerEnabled = 
+		//
+		if(!"eventbus".equals(getProviderName()) 
+				&& ResourceUtils.containsProperty(instanceGroup + ".amqp.internalTopics")) {
+			internalTopics = ResourceUtils.getList(instanceGroup + ".amqp.internalTopics");
+		}
+
+		//
+		properties = parseProfileProperties();
 	}
 
+	public String getInstanceGroup() {
+		return instanceGroup;
+	}
 
-	public static String rebuildWithNamespace(String name){
-    	if(context.namespacePrefix == null)return name;
-    	if(name == null || name.startsWith(context.namespacePrefix))return name;
-    	return context.namespacePrefix + name;
+	public String rebuildWithNamespace(String name){
+    	if(this.namespacePrefix == null)return name;
+    	if(name == null || name.startsWith(this.namespacePrefix))return name;
+    	return this.namespacePrefix + name;
     }
 
-	public static String getProviderName() {
-		return ResourceUtils.getAndValidateProperty("mendmix.amqp.provider");
+	public String getProviderName() {
+		return providerName;
 	}
 	
-	public static String getGroupName() {
-		if(context.groupName == null) {
-			String namespace = ResourceUtils.getProperty("mendmix.amqp.namespace");
-			if(StringUtils.isNotBlank(namespace) && !"none".equals(namespace)){
-				context.namespacePrefix = namespace + "_";
+	public String getGroupName() {
+		return this.groupName;
+	}
+
+	public boolean isProducerEnabled() {
+		return producerEnabled;
+	}
+	
+	public boolean isConsumerEnabled() {
+		return consumerEnabled;
+	}
+	
+	public String getProfileProperties(String key) {
+		return properties.getProperty(key);
+	}
+	
+	private Properties parseProfileProperties() {
+		//application.amqp.kafka[bootstrap.servers]=10.39.61.86:30015
+		//application.amqp.kafka.bootstrap.servers=10.39.61.86:30015
+		Properties properties = new Properties();
+		String prefix = String.format("%s.amqp.%s", instanceGroup,providerName);
+		Set<Entry<Object, Object>> entrySet = ResourceUtils.getAllProperties(prefix).entrySet();
+		String key;
+		String profileKey;
+		for (Entry<Object, Object> entry : entrySet) {
+			key = entry.getKey().toString();
+			if(key.contains("[")) {
+				profileKey = StringUtils.split(entry.getKey().toString(), "[]")[1];
+			}else {
+				profileKey = key.substring(prefix.length() + 1);
 			}
-			String groupName = ResourceUtils.getProperty("mendmix.amqp.groupName",GlobalRuntimeContext.APPID);
-			if(ResourceUtils.getBoolean("mendmix.amqp.consumer.groupParallel")) {
-				groupName = groupName + "-" + GlobalRuntimeContext.getWorkId();
-			}
-			context.groupName = rebuildWithNamespace(groupName);
-			context.loghandlerEnabled = ResourceUtils.getBoolean("mendmix.amqp.loghandler.enabled");
+			properties.setProperty(profileKey, entry.getValue().toString());
 		}
-		return context.groupName;
-	}
-	
-	public static boolean isProducerEnabled() {
-		return Boolean.parseBoolean(ResourceUtils.getProperty("mendmix.amqp.producer.enabled", "true"));
-	}
-	
-	public static boolean isConsumerEnabled() {
-		return Boolean.parseBoolean(ResourceUtils.getProperty("mendmix.amqp.consumer.enabled", "false"));
+		return properties;
 	}
 	
 	/**
 	 * 是否异步处理消息
 	 * @return
 	 */
-	public static boolean isAsyncConsumeEnabled() {
-		if(context.asyncConsumeEnabled != null)return context.asyncConsumeEnabled;
-		return context.asyncConsumeEnabled = Boolean.parseBoolean(ResourceUtils.getProperty("mendmix.amqp.consumer.async.enabled", "true"));
+	public boolean isAsyncConsumeEnabled() {
+		return this.asyncConsumeEnabled;
 	}
 	
-	public static boolean isLogEnabled() {
-		return context.loghandlerEnabled;
+	public boolean isLogEnabled() {
+		return this.loghandlerEnabled;
 	}
 
-	public static int getMaxProcessThreads() {
-		return ResourceUtils.getInt("mendmix.amqp.consumer.processThreads", 20);
+	public int getMaxProcessThreads() {
+		return this.processThreads;
 	}
 	
-	public static long getConsumeMaxInterval() {
-		if(consumeMaxInterval < 0) {
-			consumeMaxInterval = ResourceUtils.getLong("mendmix.amqp.consume.maxInterval.ms",24 * 3600 * 1000);
-		}
+	public long getConsumeMaxInterval() {
 		return consumeMaxInterval;
 	}
 
-
-	public static int getConsumeMaxRetryTimes() {
-		if(consumeMaxRetryTimes < 0) {
-			consumeMaxRetryTimes = ResourceUtils.getInt("mendmix.amqp.consume.maxRetryTimes",10);
-		}
+	public int getConsumeMaxRetryTimes() {
 		return consumeMaxRetryTimes;
 	}
 
+	public int getBatchSize() {
+		return batchSize;
+	}
 
-	public static void processMessageLog(MQMessage message,ActionType actionType,Throwable ex){
-		if(!MQContext.isLogEnabled())return;
-		ThreadPoolExecutor executor = MQContext.getLogHandleExecutor();
-		if(ignoreLogTopics.contains(message.getTopic()))return;
+	public static void processMessageLog(MQContext context,MQMessage message,ActionType actionType,Throwable ex){
+		if(!context.isLogEnabled())return;
+		if(context.ignoreLogTopics.contains(message.getTopic()))return;
 		message.setProcessTime(System.currentTimeMillis());
-		executor.execute(new Runnable() {
+		logHandleExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
 				if(ex == null) {
-					getLogHandler().onSuccess(getGroupName(),actionType,message);
+					logHandler.onSuccess(context.getGroupName(),actionType,message);
 				}else {
-					getLogHandler().onError(getGroupName(),actionType, message, ex);
+					logHandler.onError(context.getGroupName(),actionType, message, ex);
 				}
 			}
 		});
 	}
+	
+	public boolean hasInternalTopics() {
+		return this.internalTopics != null && !this.internalTopics.isEmpty();
+	}
+	
+	public boolean isInternalTopicMode(String topic) {
+		if(this.internalTopics == null)return false;
+		return this.internalTopics.contains(topic);
+	}
+	
+	
+	public static void close() {
+		if(logHandleExecutor != null) {
+			logHandleExecutor.shutdown();
+			logHandleExecutor = null;
+		}
+	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder("MQContext");
+		builder.append("\n -instance:").append(instanceGroup);
+		builder.append("\n -providerName:").append(providerName);
+		builder.append("\n -groupName:").append(groupName);
+		builder.append("\n -namespacePrefix:").append(namespacePrefix);
+		builder.append("\n -producerEnabled:").append(isProducerEnabled());
+		builder.append("\n -consumerEnabled:").append(isConsumerEnabled());
+		return builder.toString();
+	}
+    
 }

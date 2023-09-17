@@ -1,18 +1,3 @@
-/*
- * Copyright 2016-2020 www.mendmix.com.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.mendmix.amqp.adapter.redis;
 
 import org.slf4j.Logger;
@@ -32,11 +17,13 @@ import com.mendmix.common.CurrentRuntimeContext;
  */
 public class MessageHandlerDelegate {
 
-	private final static Logger logger = LoggerFactory.getLogger("com.zvosframework.adapter.amqp");
+	private final static Logger logger = LoggerFactory.getLogger("com.mendmix.amqp");
 	
+	private MQContext context;
 	private MessageHandler messageHandler;
 	
-	public MessageHandlerDelegate(String topic, MessageHandler messageHandler) {
+	public MessageHandlerDelegate(MQContext context,String topic, MessageHandler messageHandler) {
+		this.context = context;
 		this.messageHandler = messageHandler;
 	}
 
@@ -44,16 +31,16 @@ public class MessageHandlerDelegate {
 	public void onMessage(String body, String topic) {
 		MQMessage message = MQMessage.build(body);
 		try {
-			//上下文
-			if(message.getHeaders() != null) {	
-				CurrentRuntimeContext.addContextHeaders(message.getHeaders());
+			//多租户支持
+			if(message.getTenantId() != null) {	
+				CurrentRuntimeContext.setTenantId(message.getTenantId());
 			}
 			messageHandler.process(message);
-			if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message.toString());
-			MQContext.processMessageLog(message, ActionType.sub,null);
+			if(logger.isDebugEnabled())logger.debug("MQ_MESSAGE_CONSUME_SUCCESS ->message:{}",message.toString());
+			MQContext.processMessageLog(context,message, ActionType.sub,null);
 		} catch (Exception e) {
-			MQContext.processMessageLog(message, ActionType.sub,e);
-			logger.error(String.format("MENDMIX-TRACE-LOGGGING-->> MQ_MESSAGE_CONSUME_ERROR ->message:%s",body),e);
+			MQContext.processMessageLog(context,message, ActionType.sub,e);
+			logger.error(String.format("MQ_MESSAGE_CONSUME_ERROR ->message:%s",body),e);
 		}
 		
 	}

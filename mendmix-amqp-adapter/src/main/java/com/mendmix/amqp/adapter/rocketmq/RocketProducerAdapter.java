@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.mendmix.amqp.adapter.rocketmq;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -26,8 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQMessage;
+import com.mendmix.amqp.MessageHeaderNames;
 import com.mendmix.amqp.adapter.AbstractProducer;
-import com.mendmix.common.CurrentRuntimeContext;
 import com.mendmix.common.util.ResourceUtils;
 
 /**
@@ -41,9 +42,8 @@ import com.mendmix.common.util.ResourceUtils;
  */
 public class RocketProducerAdapter extends AbstractProducer {
 
-	private final Logger logger = LoggerFactory.getLogger("com.mendmix.amqp.adapter");
+	private final Logger logger = LoggerFactory.getLogger("com.mendmix.amqp");
 	
-	private String groupName;
 	private String namesrvAddr;
 	
 	private DefaultMQProducer producer;
@@ -52,46 +52,56 @@ public class RocketProducerAdapter extends AbstractProducer {
 	 * @param groupName
 	 * @param namesrvAddr
 	 */
-	public RocketProducerAdapter() {
-		this.groupName = MQContext.getGroupName();
-		this.namesrvAddr = ResourceUtils.getAndValidateProperty("mendmix.amqp.rocketmq.namesrvAddr");		
+	public RocketProducerAdapter(MQContext context) {
+		super(context);
+		this.namesrvAddr = ResourceUtils.getAndValidateProperty(context.getInstanceGroup() + ".amqp.rocketmq[namesrvAddr]");		
 	}
 
 	@Override
 	public void start() throws Exception{
 		super.start();
-		producer = new DefaultMQProducer(groupName);
+		producer = new DefaultMQProducer(context.getGroupName());
 		producer.setNamesrvAddr(namesrvAddr);
 		producer.start();
 	}
 	
+	//MessageQueueSelector
 	@Override
 	public String sendMessage(MQMessage message,boolean async) {
 		Message _message = new Message(message.getTopic(), message.getTag(), message.getBizKey(), message.bodyAsBytes());
 	
-		CurrentRuntimeContext.getContextHeaders().forEach( (k,v) -> {
-			_message.putUserProperty(k, v);
-		} );
+		if(StringUtils.isNotBlank(message.getProduceBy())){
+			_message.putUserProperty(MessageHeaderNames.produceBy.name(), message.getProduceBy());
+		}
+		if(StringUtils.isNotBlank(message.getRequestId())){
+			_message.putUserProperty(MessageHeaderNames.requestId.name(), message.getRequestId());
+		}
+		if(StringUtils.isNotBlank(message.getTenantId())){
+			_message.putUserProperty(MessageHeaderNames.tenantId.name(), message.getTenantId());
+		}
+		if(StringUtils.isNotBlank(message.getStatusCheckUrl())){
+			_message.putUserProperty(MessageHeaderNames.statusCheckUrl.name(), message.getStatusCheckUrl());
+		}
 
 		try {
 			if(async){
 				producer.send(_message, new SendCallback() {
 					@Override
 					public void onSuccess(SendResult sendResult) {
-						if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->> MQ_SEND_SUCCESS:{} -> msgId:{},status:{},offset:{}",message.getTopic(),sendResult.getMsgId(),sendResult.getSendStatus().name(),sendResult.getQueueOffset());
-						message.setMsgId(sendResult.getMsgId());
+						if(logger.isDebugEnabled())logger.debug("MQ_SEND_SUCCESS:{} -> msgId:{},status:{},offset:{}",message.getTopic(),sendResult.getMsgId(),sendResult.getSendStatus().name(),sendResult.getQueueOffset());
+						message.onProducerFinished(sendResult.getMsgId(),0,sendResult.getQueueOffset());
 						handleSuccess(message);
 					}
 					
 					@Override
 					public void onException(Throwable e) {
 						handleError(message, e);
-						logger.warn("MENDMIX-TRACE-LOGGGING-->> MQ_SEND_FAIL:"+message.getTopic(),e);
+						logger.warn("MQ_SEND_FAIL:"+message.getTopic(),e);
 					}
 				});
 			}else{
 				SendResult sendResult = producer.send(_message);	
-				message.setMsgId(sendResult.getMsgId());
+				message.onProducerFinished(sendResult.getMsgId(),0,sendResult.getQueueOffset());
 				if(sendResult.getSendStatus() == SendStatus.SEND_OK) {
 					handleSuccess(message);
 				}else {
@@ -100,7 +110,7 @@ public class RocketProducerAdapter extends AbstractProducer {
 			}
 		} catch (Exception e) {
 			handleError(message, e);
-			throw new RuntimeException("rocketMQ_Producer_error",e);
+			throw new RuntimeException(e);
 		}
 		
 		return null;

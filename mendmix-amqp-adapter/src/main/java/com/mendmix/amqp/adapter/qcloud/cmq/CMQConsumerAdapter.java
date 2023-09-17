@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQMessage;
 import com.mendmix.amqp.MessageHandler;
 import com.mendmix.amqp.adapter.AbstractConsumer;
@@ -37,8 +38,9 @@ import com.qcloud.cmq.Message;
  */
 public class CMQConsumerAdapter extends AbstractConsumer {
 
-	public CMQConsumerAdapter(Map<String, MessageHandler> messageHandlers) {
-		super(messageHandlers);
+	public CMQConsumerAdapter(MQContext context,Map<String, MessageHandler> messageHandlers) {
+		super(context,messageHandlers);
+		CMQManager.doInit(context);
 	}
 
 	@Override
@@ -56,7 +58,7 @@ public class CMQConsumerAdapter extends AbstractConsumer {
 		try {
 			List<Message> messages;
 			try {
-				messages = CMQManager.getQueue().batchReceiveMessage(batchSize);
+				messages = CMQManager.getQueue().batchReceiveMessage(context.getBatchSize());
 			} catch (com.qcloud.cmq.CMQServerException e) {
 				//(10200)no message
 				if(e.getMessage().equals("(10200)no message")) {
@@ -79,7 +81,7 @@ public class CMQConsumerAdapter extends AbstractConsumer {
 	}
 
 	@Override
-	public String handleMessageConsumed(MQMessage message) {
+	public String handleMessageConsumed(MQMessage message, boolean successed) {
 		try {
 			Message originMessage = message.getOriginMessage(Message.class);
 			String receiptHandle = originMessage.receiptHandle;

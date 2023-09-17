@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package com.mendmix.amqp.adapter.redis;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+import com.mendmix.amqp.MQContext;
 import com.mendmix.amqp.MQMessage;
 import com.mendmix.amqp.adapter.AbstractProducer;
 import com.mendmix.cache.RedisTemplateGroups;
@@ -32,10 +35,12 @@ import com.mendmix.cache.RedisTemplateGroups;
  */
 public class RedisProducerAdapter extends AbstractProducer {
 
+	private final Logger logger = LoggerFactory.getLogger("com.mendmix.amqp");
+
 	private StringRedisTemplate redisTemplate;
 	
-	public RedisProducerAdapter() {
-		
+	public RedisProducerAdapter(MQContext context) {
+		super(context);
 	}
 
 	@Override

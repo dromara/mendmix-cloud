@@ -16,6 +16,7 @@
 package com.mendmix.spring;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -25,25 +26,37 @@ import com.mendmix.spring.helper.EnvironmentHelper;
 public class InstanceFactory {
 
 	private static ApplicationContext applicationContext;
-	static{ System.setProperty("framework.website", "www.mendmix.com");}
+	private static Long timeStarting = System.currentTimeMillis();
+	private static AtomicBoolean initialized = new AtomicBoolean(false);
+	private static AtomicBoolean loadFinished = new AtomicBoolean(false);
 
-	/**
-	 * 设置实例提供者。
-	 * @param provider 一个实例提供者的实例。
-	 */
 	public static void setApplicationContext(ApplicationContext applicationContext) {
 		if(InstanceFactory.applicationContext != null)return;
 		InstanceFactory.applicationContext = applicationContext;
+		initialized.set(true);
+		//
 		EnvironmentHelper.init(applicationContext);
 	}
 
-	/**
-	 * 获取指定类型的对象实例。如果IoC容器没配置好或者IoC容器中找不到该类型的实例则抛出异常。
-	 * 
-	 * @param <T> 对象的类型
-	 * @param beanClass 对象的类
-	 * @return 类型为T的对象实例
-	 */
+
+
+	public static void loadFinished(){
+		loadFinished.set(true);
+	}
+
+	public static boolean isLoadfinished(){
+		return loadFinished.get();
+	}
+
+	
+	public static ApplicationContext getContext(){
+		return applicationContext;
+	}
+	
+	public static DefaultListableBeanFactory getBeanFactory(){
+        return (DefaultListableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
+    }
+	
 	@SuppressWarnings("unchecked")
 	public static <T> T getInstance(Class<T> beanClass) {
 		String[] beanNames = applicationContext.getBeanNamesForType(beanClass);
@@ -53,38 +66,56 @@ public class InstanceFactory {
 		return (T) applicationContext.getBean(beanNames[0]);
 	}
 
-	/**
-	 * 获取指定类型的对象实例。如果IoC容器没配置好或者IoC容器中找不到该实例则抛出异常。
-	 * 
-	 * @param <T> 对象的类型
-	 * @param beanName 实现类在容器中配置的名字
-	 * @param beanClass 对象的类
-	 * @return 类型为T的对象实例
-	 */
 	public static <T> T getInstance(Class<T> beanClass, String beanName) {
-		return (T) applicationContext.getBean(beanClass, beanName);
+		return (T) applicationContext.getBean(beanName, beanClass);
 	}
 
-	/**
-	 * 获取指定类型的对象实例
-	 * @param <T> 对象的类型
-	 * @param beanName 实现类在容器中配置的名字
-	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T getByBeanName(String beanName) {
+		return (T) applicationContext.getBean(beanName);
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <T> T getInstance(String beanName) {
 		return (T) applicationContext.getBean(beanName);
 	}
-	
-	public static ApplicationContext getContext(){
-		return applicationContext;
+
+	@Deprecated
+	public static <T> int getInterfaceCount(Class<T> beanClass) {
+		return getBeanCountOfType(beanClass);
+	}
+
+	@Deprecated
+	public static <T> Map<String, T> getInterfaces(Class<T> beanClass) {
+		return getBeansOfType(beanClass);
 	}
 	
-	public static <T> Map<String,  T> getBeansOfType(Class<T> clazz){
-		return applicationContext.getBeansOfType(clazz);
+	public static <T> int getBeanCountOfType(Class<T> beanClass) {
+		return applicationContext.getBeanNamesForType(beanClass).length;
+	}
+
+	public static <T> Map<String, T> getBeansOfType(Class<T> beanClass) {
+		return applicationContext.getBeansOfType(beanClass);
 	}
 	
-	public static DefaultListableBeanFactory getBeanFactory(){
-        return (DefaultListableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
-    }
+	/**
+	 * 这是一个阻塞方法，直到context初始化完成
+	 */
+	public synchronized static void waitUtilInitialized(){
+		if(initialized.get())return;
+		while(true){
+			if(initialized.get())break;
+			try {Thread.sleep(1000);} catch (Exception e) {}
+			long waiting = System.currentTimeMillis() - timeStarting;
+			if(waiting >60 * 1000)throw new RuntimeException("Spring Initialize failture");
+			System.out.println("Spring Initializing >>>>>"+waiting + " s");
+		}
+	}
+
+	public static boolean isInitialized() {
+		return initialized.get();
+	}
+	
+	
 
 }

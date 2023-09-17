@@ -54,12 +54,11 @@ public class CMQManager {
 	
 	private static CMQManager instance = new CMQManager();
 
-	private CMQManager() {
-		doInit();
-	}
+	private CMQManager() {}
 
-	private void doInit() {
-		queueName = MQContext.getGroupName();
+	public static void doInit(MQContext context) {
+		if(instance.account != null)return;
+		instance.queueName = context.getGroupName();
 		CmqConfig config = ResourceUtils.getBean("mendmix.amqp.cmq.", CmqConfig.class);
 	
 		Validate.notBlank(config.getEndpoint(),"config[mq.cmq.endpoint] not found");
@@ -68,7 +67,7 @@ public class CMQManager {
 
 		config.setAlwaysPrintResultLog(false);
 		config.setPrintSlow(false);
-		this.account = new Account(config);		
+		instance.account = new Account(config);		
 		logger.info("MENDMIX-TRACE-LOGGGING-->> init CMQ Account OK -> endpoint:{}",config.getEndpoint());
 	}
 	

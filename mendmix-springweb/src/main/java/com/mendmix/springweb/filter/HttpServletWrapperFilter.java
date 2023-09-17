@@ -24,6 +24,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
+import com.mendmix.common.ThreadLocalContext;
+import com.mendmix.springweb.enhancer.RequestBodyEnhancerAdvice;
 import com.mendmix.springweb.servlet.CustomHttpServletRequestWrapper;
 
 /**
@@ -41,9 +43,13 @@ public class HttpServletWrapperFilter  implements Filter {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
 		
-		ServletRequest requestWrapper = null;
-        if(request instanceof HttpServletRequest) {
+		CustomHttpServletRequestWrapper requestWrapper = null;
+        if(RequestBodyEnhancerAdvice.cachinBody() 
+        		&& request instanceof HttpServletRequest 
+        		&& request.getInputStream() != null) {
         	requestWrapper = new CustomHttpServletRequestWrapper((HttpServletRequest)request);
+        	byte[] body = requestWrapper.getBody();
+        	ThreadLocalContext.set(RequestBodyEnhancerAdvice.CTX_CACHING_BODY_KEY, body);
         }
         
         if(requestWrapper == null) {

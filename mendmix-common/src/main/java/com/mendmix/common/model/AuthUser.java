@@ -48,6 +48,13 @@ public class AuthUser {
 	private String principalId;
 	private boolean admin;
 
+	public AuthUser() {}
+	
+	public AuthUser(String id, String name) {
+		this.id = id;
+		this.name = name;
+	}
+
 	public String getId() {
 		return id;
 	}

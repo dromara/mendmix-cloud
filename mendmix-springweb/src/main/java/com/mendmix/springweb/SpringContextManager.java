@@ -20,6 +20,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
@@ -36,7 +37,7 @@ import com.mendmix.spring.InstanceFactory;
  * @version 1.0.0
  * @date 2018年9月13日
  */
-public class SpringContextManager implements ApplicationContextAware,BeanDefinitionRegistryPostProcessor,DisposableBean{
+public class SpringContextManager implements ApplicationContextAware,BeanDefinitionRegistryPostProcessor,DisposableBean,CommandLineRunner{
 
 	@Override
 	public void destroy() throws Exception {
@@ -54,5 +55,10 @@ public class SpringContextManager implements ApplicationContextAware,BeanDefinit
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {}
+
+	@Override
+	public void run(String... args) throws Exception {
+		InstanceFactory.loadFinished();
+	}
 
 }
