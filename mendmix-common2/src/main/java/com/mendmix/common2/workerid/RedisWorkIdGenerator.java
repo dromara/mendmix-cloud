@@ -15,8 +15,10 @@
  */
 package com.mendmix.common2.workerid;
 
+import java.util.Comparator;
 import java.util.Set;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -36,7 +38,9 @@ public class RedisWorkIdGenerator implements WorkIdGenerator,SubTimerTask {
 
 	private static final Logger logger = LoggerFactory.getLogger("com.mendmix");
 	
-	private static final int INTERVAL = 5000;
+	private static final int INTERVAL = RandomUtils.nextInt(1000, 2000);
+	private static final int TIMEOUT_THRESHOLD = INTERVAL * 2 + 1;
+	
 	private static final String NODE_REGISTER_KEY = "_mendmix_service_nodes:" + GlobalRuntimeContext.APPID;
 	
 	private StringRedisTemplate redisTemplate;
@@ -75,23 +79,27 @@ public class RedisWorkIdGenerator implements WorkIdGenerator,SubTimerTask {
 			RedisDistributeLock lock = new RedisDistributeLock(NODE_REGISTER_KEY);
 			try {
 				lock.lock();
+				int maxNodeId = 0;
 				Set<String> nodeIds = redisTemplate().opsForZSet().rangeByScore(NODE_REGISTER_KEY, 0, currentTime + INTERVAL);
 				if(nodeIds == null || nodeIds.isEmpty()) {
 					workId = 1;
 					logger.info("ZVOS-FRAMEWORK-TRACE-LOGGGING-->> init first workId:{}",workId);
 				}else {
-					nodeIds.stream().sorted().forEach(nodeId -> {
-						long lastHeartbeatTime = redisTemplate.opsForZSet().score(NODE_REGISTER_KEY, nodeId).longValue();
+					maxNodeId = Integer.parseInt(nodeIds.stream().sorted(Comparator.comparingInt(o -> Integer.parseInt(o))).reduce((first, last) -> last).orElse("1"));
+					logger.info(">> current nodeIds:{},max:{}",nodeIds,maxNodeId);
+					for (int i = 1; i <= maxNodeId; i++) {
+						Double lastHeartbeatTime = redisTemplate.opsForZSet().score(NODE_REGISTER_KEY, String.valueOf(i));
 						//节点已经下线
-						if(workId == 0 && currentTime - lastHeartbeatTime > INTERVAL * 3) {
-							workId = Integer.parseInt(nodeId);
-							logger.info("ZVOS-FRAMEWORK-TRACE-LOGGGING-->> init workId:{} use expired workId",workId);
+						if(lastHeartbeatTime == null || (currentTime - lastHeartbeatTime.longValue() > TIMEOUT_THRESHOLD)) {
+							workId = i;
+							logger.info(">> init workId:{} use expired workId ,currentTime:{},lastHeartbeatTime:{}",workId,currentTime,lastHeartbeatTime);
+							break;
 						}
-					});
+					}
 				}
 				if(workId == 0) {
-					workId = nodeIds.size() + 1;
-					logger.info("ZVOS-FRAMEWORK-TRACE-LOGGGING-->> init workId:{} by incr",workId);
+					workId = maxNodeId + 1;
+					logger.info(">> init workId:{} by incr",workId);
 				}
 				updateNodeSTat(currentTime);
 			} finally {
