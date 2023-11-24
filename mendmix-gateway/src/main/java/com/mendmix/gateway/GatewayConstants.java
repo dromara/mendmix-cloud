@@ -25,6 +25,9 @@ public class GatewayConstants {
 	public static final String CONTEXT_CURRENT_URI = "ctx-current-uri";
 	public static final String CONTEXT_CURRENT_API = "ctx-current-api";
 	public static final String CACHED_REQUEST_BODY_STR_ATTR = "cachedRequestBodyStr";
+	public static final String CONTEXT_ACTIVE_LOG_BODY = "ctx-active-logBody";
+	public static final String CONTEXT_IGNORE_LOG_BODY = "ctx-ignore-logBody";
+	public static final String CONTEXT_RESP_CONTENT_LENGTH = "ctx-resp-content-length";
 	
 	public static final String REQ_SIGN_HEADER = "x-sign";
 	public static final String OPEN_SIGN_HEADER = "x-open-sign";

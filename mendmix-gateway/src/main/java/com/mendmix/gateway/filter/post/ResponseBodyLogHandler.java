@@ -18,6 +18,7 @@ package com.mendmix.gateway.filter.post;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.mendmix.common.model.ApiInfo;
+import com.mendmix.gateway.GatewayConstants;
 import com.mendmix.gateway.filter.PostFilterHandler;
 import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
@@ -43,11 +44,14 @@ public class ResponseBodyLogHandler implements PostFilterHandler {
 		ActionLog actionLog = exchange.getAttribute(ActionLogCollector.CURRENT_LOG_CONTEXT_NAME);
 		if(actionLog == null)return respBodyAsString;
 		
-		ApiInfo apiInfo = RequestContextHelper.getCurrentApi(exchange);
-		if(apiInfo != null && !apiInfo.isResponseLog()) {
+		boolean loggingBody = exchange.getAttributes().containsKey(GatewayConstants.CONTEXT_ACTIVE_LOG_BODY);
+		if(!loggingBody) {			
+			ApiInfo apiInfo = RequestContextHelper.getCurrentApi(exchange);
+			loggingBody = apiInfo == null || apiInfo.isResponseLog();
+		}
+		if(!loggingBody) {
         	return respBodyAsString;
         }
-		//
 		actionLog.setOutputData(respBodyAsString);
 		
 		return respBodyAsString;

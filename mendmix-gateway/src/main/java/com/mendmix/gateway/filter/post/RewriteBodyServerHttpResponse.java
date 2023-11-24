@@ -19,7 +19,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,21 +26,32 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cloud.gateway.filter.factory.rewrite.CachedBodyOutputMessage;
+import org.springframework.cloud.gateway.support.BodyInserterContext;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferFactory;
-import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ReactiveHttpOutputMessage;
+import org.springframework.http.codec.HttpMessageReader;
+import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.web.reactive.function.BodyInserter;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.mendmix.common.CustomRequestHeaders;
-import com.mendmix.common.model.ApiInfo;
-import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.GatewayConfigs;
+import com.mendmix.gateway.GatewayConstants;
+import com.mendmix.gateway.filter.AbstracRouteFilter;
 import com.mendmix.gateway.filter.PostFilterHandler;
+import com.mendmix.gateway.helper.RequestContextHelper;
 import com.mendmix.gateway.model.BizSystemModule;
+import com.mendmix.spring.InstanceFactory;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -54,27 +64,39 @@ import reactor.core.publisher.Mono;
  */
 public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 
+	private static Logger logger = LoggerFactory.getLogger("com.mendmix.gateway");
 
+	private final String APPLICATION_JSON_STRING = MediaType.APPLICATION_JSON.toString();
 	private static final String GZIP_ENCODE = "gzip";
-
-	private static List<PostFilterHandler> handlers = new ArrayList<>();
-
+	private static final int BODY_SIZE_LIMIT = 256 * 1024;
+	private static final int LOGGING_BODY_SIZE_LIMIT = 100 * 1024;
+	
+	private static List<HttpMessageReader<?>> messageReaders;
+	private static List<PostFilterHandler> handlers;
+	
 	private ServerWebExchange exchange;
 	private BizSystemModule module;
 	private String bodyString;
-	private boolean rewriteEnabled = ResourceUtils.getBoolean("filter.response.rewrite.enbaled", true);
-
+	
+	public RewriteBodyServerHttpResponse(ServerWebExchange exchange, BizSystemModule module) {
+		super(exchange.getResponse());
+		this.exchange = exchange;
+		this.module = module;
+	}
+	
 	public static void setHandlers(List<PostFilterHandler> handlers) {
 		if (handlers.size() > 1) {
 			handlers = handlers.stream().sorted(Comparator.comparing(PostFilterHandler::order)).collect(Collectors.toList());
 		}
 		RewriteBodyServerHttpResponse.handlers = handlers;
 	}
-
-	public RewriteBodyServerHttpResponse(ServerWebExchange exchange, BizSystemModule module) {
-		super(exchange.getResponse());
-		this.exchange = exchange;
-		this.module = module;
+	
+	private static List<HttpMessageReader<?>> getMessageReaders() {
+		if(messageReaders == null) {
+			//messageReaders = HandlerStrategies.withDefaults().messageReaders();
+			messageReaders = InstanceFactory.getInstance(ServerCodecConfigurer.class).getReaders();
+		}
+		return messageReaders;
 	}
 
 	public String getBodyString() {
@@ -83,90 +105,91 @@ public class RewriteBodyServerHttpResponse extends ServerHttpResponseDecorator {
 
 	@Override
 	public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
-
-		DataBufferFactory bufferFactory = exchange.getResponse().bufferFactory();
-		HttpHeaders headers = exchange.getResponse().getHeaders();
-		
-		if (headers.containsKey(HttpHeaders.CONTENT_DISPOSITION)) {
-			return super.writeWith(body);
+		final HttpHeaders headers = exchange.getResponse().getHeaders();
+    	if (headers.containsKey(HttpHeaders.CONTENT_DISPOSITION)) {
+    		AbstracRouteFilter.addIgnoreResponseFilterUri(exchange);
+    		return super.writeWith(body);
 		}
-		
-		boolean isNullBody = !headers.containsKey(HttpHeaders.TRANSFER_ENCODING) && headers.getContentLength() == 0;
+    	
+    	//
+		final long contentLength = headers.getContentLength();
+		final boolean withTransferEncodingHeader = headers.containsKey(HttpHeaders.TRANSFER_ENCODING);
+		boolean isNullBody = !withTransferEncodingHeader && contentLength == 0;
 		if(isNullBody) {
 			for (PostFilterHandler handler : handlers) {
 				bodyString = handler.process(exchange, module, bodyString);
 			}
 			if(bodyString != null) {
 				byte[] bytes = bodyString.getBytes();
-				DataBuffer dataBuffer = bufferFactory.wrap(bytes);
+				DataBuffer dataBuffer = exchange.getResponse().bufferFactory().wrap(bytes);
 				headers.setContentLength(bytes.length);
 				return super.writeWith(Flux.just(dataBuffer));
 			}
 			return super.writeWith(body);
 		}
-
-		MediaType contentType = headers.getContentType();
-		if (contentType == null || !contentType.getSubtype().equals(MediaType.APPLICATION_JSON.getSubtype())) {
-			return super.writeWith(body);
-		}
-		
-		boolean buildNewResponse = rewriteEnabled;
 		//
-		if(buildNewResponse) {
-			buildNewResponse = !headers.containsKey(CustomRequestHeaders.HEADER_RESP_KEEP);
-		}
-		//
-		if(buildNewResponse) {
-			buildNewResponse = !exchange.getRequest().getHeaders().containsKey(CustomRequestHeaders.HEADER_RESP_KEEP);
+		if(GatewayConfigs.actionLogEnabled && !GatewayConfigs.actionResponseBodyIngore && headers.containsKey(CustomRequestHeaders.HEADER_EXCEPTION_CODE)) {
+			exchange.getAttributes().put(GatewayConstants.CONTEXT_ACTIVE_LOG_BODY, true);
 		}
 
-		if (!buildNewResponse && GatewayConfigs.actionLogEnabled) {
-			ApiInfo apiInfo = module.getApiInfo(exchange.getRequest().getMethodValue(),exchange.getRequest().getPath().value());
-			buildNewResponse = apiInfo != null && apiInfo.isActionLog() && apiInfo.isResponseLog();
-		}
+		final boolean isGzip = GZIP_ENCODE.equalsIgnoreCase(headers.getFirst(HttpHeaders.CONTENT_ENCODING));
+        if(logger.isTraceEnabled()) {
+        	logger.trace("handleReadResponseBody begin -> isGzip:{}",isGzip);
+        }
+        String originalResponseContentType = exchange.getAttribute(ServerWebExchangeUtils.ORIGINAL_RESPONSE_CONTENT_TYPE_ATTR);
+		if (originalResponseContentType != null && originalResponseContentType.startsWith(APPLICATION_JSON_STRING)){
+            ClientResponse clientResponse = ClientResponse
+                    .create(this.getDelegate().getStatusCode(), getMessageReaders())
+                    .body(Flux.from(body)).build();
 
-		if (!buildNewResponse) {
-			return super.writeWith(body);
-		}
-
-		if (body instanceof Flux) {
-			Flux<? extends DataBuffer> fluxBody = (Flux<? extends DataBuffer>) body;
-			return super.writeWith(fluxBody.buffer().map(dataBuffers -> {
-				DataBuffer dataBuffer = bufferFactory.join(dataBuffers);
-				byte[] content = handleReadResponseBody(dataBuffer);
-				return bufferFactory.wrap(content);
-			}));
-		}
-		return super.writeWith(body);
-	}
-
-	private byte[] handleReadResponseBody(DataBuffer dataBuffer) {
-		try {
-			HttpHeaders headers = exchange.getResponse().getHeaders();
-			boolean isGzip = GZIP_ENCODE.equalsIgnoreCase(headers.getFirst(HttpHeaders.CONTENT_ENCODING));
-			byte[] content = new byte[dataBuffer.readableByteCount()];
-			dataBuffer.read(content);
-			if (isGzip) {
-				content = gzipDecode(content);
-			}
-			bodyString = new String(content, StandardCharsets.UTF_8);
-			//
-			for (PostFilterHandler handler : handlers) {
-				bodyString = handler.process(exchange, module, bodyString);
-			}
-			byte[] bytes = bodyString.getBytes();
-			if (isGzip) {
-				bytes = gzipEncode(bytes);
-			}
-			if (!headers.containsKey(HttpHeaders.TRANSFER_ENCODING)
-					|| headers.containsKey(HttpHeaders.CONTENT_LENGTH)) {
-				headers.setContentLength(bytes.length);
-			}
-			return bytes;
-		} finally {
-			DataBufferUtils.release(dataBuffer);
-		}
-
+            Mono<byte[]> bodyMono = clientResponse.bodyToMono(byte[].class).map((bytes) -> {
+            	if(isGzip) {
+            		bytes = gzipDecode(bytes);
+            	}
+            	if(bytes.length >= LOGGING_BODY_SIZE_LIMIT) {
+            		exchange.getAttributes().put(GatewayConstants.CONTEXT_IGNORE_LOG_BODY, true);
+            	}
+            	bodyString = new String(bytes, StandardCharsets.UTF_8);
+            	for (PostFilterHandler handler : handlers) {
+    				bodyString = handler.process(exchange, module, bodyString);
+    			}
+            	bytes = bodyString.getBytes();
+            	if(isGzip) {
+            		bytes = gzipEncode(bodyString.getBytes());
+            	}
+            	
+            	int newContentLength = bytes.length;
+            	if(contentLength <= 0) {
+            		exchange.getAttributes().put(GatewayConstants.CONTEXT_RESP_CONTENT_LENGTH, newContentLength);
+            	}
+            	//
+            	if((headers.containsKey(CustomRequestHeaders.HEADER_RESP_KEEP)) 
+            			&& newContentLength > BODY_SIZE_LIMIT) {
+            		AbstracRouteFilter.addIgnoreResponseFilterUri(exchange);
+            	}
+                return bytes;
+            });
+            
+            BodyInserter<Mono<byte[]>, ReactiveHttpOutputMessage> bodyInserter = BodyInserters.fromPublisher(bodyMono,byte[].class);
+            CachedBodyOutputMessage outputMessage = new CachedBodyOutputMessage(
+                    exchange, exchange.getResponse().getHeaders());
+            return bodyInserter.insert(outputMessage, new BodyInserterContext())
+                    .then(Mono.defer(() -> {
+                        Flux<DataBuffer> messageBody = outputMessage.getBody();
+                        //HttpHeaders headers = getDelegate().getHeaders();
+                        if (!withTransferEncodingHeader) {
+                            messageBody = messageBody.doOnNext(data -> headers
+                                    .setContentLength(data.readableByteCount()));
+                        }
+                        // TODO: fail if isStreamingMediaType?
+                        return getDelegate().writeWith(messageBody);
+                    }));
+        }else {
+        	if(RequestContextHelper.getCurrentApi(exchange) != null) {        		
+        		AbstracRouteFilter.addIgnoreResponseFilterUri(exchange);
+        	}
+            return super.writeWith(body);
+        }
 	}
 
 	private static byte[] gzipDecode(byte[] encoded) {

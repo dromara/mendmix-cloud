@@ -15,10 +15,14 @@
  */
 package com.mendmix.gateway.autoconfigure;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.codec.ServerCodecConfigurer;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.reactive.config.PathMatchConfigurer;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 
+import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.gateway.GatewayConfigs;
 
 /**
@@ -33,6 +37,18 @@ public class CustomWebFluxConfigurer implements WebFluxConfigurer {
 	public void configurePathMatching(PathMatchConfigurer configurer) {
 		configurer.addPathPrefix(GatewayConfigs.PATH_PREFIX,c -> true);
 	}
+	
+	@Override
+    public void configureHttpMessageCodecs(ServerCodecConfigurer configurer) {
+		String propValue = ResourceUtils.getProperty("spring.codec.max-in-memory-size", String.valueOf(10 * 1024 * 1024));
+		int size;
+        if(StringUtils.isNumeric(propValue)) {
+        	size = Integer.parseInt(propValue);
+        }else {
+        	size = (int) DataSize.parse(propValue).toBytes();
+        }
+		configurer.defaultCodecs().maxInMemorySize(size);
+    }
 
 	
 }

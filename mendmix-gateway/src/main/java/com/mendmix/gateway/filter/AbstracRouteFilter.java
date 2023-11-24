@@ -71,7 +71,7 @@ public abstract class AbstracRouteFilter implements GlobalFilter, Ordered, Comma
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-
+		
 		if(exchange.getAttribute(GatewayConstants.CONTEXT_IGNORE_FILTER) != null) {
     		return chain.filter(exchange);
     	}
@@ -89,13 +89,6 @@ public abstract class AbstracRouteFilter implements GlobalFilter, Ordered, Comma
 			for (PreFilterHandler handler : preHandlers) {
 				requestBuilder = handler.process(exchange, module, requestBuilder);
 			}
-			//
-			boolean loggingRespBody = GatewayConfigs.actionLogEnabled && !GatewayConfigs.actionResponseBodyIngore;
-			boolean rewriteRespBody = GatewayConfigs.respRewriteEnabled && !GatewayConfigs.ignoreRewriteRoutes.contains(module.getRouteName());
-			if(!loggingRespBody && !rewriteRespBody) {
-				return chain.filter(exchange);
-			}
-			
 			RewriteBodyServerHttpResponse newResponse = new RewriteBodyServerHttpResponse(exchange,module);
 			final ServerWebExchange newExchange = exchange.mutate().request(requestBuilder.build()).response(newResponse).build();
 			//
@@ -172,6 +165,10 @@ public abstract class AbstracRouteFilter implements GlobalFilter, Ordered, Comma
 		for (PostFilterHandler handler : postHandlers) {
 			handler.onStarted();
 		}
+		
+	}
+	
+	public static void addIgnoreResponseFilterUri(ServerWebExchange exchange) {
 		
 	}
 
