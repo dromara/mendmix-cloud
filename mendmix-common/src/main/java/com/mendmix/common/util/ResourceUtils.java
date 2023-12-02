@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -49,6 +50,9 @@ import org.yaml.snakeyaml.Yaml;
 public final class ResourceUtils {
 	
 	
+	private static List<String> fileNames;
+	private static List<String> fileExtensions = Arrays.asList(".properties",".yaml",".yml");
+	
 	public static String CONFIG_DELIMITERS = ",; \t\n";
 	public static final String NULL_VALUE_PLACEHOLDER = "_NULL_PLACEHOLDER_";
 	public static final String PLACEHOLDER_PREFIX = "${";
@@ -62,6 +66,8 @@ public final class ResourceUtils {
 	
 	
 	static {
+		String propVal = System.getProperty("application.configs", "application,bootstrap");
+		fileNames = Arrays.asList(propVal.split(","));
 		loadLocalConfigs();
 	}
 	
@@ -121,15 +127,23 @@ public final class ResourceUtils {
 		Enumeration<JarEntry> entries = jarFile.entries(); 
 		while (entries.hasMoreElements()) {  
 			JarEntry entry = entries.nextElement();
-			if(entry.getName().endsWith(".properties") || entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml")){
-				if(entry.getName().contains("/i18n/"))continue;
-				if(entry.getName().endsWith("pom.properties"))continue;
-				fileExt = entry.getName().substring(entry.getName().lastIndexOf("."));
-				if(!allFileMap.containsKey(fileExt)){
-					allFileMap.put(fileExt, new ArrayList<String>());
-				}
-				allFileMap.get(fileExt).add(entry.getName());
+			String fileName;
+			if(entry.getName().contains("/")) {
+				fileName = entry.getName().substring(entry.getName().lastIndexOf("/") + 1);
+			}else {
+				fileName = entry.getName().substring(entry.getName().lastIndexOf(File.separator) + 1);
 			}
+			if(!fileNames.stream().anyMatch(prefix -> fileName.startsWith(prefix))) {
+				continue;
+			}
+			if(!fileExtensions.stream().anyMatch(suffix -> fileName.endsWith(suffix))) {
+				continue;
+			}
+			fileExt = entry.getName().substring(entry.getName().lastIndexOf("."));
+			if(!allFileMap.containsKey(fileExt)){
+				allFileMap.put(fileExt, new ArrayList<String>());
+			}
+			allFileMap.get(fileExt).add(entry.getName());
 		} 
 		
 		Set<String> fileExts = allFileMap.keySet();
@@ -149,16 +163,18 @@ public final class ResourceUtils {
 			if(file.isDirectory()){
 			  continue;
 			}
-			String path = file.getPath();
-			if(path.endsWith(".properties") || path.endsWith(".yaml") || path.endsWith(".yml")){
-				if(path.contains("/i18n/"))continue;
-				if(path.endsWith("pom.properties"))continue;
-				fileExt = path.substring(path.lastIndexOf("."));
-				if(!allFileMap.containsKey(fileExt)){
-					allFileMap.put(fileExt, new ArrayList<String>());
-				}
-				allFileMap.get(fileExt).add(path);
+			if(!fileNames.stream().anyMatch(prefix -> file.getName().startsWith(prefix))) {
+				continue;
 			}
+			if(!fileExtensions.stream().anyMatch(suffix -> file.getName().endsWith(suffix))) {
+				continue;
+			}
+			String path = file.getPath();
+			fileExt = path.substring(path.lastIndexOf("."));
+			if(!allFileMap.containsKey(fileExt)){
+				allFileMap.put(fileExt, new ArrayList<String>());
+			}
+			allFileMap.get(fileExt).add(path);
 		}
 		
 		Set<String> fileExts = allFileMap.keySet();
@@ -208,8 +224,7 @@ public final class ResourceUtils {
 				}else {
 					fileName = file.substring(file.lastIndexOf(File.separator) + 1);
 				}
-				if(fileName.startsWith("application-"))continue;
-				if(fileName.startsWith("bootstrap-"))continue;
+				if(fileName.contains("-"))continue;
 				allProperties.putAll(filePropMap.get(file));
 				System.out.println("MENDMIX-TRACE-LOGGGING-->> load properties from file:" + file);
 			}
@@ -448,6 +463,8 @@ public final class ResourceUtils {
 						configValue = Long.parseLong(getProperty(configKey));
 					}else if(field.getType() == boolean.class || field.getType() == Boolean.class){
 						configValue = Boolean.parseBoolean(getProperty(configKey));
+					}else if(List.class.isAssignableFrom(field.getType())) {
+						configValue = getList(configKey);
 					}else{
 						configValue = getProperty(configKey);
 					}
@@ -557,7 +574,21 @@ public final class ResourceUtils {
 			currentKey = keyPrefix == null ? key.toString() : keyPrefix + "." + key.toString();
 			value = yamlData.get(key);
 			if(value == null || StringUtils.isBlank(value.toString()))continue;
-			if(value instanceof Map){
+			if(value instanceof List){
+				int index = 0;
+				for (Object subValue : (List)value) {
+					if(index > 0) {
+						currentKey = currentKey.substring(0,currentKey.lastIndexOf("["));
+					}
+					currentKey = currentKey + "["+index+"]";
+					if(subValue instanceof Map){
+						parseYamlInnerMap(currentKey, result, (Map)subValue);
+					}else{
+						result.setProperty(currentKey, subValue.toString());
+					}
+					index++;
+				}
+			}else if(value instanceof Map){
 				parseYamlInnerMap(currentKey, result, (Map)value);
 			}else{
 				result.setProperty(currentKey, value.toString());
