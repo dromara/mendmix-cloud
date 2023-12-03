@@ -15,6 +15,8 @@
  */
 package com.mendmix.springweb;
 
+import java.util.Map;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -24,20 +26,26 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+import com.mendmix.common.GlobalRuntimeContext;
+import com.mendmix.common.async.AsyncInitializer;
 import com.mendmix.common.async.RetryAsyncTaskExecutor;
+import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.logging.actionlog.ActionLogCollector;
+import com.mendmix.logging.applog.LogProfileManager;
+import com.mendmix.spring.ApplicationStartedListener;
 import com.mendmix.spring.InstanceFactory;
 
 /**
  * 
  * <br>
- * Class Name   : SpringContextManager
+ * Class Name : SpringContextManager
  *
  * @author jiangwei
  * @version 1.0.0
  * @date 2018年9月13日
  */
-public class SpringContextManager implements ApplicationContextAware,BeanDefinitionRegistryPostProcessor,DisposableBean,CommandLineRunner{
+public class SpringContextManager
+		implements ApplicationContextAware, BeanDefinitionRegistryPostProcessor, DisposableBean, CommandLineRunner {
 
 	@Override
 	public void destroy() throws Exception {
@@ -48,17 +56,48 @@ public class SpringContextManager implements ApplicationContextAware,BeanDefinit
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		InstanceFactory.setApplicationContext(applicationContext);
+		LogProfileManager.reload();
 	}
 
 	@Override
-	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {}
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+	}
 
 	@Override
-	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {}
+	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+	}
 
 	@Override
 	public void run(String... args) throws Exception {
 		InstanceFactory.loadFinished();
+		// 启动完成
+		GlobalRuntimeContext.startFinished();
+		// 执行异步初始化
+		Map<String, AsyncInitializer> asyncInitializers = InstanceFactory.getBeansOfType(AsyncInitializer.class);
+		if (asyncInitializers != null) {
+			for (AsyncInitializer initializer : asyncInitializers.values()) {
+				initializer.process();
+			}
+		}
+		Map<String, ApplicationStartedListener> interfaces = InstanceFactory
+				.getBeansOfType(ApplicationStartedListener.class);
+		if (interfaces != null) {
+			for (ApplicationStartedListener listener : interfaces.values()) {
+				listener.onApplicationStarted(InstanceFactory.getContext());
+			}
+		}
+		//
+		System.out.println("\n");
+		if (System.getProperties().containsKey("_app_start_time_point")) {
+			long startTime = Long.parseLong(System.getProperties().remove("_app_start_time_point").toString());
+			long endTime = System.currentTimeMillis();
+			long time = endTime - startTime;
+			System.out.println("Start Using Time: " + time / 1000 + " s");
+		}
+		System.out.println("...............................................................");
+		System.out.println("..................Service starts successfully (port:"
+				+ ResourceUtils.getProperty("server.port") + ")..................");
+		System.out.println("...............................................................");
 	}
 
 }

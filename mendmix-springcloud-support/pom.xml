@@ -75,7 +75,6 @@
 			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-logging</artifactId>
 			<version>${project.version}</version>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

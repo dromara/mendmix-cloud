@@ -19,7 +19,6 @@ import org.apache.commons.lang3.RandomUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.mendmix.cache.CacheUtils;
 import com.mendmix.common.WorkIdGenerator;
 import com.mendmix.common.util.ResourceUtils;
 import com.mendmix.common2.workerid.LocalWorkIdGenerator;
@@ -37,7 +36,7 @@ public class IdWorkIdConfiguration {
 				return new ZkWorkIdGenerator();
 			} catch (ClassNotFoundException e) {}
     	}
-    	if(CacheUtils.isRedis()) {
+    	if(ResourceUtils.containsAnyProperty("spring.redis.host","spring.redis.sentinel.nodes","spring.redis.cluster.nodes")){
     		try {
 				Class.forName("org.springframework.data.redis.core.StringRedisTemplate");
 				return new RedisWorkIdGenerator();

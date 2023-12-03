@@ -96,7 +96,7 @@ public class GlobalRuntimeContext {
 		}else {
 			workId = RandomUtils.nextInt(10, 99);
 		}
-		System.out.println(">>>>>>>>workId = "+workId+">>>>>>>>");
+		System.out.println(">>workId = "+workId);
 		return workId;
 	}
 

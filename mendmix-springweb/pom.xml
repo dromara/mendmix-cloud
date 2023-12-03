@@ -15,19 +15,16 @@
 			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-common</artifactId>
 			<version>${project.version}</version>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-spring</artifactId>
 			<version>${project.version}</version>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-logging</artifactId>
 			<version>${project.version}</version>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>

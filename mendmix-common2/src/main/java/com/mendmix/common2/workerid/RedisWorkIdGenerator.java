@@ -23,11 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-import com.mendmix.cache.RedisTemplateGroups;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.WorkIdGenerator;
-import com.mendmix.common2.lock.redis.RedisDistributeLock;
 import com.mendmix.common2.task.SubTimerTask;
+import com.mendmix.spring.InstanceFactory;
 
 /**
  * @description <br>
@@ -48,16 +47,13 @@ public class RedisWorkIdGenerator implements WorkIdGenerator,SubTimerTask {
 	private int workId;
 	
 	public RedisWorkIdGenerator() {
-		try {
-			redisTemplate = RedisTemplateGroups.getDefaultStringRedisTemplate();
-		} catch (Exception e) {}
 		GlobalRuntimeContext.setWorkIdGenerator(this);
 	}
 	
 	private StringRedisTemplate redisTemplate() {
 		if(redisTemplate != null) return redisTemplate;
 		synchronized (this) {
-			redisTemplate = RedisTemplateGroups.getDefaultStringRedisTemplate();
+			redisTemplate = InstanceFactory.getInstance(StringRedisTemplate.class);
 		}
 		return redisTemplate;
 	}
@@ -76,9 +72,12 @@ public class RedisWorkIdGenerator implements WorkIdGenerator,SubTimerTask {
 	public void doSchedule() {
 		long currentTime = System.currentTimeMillis();
 		if(workId == 0) {
-			RedisDistributeLock lock = new RedisDistributeLock(NODE_REGISTER_KEY);
+			Boolean getLock = redisTemplate().opsForValue().setIfAbsent(NODE_REGISTER_KEY + "_lock", "1");
 			try {
-				lock.lock();
+				while(!getLock) {
+					try {Thread.sleep(100);} catch (Exception e) {}
+					getLock = redisTemplate().opsForValue().setIfAbsent(NODE_REGISTER_KEY + "_lock", "1");
+				}
 				int maxNodeId = 0;
 				Set<String> nodeIds = redisTemplate().opsForZSet().rangeByScore(NODE_REGISTER_KEY, 0, currentTime + INTERVAL);
 				if(nodeIds == null || nodeIds.isEmpty()) {
@@ -103,7 +102,7 @@ public class RedisWorkIdGenerator implements WorkIdGenerator,SubTimerTask {
 				}
 				updateNodeSTat(currentTime);
 			} finally {
-				lock.unlock();
+				redisTemplate().delete(NODE_REGISTER_KEY + "_lock");
 			}
 		}else {
 			updateNodeSTat(currentTime);

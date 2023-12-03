@@ -16,7 +16,6 @@
 package com.mendmix.common2.lock.redis;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -24,11 +23,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
-import com.mendmix.cache.CacheUtils;
-import com.mendmix.cache.RedisTemplateGroups;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.MendmixBaseException;
+import com.mendmix.spring.InstanceFactory;
 
 /**
  * 基于redis的锁
@@ -43,25 +41,17 @@ public class RedisDistributeLock  {
 	
 	private static final String KEY_PREFIX = "_dlock:";
 
-	private static StringRedisTemplate stringRedisTemplate;
+	private static StringRedisTemplate redisTemplate;
 
 	private static StringRedisTemplate getRedisTemplate() {
-		if(stringRedisTemplate != null)return stringRedisTemplate;
-		if (stringRedisTemplate == null && CacheUtils.isRedis()) {
+		if(redisTemplate != null)return redisTemplate;
+		if (redisTemplate == null) {
 			try {
-				stringRedisTemplate = RedisTemplateGroups.getDefaultStringRedisTemplate();
+				redisTemplate = InstanceFactory.getInstance(StringRedisTemplate.class);
 			} catch (Exception e) {
 			}
-		} else {
-			List<String> groupNames = RedisTemplateGroups.getRedisTemplateGroupNames();
-			if (groupNames.size() > 0) {
-				try {
-					stringRedisTemplate = RedisTemplateGroups.getStringRedisTemplate(groupNames.get(0));
-				} catch (Exception e) {
-				}
-			}
 		}
-		return stringRedisTemplate;
+		return redisTemplate;
 	}
 
 	private static String getLockLua = "local res = redis.call('setnx', KEYS[1],ARGV[1])\n" + 
@@ -111,7 +101,7 @@ public class RedisDistributeLock  {
 		if (getRedisTemplate() == null)
 			return true;
 		String threadKey = buildThreadKey();
-		Long result = stringRedisTemplate.execute(lockScript, Arrays.asList(lockName), threadKey, String.valueOf(maxLiveMillis));
+		Long result = redisTemplate.execute(lockScript, Arrays.asList(lockName), threadKey, String.valueOf(maxLiveMillis));
 		return result != null && result == 1;
 	}
 
@@ -144,7 +134,7 @@ public class RedisDistributeLock  {
 	public boolean isIdle() {
 		if (getRedisTemplate() == null)
 			return true;
-		return !stringRedisTemplate.hasKey(lockName);
+		return !redisTemplate.hasKey(lockName);
 	}
 
 	public long blockUtilIdle(long time, TimeUnit unit) {
@@ -175,10 +165,10 @@ public class RedisDistributeLock  {
 	public void unlock() {
 		if (getRedisTemplate() == null)
 			return;
-		String val = stringRedisTemplate.opsForValue().get(lockName);
+		String val = redisTemplate.opsForValue().get(lockName);
 		String threadKey = buildThreadKey();
 		if(threadKey.equals(val)) {			
-			stringRedisTemplate.delete(lockName);
+			redisTemplate.delete(lockName);
 		}else if(val != null){
 			logger.info(">>线程[{}] 解锁不匹配!! -> lockName:{},期望线程:{}",threadKey,lockName,val);
 		}

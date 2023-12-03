@@ -145,10 +145,10 @@ public class LogProfileManager {
 
 		String profile = ResourceUtils.getProperty("log.profile", "default");
 		//
-		System.out.println("================log custom config====================");
-		System.out.println("log.profile          =    " + profile);
+		System.out.println("log config");
+		System.out.println(" -log.profile          =    " + profile);
 		if ("file".equals(profile))
-			System.out.println("log.output.dir =    " + System.getProperty("log.output.dir"));
+			System.out.println(" -log.output.dir =    " + System.getProperty("log.output.dir"));
 		Properties properties = ResourceUtils.getAllProperties("log.");
 		Set<Entry<Object, Object>> entrySet = properties.entrySet();
 		boolean withLogLevelItem = false;
@@ -161,7 +161,6 @@ public class LogProfileManager {
 			System.setProperty(key, entry.getValue().toString());
 			System.out.println(key + "   =   " + entry.getValue());
 		}
-		System.out.println("================log custom config====================");
 
 		if ("default".equals(profile)) {
 			if (withLogLevelItem) {
