@@ -48,9 +48,9 @@ public class MyBatisInterceptorHanlder implements InterceptorHanlder {
 
 	@Override
 	public void preHandler(Method method, Object[] args) {
-		//多个方法层级调用 ，以最外层方法定义为准
-		if(!MybatisRuntimeContext.isTransactionalOn() && method.isAnnotationPresent(Transactional.class)) {
-			MybatisRuntimeContext.setTransactionalMode(true);
+		if(method.isAnnotationPresent(Transactional.class)
+				&& !method.getAnnotation(Transactional.class).readOnly()) {
+			MybatisRuntimeContext.forceUseMaster();
 		}
 		
 		if(method.isAnnotationPresent(UseMaster.class)){				

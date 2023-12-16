@@ -47,7 +47,6 @@ import com.mendmix.spring.InstanceFactory;
 public class MybatisRuntimeContext {
 
 
-	private static final String CONTEXT_TRANS_ON_KEY = "_ctx_trans_on_";
 	private static final String CONTEXT_FORCE_MASTER_KEY = "_ctx_force_master_";
 	private static final String CONTEXT_DATASOURCE_KEY = "_ctx_ds_";
 	private static final String CONTEXT_DATA_PROFILE_KEY = "_ctx_dataprofile_";
@@ -91,22 +90,6 @@ public class MybatisRuntimeContext {
 	}
 
 	
-	public static void setTransactionalMode(boolean on){
-		ThreadLocalContext.set(CONTEXT_TRANS_ON_KEY, String.valueOf(on));
-		if(on){
-			forceUseMaster();
-		}
-	}
-	
-	public static String getTransactionalMode(){
-		return ThreadLocalContext.getStringValue(CONTEXT_TRANS_ON_KEY);
-	}
-	
-	public static boolean isTransactionalOn(){
-		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_TRANS_ON_KEY));
-	}
-	
-	
 	public static void setIgnoreSqlRewrite(boolean ignore){
 		getSqlRewriteStrategy().setIgnoreAny(ignore);
 	}
@@ -147,10 +130,11 @@ public class MybatisRuntimeContext {
 	
 	public static void forceUseMaster(){
 		ThreadLocalContext.set(CONTEXT_FORCE_MASTER_KEY, String.valueOf(true));
+		useMaster();
 	}
 	
 	public static boolean isForceUseMaster(){
-		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_TRANS_ON_KEY));
+		return Boolean.parseBoolean(ThreadLocalContext.getStringValue(CONTEXT_FORCE_MASTER_KEY));
 	}
 	
 	/**

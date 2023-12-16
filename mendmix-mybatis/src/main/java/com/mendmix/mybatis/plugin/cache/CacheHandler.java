@@ -193,7 +193,7 @@ public class CacheHandler implements InterceptorHandler {
 		String cacheKey = null;
 		if(mt.getSqlCommandType().equals(SqlCommandType.SELECT)){	
 			//事务方法内部的查询不走缓存
-			if(MybatisRuntimeContext.isTransactionalOn()){
+			if(MybatisRuntimeContext.isForceUseMaster()){
 				if(logger.isDebugEnabled())logger.debug("MENDMIX-TRACE-LOGGGING-->>  auto_cache_process skipCache[isTransactionalOn] -> mapperId:{}",mt.getId());
 				return null;
 			}
