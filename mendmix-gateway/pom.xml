@@ -43,8 +43,8 @@
 		<dependency>
 			<groupId>com.mendmix</groupId>
 			<artifactId>mendmix-security</artifactId>
-			<optional>true</optional>
 			<version>${project.version}</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
@@ -62,7 +62,6 @@
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-commons</artifactId>
-			<optional>true</optional>
 		</dependency>
 
 		<!-- gateway -->
@@ -70,14 +69,12 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-gateway-server</artifactId>
 			<version>3.1.1</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-webflux</artifactId>
 			<version>${spring.version}</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>

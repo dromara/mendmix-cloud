@@ -28,7 +28,5 @@ import com.mendmix.common.model.AuthUser;
  */
 public interface AuthorizationProvider {
 
-	void initContext(ServerHttpRequest request);
-	
-	AuthUser doAuthorization(String method,String uri) throws UnauthorizedException,ForbiddenAccessException;
+	AuthUser doAuthorization(ServerHttpRequest request) throws UnauthorizedException,ForbiddenAccessException;
 }

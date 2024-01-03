@@ -75,7 +75,7 @@ public class GlobalFilter implements WebFilter {
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 		ServerHttpRequest request = exchange.getRequest();
 		try {
-			String uri = RequestContextHelper.getCurrentFormatUri(exchange);
+			String uri = RequestContextHelper.getCurrentOriginUri(exchange);
 			if((matchUriPrefix != null && !uri.startsWith(matchUriPrefix)) 
 					|| RequestContextHelper.isWebSocketRequest(exchange.getRequest())) {
 				exchange.getAttributes().put(GatewayConstants.CONTEXT_IGNORE_FILTER, Boolean.TRUE);
@@ -94,8 +94,7 @@ public class GlobalFilter implements WebFilter {
 			
 			AuthUser currentUser = null;
 			try {
-				authorizationProvider.initContext(request);
-				currentUser = authorizationProvider.doAuthorization(request.getMethodValue(),uri);
+				currentUser = authorizationProvider.doAuthorization(request);
 			} catch (UnauthorizedException e) {
 				if(!specUnauthorizedHandler.customAuthentication(exchange)) {
 					RequestContextHelper.clearContextAttributes(exchange);

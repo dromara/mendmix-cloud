@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
@@ -33,7 +32,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.util.UriUtils;
 
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.GlobalRuntimeContext;
@@ -60,7 +58,6 @@ import com.mendmix.gateway.model.BizSystemModule;
  */
 public class RequestContextHelper {
 
-	private static Pattern uriSplitPattern = Pattern.compile("\\/+");
 	private static final String WEBSOCKET_KEYS = "sec-websocket-key";
 
 	public static String getOriginDomain(ServerHttpRequest request) {
@@ -130,10 +127,11 @@ public class RequestContextHelper {
 		return false;
 	}
 	
-	public static String getCurrentFormatUri(ServerWebExchange exchange) {
+	public static String getCurrentOriginUri(ServerWebExchange exchange) {
 		String uri = exchange.getAttribute(GatewayConstants.CONTEXT_CURRENT_URI);
 		if(uri == null){
-			uri = formatUri(exchange.getRequest().getPath().value());
+			uri = exchange.getRequest().getPath().value();
+			exchange.getAttributes().put(GatewayConstants.CONTEXT_CURRENT_URI, uri);
 		}
 		return uri;
 	}
@@ -228,24 +226,6 @@ public class RequestContextHelper {
 		}
 		exchange.getAttributes().clear();
 		ThreadLocalContext.unset();
-	}
-	
-	private static String formatUri(String uri) {
-		uri = UriUtils.decode(uri,StandardCharsets.UTF_8);
-		if(uri.contains(GlobalConstants.BACK_SLASH)) {
-			uri = StringUtils.replace(uri, GlobalConstants.BACK_SLASH, GlobalConstants.PATH_SEPARATOR);
-		}
-		String[] parts = uriSplitPattern.split(uri);
-		StringBuilder uriBuilder = new StringBuilder(GlobalConstants.PATH_SEPARATOR);
-		for (String part : parts) {
-			if(StringUtils.isBlank(part))continue;
-			if(part.contains(GlobalConstants.SEMICOLON)) {			
-				part = StringUtils.split(part, GlobalConstants.SEMICOLON, 2)[0];
-			}
-			uriBuilder.append(part.trim()).append(GlobalConstants.PATH_SEPARATOR);
-		}	
-		uriBuilder.deleteCharAt(uriBuilder.length() - 1);
-		return uriBuilder.toString();
 	}
 	
 }

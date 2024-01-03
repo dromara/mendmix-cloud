@@ -121,7 +121,7 @@ public class GlobalRuntimeContext {
 
 	public static File getAppDataDir() {
 		if(appDataDir != null)return appDataDir;
-		String dataDir = ResourceUtils.getProperty("application.data.dir","java.io.tmpdir");
+		String dataDir = ResourceUtils.getProperty("application.data.dir",System.getProperty("java.io.tmpdir"));
 		try {
 			File dir = new File(dataDir,APPID);
 			boolean exists;
