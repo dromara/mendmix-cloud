@@ -26,6 +26,8 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import com.mendmix.common.GlobalConstants;
 import com.mendmix.common.GlobalRuntimeContext;
 import com.mendmix.common.MendmixBaseException;
+import com.mendmix.common.async.RetryAsyncTaskExecutor;
+import com.mendmix.common.async.RetryTask;
 import com.mendmix.spring.InstanceFactory;
 
 /**
@@ -172,6 +174,34 @@ public class RedisDistributeLock  {
 		}else if(val != null){
 			logger.info(">>线程[{}] 解锁不匹配!! -> lockName:{},期望线程:{}",threadKey,lockName,val);
 		}
+	}
+	
+	public void unlock(int delayMills) {
+		if (getRedisTemplate() == null) {
+			return;
+		}
+		if(delayMills <= 0) {
+			unlock();
+			return;
+		}
+		String val = redisTemplate.opsForValue().get(lockName);
+		String threadKey = buildThreadKey();
+		RetryAsyncTaskExecutor.execute(new RetryTask() {
+			@Override
+			public String traceId() {
+				return lockName;
+			}
+			@Override
+			public boolean process() throws Exception {
+				Thread.sleep(delayMills);
+				if(threadKey.equals(val)) {			
+					redisTemplate.delete(lockName);
+				}else if(val != null){
+					logger.info(">>线程[{}] 解锁不匹配!! -> lockName:{},期望线程:{}",threadKey,lockName,val);
+				}
+				return true;
+			}
+		});
 	}
 	
 	private String buildThreadKey() {

@@ -15,9 +15,16 @@
  */
 package com.mendmix.mybatis.crud.builder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.ibatis.jdbc.SQL;
 import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.ResultMap;
 import org.apache.ibatis.mapping.SqlCommandType;
+import org.apache.ibatis.reflection.MetaObject;
+import org.apache.ibatis.reflection.SystemMetaObject;
 import org.apache.ibatis.session.Configuration;
 
 import com.mendmix.mybatis.metadata.ColumnMetadata;
@@ -52,7 +59,12 @@ public class DeleteByPrimaryKeyBuilder extends AbstractMethodBuilder{
 	}
 
 	@Override
-	void setResultType(Configuration configuration, MappedStatement statement, Class<?> entityClass) {}
+	void setResultType(Configuration configuration, MappedStatement statement, Class<?> entityClass) {
+		ResultMap.Builder builder = new ResultMap.Builder(configuration, "int", Integer.class, new ArrayList<>(), true);
+		MetaObject metaObject = SystemMetaObject.forObject(statement);
+		List<ResultMap> resultMaps = Arrays.asList(builder.build());
+		metaObject.setValue("resultMaps", resultMaps);
+	}
 
 	@Override
 	boolean scriptWrapper() {

@@ -32,6 +32,8 @@ public class SqlTemplate {
 	public static final String BATCH_INSERT = "INSERT INTO %s \n %s \n VALUES \n <foreach collection=\"list\" item=\"item\" index=\"index\" separator=\",\">%s</foreach>";
 	public static final String SELECT_BY_KEYS = "SELECT * FROM %s WHERE %s IN  <foreach collection=\"list\" item=\"id\" index=\"index\" open=\"(\" close=\")\" separator=\",\">#{id}</foreach>";
 	public static final String BATCH_UPDATE_BY_KEYS = "UPDATE %s %s \n WHERE %s IN <foreach collection=\"ids\" item=\"id\" index=\"index\" open=\"(\" close=\")\" separator=\",\">#{id}</foreach>";
+	public static final String BATCH_UPDATE_FOREACH = "<foreach collection=\"list\" item=\"item\" separator=\";\">%s</foreach>";
+	public static final String DELETE_BY_KEYS = "DELETE FROM %s WHERE %s IN  <foreach collection=\"list\" item=\"id\" index=\"index\" open=\"(\" close=\")\" separator=\",\">#{id}</foreach>";
 	
 	public static String wrapIfTag(String fieldName,String expr,boolean skip){
 		if(skip)return expr;

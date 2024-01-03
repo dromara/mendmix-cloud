@@ -27,7 +27,7 @@ import com.mendmix.mybatis.metadata.EntityMetadata;
 import com.mendmix.mybatis.metadata.TableMetadata;
 
 /**
- * 批量插入
+ * 批量更新
  * @description <br>
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月22日

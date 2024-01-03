@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,19 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
 import org.apache.ibatis.session.Configuration;
 
+import com.mendmix.mybatis.crud.CrudMethods;
 import com.mendmix.mybatis.crud.SqlTemplate;
 import com.mendmix.mybatis.metadata.ColumnMetadata;
 import com.mendmix.mybatis.metadata.EntityMetadata;
 import com.mendmix.mybatis.metadata.TableMetadata;
 
 /**
- * 批量插入
- * @description <br>
- * @author <a href="mailto:vakinge@gmail.com">vakin</a>
- * @date 2018年11月22日
+ * 
+ * <br>
+ * @author 姜维(00770874)
+ * @date 2023年10月21日
  */
-public class UpdateBuilder  extends AbstractMethodBuilder{
+public class UpdateListByPrimaryKeysSelectiveBuilder extends AbstractMethodBuilder{
 
 	@Override
 	SqlCommandType sqlCommandType() {
@@ -47,7 +48,12 @@ public class UpdateBuilder  extends AbstractMethodBuilder{
 
 	@Override
 	String[] methodNames() {
-		return new String[]{"updateByPrimaryKey","updateByPrimaryKeySelective"};
+		return new String[]{CrudMethods.updateListByPrimaryKeysSelective.name()};
+	}
+	
+	@Override
+	protected boolean selective() {
+		return true;
 	}
 
 	@Override
@@ -55,13 +61,14 @@ public class UpdateBuilder  extends AbstractMethodBuilder{
 
 		// 从表注解里获取表名等信息
 		TableMetadata tableMapper = entityMapper.getTable();
-		Set<ColumnMetadata> columnMappers = entityMapper.getColumns();
+		Set<ColumnMetadata> columns = entityMapper.getColumns();
 		
 		String idColumn = null;
 		String idProperty = null;
-		StringBuilder set = new StringBuilder();
-		set.append("<trim prefix=\"SET\" suffixOverrides=\",\">");
-		for (ColumnMetadata column : columnMappers) {
+		StringBuilder sqlBuilder = new StringBuilder();
+		sqlBuilder.append("UPDATE ").append(tableMapper.getName()).append(" ");
+		sqlBuilder.append("<trim prefix=\"SET\" suffixOverrides=\",\">");
+		for (ColumnMetadata column : columns) {
 			if (!column.isUpdatable()) {
 				continue;
 			}
@@ -69,16 +76,16 @@ public class UpdateBuilder  extends AbstractMethodBuilder{
 				idColumn= column.getColumn();
 				idProperty = column.getProperty();
 			}else{
-				String expr = SqlTemplate.wrapIfTag(column.getProperty(), column.getColumn() +"=#{"+column.getProperty()+"}", !selective);
-				set.append(expr);
-				if(!selective)set.append(",");
+				String expr = SqlTemplate.wrapIfTag("item." + column.getProperty(), column.getColumn() +"=#{item."+column.getProperty()+"}", !selective);
+				sqlBuilder.append(expr);
+				if(!selective)sqlBuilder.append(",");
 			}
 		}
-		if(!selective)set.deleteCharAt(set.length() - 1);
-		set.append("</trim>");
-
-		String sql = String.format(SqlTemplate.UPDATE_BY_KEY, tableMapper.getName(),set.toString(),idColumn,idProperty);
-
+		if(!selective)sqlBuilder.deleteCharAt(sqlBuilder.length() - 1);
+		sqlBuilder.append("</trim>");
+		//
+		sqlBuilder.append(" WHERE ").append(idColumn).append(" = #{item.").append(idProperty).append("}");
+		String sql = String.format(SqlTemplate.BATCH_UPDATE_FOREACH, sqlBuilder.toString());
 		return sql;
 	}
 

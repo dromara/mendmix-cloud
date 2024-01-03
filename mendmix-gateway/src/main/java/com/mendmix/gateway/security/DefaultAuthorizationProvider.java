@@ -32,15 +32,12 @@ import com.mendmix.security.model.UserSession;
  */
 public class DefaultAuthorizationProvider implements AuthorizationProvider {
 
-	@Override
-	public void initContext(ServerHttpRequest request) {
-		ReactiveRequestContextAdapter.init(request);
-	}
 
 	@Override
-	public AuthUser doAuthorization(String method, String uri)
+	public AuthUser doAuthorization(ServerHttpRequest request)
 			throws UnauthorizedException, ForbiddenAccessException {
-		final UserSession session = SecurityDelegating.doAuthorization(method, uri);
+		ReactiveRequestContextAdapter.init(request);
+		final UserSession session = SecurityDelegating.doAuthorization(request.getMethodValue(), request.getPath().value());
 		if(session != null && !session.isAnonymous()) {
 			CurrentRuntimeContext.setAuthUser(session.getUser());
 			if(session.getTenanId() != null) {

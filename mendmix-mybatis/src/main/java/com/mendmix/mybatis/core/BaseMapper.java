@@ -18,6 +18,7 @@ package com.mendmix.mybatis.core;
 import java.io.Serializable;
 import java.util.List;
 
+import org.apache.ibatis.annotations.DeleteProvider;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.ResultType;
@@ -25,7 +26,9 @@ import org.apache.ibatis.annotations.SelectProvider;
 import org.apache.ibatis.annotations.UpdateProvider;
 
 import com.mendmix.mybatis.crud.provider.CountByExampleProvider;
+import com.mendmix.mybatis.crud.provider.DeleteByExampleProvider;
 import com.mendmix.mybatis.crud.provider.SelectByExampleProvider;
+import com.mendmix.mybatis.crud.provider.SelectOneByExampleProvider;
 import com.mendmix.mybatis.crud.provider.UpdateWithVersionProvider;
 
 /**
@@ -73,7 +76,9 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
 	
 	List<T> selectAll();
 
-	void deleteByPrimaryKey(ID id);
+	int deleteByPrimaryKey(ID id);
+	
+	int deleteByPrimaryKeys(List<ID> ids);
 	
 	/**
 	 * 批量插入
@@ -95,5 +100,21 @@ public abstract interface BaseMapper<T extends BaseEntity, ID extends Serializab
 	
 	int batchUpdateByPrimaryKeys(@Param("ids")List<ID> ids,@Param("example") T example);
 	
+	int updateListByPrimaryKeys(List<T> entities);
+	
+	/**
+	 * 批量更新对象 （jdbc连接需指定allowMultiQueries=true）
+	 * @param entities
+	 * @return
+	 */
+	int updateListByPrimaryKeysSelective(List<T> entities);
+	
+	@DeleteProvider(type = DeleteByExampleProvider.class, method = "deleteByExample")
+	@ResultType(Integer.class)
+	Integer deleteByExample(Object example);
+	
+	@SelectProvider(type = SelectOneByExampleProvider.class, method = "selectOneByExample")
+	@ResultMap("BaseResultMap")
+	T selectOneByExample(Object example);
 }
 

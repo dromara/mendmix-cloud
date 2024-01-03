@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2020 www.jeesuite.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
 import org.apache.ibatis.session.Configuration;
 
+import com.mendmix.mybatis.crud.CrudMethods;
 import com.mendmix.mybatis.crud.SqlTemplate;
 import com.mendmix.mybatis.metadata.ColumnMetadata;
 import com.mendmix.mybatis.metadata.EntityMetadata;
@@ -38,16 +39,16 @@ import com.mendmix.mybatis.metadata.TableMetadata;
  * @author <a href="mailto:vakinge@gmail.com">vakin</a>
  * @date 2018年11月22日
  */
-public class UpdateBuilder  extends AbstractMethodBuilder{
+public class UpdateListByPrimaryKeysBuilder extends AbstractMethodBuilder{
 
 	@Override
 	SqlCommandType sqlCommandType() {
-		return SqlCommandType.UPDATE;
+		return SqlCommandType.INSERT;
 	}
 
 	@Override
 	String[] methodNames() {
-		return new String[]{"updateByPrimaryKey","updateByPrimaryKeySelective"};
+		return new String[]{CrudMethods.updateListByPrimaryKeys.name()};
 	}
 
 	@Override
@@ -55,33 +56,44 @@ public class UpdateBuilder  extends AbstractMethodBuilder{
 
 		// 从表注解里获取表名等信息
 		TableMetadata tableMapper = entityMapper.getTable();
-		Set<ColumnMetadata> columnMappers = entityMapper.getColumns();
-		
-		String idColumn = null;
-		String idProperty = null;
-		StringBuilder set = new StringBuilder();
-		set.append("<trim prefix=\"SET\" suffixOverrides=\",\">");
-		for (ColumnMetadata column : columnMappers) {
-			if (!column.isUpdatable()) {
+		Set<ColumnMetadata> columns = entityMapper.getColumns();
+
+		StringBuilder fieldBuilder = new StringBuilder("(");
+		StringBuilder prppertyBuilder = new StringBuilder("(");
+		if (!entityMapper.autoId()) {
+			fieldBuilder.append(entityMapper.getIdColumn().getColumn()).append(",");
+			prppertyBuilder.append("#{item.").append(entityMapper.getIdColumn().getProperty()).append("},");
+		}
+		for (ColumnMetadata column : columns) {
+			if (column.isId() || !column.isInsertable()) {
 				continue;
 			}
-			if (column.isId()) {
-				idColumn= column.getColumn();
-				idProperty = column.getProperty();
-			}else{
-				String expr = SqlTemplate.wrapIfTag(column.getProperty(), column.getColumn() +"=#{"+column.getProperty()+"}", !selective);
-				set.append(expr);
-				if(!selective)set.append(",");
-			}
+			String fieldExpr = SqlTemplate.wrapIfTag(column.getProperty(), column.getColumn(), true);
+			String propertyExpr = SqlTemplate.wrapIfTag(column.getProperty(), "#{item." + column.getProperty() + "}", true);
+			fieldBuilder.append(fieldExpr);
+			fieldBuilder.append(",");
+			prppertyBuilder.append(propertyExpr);
+			prppertyBuilder.append(",");
 		}
-		if(!selective)set.deleteCharAt(set.length() - 1);
-		set.append("</trim>");
-
-		String sql = String.format(SqlTemplate.UPDATE_BY_KEY, tableMapper.getName(),set.toString(),idColumn,idProperty);
-
-		return sql;
+		
+		fieldBuilder.deleteCharAt(fieldBuilder.length() - 1);
+		prppertyBuilder.deleteCharAt(prppertyBuilder.length() - 1);
+		
+		fieldBuilder.append(")");
+		prppertyBuilder.append(")");
+		String sql = String.format(SqlTemplate.BATCH_INSERT, tableMapper.getName(),fieldBuilder.toString(),prppertyBuilder.toString());
+		// 
+		StringBuilder sqlBuilder = new StringBuilder(sql);
+		sqlBuilder.append("\n ON DUPLICATE KEY UPDATE ");
+		for (ColumnMetadata column : columns) {
+			if (column.isId() || !column.isUpdatable()) {
+				continue;
+			}
+			sqlBuilder.append(column.getColumn()).append(" = VALUES(").append(column.getColumn()).append("),");
+		}
+		sqlBuilder.deleteCharAt(sqlBuilder.length() - 1);
+		return sqlBuilder.toString();
 	}
-
 
 	@Override
 	void setResultType(Configuration configuration, MappedStatement statement, Class<?> entityClass) {
@@ -90,11 +102,10 @@ public class UpdateBuilder  extends AbstractMethodBuilder{
 		List<ResultMap> resultMaps = Arrays.asList(builder.build());
 		metaObject.setValue("resultMaps", resultMaps);
 	}
-	
+
 	@Override
 	boolean scriptWrapper() {
 		return true;
 	}
 	
 }
-

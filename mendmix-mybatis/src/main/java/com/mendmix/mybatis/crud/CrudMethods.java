@@ -29,10 +29,13 @@ public enum CrudMethods {
 	insertList,
 	updateByPrimaryKey,
 	updateByPrimaryKeySelective,
+	updateListByPrimaryKeys,
+	updateListByPrimaryKeysSelective,
 	selectAll,
 	selectByPrimaryKeys,
 	selectByExample,
 	countAll,
-	countByExample
+	countByExample,
+	deleteByPrimaryKeys
 	;
 }

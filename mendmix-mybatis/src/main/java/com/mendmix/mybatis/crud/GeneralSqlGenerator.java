@@ -25,12 +25,15 @@ import org.slf4j.LoggerFactory;
 import com.mendmix.mybatis.crud.builder.BatchUpdateByPrimaryKeysBuilder;
 import com.mendmix.mybatis.crud.builder.CountAllBuilder;
 import com.mendmix.mybatis.crud.builder.DeleteByPrimaryKeyBuilder;
+import com.mendmix.mybatis.crud.builder.DeleteByPrimaryKeysBuilder;
 import com.mendmix.mybatis.crud.builder.InsertBuilder;
 import com.mendmix.mybatis.crud.builder.InsertListBuilder;
 import com.mendmix.mybatis.crud.builder.SelectAllBuilder;
 import com.mendmix.mybatis.crud.builder.SelectByPrimaryKeyBuilder;
 import com.mendmix.mybatis.crud.builder.SelectByPrimaryKeysBuilder;
 import com.mendmix.mybatis.crud.builder.UpdateBuilder;
+import com.mendmix.mybatis.crud.builder.UpdateListByPrimaryKeysBuilder;
+import com.mendmix.mybatis.crud.builder.UpdateListByPrimaryKeysSelectiveBuilder;
 import com.mendmix.mybatis.metadata.MapperMetadata;
 import com.mendmix.mybatis.parser.MybatisMapperParser;
 
@@ -68,6 +71,9 @@ public class GeneralSqlGenerator {
 			new SelectByPrimaryKeysBuilder().build(configuration, languageDriver, entity);
 			new CountAllBuilder().build(configuration, languageDriver, entity);
 			new BatchUpdateByPrimaryKeysBuilder().build(configuration, languageDriver, entity);
+			new UpdateListByPrimaryKeysBuilder().build(configuration, languageDriver, entity);
+			new UpdateListByPrimaryKeysSelectiveBuilder().build(configuration, languageDriver, entity);
+			new DeleteByPrimaryKeysBuilder().build(configuration, languageDriver, entity);
 			log.info("MENDMIX-TRACE-LOGGGING-->> generate autoCrud for:[{}] finish",entity.getEntityClass().getName());
 		}
 	}
