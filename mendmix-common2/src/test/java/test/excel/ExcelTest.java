@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2022 dromara.org.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import java.util.List;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
-import com.mendmix.common.util.JsonUtils;
-import com.mendmix.common2.excel.ExcelPerfModeReader;
+import org.dromara.mendmix.common.util.JsonUtils;
+import org.dromara.mendmix.common.excel.ExcelPerfModeReader;
 
 /**
  * @description <br>

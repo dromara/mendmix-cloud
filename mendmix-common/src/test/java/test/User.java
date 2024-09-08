@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2022 dromara.org.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.util.Date;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
-import com.mendmix.common.util.DigestUtils;
+import org.dromara.mendmix.common.util.DigestUtils;
 
 /**
  * @description <br>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2022 dromara.org.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.mendmix.common2.excel.annotation.TitleCell;
-import com.mendmix.common2.excel.model.TitleMeta;
+import org.dromara.mendmix.common.excel.annotation.TitleCell;
+import org.dromara.mendmix.common.excel.model.TitleMeta;
 
 /**
  * 个人工资数据

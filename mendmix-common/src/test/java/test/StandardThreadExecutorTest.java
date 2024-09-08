@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2022 dromara.org.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package test;
 
 import org.apache.commons.lang3.RandomUtils;
 
-import com.mendmix.common.async.StandardThreadExecutor;
+import org.dromara.mendmix.common.async.StandardThreadExecutor;
 
 /**
  * 

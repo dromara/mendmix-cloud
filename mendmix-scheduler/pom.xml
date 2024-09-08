@@ -2,28 +2,28 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.mendmix</groupId>
+		<groupId>org.dromara.mendmix</groupId>
 		<artifactId>mendmix-parent</artifactId>
-		<version>1.4.4</version>
+		<version>2.0.0</version>
 	</parent>
 	<artifactId>mendmix-scheduler</artifactId>
-	<version>1.4.4</version>
+	<version>2.0.0</version>
 
 
 	<dependencies>
 		<dependency>
-			<groupId>com.mendmix</groupId>
+			<groupId>org.dromara.mendmix</groupId>
 			<artifactId>mendmix-common</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.mendmix</groupId>
+			<groupId>org.dromara.mendmix</groupId>
 			<artifactId>mendmix-spring</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		
 		<dependency>
-			<groupId>com.mendmix</groupId>
+			<groupId>org.dromara.mendmix</groupId>
 			<artifactId>mendmix-logging</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -50,6 +50,7 @@
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
+			<optional>true</optional>
 		</dependency>
 		
 		<dependency>
@@ -68,6 +69,13 @@
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-redis</artifactId>
 			<version>2.3.4.RELEASE</version>
+			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-autoconfigure</artifactId>
+			<version>${spring-boot.version}</version>
 			<optional>true</optional>
 		</dependency>
 		

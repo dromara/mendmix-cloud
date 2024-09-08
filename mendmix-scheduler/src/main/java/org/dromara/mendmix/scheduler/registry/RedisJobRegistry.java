@@ -1,0 +1,240 @@
+/*
+ * Copyright 2016-2022 dromara.org.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.dromara.mendmix.scheduler.registry;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.dromara.mendmix.common.GlobalContext;
+import org.dromara.mendmix.common.async.StandardThreadExecutor.StandardThreadFactory;
+import org.dromara.mendmix.common.util.JsonUtils;
+import org.dromara.mendmix.scheduler.JobContext;
+import org.dromara.mendmix.scheduler.model.JobConfig;
+import org.dromara.mendmix.spring.InstanceFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+
+/**
+ * 
+ * @description <br>
+ * @author <a href="mailto:vakinge@gmail.com">vakin</a>
+ * @date 2021年12月18日
+ */
+public class RedisJobRegistry extends AbstarctJobRegistry implements DisposableBean{
+
+private static final Logger logger = LoggerFactory.getLogger("org.dromara.mendmix.scheduler");
+	
+	private static final int SYNC_STAT_PERIOD = 1000;
+	private static final Duration NODE_ACTIVE_MILLIS = Duration.ofMillis(SYNC_STAT_PERIOD * 3 + 5000);
+	private static final String NODE_REGISTER_KEY = "__schedulerNodes:" + GlobalContext.APPID;
+	private static final String JOB_REGISTER_KEY = "__schedulerJobs:" + GlobalContext.APPID;
+	private static final String NODE_REFRESH_STAT_KEY = "__schedulerNodeRefreshStat:" + GlobalContext.APPID;
+
+
+	private StringRedisTemplate redisTemplate;
+	
+	private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1, new StandardThreadFactory("RedisJobRegistry"));
+	
+	public RedisJobRegistry() {}
+	
+	public RedisJobRegistry(StringRedisTemplate redisTemplate) {
+		this.redisTemplate = redisTemplate;
+	}
+
+	private StringRedisTemplate getRedisTemplate() {
+		if(redisTemplate == null) {
+			redisTemplate = InstanceFactory.getInstance(StringRedisTemplate.class);
+		}
+		return redisTemplate;
+	}
+
+	public void setRedisTemplate(StringRedisTemplate redisTemplate) {
+		this.redisTemplate = redisTemplate;
+	}
+	
+	@Override
+	public void register(JobConfig conf) {
+
+		JobConfig onOherNodeJob = getConf(conf.getJobName(), true);
+		if(onOherNodeJob != null && onOherNodeJob.getCurrentNodeId() != null) {
+			long currentTime = System.currentTimeMillis();
+			//当前注册的节点
+			Set<String> nodeIds = getRedisTemplate().opsForZSet().rangeByScore(NODE_REGISTER_KEY, currentTime - SYNC_STAT_PERIOD - 1, currentTime + 10000);
+		    //注册运行节点已下线
+			if(nodeIds == null || !nodeIds.contains(onOherNodeJob.getCurrentNodeId())) {
+				conf.setCurrentNodeId(null);
+		    }
+		}
+		//
+		if(conf.getCurrentNodeId() == null) {
+			conf.setCurrentNodeId(GlobalContext.getNodeName());
+		}
+		
+		updateJobConfig(conf);
+	}
+	
+	@Override
+	public void updateJobConfig(JobConfig conf) {
+		conf.setModifyTime(System.currentTimeMillis());
+		schedulerConfgs.put(conf.getJobName(), conf);
+		getRedisTemplate().opsForHash().put(JOB_REGISTER_KEY, conf.getJobName(), JsonUtils.toJson(conf));
+	}
+
+	@Override
+	public void setRuning(String jobName, Date fireTime) {
+		JobConfig config = getConf(jobName,false);
+		config.setRunning(true);
+		config.setExecTimes(config.getExecTimes() + 1);
+		config.setLastFireTime(fireTime);
+		config.setErrorMsg(null);
+		// 更新本地
+		schedulerConfgs.put(jobName, config);
+		//
+		updateJobConfig(config);
+		
+	}
+	
+	@Override
+	public void setStoping(String jobName, Date nextFireTime, Exception e) {
+		JobConfig config = getConf(jobName,false);
+		config.setRunning(false);
+		config.setNextFireTime(nextFireTime);
+		config.setErrorMsg(e == null ? null : ExceptionUtils.getMessage(e));
+		// 更新本地
+		schedulerConfgs.put(jobName, config);
+		//
+		updateJobConfig(config);
+		
+	}
+	
+	@Override
+	public JobConfig getConf(String jobName, boolean forceRemote) {
+		JobConfig config = schedulerConfgs.get(jobName);
+		if(config == null || forceRemote) {
+			String json = Objects.toString(getRedisTemplate().opsForHash().get(JOB_REGISTER_KEY, jobName), null);
+			if(json != null)config = JsonUtils.toObject(json, JobConfig.class);
+		}
+		return config;
+	}
+
+	@Override
+	public void unregister(String jobName) {
+		redisTemplate.opsForHash().delete(JOB_REGISTER_KEY, jobName);
+	}
+
+	@Override
+	public List<JobConfig> getAllJobs() {
+		return new ArrayList<>(schedulerConfgs.values());
+	}
+	
+	@Override
+	public void onRegistered() {
+		updateNodeSTat(GlobalContext.getNodeName(), System.currentTimeMillis());
+		//移除过期job
+		Set<Object> jobNames = redisTemplate.opsForHash().keys(JOB_REGISTER_KEY);
+		for (Object jobName : jobNames) {
+			if(!schedulerConfgs.containsKey(jobName)) {
+				unregister(jobName.toString());
+				logger.info("MENDMIX-STARTUP-LOGGGING-->> remove expire job:{}",jobName);
+			}
+		}
+		executor.scheduleWithFixedDelay(new Runnable() {
+			@Override
+			public void run() {
+				coordinate();
+			}
+		}, SYNC_STAT_PERIOD, SYNC_STAT_PERIOD, TimeUnit.MILLISECONDS);
+	}
+	
+	private void updateNodeSTat(String nodeId,long currentTime) {
+		redisTemplate.opsForZSet().add(NODE_REGISTER_KEY, nodeId, currentTime);
+		redisTemplate.expire(NODE_REGISTER_KEY, NODE_ACTIVE_MILLIS);
+	}
+	
+	private void reloadSchedulerConfgs() {
+		Set<Object> jobNames = redisTemplate.opsForHash().keys(JOB_REGISTER_KEY);
+		JobConfig config;
+		for (Object jobName : jobNames) {
+			config = getConf(jobName.toString(), true);
+			schedulerConfgs.put(config.getJobName(), config);
+		}
+	}
+	
+	private void coordinate() {
+		if(redisTemplate.hasKey(NODE_REFRESH_STAT_KEY)) {
+			reloadSchedulerConfgs();
+		}
+		//
+		long currentTime = System.currentTimeMillis();
+		//同步所有任务
+		Set<Object> jobNames = redisTemplate.opsForHash().keys(JOB_REGISTER_KEY);
+		JobConfig config;
+		for (Object jobName : jobNames) {
+			config = getConf(jobName.toString(), true);
+			schedulerConfgs.put(jobName.toString(), config);
+		}
+		
+		Set<String> lastActiveNodes = JobContext.getContext().getActiveNodes();
+		//同步节点
+		Set<String> nodeIds = redisTemplate.opsForZSet().rangeByScore(NODE_REGISTER_KEY, 0, currentTime + 10000);
+		//是否需要负载均衡
+		boolean rebalanceRequired = lastActiveNodes.size() != nodeIds.size() || !lastActiveNodes.containsAll(nodeIds);
+		Iterator<String> iterator = nodeIds.iterator();
+		String nodeId;
+		while(iterator.hasNext()) {
+			nodeId = iterator.next();
+			if(GlobalContext.getNodeName().equals(nodeId)) {
+				updateNodeSTat(nodeId, currentTime);
+			}else {
+				long lastHeartbeatTime = redisTemplate.opsForZSet().score(NODE_REGISTER_KEY, nodeId).longValue();
+				//节点下线
+				if(currentTime - lastHeartbeatTime > SYNC_STAT_PERIOD * 2) {
+					redisTemplate.opsForZSet().remove(NODE_REGISTER_KEY, nodeId);
+					iterator.remove();
+					rebalanceRequired = true;
+					logger.info("MENDMIX-TRACE-LOGGGING-->> scheduler node[{}] lastHeartbeatTime:{},removing...",nodeId,lastHeartbeatTime);
+				}
+			}
+		}
+		//
+		if(rebalanceRequired) {
+			List<String> activeNodeIds = new ArrayList<>(nodeIds);
+			JobContext.getContext().refreshNodes(activeNodeIds);
+			logger.info("MENDMIX-TRACE-LOGGGING-->> current activeNodeIds:{}",activeNodeIds);
+			//
+			rebalanceJobNode(activeNodeIds);
+			redisTemplate.opsForValue().set(NODE_REFRESH_STAT_KEY, "1",NODE_ACTIVE_MILLIS);
+		}
+		
+	}
+
+	@Override
+	public void destroy() throws Exception {
+		executor.shutdown();
+	}
+}

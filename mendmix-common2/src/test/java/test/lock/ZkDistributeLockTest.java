@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2022 dromara.org.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.mendmix.common2.lock.zk.ZkDistributeLock;
+import org.dromara.mendmix.common.lock.zk.ZkDistributeLock;
 
 public class ZkDistributeLockTest {
 

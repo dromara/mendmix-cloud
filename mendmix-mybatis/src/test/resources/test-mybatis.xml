@@ -14,7 +14,7 @@
 
 	<import resource="test-cache.xml" />
 
-	<bean id="routeDataSource" class="com.mendmix.mybatis.datasource.MultiRouteDataSource">
+	<bean id="routeDataSource" class="com.mendmix.mybatis.datasource.DynamicMultiDataSource">
 	   <constructor-arg index="0" value="default" />  
 	</bean>
 

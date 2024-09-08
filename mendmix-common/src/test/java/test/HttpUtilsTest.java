@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2022 dromara.org.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package test;
 
-import com.mendmix.common.http.HttpRequestEntity;
-import com.mendmix.common.http.HttpResponseEntity;
-import com.mendmix.common.util.HttpUtils;
+import org.dromara.mendmix.common.http.HttpRequestEntity;
+import org.dromara.mendmix.common.http.HttpResponseEntity;
+import org.dromara.mendmix.common.util.HttpUtils;
 
 public class HttpUtilsTest {
 

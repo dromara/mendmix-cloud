@@ -1,0 +1,2 @@
+org.springframework.boot.env.EnvironmentPostProcessor=\
+org.dromara.mendmix.springweb.GlobalContexInitializer

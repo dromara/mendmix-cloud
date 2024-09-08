@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 www.mendmix.com.
+ * Copyright 2016-2022 dromara.org.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mendmix.common.serializer.JavaSerializer;
-import com.mendmix.common.util.JsonUtils;
-import com.mendmix.common.util.SerializeUtils;
+import org.dromara.mendmix.common.serializer.JavaSerializer;
+import org.dromara.mendmix.common.util.JsonUtils;
+import org.dromara.mendmix.common.util.SerializeUtils;
 
 import test.User;
 
