@@ -16,10 +16,7 @@
 package org.dromara.mendmix.logging.autoconfigure;
 
 import org.dromara.mendmix.logging.LogKafkaClient;
-import org.dromara.mendmix.logging.tracelog.processor.KafkaApmLogProcessor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -41,12 +38,6 @@ public class LoggingSupportConfiguration {
 	public LogKafkaClient logKafkaClient(@Value("${application.apm.loghandle.kafka.servers}") String servers) {
 		return new LogKafkaClient(servers);
 	}
-	
-	@Bean
-	@ConditionalOnProperty(name = "mendmix-cloud.logging.tracelog.enabled",havingValue = "true")
-	@ConditionalOnBean(LogKafkaClient.class)
-	public KafkaApmLogProcessor kafkaApmLogProcessor(@Autowired LogKafkaClient kafkaClient) {
-		return new KafkaApmLogProcessor(kafkaClient);
-	}
+
 
 }

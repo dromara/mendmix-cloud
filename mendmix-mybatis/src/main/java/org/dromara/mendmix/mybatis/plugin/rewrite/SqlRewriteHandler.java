@@ -111,6 +111,7 @@ public class SqlRewriteHandler implements PluginInterceptorHandler {
 	private static final String FRCH_INDEX_PREFIX = "__frch_index_";
 	private static final String FRCH_ITEM_PREFIX = "__frch_item_";
 	private static EqualsTo noPermssionCondition = new EqualsTo();
+	private static EqualsTo ignorePermssionCondition = new EqualsTo();
 	
 	//<table,<alias,[column...]>>
 	private Map<String, LinkedHashMap<String,List<String>>> tableDataPermColumnMappings = new HashMap<>();
@@ -150,6 +151,9 @@ public class SqlRewriteHandler implements PluginInterceptorHandler {
 		noPermssionCondition = new EqualsTo();
 		noPermssionCondition.setLeftExpression(new Column("1"));
 		noPermssionCondition.setRightExpression(new LongValue(2));
+		ignorePermssionCondition = new EqualsTo();
+		ignorePermssionCondition.setLeftExpression(new Column("1"));
+		ignorePermssionCondition.setRightExpression(new LongValue(1));
 	
 		dynaDataPermEnaled = MybatisConfigs.isDataPermissionEnabled(context.getGroupName());
 		isFieldSharddingTenant = MybatisConfigs.isFieldSharddingTenant(context.getGroupName());
@@ -450,9 +454,15 @@ public class SqlRewriteHandler implements PluginInterceptorHandler {
 			//
 			for (RewriteTable table : context.rewriteTables) {
 				Expression mergeExpression = null;
-				if(table.getGroupExpressions() == null)continue;
-				table.setUsingGlobalOrgPerm(false); //TODO 先关闭全局组织权限处理
-				for (Expression expression : table.getGroupExpressions()) {	
+				final Collection<Expression> groupExpressions = table.getGroupExpressions();
+				if(groupExpressions == null)continue;
+				//分组权限包含 1=1
+				if(groupExpressions.stream().anyMatch(item -> item.equals(ignorePermssionCondition))) {
+					continue;
+				}
+				 //先关闭全局组织权限处理
+				table.setUsingGlobalOrgPerm(false);
+				for (Expression expression : groupExpressions) {	
 					expression = wrapParenthesis(expression);
 					mergeExpression = mergeExpression == null 
 							? expression 
@@ -856,6 +866,10 @@ public class SqlRewriteHandler implements PluginInterceptorHandler {
 				equalsTo.setRightExpression(new StringValue(softDeleteFalseValue));
 			}
 			permExpression = permExpression == null ? equalsTo : new AndExpression(wrapParenthesis(permExpression), equalsTo);
+		}
+		//
+		if(permExpression == null && !withPermission && withAllPermission) {
+			permExpression = ignorePermssionCondition;
 		}
 				
 		if(context.traceLogging) {

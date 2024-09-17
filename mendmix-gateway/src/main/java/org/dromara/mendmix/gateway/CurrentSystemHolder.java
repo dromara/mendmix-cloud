@@ -64,8 +64,8 @@ public class CurrentSystemHolder {
 
 	private static Logger log = LoggerFactory.getLogger("org.dromara.mendmix");
 
+	private static boolean globalRouteEnabled = ResourceUtils.getBoolean("mendmix-cloud.global-route.enabled",true);
 	private static boolean remoteRouteEnabled = ResourceUtils.getBoolean("mendmix-cloud.remote-route.enabled",true);
-	private static boolean baseRouteEnabled = ResourceUtils.getBoolean("mendmix-cloud.base-route.enabled",true);
 	private static boolean multiSystemMode = ResourceUtils.getBoolean("mendmix-cloud.proxy.multi-system.enabled",false);
 	
 	private static AtomicReference<LocalCacheHub> localCacheHubRef = new AtomicReference<>();
@@ -331,7 +331,7 @@ public class CurrentSystemHolder {
 		//本地模块
 		loadLocalRouteModules(localCacheHub);
 		//全局模块
-		if(apiInstance != null && baseRouteEnabled) {
+		if(apiInstance != null && globalRouteEnabled) {
 			List<String> baseRouteNames = ResourceUtils.getList("mendmix-cloud.base-route.names");
 			List<BizSystemModule> globalModules = apiInstance.getGlobalModules();
 			log.info("> globalModules size:{}",globalModules.size());

@@ -15,51 +15,18 @@
 			<groupId>org.dromara.mendmix</groupId>
 			<artifactId>mendmix-common</artifactId>
 			<version>${project.version}</version>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.dromara.mendmix</groupId>
 			<artifactId>mendmix-spring</artifactId>
 			<version>${project.version}</version>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.dromara.mendmix</groupId>
 			<artifactId>mendmix-cache</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<version>1.2.17</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j.version}</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>${slf4j.version}</version>
-			<optional>true</optional>
-		</dependency>
 
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-			<version>${log4j2.version}</version>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-core</artifactId>
-			<version>${log4j2.version}</version>
-			<optional>true</optional>
-		</dependency>
 
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -108,24 +75,15 @@
 			<optional>true</optional>
 		</dependency>
 
-		<dependency>
-			<groupId>net.bytebuddy</groupId>
-			<artifactId>byte-buddy</artifactId>
-			<version>1.11.22</version>
-		</dependency>
 
-		<dependency>
-			<groupId>net.bytebuddy</groupId>
-			<artifactId>byte-buddy-agent</artifactId>
-			<version>1.11.22</version>
-		</dependency>
-		
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-autoconfigure</artifactId>
 			<version>${spring-boot.version}</version>
 			<optional>true</optional>
 		</dependency>
+
+
 
 	</dependencies>
 </project>
