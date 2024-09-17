@@ -37,7 +37,7 @@
 			<name>vakin jiang</name>
 			<email>vakinge@gmail.com</email>
 			<organization>github</organization>
-			<organizationUrl>http://www.mendmix.com</organizationUrl>
+			<organizationUrl>https://dromara.org</organizationUrl>
 		</developer>
 	</developers>
 
@@ -358,14 +358,14 @@
 	</build>
 
 	<distributionManagement>
-		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=密码 -->
+		<!-- mvn clean deploy -P release -DskipTests=true -Dgpg.passphrase=qq56121830 -->
 		<snapshotRepository>
 			<id>ossrh</id>
-			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>
-			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
 		</repository>
 	</distributionManagement>
 
